@@ -1,4 +1,4 @@
-## Comparison of GPT-5 (Thinking Mode) vs. Claude Opus 4.1 vs. Claude Opus 4
+## Code Generation comparison of GPT-5 (Thinking Mode) vs. Claude Opus 4.1 vs. Claude Opus 4
 
 | Feature / Metric | GPT-5 (Thinking Mode) | Claude Opus 4.1 | Claude Opus 4 |
 |------------------|----------------------|------------------|---------------|
@@ -13,14 +13,7 @@
 | Latency | Higher (due to thinking mode) | Moderate | Moderate |
 | Best Use Cases | Complex reasoning, debugging | Large-scale refactoring, precision | General development tasks |
 
-
-
-## Insights
-- **GPT-5 (Thinking Mode)** excels in complex reasoning, error recovery, and adaptive tool use, making it ideal for tasks like debugging, planning, and multi-step logic.
-- **Claude Opus 4.1** is optimized for multi-file code refactoring, precision bug fixing, and agentic workflows, with a slightly lower SWE-bench score but better consistency and documentation generation.
-- **Claude Opus 4** remains strong but is now slightly behind both GPT-5 and Opus 4.1 in terms of reasoning depth and tool integration.
-
-
+---
 
 ## Code Generation Performance by Task Type
 | Task Type | GPT-5 (Thinking Mode) | Claude Opus 4.1 | Claude Opus 4 |
@@ -35,10 +28,20 @@
 | TypeScript Type Challenges | Good, but sometimes overgeneralizes. | Excellent: Deep understanding of type systems and narrowing logic. | Strong, but less flexible. |
 | Long-running Agentic Tasks | Handles multi-step workflows well with reasoning mode. | Superior: Can run for hours with minimal intervention (e.g., 7-hour refactors). | Good, but may require more supervision. |
 
+---
+
+## Insights
+- **GPT-5 (Thinking Mode)** excels in complex reasoning, error recovery, and adaptive tool use, making it ideal for tasks like debugging, planning, and multi-step logic.
+- **Claude Opus 4.1** is optimized for multi-file code refactoring, precision bug fixing, and agentic workflows, with a slightly lower SWE-bench score but better consistency and documentation generation.
+- **Claude Opus 4** remains strong but is now slightly behind both GPT-5 and Opus 4.1 in terms of reasoning depth and tool integration.
+
+---
 
 
 ## bechmarks from OpenAI
-<img src="./OpenAI-comparison.png" alt="GPT5" width="1000" height="450">
+<img src="./OpenAI-comparison.png" alt="GPT5" width="1000" height="450"><br>
+<img src="./GPT5-SWE-bench.png" alt="GPT5" width="500" height="400">
+<img src="./GPT5-Tau2-bench.png" alt="GPT5" width="500" height="400">
 
 ---
 
@@ -59,4 +62,6 @@
 
 ## references
 https://openai.com/index/introducing-gpt-5-for-developers/ <br>
+https://openai.com/index/introducing-gpt-5/ <br>
 https://blog.getbind.co/2025/08/06/claude-opus-4-1-vs-claude-opus-4-how-good-is-this-upgrade/
+https://github.com/with-logic/gpt-5-vs-opus-4-1-coding-examples/tree/main
