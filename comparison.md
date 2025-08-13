@@ -2,7 +2,7 @@
 
 | Feature / Metric | GPT-5 (Thinking Mode) | Claude Opus 4.1 | Claude Opus 4 |
 |------------------|----------------------|------------------|---------------|
-| SWE-bench Verified Score | 74.9% | 74.5% | 72.5% |
+| [SWE-bench Verified Score](https://github.com/princeton-nlp/SWE-bench) | 74.9% | 74.5% | 72.5% |
 | Reasoning Mode | Flexible (minimal to deep) | Hybrid (rapid + extended) | Hybrid (less refined) |
 | Tool Use | Free-form function calling | Bash + file editing tools | Same as 4.1 |
 | Multi-file Refactoring | Strong | Excellent | Good |
