@@ -1,67 +1,65 @@
-## Code Generation comparison of GPT-5 (Thinking Mode) vs. Claude Opus 4.1 vs. Claude Opus 4
+# Code Generation comparison of GPT-5 (Thinking Mode) vs. Claude Opus 4.1/4
 
-| Feature / Metric | GPT-5 (Thinking Mode) | Claude Opus 4.1 | Claude Opus 4 |
+## Benchmark result:
+| Benchmark | GPT-5 (Thinking Mode) | Claude Opus 4.1 | Claude Opus 4 |
 |------------------|----------------------|------------------|---------------|
-| [SWE-bench Verified Score](https://github.com/princeton-nlp/SWE-bench) | 74.9% | 74.5% | 72.5% |
-| Reasoning Mode | Flexible (minimal to deep) | Hybrid (rapid + extended) | Hybrid (less refined) |
-| Tool Use | Free-form function calling | Bash + file editing tools | Same as 4.1 |
-| Multi-file Refactoring | Strong | Excellent | Good |
-| Error Recovery | Superior | Strong | Moderate |
-| Code Consistency | Good | Very High | High |
-| API Documentation Generation | Moderate | High | Moderate |
-| Context Window | 128K tokens | 200K tokens | 200K tokens |
-| Latency | Higher (due to thinking mode) | Moderate | Moderate |
-| Best Use Cases | Complex reasoning, debugging | Large-scale refactoring, precision | General development tasks |
+| [SWE-bench Verified Score](https://github.com/princeton-nlp/SWE-bench) | **74.9%** | 74.5% | 72.5% |
 
----
-
-## Code Generation Performance by Task Type
+## Code Generation Performance by Task
 | Task Type | GPT-5 (Thinking Mode) | Claude Opus 4.1 | Claude Opus 4 |
 |-----------|----------------------|------------------|---------------|
-| Single-file Edits | Fast and accurate; excels with structured prompts and minimal reasoning effort. | Strong performance; slightly more verbose but consistent. | Good, but less precise than 4.1. |
-| Multi-file Refactoring | Capable, but slower due to deeper reasoning. | Best-in-class: Maintains context across modules, ideal for large codebases. | Strong, but less consistent in long-context edits. |
+| Single-file Edits | **Fast and accurate; excels with structured prompts and minimal reasoning effort.** | Strong performance; slightly more verbose but consistent. | Good, but less precise than 4.1. |
+| Multi-file Refactoring | Capable, but slower due to deeper reasoning. | <span style="font-weight: bold; color: green;">Best-in-class: Maintains context across modules, ideal for large codebases.</span> | Strong, but less consistent in long-context edits. |
 | Bug Fixing | Excellent at identifying and resolving subtle bugs, especially with reasoning mode. | Very strong: Surgical precision in pinpointing and fixing issues. | Good, but may over-edit or miss edge cases. |
 | Test Generation | Generates comprehensive test suites with good coverage. | Slightly better at aligning tests with business logic. | Moderate performance. |
-| Frontend UI Code | High-fidelity HTML/CSS/JS generation; good with design-to-code prompts. | Competent, but less visually aligned. | Adequate for basic UI tasks. |
+| Frontend UI Code | <span style="font-weight: bold; color: green;"> High-fidelity HTML/CSS/JS generation; good with design-to-code prompts. </span> | Competent, but less visually aligned. | Adequate for basic UI tasks. |
 | Backend API Development | Strong with REST/GraphQL scaffolding and error handling. | Comparable, with better documentation generation. | Slightly behind in API structure consistency. |
-| Data Visualization | Excels with libraries like D3.js, Chart.js, and Plotly. | Good, but sometimes verbose. | Moderate; may require manual cleanup. |
-| TypeScript Type Challenges | Good, but sometimes overgeneralizes. | Excellent: Deep understanding of type systems and narrowing logic. | Strong, but less flexible. |
+| Tool Use | **Free-form function calling** | Bash + file editing tools | Same as 4.1 |
+| Error Recovery | Superior | Strong | Moderate |
+| Code Consistency | Good | **Very High** | High |
+| Context Window | 128K tokens | 200K tokens | 200K tokens |
+| Reasoning Mode | Flexible (minimal to deep) | Hybrid (rapid + extended) | Hybrid (less refined) |
+| Latency | Higher (due to thinking mode) | Moderate | Moderate |
 | Long-running Agentic Tasks | Handles multi-step workflows well with reasoning mode. | Superior: Can run for hours with minimal intervention (e.g., 7-hour refactors). | Good, but may require more supervision. |
 
+## Summary
+**GPT-5 (Thinking Mode)**: 
+- Best for single-file edits and bug fixing with minimal reasoning. 
+- Excels in frontend UI code generation and has strong tool use capabilities. 
+- Its reasoning mode allows for deep context understanding, making it ideal for complex tasks.
+
+**Claude Opus 4.1**: 
+- Best-in-class for multi-file refactoring and long-context tasks.
+- It maintains high code consistency and excels in backend API development and test generation.
+- Its hybrid reasoning mode allows for rapid and extended reasoning, making it versatile across various coding tasks.
+
+
+---
+## Samples on code generation
+
+| Code generation prompt | GPT-5 (Thinking Mode) | Claude 4.1 |
+|------------------|----------------------|------------------|
+| 用python生成贪吃蛇游戏 | <img src="./snake-gpt5.png" alt="GPT5" width="700" height="600"> | <img src="./snake-claude.png" alt="Claude4.1" width="700" height="600"> |
+
+
+### More code generation examples (GPT-5 vs. Claude Opus 4.1)
+- https://gpt-5-vs-opus-4-1-coding-examples.vercel.app/
+
 ---
 
-## Insights
-- **GPT-5 (Thinking Mode)** excels in complex reasoning, error recovery, and adaptive tool use, making it ideal for tasks like debugging, planning, and multi-step logic.
-- **Claude Opus 4.1** is optimized for multi-file code refactoring, precision bug fixing, and agentic workflows, with a slightly lower SWE-bench score but better consistency and documentation generation.
-- **Claude Opus 4** remains strong but is now slightly behind both GPT-5 and Opus 4.1 in terms of reasoning depth and tool integration.
+## Reference:
+**Reference links:**
+- https://openai.com/index/introducing-gpt-5-for-developers/ <br>
+- https://openai.com/index/introducing-gpt-5/ <br>
+- https://blog.getbind.co/2025/08/06/claude-opus-4-1-vs-claude-opus-4-how-good-is-this-upgrade/ <br>
+- https://github.com/with-logic/gpt-5-vs-opus-4-1-coding-examples/tree/main<br>
+<br>
 
----
-
-
-## bechmarks from OpenAI
+**Benchmarks from OpenAI**
 <img src="./OpenAI-comparison.png" alt="GPT5" width="1000" height="450"><br>
 <img src="./GPT5-SWE-bench.png" alt="GPT5" width="500" height="400">
 <img src="./GPT5-Tau2-bench.png" alt="GPT5" width="500" height="400">
-
----
-
-## benchmarks from Claude Opus 4.1 vs. Claude Opus 4
-<img src="./Claude-comparison.png" alt="Claude" width="1000" height="700">
-
----
-
-## sample to compare GPT-5 and Claude Opus 4.1 on code generation
-### Code generation prompt "用python生成贪吃蛇游戏"
-*Figure: Python implementation of the Snake game generated by GPT-5 (Thinking Mode)*<br>
-<img src="./snake-gpt5.png" alt="GPT5" width="700" height="600">
-
 <br>
 
-*Figure: Python implementation of the Snake game generated by Claude 4.1*<br>
-<img src="./snake-claude.png" alt="Claude4.1" width="700" height="600">
-
-## references
-https://openai.com/index/introducing-gpt-5-for-developers/ <br>
-https://openai.com/index/introducing-gpt-5/ <br>
-https://blog.getbind.co/2025/08/06/claude-opus-4-1-vs-claude-opus-4-how-good-is-this-upgrade/
-https://github.com/with-logic/gpt-5-vs-opus-4-1-coding-examples/tree/main
+**Reference: benchmarks from Claude Opus 4.1**
+<img src="./Claude-comparison.png" alt="Claude" width="1000" height="700">
