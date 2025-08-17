@@ -9,10 +9,10 @@
 | Task Type | GPT-5 (Thinking Mode) | Claude Opus 4.1 | Claude Opus 4 |
 |-----------|----------------------|------------------|---------------|
 | Single-file Edits | **Fast and accurate; excels with structured prompts and minimal reasoning effort.** | Strong performance; slightly more verbose but consistent. | Good, but less precise than 4.1. |
-| Multi-file Refactoring | Capable, but slower due to deeper reasoning. | <span style="font-weight: bold; color: green;">Best-in-class: Maintains context across modules, ideal for large codebases.</span> | Strong, but less consistent in long-context edits. |
+| Multi-file Refactoring | Capable, but slower due to deeper reasoning. | **Best-in-class: Maintains context across modules, ideal for large codebases.** | Strong, but less consistent in long-context edits. |
 | Bug Fixing | Excellent at identifying and resolving subtle bugs, especially with reasoning mode. | Very strong: Surgical precision in pinpointing and fixing issues. | Good, but may over-edit or miss edge cases. |
 | Test Generation | Generates comprehensive test suites with good coverage. | Slightly better at aligning tests with business logic. | Moderate performance. |
-| Frontend UI Code | <span style="font-weight: bold; color: green;"> High-fidelity HTML/CSS/JS generation; good with design-to-code prompts. </span> | Competent, but less visually aligned. | Adequate for basic UI tasks. |
+| Frontend UI Code | **High-fidelity HTML/CSS/JS generation; good with design-to-code prompts.** | Competent, but less visually aligned. | Adequate for basic UI tasks. |
 | Backend API Development | Strong with REST/GraphQL scaffolding and error handling. | Comparable, with better documentation generation. | Slightly behind in API structure consistency. |
 | Tool Use | **Free-form function calling** | Bash + file editing tools | Same as 4.1 |
 | Error Recovery | Superior | Strong | Moderate |
