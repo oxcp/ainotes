@@ -6,7 +6,7 @@
 | [SWE-bench Verified Score](https://github.com/princeton-nlp/SWE-bench) | **74.9%** | 74.5% | 72.5% |
 
 ## Code Generation Performance by Task
-| Task Type | GPT-5 (Thinking Mode) | Claude Opus 4.1 | Claude Opus 4 |
+| Task Type | GPT-5 | Claude Opus 4.1 | Claude Opus 4 |
 |-----------|----------------------|------------------|---------------|
 | Single-file Edits | **Fast and accurate; excels with structured prompts and minimal reasoning effort.** | Strong performance; slightly more verbose but consistent. | Good, but less precise than 4.1. |
 | Multi-file Refactoring | Capable, but slower due to deeper reasoning. | **Best-in-class: Maintains context across modules, ideal for large codebases.** | Strong, but less consistent in long-context edits. |
