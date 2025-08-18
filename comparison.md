@@ -23,16 +23,29 @@
 | Long-running Agentic Tasks | Handles multi-step workflows well with reasoning mode. | Superior: Can run for hours with minimal intervention (e.g., 7-hour refactors). | Good, but may require more supervision. |
 
 ## Summary
-**GPT-5 (Thinking Mode)**: 
+**GPT-5:** 
 - Best for single-file edits and bug fixing with minimal reasoning. 
 - Excels in frontend UI code generation and has strong tool use capabilities. 
 - Its reasoning mode allows for deep context understanding, making it ideal for complex tasks.
 
-**Claude Opus 4.1**: 
+**Claude Opus 4.1:** 
 - Best-in-class for multi-file refactoring and long-context tasks.
 - It maintains high code consistency and excels in backend API development and test generation.
 - Its hybrid reasoning mode allows for rapid and extended reasoning, making it versatile across various coding tasks.
 
+**GPT-5在以下方面有优势:**
+- 单个文件的代码生成和编辑
+- 前端代码生成效果
+- 自由格式的function calling
+- 链式思考推理模式更有利处理复杂任务
+- 价格
+
+**Claude Opus 4.1在以下方面有优势:**
+- 基于框架生成和多文件编辑
+- 更长上下文
+- 更高的代码一致性
+- 后端代码生成（API），测试用例生成
+- 混合推理模式，更快速+自动扩展推理能力，适应不同编码任务
 
 ---
 ## Samples on code generation
