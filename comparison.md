@@ -1,4 +1,4 @@
-# Code Generation comparison of GPT-5 (Thinking Mode) vs. Claude Opus 4.1/4
+# Code Generation comparison of GPT-5 vs. Claude Opus 4.1/4
 
 ## Benchmark result:
 | Benchmark | GPT-5 (Thinking Mode) | Claude Opus 4.1 | Claude Opus 4 |
@@ -53,7 +53,6 @@
 - https://openai.com/index/introducing-gpt-5-for-developers/ <br>
 - https://openai.com/index/introducing-gpt-5/ <br>
 - https://blog.getbind.co/2025/08/06/claude-opus-4-1-vs-claude-opus-4-how-good-is-this-upgrade/ <br>
-- https://github.com/with-logic/gpt-5-vs-opus-4-1-coding-examples/tree/main<br>
 <br>
 
 **Benchmarks from OpenAI**
