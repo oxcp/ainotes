@@ -40,6 +40,7 @@
 | Code generation prompt | GPT-5 (Thinking Mode) | Claude 4.1 |
 |------------------|----------------------|------------------|
 | 用python生成贪吃蛇游戏 | <img src="./snake-gpt5.png" alt="GPT5" width="700" height="600"> | <img src="./snake-claude.png" alt="Claude4.1" width="700" height="600"> |
+| 用python生成计算器和UI | <img src="./calculator-gpt5.png" alt="GPT5" width="500" height="790"> | <img src="./calculator-claude41.png" alt="Claude4.1" width="500" height="790"> |
 
 
 ### More code generation examples (GPT-5 vs. Claude Opus 4.1)
