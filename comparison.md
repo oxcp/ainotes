@@ -44,7 +44,7 @@
 
 
 ### More code generation examples (GPT-5 vs. Claude Opus 4.1)
-- https://gpt-5-vs-opus-4-1-coding-examples.vercel.app/
+- https://gpt-5-vs-opus-4-1-coding-examples.vercel.app/ (**Repo:** https://github.com/with-logic/gpt-5-vs-opus-4-1-coding-examples/)
 
 ---
 
