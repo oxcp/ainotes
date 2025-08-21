@@ -1,0 +1,117 @@
+Duration: 62.264 seconds.
+
+Code generated:
+我将从安全性、性能和资源使用效率三个方面优化这段代码：
+
+## 优化后的代码：
+
+```java
+private static final String QUERY_MANAGERS_BY_LEVEL =
+    "SELECT id, name, salary, level, department FROM employee WHERE level = ?";
+
+public List<Manager> getManagersByLevel(int level) {
+    List<Manager> managers = new ArrayList<>();
+
+    try (Connection conn = this.getConnection();
+         PreparedStatement preparedStatement = conn.prepareStatement(QUERY_MANAGERS_BY_LEVEL)) {
+
+        // 使用参数化查询
+        preparedStatement.setInt(1, level);
+
+        try (ResultSet resultSet = preparedStatement.executeQuery()) {
+            while (resultSet.next()) {
+                Manager manager = new Manager();
+                manager.setId(resultSet.getInt("id"));
+                manager.setName(resultSet.getString("name"));
+                manager.setSalary(resultSet.getDouble("salary"));
+                manager.setLevel(resultSet.getInt("level"));
+                manager.setDepartment(resultSet.getString("department"));
+                managers.add(manager);
+            }
+        }
+    } catch (SQLException e) {
+        // 使用日志框架替代printStackTrace
+        logger.error("Failed to get managers by level: " + level, e);
+        // 可以选择抛出自定义异常
+        throw new DataAccessException("Error retrieving managers for level: " + level, e);
+    }
+
+    return managers;
+}
+```
+
+## 进一步优化版本（使用连接池和批量处理）：
+
+```java
+private static final String QUERY_MANAGERS_BY_LEVEL =
+    "SELECT id, name, salary, level, department FROM employee WHERE level = ?";
+private static final int INITIAL_CAPACITY = 50;
+
+public List<Manager> getManagersByLevel(int level) {
+    // 验证输入参数
+    if (level < 0) {
+        throw new IllegalArgumentException("Level must be non-negative: " + level);
+    }
+
+    List<Manager> managers = new ArrayList<>(INITIAL_CAPACITY);
+
+    try (Connection conn = dataSource.getConnection();  // 使用连接池
+         PreparedStatement preparedStatement = conn.prepareStatement(
+             QUERY_MANAGERS_BY_LEVEL,
+             ResultSet.TYPE_FORWARD_ONLY,
+             ResultSet.CONCUR_READ_ONLY)) {
+
+        // 优化大数据集的获取
+        preparedStatement.setFetchSize(100);
+        preparedStatement.setInt(1, level);
+
+        try (ResultSet resultSet = preparedStatement.executeQuery()) {
+            while (resultSet.next()) {
+                managers.add(mapResultSetToManager(resultSet));
+            }
+        }
+    } catch (SQLException e) {
+        logger.error("Failed to get managers by level: {}", level, e);
+        throw new DataAccessException("Error retrieving managers for level: " + level, e);
+    }
+
+    return managers;
+}
+
+private Manager mapResultSetToManager(ResultSet resultSet) throws SQLException {
+    Manager manager = new Manager();
+    manager.setId(resultSet.getInt("id"));
+    manager.setName(resultSet.getString("name"));
+    manager.setSalary(resultSet.getDouble("salary"));
+    manager.setLevel(resultSet.getInt("level"));
+    manager.setDepartment(resultSet.getString("department"));
+    return manager;
+}
+```
+
+## 优化原因详解：
+
+### 1. **安全性优化**
+- **SQL注入防护**：原代码使用字符串拼接构建SQL，存在SQL注入风险。优化后使用参数化查询（`?`占位符）
+- **输入验证**：添加了level参数的合法性检查
+- **异常处理**：使用日志框架记录异常，避免敏感信息泄露
+
+### 2. **资源使用效率优化**
+- **自动资源管理**：使用try-with-resources确保Connection、PreparedStatement和ResultSet被正确关闭，防止资源泄漏
+- **连接池**：建议使用DataSource（如HikariCP）而非直接获取连接
+- **SQL常量化**：将SQL语句定义为静态常量，避免重复创建字符串对象
+
+### 3. **性能优化**
+- **SELECT具体字段**：避免使用`SELECT *`，只查询需要的字段，减少网络传输和内存占用
+- **初始容量设置**：ArrayList设置初始容量，减少动态扩容的开销
+- **FetchSize优化**：对于大数据集，设置合适的fetchSize减少网络往返次数
+- **ResultSet类型优化**：使用`TYPE_FORWARD_ONLY`和`CONCUR_READ_ONLY`提高性能
+
+### 4. **其他优化建议**
+- **缓存机制**：如果数据不经常变化，可以考虑添加缓存
+- **分页查询**：对于大数据集，实现分页功能
+- **异步处理**：对于耗时操作，考虑使用CompletableFuture异步处理
+- **使用ORM框架**：考虑使用MyBatis或JPA等框架简化数据访问层
+
+这些优化能够显著提升代码的安全性、性能和可维护性。
+

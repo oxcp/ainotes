@@ -1,0 +1,73 @@
+Duration: 39.678 seconds.
+
+Code generated:
+主要问题与改进点
+- 资源泄露：未关闭 ResultSet、PreparedStatement（以及可能的 Connection），会导致连接池耗尽或内存泄漏。
+- 异常处理不当：e.printStackTrace() 会吞没异常且不利于生产环境定位问题，应记录日志并向上抛出或包装为运行时异常。
+- SELECT * 不必要：应显式列出需要的列，减少数据传输、避免列变更带来的隐患。
+- 参数校验缺失：level 未校验，负值或异常值可能导致无意义的全表扫描。
+- 潜在性能/可用性问题：未设置超时、fetch size 或最大行数，容易导致长时间阻塞或内存压力。
+- 可能的保留字冲突：某些数据库（如 Oracle）中 level 是保留字，需转义或更名。
+- 金额类型：salary 用 double 容易出现精度问题，建议使用 BigDecimal（如果模型允许）。
+
+修复后的代码示例（使用 try-with-resources，显式列、校验与超时）
+注：这里假设该方法自己管理 Connection。若你的项目由事务管理器/容器管理连接，请不要在此处关闭 Connection，仅对 PreparedStatement、ResultSet 使用 try-with-resources，并从外部传入 Connection。
+
+public List<Manager> getManagersByLevel(int level) {
+    if (level < 0) {
+        throw new IllegalArgumentException("level must be >= 0");
+    }
+
+    // 如果数据库将 level 视为保留字，请按你的数据库方言转义标识符
+    // 例如 Oracle: "LEVEL"；MySQL: `level`（或启用 ANSI_QUOTES 后使用 "level"）
+    String sql = "SELECT id, name, salary, level, department FROM employee WHERE level = ? ORDER BY id";
+
+    List<Manager> managers = new ArrayList<>();
+    try (Connection conn = this.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setInt(1, level);
+
+        // 可选的健壮性设置
+        ps.setQueryTimeout(30);   // 30 秒查询超时，驱动支持时生效
+        ps.setFetchSize(100);     // 适配你的场景/驱动
+
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Manager manager = new Manager();
+                manager.setId(rs.getInt("id"));
+                manager.setName(rs.getString("name"));
+
+                // 若模型允许，建议将 Manager#setSalary 改为接收 BigDecimal
+                // BigDecimal salary = rs.getBigDecimal("salary");
+                // manager.setSalary(salary);
+
+                // 若暂时仍为 double：
+                java.math.BigDecimal salary = rs.getBigDecimal("salary");
+                manager.setSalary(salary == null ? 0.0 : salary.doubleValue());
+
+                int lvl = rs.getInt("level");
+                if (rs.wasNull()) {
+                    // 依据业务决定如何处理 null（跳过、默认值、异常等）
+                    // 这里示例用默认 0 或者可以抛异常
+                }
+                manager.setLevel(lvl);
+
+                manager.setDepartment(rs.getString("department"));
+                managers.add(manager);
+            }
+        }
+    } catch (SQLException e) {
+        // 生产环境建议使用日志框架记录
+        throw new RuntimeException("Failed to query managers by level: " + level, e);
+    }
+    return managers;
+}
+
+可选增强
+- 分页与最大行数限制，避免一次性拉取过多数据：
+  - 使用 ps.setMaxRows(1000) 或在 SQL 中加 LIMIT/OFFSET（按数据库方言）。
+  - 提供重载方法 getManagersByLevel(int level, int limit, int offset)。
+- 如果使用 Spring/JPA/MyBatis 等框架，改用其模板/Mapper，减少手写 JDBC 易错点。
+- 如数据库将 level 视为保留字，请在 SQL 中正确转义或更改列名，避免语法冲突。
+

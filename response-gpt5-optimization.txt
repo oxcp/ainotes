@@ -1,0 +1,119 @@
+Duration: 46.881 seconds.
+
+Code generated:
+问题点与优化方向
+- 安全性
+  - 直接拼接 SQL 存在 SQL 注入风险。
+  - 使用 SELECT * 暴露不必要字段，增加数据泄露面。
+  - 异常处理使用 printStackTrace 不利于统一审计与告警。
+
+- 资源使用效率
+  - 未关闭 Connection、PreparedStatement、ResultSet，易造成连接泄漏（连接池资源耗尽）。
+  - 未显式设置只读、fetchSize 等参数，不利于流式读取与网络/内存占用控制。
+
+- 性能
+  - 未使用参数化查询，容易造成数据库无法有效利用执行计划缓存。
+  - 未限定列，增加 I/O 和反序列化成本。
+  - 未设置查询超时，异常情况下可能长时间占用资源。
+  - 可能使用了保留字 level（如 Oracle），导致潜在的解析开销或错误。
+  - 缺少分页/索引建议，面对大数据量查询可能性能不佳。
+
+优化后的代码示例（基于纯 JDBC）
+说明：保持方法签名不变，使用 try-with-resources 自动关闭资源；参数化查询；限定列；只读连接、fetchSize、超时控制；日志替代 printStackTrace。可根据实际日志框架替换 logger。
+
+public List<Manager> getManagersByLevel(int level) {
+    if (level < 0) {
+        throw new IllegalArgumentException("level must be >= 0");
+    }
+
+    // 避免 SELECT *，只取需要的列；如果 level 是保留字，建议重命名为 job_level 或使用转义
+    final String sql = "SELECT id, name, salary, level, department FROM employee WHERE level = ?";
+
+    List<Manager> managers = new ArrayList<>();
+    try (Connection conn = getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        boolean prevReadOnly = false;
+        try {
+            // 只读优化：部分驱动/数据库可更好地选择执行路径
+            prevReadOnly = conn.isReadOnly();
+            conn.setReadOnly(true);
+
+            // 参数化查询，防注入 + 利用执行计划缓存
+            ps.setInt(1, level);
+
+            // 流式读取相关优化（可按实际数据库/驱动调整）
+            ps.setFetchDirection(ResultSet.FETCH_FORWARD);
+            ps.setFetchSize(200);        // 结合业务数据量和驱动特性调优
+            ps.setQueryTimeout(5);       // 秒级超时，避免长时间卡死连接
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Manager m = new Manager();
+                    m.setId(rs.getInt("id"));
+                    m.setName(rs.getString("name"));
+
+                    // 金额字段建议 BigDecimal；此处保持原签名，读取后再转
+                    java.math.BigDecimal sal = rs.getBigDecimal("salary");
+                    m.setSalary(sal == null ? 0.0 : sal.doubleValue());
+
+                    // 若 level 允许 NULL，需使用 getObject 并判空；否则保持 getInt
+                    m.setLevel(rs.getInt("level"));
+
+                    m.setDepartment(rs.getString("department"));
+                    managers.add(m);
+                }
+            }
+        } finally {
+            // 归还连接前恢复只读标志（连接池通常会重置，但稳妥起见手动恢复）
+            try {
+                conn.setReadOnly(prevReadOnly);
+            } catch (SQLException ignore) {
+                // 可记录 debug 日志
+            }
+        }
+    } catch (SQLException e) {
+        // 使用统一日志并抛出业务/数据访问异常，避免悄悄吞异常
+        // logger.error("Query managers by level failed, level={}", level, e);
+        throw new RuntimeException("Query managers by level failed, level=" + level, e);
+    }
+    return managers;
+}
+
+各项优化的原因说明
+- 安全
+  - 使用参数占位符（?）代替字符串拼接，防止 SQL 注入。
+  - 仅选择必要列，减少敏感字段暴露风险。
+  - 统一日志并抛出异常，便于监控和审计，不吞异常。
+
+- 资源使用效率
+  - try-with-resources 保证 Connection/PreparedStatement/ResultSet 被及时关闭，避免连接泄漏，提升连接池利用率。
+  - 设置只读连接，数据库可以进行锁/缓存等方面的轻量化处理。
+  - fetchSize 合理设置可减少一次性将全部结果集加载到内存的风险，改善内存占用峰值。
+
+- 性能
+  - 参数化查询可复用执行计划，减少解析与优化成本。
+  - 避免 SELECT *，降低磁盘 I/O、网络传输以及 JDBC 反序列化成本。
+  - 设置查询超时，避免慢查询长时间占用核心资源。
+  - FETCH_FORWARD 提示驱动以顺序方式读取，提高顺序访问效率。
+  - 如果使用 MySQL 并希望流式返回，可根据驱动配置进行专门优化：
+    - 对 MySQL 5.x 驱动：ps.setFetchSize(Integer.MIN_VALUE) 并启用 useCursorFetch=false 或使用 server-side cursor 配置；
+    - 对 MySQL 8.x 驱动：启用 useCursorFetch=true 并设置合理 fetchSize。
+  - 列名 level 在部分数据库（如 Oracle）是保留字，建议更名为 job_level/grade，或使用转义（但转义会降低可移植性）。
+
+进一步可选的优化建议
+- 数据库层
+  - 为 employee(level) 建立索引；若此查询高频且访问列固定，可考虑覆盖索引（包含 id,name,salary,department）以减少回表。
+  - 如果结果集可能很大，增加分页参数（limit/offset 或 keyset pagination）并在应用侧提供分页接口。
+  - 确保该查询在合理事务隔离级别下执行，避免不必要的锁冲突。
+
+- 应用层
+  - Manager.salary 若代表货币金额，建议用 BigDecimal 全链路处理，避免 double 精度问题。
+  - 输入校验：限制 level 合法范围（如 0~10）。
+  - 统一的异常类型（如自定义 DataAccessException）与日志框架（slf4j/logback）。
+  - 使用连接池（HikariCP 等）并开启 preparedStatementCache，以降低准备语句开销。
+
+- 维护性
+  - 将结果集映射提取为私有方法或 RowMapper，便于复用与单元测试。
+  - 避免使用保留字作为列名，或在 ORM/DAO 层集中管理列名常量。
+

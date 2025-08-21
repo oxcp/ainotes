@@ -1,0 +1,24 @@
+id: codecomments
+prompt: |
+  请给以下代码添加注释说明:
+package com.employee.app.dao;
+
+import java.sql.SQLException;
+import java.util.List;
+import com.employee.app.entity.Employee;
+
+/**
+ * This interface defines the operations that can be performed on Employee objects in the database.
+ */
+public interface EmployeeDao {
+
+    Boolean addEmployee(Employee newEmployee)throws SQLException;
+    Employee getEmployee(Integer employeeId);
+    Boolean updateEmployee(Employee updateEmployee);
+    Boolean updateEmployeeName(Integer employeeId,String name);
+    Boolean deleteEmployee(Integer employeeId);
+    List<Employee> getAllEmployees();
+    Boolean updateEmployeeSalary(Integer employeeId,String name);
+
+}
+

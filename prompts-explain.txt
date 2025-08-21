@@ -1,0 +1,21 @@
+id: explain
+prompt: |
+  以下代码的作用和逻辑是什么:
+function ascending(a,b) {
+    return a == null || b == null ? NaN : a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN;
+}
+
+function bisectLeft(a, x, lo, hi) {
+    if (lo == null) lo = 0;
+    if (hi == null) hi = a.length;
+    while (lo < hi) {
+        var mid = lo + hi >>> 1;
+        if (ascending(a[mid], x) < 0) {
+            lo = mid + 1;
+        } else {
+            hi = mid;
+        }
+    }
+    return lo;
+}
+

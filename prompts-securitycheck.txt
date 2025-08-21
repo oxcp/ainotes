@@ -1,0 +1,23 @@
+id: securitycheck
+prompt: |
+  检查以下代码有什么漏洞，帮助修复生成修复后的代码:
+public List<Manager> getManagersByLevel(int level) {
+    List<Manager> managers = new ArrayList<>();
+    try {
+        String sql = "SELECT * FROM employee WHERE level = " + level;
+        PreparedStatement preparedStatement = this.getConnection().prepareStatement(sql);
+        ResultSet resultSet = preparedStatement.executeQuery();
+        while (resultSet.next()) {
+            Manager manager = new Manager();
+            manager.setId(resultSet.getInt("id"));
+            manager.setName(resultSet.getString("name"));
+            manager.setSalary(resultSet.getDouble("salary"));
+            manager.setLevel(resultSet.getInt("level"));
+            manager.setDepartment(resultSet.getString("department"));
+            managers.add(manager);
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return managers;
+}

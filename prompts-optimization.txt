@@ -1,0 +1,24 @@
+id: calculator
+prompt: |
+  从安全，性能，资源使用效率等方面，优化以下代码，并给出优化的原因:
+public List<Manager> getManagersByLevel(int level) {
+    List<Manager> managers = new ArrayList<>();
+    try {
+        String sql = "SELECT * FROM employee WHERE level = " + level;
+        PreparedStatement preparedStatement = this.getConnection().prepareStatement(sql);
+        ResultSet resultSet = preparedStatement.executeQuery();
+        while (resultSet.next()) {
+            Manager manager = new Manager();
+            manager.setId(resultSet.getInt("id"));
+            manager.setName(resultSet.getString("name"));
+            manager.setSalary(resultSet.getDouble("salary"));
+            manager.setLevel(resultSet.getInt("level"));
+            manager.setDepartment(resultSet.getString("department"));
+            managers.add(manager);
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return managers;
+}
+

@@ -1,0 +1,81 @@
+Verifying prompt:
+请将以下代码翻译成Python实现:
+#include <stdio.h>
+
+int findMax(int n);
+
+int main() {
+  int n, max;
+  scanf("%d", &n);
+  max = findMax(n);
+  printf("%d\n" , max);
+  return 0;
+}
+
+int findMax(int n) {
+  int a,max;
+      if(n==1) {
+      //getchar();
+      scanf("%d", &a);
+      return a;
+  }
+  else {
+      max=findMax(n-1);
+      scanf("%d",&a);
+      return a>max?a:max;
+  }
+}
+
+Duration: 25.739 seconds.
+
+Code generated:
+这段C代码是一个递归查找最大值的程序。以下是Python的实现：
+
+```python
+def findMax(n):
+    if n == 1:
+        a = int(input())
+        return a
+    else:
+        max_val = findMax(n - 1)
+        a = int(input())
+        return a if a > max_val else max_val
+
+def main():
+    n = int(input())
+    max_val = findMax(n)
+    print(max_val)
+
+if __name__ == "__main__":
+    main()
+```
+
+**代码说明：**
+
+1. **主函数 `main()`**：
+   - 读取要输入的数字个数 `n`
+   - 调用 `findMax(n)` 函数获取最大值
+   - 输出最大值
+
+2. **递归函数 `findMax(n)`**：
+   - 基础情况：当 `n == 1` 时，读取一个数字并返回
+   - 递归情况：先递归调用 `findMax(n-1)` 获取前 `n-1` 个数的最大值，然后读取当前数字，返回当前数字和之前最大值中的较大者
+
+3. **输入输出对应关系**：
+   - C语言的 `scanf("%d", &n)` 对应 Python 的 `int(input())`
+   - C语言的 `printf("%d\n", max)` 对应 Python 的 `print(max_val)`
+   - C语言的三元运算符 `a>max?a:max` 对应 Python 的 `a if a > max_val else max_val`
+
+**使用示例：**
+```
+输入：
+3
+5
+8
+2
+
+输出：
+8
+```
+
+这个程序会读取 n 个整数，然后通过递归方式找出其中的最大值。
