@@ -52,8 +52,8 @@
 
 | Code generation prompt | GPT-5 | Claude 4.1 |
 |------------------|----------------------|------------------|
-| 用python生成贪吃蛇游戏 | <img src="./snake-gpt5.png" alt="GPT5" width="700" height="600"> | <img src="./snake-claude.png" alt="Claude4.1" width="700" height="600"> |
-| 用python生成计算器和UI | <img src="./calculator-gpt5.png" alt="GPT5" width="500" height="790"> | <img src="./calculator-claude41.png" alt="Claude4.1" width="500" height="790"> |
+| 用python生成贪吃蛇游戏 | <img src="./examples/snake-gpt5.png" alt="GPT5" width="700" height="600"> | <img src="./examples/snake-claude.png" alt="Claude4.1" width="700" height="600"> |
+| 用python生成计算器和UI | <img src="./examples/calculator-gpt5.png" alt="GPT5" width="500" height="790"> | <img src="./examples/calculator-claude41.png" alt="Claude4.1" width="500" height="790"> |
 
 ### 典型开发任务的表现对比 (GPT-5 vs. Claude Opus 4.1)
 - [通过相同的提示词，对比GPT-5和Claude Opus 4.1在不同开发任务中的响应](https://oxcp.github.io/ainotes/). [【测试提示词和结果输出】](./codegentest.md)
