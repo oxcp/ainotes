@@ -56,7 +56,7 @@
 | 用python生成计算器和UI | <img src="./calculator-gpt5.png" alt="GPT5" width="500" height="790"> | <img src="./calculator-claude41.png" alt="Claude4.1" width="500" height="790"> |
 
 ### 典型开发任务的表现对比 (GPT-5 vs. Claude Opus 4.1)
-- [通过相同的提示词，对比GPT-5和Claude Opus 4.1在不同开发任务中的响应](./codegentest.md) 
+- [通过相同的提示词，对比GPT-5和Claude Opus 4.1在不同开发任务中的响应](https://oxcp.github.io/ainotes/). [【测试提示词和结果输出】](./codegentest.md)
 
 ### More code generation examples (GPT-5 vs. Claude Opus 4.1)
 - https://gpt-5-vs-opus-4-1-coding-examples.vercel.app/ (**Repo:** https://github.com/with-logic/gpt-5-vs-opus-4-1-coding-examples/)
