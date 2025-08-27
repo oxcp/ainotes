@@ -1,36 +1,36 @@
 Duration: 7.333 seconds.
 Output:
-# Python ÊµÏÖ´úÂë
+# Python å®žçŽ°ä»£ç 
 
 ```python
 def find_max(n):
     """
-    µÝ¹é²éÕÒn¸öÕûÊýÖÐµÄ×î´óÖµ
+    é€’å½’æŸ¥æ‰¾nä¸ªæ•´æ•°ä¸­çš„æœ€å¤§å€¼
     
-    ²ÎÊý:
-        n: ÕûÊýÊýÁ¿
-    ·µ»Ø:
-        ×î´óÖµ
+    å‚æ•°:
+        n: æ•´æ•°æ•°é‡
+    è¿”å›ž:
+        æœ€å¤§å€¼
     """
     if n == 1:
-        # Èç¹ûÖ»ÓÐÒ»¸öÊý£¬Ö±½Ó·µ»ØËü
+        # å¦‚æžœåªæœ‰ä¸€ä¸ªæ•°ï¼Œç›´æŽ¥è¿”å›žå®ƒ
         a = int(input())
         return a
     else:
-        # µÝ¹éÕÒ³öÇ°n-1¸öÊýÖÐµÄ×î´óÖµ
+        # é€’å½’æ‰¾å‡ºå‰n-1ä¸ªæ•°ä¸­çš„æœ€å¤§å€¼
         max_val = find_max(n - 1)
-        # ¶ÁÈ¡µÚn¸öÊý
+        # è¯»å–ç¬¬nä¸ªæ•°
         a = int(input())
-        # ·µ»ØÇ°n-1¸öÊýµÄ×î´óÖµºÍµ±Ç°ÊýÖÐµÄ½Ï´óÕß
+        # è¿”å›žå‰n-1ä¸ªæ•°çš„æœ€å¤§å€¼å’Œå½“å‰æ•°ä¸­çš„è¾ƒå¤§è€…
         return a if a > max_val else max_val
 
 
 def main():
-    # ¶ÁÈ¡ÕûÊýÊýÁ¿
+    # è¯»å–æ•´æ•°æ•°é‡
     n = int(input())
-    # ²éÕÒ×î´óÖµ
+    # æŸ¥æ‰¾æœ€å¤§å€¼
     max_val = find_max(n)
-    # Êä³ö×î´óÖµ
+    # è¾“å‡ºæœ€å¤§å€¼
     print(max_val)
 
 
@@ -38,4 +38,4 @@ if __name__ == "__main__":
     main()
 ```
 
-Õâ¸öPythonÊµÏÖ±£ÁôÁËÔ­C´úÂëµÄµÝ¹éÂß¼­£¬²¢Ê¹ÓÃÁËPythonµÄ`input()`º¯Êý´úÌæCµÄ`scanf()`À´¶ÁÈ¡ÊäÈë¡£ÕûÌåÂß¼­ÊÇµÝ¹é²éÕÒn¸öÕûÊýÖÐµÄ×î´óÖµ¡£
+è¿™ä¸ªPythonå®žçŽ°ä¿ç•™äº†åŽŸCä»£ç çš„é€’å½’é€»è¾‘ï¼Œå¹¶ä½¿ç”¨äº†Pythonçš„`input()`å‡½æ•°ä»£æ›¿Cçš„`scanf()`æ¥è¯»å–è¾“å…¥ã€‚æ•´ä½“é€»è¾‘æ˜¯é€’å½’æŸ¥æ‰¾nä¸ªæ•´æ•°ä¸­çš„æœ€å¤§å€¼ã€‚

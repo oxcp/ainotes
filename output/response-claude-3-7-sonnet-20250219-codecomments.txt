@@ -1,6 +1,6 @@
 Duration: 10.81 seconds.
 Output:
-# EmployeeDao ½Ó¿Ú´úÂë×¢ÊÍ
+# EmployeeDao æ¥å£ä»£ç æ³¨é‡Š
 
 ```java
 package com.employee.app.dao;
@@ -11,62 +11,62 @@ import com.employee.app.entity.Employee;
 
 /**
  * This interface defines the operations that can be performed on Employee objects in the database.
- * ¸Ã½Ó¿Ú¶¨ÒåÁË¿ÉÒÔ¶ÔÊı¾İ¿âÖĞµÄÔ±¹¤¶ÔÏóÖ´ĞĞµÄ²Ù×÷¡£
+ * è¯¥æ¥å£å®šä¹‰äº†å¯ä»¥å¯¹æ•°æ®åº“ä¸­çš„å‘˜å·¥å¯¹è±¡æ‰§è¡Œçš„æ“ä½œã€‚
  */
 public interface EmployeeDao {
 
   /**
-   * Ìí¼ÓĞÂÔ±¹¤µ½Êı¾İ¿â
-   * @param newEmployee ÒªÌí¼ÓµÄÔ±¹¤¶ÔÏó
-   * @return Ìí¼Ó³É¹¦·µ»Øtrue£¬·ñÔò·µ»Øfalse
-   * @throws SQLException Êı¾İ¿â²Ù×÷Òì³£
+   * æ·»åŠ æ–°å‘˜å·¥åˆ°æ•°æ®åº“
+   * @param newEmployee è¦æ·»åŠ çš„å‘˜å·¥å¯¹è±¡
+   * @return æ·»åŠ æˆåŠŸè¿”å›trueï¼Œå¦åˆ™è¿”å›false
+   * @throws SQLException æ•°æ®åº“æ“ä½œå¼‚å¸¸
    */
   Boolean addEmployee(Employee newEmployee) throws SQLException;
   
   /**
-   * ¸ù¾İÔ±¹¤ID»ñÈ¡Ô±¹¤ĞÅÏ¢
-   * @param employeeId Ô±¹¤ID
-   * @return ·µ»Ø¶ÔÓ¦IDµÄÔ±¹¤¶ÔÏó£¬Èç¹û²»´æÔÚÔò·µ»Ønull
+   * æ ¹æ®å‘˜å·¥IDè·å–å‘˜å·¥ä¿¡æ¯
+   * @param employeeId å‘˜å·¥ID
+   * @return è¿”å›å¯¹åº”IDçš„å‘˜å·¥å¯¹è±¡ï¼Œå¦‚æœä¸å­˜åœ¨åˆ™è¿”å›null
    */
   Employee getEmployee(Integer employeeId);
   
   /**
-   * ¸üĞÂÔ±¹¤ĞÅÏ¢
-   * @param updateEmployee °üº¬¸üĞÂĞÅÏ¢µÄÔ±¹¤¶ÔÏó
-   * @return ¸üĞÂ³É¹¦·µ»Øtrue£¬·ñÔò·µ»Øfalse
+   * æ›´æ–°å‘˜å·¥ä¿¡æ¯
+   * @param updateEmployee åŒ…å«æ›´æ–°ä¿¡æ¯çš„å‘˜å·¥å¯¹è±¡
+   * @return æ›´æ–°æˆåŠŸè¿”å›trueï¼Œå¦åˆ™è¿”å›false
    */
   Boolean updateEmployee(Employee updateEmployee);
   
   /**
-   * ¸üĞÂÔ±¹¤ĞÕÃû
-   * @param employeeId Ô±¹¤ID
-   * @param name ĞÂµÄÔ±¹¤ĞÕÃû
-   * @return ¸üĞÂ³É¹¦·µ»Øtrue£¬·ñÔò·µ»Øfalse
+   * æ›´æ–°å‘˜å·¥å§“å
+   * @param employeeId å‘˜å·¥ID
+   * @param name æ–°çš„å‘˜å·¥å§“å
+   * @return æ›´æ–°æˆåŠŸè¿”å›trueï¼Œå¦åˆ™è¿”å›false
    */
   Boolean updateEmployeeName(Integer employeeId, String name);
   
   /**
-   * ¸ù¾İIDÉ¾³ıÔ±¹¤
-   * @param employeeId ÒªÉ¾³ıµÄÔ±¹¤ID
-   * @return É¾³ı³É¹¦·µ»Øtrue£¬·ñÔò·µ»Øfalse
+   * æ ¹æ®IDåˆ é™¤å‘˜å·¥
+   * @param employeeId è¦åˆ é™¤çš„å‘˜å·¥ID
+   * @return åˆ é™¤æˆåŠŸè¿”å›trueï¼Œå¦åˆ™è¿”å›false
    */
   Boolean deleteEmployee(Integer employeeId);
   
   /**
-   * »ñÈ¡ËùÓĞÔ±¹¤ÁĞ±í
-   * @return ·µ»Ø°üº¬ËùÓĞÔ±¹¤¶ÔÏóµÄÁĞ±í
+   * è·å–æ‰€æœ‰å‘˜å·¥åˆ—è¡¨
+   * @return è¿”å›åŒ…å«æ‰€æœ‰å‘˜å·¥å¯¹è±¡çš„åˆ—è¡¨
    */
   List<Employee> getAllEmployees();
   
   /**
-   * ¸üĞÂÔ±¹¤Ğ½×Ê
-   * @param employeeId Ô±¹¤ID
-   * @param name Ô±¹¤ĞÕÃû£¨²ÎÊıÃû³Æ¿ÉÄÜÓĞÎó£¬Ó¦Îªsalary£©
-   * @return ¸üĞÂ³É¹¦·µ»Øtrue£¬·ñÔò·µ»Øfalse
+   * æ›´æ–°å‘˜å·¥è–ªèµ„
+   * @param employeeId å‘˜å·¥ID
+   * @param name å‘˜å·¥å§“åï¼ˆå‚æ•°åç§°å¯èƒ½æœ‰è¯¯ï¼Œåº”ä¸ºsalaryï¼‰
+   * @return æ›´æ–°æˆåŠŸè¿”å›trueï¼Œå¦åˆ™è¿”å›false
    */
   Boolean updateEmployeeSalary(Integer employeeId, String name);
 
 }
 ```
 
-×¢Òâ£º`updateEmployeeSalary`·½·¨µÄ²ÎÊıÃû¿ÉÄÜ´æÔÚÎÊÌâ£¬µÚ¶ş¸ö²ÎÊıÓ¦¸ÃÊÇ`salary`¶ø²»ÊÇ`name`¡£ÔÚÊµ¼ÊÓ¦ÓÃÖĞ£¬Äú¿ÉÄÜĞèÒªĞŞÕıÕâ¸ö·½·¨µÄ²ÎÊıÀàĞÍºÍÃû³Æ¡£
+æ³¨æ„ï¼š`updateEmployeeSalary`æ–¹æ³•çš„å‚æ•°åå¯èƒ½å­˜åœ¨é—®é¢˜ï¼Œç¬¬äºŒä¸ªå‚æ•°åº”è¯¥æ˜¯`salary`è€Œä¸æ˜¯`name`ã€‚åœ¨å®é™…åº”ç”¨ä¸­ï¼Œæ‚¨å¯èƒ½éœ€è¦ä¿®æ­£è¿™ä¸ªæ–¹æ³•çš„å‚æ•°ç±»å‹å’Œåç§°ã€‚
