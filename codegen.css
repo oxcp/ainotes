@@ -16,12 +16,21 @@
 }
 .panel-title {
     font-weight: bold;
-    background: #333;
+    background: darkslateblue;
     color: #fff;
     padding: 8px 12px;
     font-size: 1rem;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
     border-bottom: 1px solid #bbb;
+    height: 2.5em;
+    line-height: 2.5em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    display: flex;
+    position: relative;
+    min-height: 0;    
 }
 body {
     margin: 0;
