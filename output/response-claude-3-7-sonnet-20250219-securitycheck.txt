@@ -1,0 +1,73 @@
+Duration: 14.908 seconds.
+Output:
+# 代码漏洞分析
+
+在这段代码中，我发现了以下问题：
+
+1. **SQL注入漏洞**：代码直接拼接了用户输入的`level`参数到SQL语句中，没有使用参数化查询
+2. **资源泄漏**：没有在`finally`块中关闭数据库连接、`PreparedStatement`和`ResultSet`
+3. **异常处理不当**：只是打印堆栈信息，没有进行适当的日志记录或向上层抛出异常
+
+# 修复后的代码
+
+```java
+public List<Manager> getManagersByLevel(int level) {
+    List<Manager> managers = new ArrayList<>();
+    Connection connection = null;
+    PreparedStatement preparedStatement = null;
+    ResultSet resultSet = null;
+    
+    try {
+        // 使用参数化查询来防止SQL注入
+        String sql = "SELECT * FROM employee WHERE level = ?";
+        connection = this.getConnection();
+        preparedStatement = connection.prepareStatement(sql);
+        preparedStatement.setInt(1, level); // 使用参数绑定
+        
+        resultSet = preparedStatement.executeQuery();
+        
+        while (resultSet.next()) {
+            Manager manager = new Manager();
+            manager.setId(resultSet.getInt("id"));
+            manager.setName(resultSet.getString("name"));
+            manager.setSalary(resultSet.getDouble("salary"));
+            manager.setLevel(resultSet.getInt("level"));
+            manager.setDepartment(resultSet.getString("department"));
+            managers.add(manager);
+        }
+    } catch (SQLException e) {
+        // 更好的异常处理，可以考虑使用日志框架
+        logger.error("Error retrieving managers by level: " + level, e);
+        // 或者向上层抛出自定义异常
+        // throw new DatabaseException("Error retrieving managers", e);
+    } finally {
+        // 确保资源被正确关闭
+        try {
+            if (resultSet != null) {
+                resultSet.close();
+            }
+            if (preparedStatement != null) {
+                preparedStatement.close();
+            }
+            // 注意：根据实际情况决定是否在这里关闭连接
+            // 如果connection是从连接池获取的，可能只需要释放而不是关闭
+            // if (connection != null) {
+            //     connection.close();
+            // }
+        } catch (SQLException e) {
+            logger.error("Error closing database resources", e);
+        }
+    }
+    
+    return managers;
+}
+```
+
+# 主要改进
+
+1. **防止SQL注入**：使用参数化查询替代字符串拼接
+2. **资源管理**：在`finally`块中确保所有资源都被关闭
+3. **异常处理**：添加了更好的异常处理方式
+4. **代码结构**：使代码更清晰，易于维护
+
+注意：代码中的`logger`是假设你项目中已经集成了某种日志框架。如果没有，你需要添加相应的依赖和配置。

@@ -1,0 +1,99 @@
+Duration: 18.159 seconds.
+Output:
+以下是优化后的代码及详细说明：
+
+```java
+public List<Manager> getManagersByLevel(int level) {
+    // 输入验证 - 安全性提升
+    if (level < 1 || level > 10) { // 假设level范围是1-10
+        throw new IllegalArgumentException("Invalid level: " + level);
+    }
+    
+    // 使用参数化查询 - 防止SQL注入
+    String sql = "SELECT id, name, salary, level, department FROM employee WHERE level = ?";
+    List<Manager> managers = new ArrayList<>();
+    
+    // 使用try-with-resources确保资源自动关闭
+    try (Connection connection = this.getConnection();
+         PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+        
+        preparedStatement.setInt(1, level);
+        
+        try (ResultSet resultSet = preparedStatement.executeQuery()) {
+            while (resultSet.next()) {
+                Manager manager = createManagerFromResultSet(resultSet);
+                managers.add(manager);
+            }
+        }
+        
+    } catch (SQLException e) {
+        // 使用日志框架替代printStackTrace，避免敏感信息泄露
+        logger.error("Failed to retrieve managers by level: {}", level, e);
+        throw new DataAccessException("Unable to retrieve managers", e);
+    }
+    
+    return managers;
+}
+
+// 提取方法，提高代码复用性和可维护性
+private Manager createManagerFromResultSet(ResultSet resultSet) throws SQLException {
+    Manager manager = new Manager();
+    manager.setId(resultSet.getInt("id"));
+    manager.setName(resultSet.getString("name"));
+    manager.setSalary(resultSet.getDouble("salary"));
+    manager.setLevel(resultSet.getInt("level"));
+    manager.setDepartment(resultSet.getString("department"));
+    return manager;
+}
+```
+
+## 优化原因详解：
+
+### 🔒 安全性优化
+
+1. **防止SQL注入攻击**
+   - **原问题**：字符串拼接构建SQL `"SELECT * FROM employee WHERE level = " + level`
+   - **优化**：使用参数化查询 `preparedStatement.setInt(1, level)`
+   - **原因**：参数化查询可以防止恶意输入被当作SQL代码执行
+
+2. **输入验证**
+   - **新增**：参数范围校验
+   - **原因**：防止无效输入导致的异常行为或资源浪费
+
+3. **敏感信息保护**
+   - **原问题**：`e.printStackTrace()` 可能暴露系统信息
+   - **优化**：使用日志框架记录错误，避免敏感信息泄露
+
+### ⚡ 性能优化
+
+1. **精确字段查询**
+   - **原问题**：使用 `SELECT *` 查询所有字段
+   - **优化**：只查询需要的字段 `SELECT id, name, salary, level, department`
+   - **原因**：减少网络传输和内存使用，提高查询速度
+
+2. **代码结构优化**
+   - **新增**：提取 `createManagerFromResultSet` 方法
+   - **原因**：提高代码复用性，便于维护和测试
+
+### 📊 资源使用效率优化
+
+1. **自动资源管理**
+   - **原问题**：手动管理数据库连接和资源
+   - **优化**：使用try-with-resources语句
+   - **原因**：确保Connection、PreparedStatement、ResultSet自动关闭，防止资源泄露
+
+2. **异常处理改进**
+   - **原问题**：只是打印异常，没有适当处理
+   - **优化**：抛出自定义异常，便于上层调用者处理
+   - **原因**：提供更好的错误处理机制和调试信息
+
+### 📈 额外建议
+
+如果需要进一步优化，还可以考虑：
+
+1. **缓存策略**：对频繁查询的数据进行缓存
+2. **连接池**：使用数据库连接池避免频繁创建连接
+3. **分页查询**：对大量数据进行分页处理
+4. **索引优化**：确保level字段有适当的数据库索引
+
+这些优化显著提升了代码的安全性、性能和资源管理效率。

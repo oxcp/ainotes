@@ -93,10 +93,32 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-function showMessage(item, elementid) {
-    loadContent("prompts-" + item + ".yaml", 'panel-b-content');
-    loadContent("response-gpt5-" + item + ".txt", 'panel-c-content');
-    loadContent("response-claude41-" + item + ".txt", 'panel-d-content');
+
+let panelA_selected_item = "";
+function showMessage(item) {
+    panelA_selected_item = item;
+    loadContent("prompts/prompts-" + item + ".yaml", 'panel-b-content');
+    loadContent("output/response-gpt5-" + item + ".txt", 'panel-c-content');
+    refreshNonGPTMessage(item);
+}
+
+function refreshNonGPTMessage(item) {
+    // const panelDContent = document.getElementById('panel-d-content');
+    // panelDContent.textContent = `Response from ${selectedModel} here:`;
+    selectedModel = document.getElementById('model-select').value;
+    loadContent("output/response-" + selectedModel + "-" + item + ".txt", 'panel-d-content');    
+
+}
+
+function handleModelSelect(event) {
+    const select = event.target;
+
+    if (panelA_selected_item === "") {
+        const selectedText = select.options[select.selectedIndex].text;
+        document.getElementById('panel-d-content').innerHTML = `Response from <span id="selected-model-text">${selectedText}</span> here:`;
+    } else {
+        refreshNonGPTMessage(panelA_selected_item);
+    }
 }
 
 // function to load content from file, and return the content as text
@@ -105,6 +127,6 @@ async function loadContent(url, elementid) {
     .then((response) => response.text()) //2
     .then((info) => {
         document.getElementById(elementid).textContent = info; //3
-        console.log(info);
+        //console.log(info);
     });
 }

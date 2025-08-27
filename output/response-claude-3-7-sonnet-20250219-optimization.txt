@@ -1,0 +1,118 @@
+Duration: 19.65 seconds.
+Output:
+# 代码优化分析
+
+我将从安全、性能和资源使用效率等方面优化这段代码，并解释每项优化的原因。
+
+## 优化后的代码
+
+```java
+public List<Manager> getManagersByLevel(int level) {
+    List<Manager> managers = new ArrayList<>();
+    Connection connection = null;
+    PreparedStatement preparedStatement = null;
+    ResultSet resultSet = null;
+    
+    try {
+        // 使用参数化查询避免SQL注入
+        String sql = "SELECT id, name, salary, level, department FROM employee WHERE level = ?";
+        
+        connection = this.getConnection();
+        preparedStatement = connection.prepareStatement(sql);
+        preparedStatement.setInt(1, level);
+        
+        resultSet = preparedStatement.executeQuery();
+        
+        while (resultSet.next()) {
+            Manager manager = new Manager();
+            manager.setId(resultSet.getInt("id"));
+            manager.setName(resultSet.getString("name"));
+            manager.setSalary(resultSet.getDouble("salary"));
+            manager.setLevel(resultSet.getInt("level"));
+            manager.setDepartment(resultSet.getString("department"));
+            managers.add(manager);
+        }
+    } catch (SQLException e) {
+        // 使用日志记录异常而不是简单的printStackTrace
+        logger.error("Error retrieving managers by level: " + level, e);
+        // 或者抛出自定义异常
+        // throw new DatabaseException("Failed to retrieve managers", e);
+    } finally {
+        // 确保资源关闭，避免资源泄漏
+        closeResources(resultSet, preparedStatement, connection);
+    }
+    
+    return managers;
+}
+
+// 资源关闭辅助方法
+private void closeResources(ResultSet rs, PreparedStatement ps, Connection conn) {
+    try {
+        if (rs != null) {
+            rs.close();
+        }
+    } catch (SQLException e) {
+        logger.warn("Failed to close ResultSet", e);
+    }
+    
+    try {
+        if (ps != null) {
+            ps.close();
+        }
+    } catch (SQLException e) {
+        logger.warn("Failed to close PreparedStatement", e);
+    }
+    
+    try {
+        if (conn != null && !conn.isClosed()) {
+            // 根据连接管理策略决定是关闭还是返回连接池
+            conn.close();
+        }
+    } catch (SQLException e) {
+        logger.warn("Failed to close Connection", e);
+    }
+}
+```
+
+## 优化理由
+
+### 1. 安全性优化
+
+**问题**: 使用字符串拼接构建SQL查询容易导致SQL注入攻击。
+**解决方案**: 使用参数化查询（PreparedStatement的setXXX方法）替代字符串拼接。
+**优化原因**: 参数化查询可以确保输入参数被正确处理和转义，防止SQL注入攻击。
+
+### 2. 资源管理优化
+
+**问题**: 原代码中没有关闭数据库资源（Connection, PreparedStatement, ResultSet）。
+**解决方案**: 添加finally块确保所有资源都被正确关闭。
+**优化原因**: 不关闭资源会导致资源泄漏，最终可能导致数据库连接池耗尽或内存问题。
+
+### 3. 异常处理优化
+
+**问题**: 原代码简单地打印堆栈跟踪，没有适当的错误处理。
+**解决方案**: 使用合适的日志记录机制或者抛出有意义的自定义异常。
+**优化原因**: 
+- 适当的日志记录更有利于问题诊断
+- printStackTrace()直接输出到标准错误流，在生产环境中难以捕获和监控
+- 抛出自定义异常可以让调用者决定如何处理错误
+
+### 4. 性能优化
+
+**问题**: SELECT * 查询可能会检索不必要的列数据。
+**解决方案**: 明确指定需要的列名。
+**优化原因**: 只获取需要的列可以减少数据传输和处理量，提高查询效率。
+
+### 5. 连接管理优化
+
+**问题**: 连接获取和管理不明确。
+**解决方案**: 明确定义连接变量，并在finally块中适当处理。
+**优化原因**: 清晰的连接管理可以确保连接被正确使用和释放，避免连接泄漏。
+
+### 6. 代码鲁棒性优化
+
+**问题**: 没有考虑资源关闭时可能出现的异常。
+**解决方案**: 为每个资源关闭操作添加单独的try-catch块。
+**优化原因**: 确保一个资源关闭失败不会影响其他资源的关闭操作。
+
+这些优化共同提高了代码的安全性、性能和资源利用效率，同时增强了代码的鲁棒性和可维护性。

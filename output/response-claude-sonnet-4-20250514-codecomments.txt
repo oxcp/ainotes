@@ -1,0 +1,97 @@
+Duration: 16.679 seconds.
+Output:
+以下是添加了详细注释说明的代码：
+
+```java
+package com.employee.app.dao;
+
+import java.sql.SQLException;
+import java.util.List;
+import com.employee.app.entity.Employee;
+
+/**
+ * 员工数据访问对象接口
+ * 定义了对员工对象进行数据库操作的所有方法
+ * 
+ * @author [作者名]
+ * @version 1.0
+ * @since [创建日期]
+ */
+public interface EmployeeDao {
+
+    /**
+     * 添加新员工到数据库
+     * 
+     * @param newEmployee 要添加的新员工对象，包含员工的所有基本信息
+     * @return Boolean 操作结果，true表示添加成功，false表示添加失败
+     * @throws SQLException 当数据库操作发生错误时抛出SQL异常
+     */
+    Boolean addEmployee(Employee newEmployee) throws SQLException;
+
+    /**
+     * 根据员工ID获取员工信息
+     * 
+     * @param employeeId 员工的唯一标识ID
+     * @return Employee 返回对应的员工对象，如果未找到则返回null
+     */
+    Employee getEmployee(Integer employeeId);
+
+    /**
+     * 更新员工信息
+     * 根据员工对象中的ID更新对应员工的所有信息
+     * 
+     * @param updateEmployee 包含更新信息的员工对象
+     * @return Boolean 操作结果，true表示更新成功，false表示更新失败
+     */
+    Boolean updateEmployee(Employee updateEmployee);
+
+    /**
+     * 更新指定员工的姓名
+     * 
+     * @param employeeId 要更新的员工ID
+     * @param name 新的员工姓名
+     * @return Boolean 操作结果，true表示更新成功，false表示更新失败
+     */
+    Boolean updateEmployeeName(Integer employeeId, String name);
+
+    /**
+     * 删除指定ID的员工
+     * 
+     * @param employeeId 要删除的员工ID
+     * @return Boolean 操作结果，true表示删除成功，false表示删除失败或员工不存在
+     */
+    Boolean deleteEmployee(Integer employeeId);
+
+    /**
+     * 获取所有员工信息
+     * 
+     * @return List<Employee> 包含所有员工对象的列表，如果没有员工则返回空列表
+     */
+    List<Employee> getAllEmployees();
+
+    /**
+     * 更新指定员工的薪资
+     * 注意：此方法的参数可能有误，通常更新薪资应该传入薪资金额而不是姓名
+     * 
+     * @param employeeId 要更新的员工ID
+     * @param name 参数命名可能有误，实际应该是salary（薪资金额）
+     * @return Boolean 操作结果，true表示更新成功，false表示更新失败
+     * @deprecated 建议修改参数名称或参数类型以更准确地反映其用途
+     */
+    Boolean updateEmployeeSalary(Integer employeeId, String name);
+}
+```
+
+**注释说明要点：**
+
+1. **类级注释**：描述了整个接口的用途和功能
+2. **方法注释**：每个方法都包含了详细的说明，包括：
+   - 功能描述
+   - 参数说明（@param）
+   - 返回值说明（@return）
+   - 异常说明（@throws）
+3. **代码问题提醒**：注意到 `updateEmployeeSalary` 方法的参数命名可能有问题，添加了相应的注释提醒
+
+**建议改进：**
+- `updateEmployeeSalary` 方法的第二个参数应该是 `Double salary` 或 `BigDecimal salary` 而不是 `String name`
+- 可以考虑添加更多的异常处理声明，如 `DataAccessException` 等

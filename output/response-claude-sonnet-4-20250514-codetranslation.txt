@@ -1,0 +1,66 @@
+Duration: 11.291 seconds.
+Output:
+这是将C代码翻译成Python的实现：
+
+```python
+def find_max(n):
+    """
+    递归函数：从输入中读取n个数字并返回最大值
+    """
+    if n == 1:
+        a = int(input())
+        return a
+    else:
+        max_val = find_max(n - 1)
+        a = int(input())
+        return a if a > max_val else max_val
+
+def main():
+    """
+    主函数
+    """
+    n = int(input())
+    max_val = find_max(n)
+    print(max_val)
+
+if __name__ == "__main__":
+    main()
+```
+
+**代码说明：**
+
+1. **函数定义**：`find_max(n)` 对应C代码中的 `findMax(int n)`
+2. **输入处理**：`scanf("%d", &n)` 对应 `int(input())`
+3. **递归逻辑**：保持与原C代码相同的递归结构
+4. **条件表达式**：`a>max?a:max` 对应Python的 `a if a > max_val else max_val`
+5. **输出**：`printf("%d\n", max)` 对应 `print(max_val)`
+
+**使用示例：**
+```
+输入：
+3
+5
+2
+8
+
+输出：
+8
+```
+
+**更简洁的Python实现（可选）：**
+如果你想要更符合Python风格的实现：
+
+```python
+def find_max_pythonic():
+    n = int(input())
+    numbers = []
+    for _ in range(n):
+        numbers.append(int(input()))
+    return max(numbers)
+
+# 使用
+result = find_max_pythonic()
+print(result)
+```
+
+不过上面的递归版本更忠实于原始C代码的逻辑结构。

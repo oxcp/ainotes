@@ -1,0 +1,146 @@
+Duration: 52.064 seconds.
+Output:
+您好，这段代码存在几个比较严重的问题，其中最关键的是**SQL注入 (SQL Injection)**漏洞。此外，还有**资源泄露**和**不恰当的异常处理**问题。
+
+下面我将逐一分析并提供修复后的代码。
+
+---
+
+### 1. 漏洞分析
+
+#### a. SQL注入 (SQL Injection) - (严重)
+
+*   **问题所在**:
+    代码通过字符串拼接的方式构建SQL查询语句：
+    ```java
+    String sql = "SELECT * FROM employee WHERE level = " + level;
+    ```
+    虽然这里的 `level` 参数是 `int` 类型，降低了传统字符串注入的风险（比如注入 `' OR '1'='1' --`），但这种编程习惯本身是极度危险的。如果攻击者有办法传入一个非数字的、经过构造的字符串（例如，通过某些框架的类型转换漏洞），或者如果这个方法被重构为接受字符串参数，就会立刻产生严重的安全漏洞。
+
+    例如，如果 `level` 可以被构造成 `1 OR 1=1`，那么SQL语句就会变成：
+    `SELECT * FROM employee WHERE level = 1 OR 1=1`
+    这将返回 `employee` 表中的所有记录，绕过了 `level` 的过滤条件。
+
+*   **核心危害**: 攻击者可以绕过身份验证、窃取敏感数据、修改甚至删除数据库中的数据。
+
+#### b. 资源泄露 (Resource Leak) - (严重)
+
+*   **问题所在**:
+    代码中创建了 `PreparedStatement` 和 `ResultSet` 对象，但在任何情况下（无论是正常执行完毕还是发生异常），都没有关闭这些资源。数据库连接（`Connection`）也可能没有被关闭（取决于 `this.getConnection()` 的实现）。
+
+*   **核心危害**: 数据库连接是非常宝贵的资源。如果不及时释放，会导致连接池耗尽，最终使整个应用程序无法连接到数据库，造成服务中断。
+
+#### c. 不恰当的异常处理 (Improper Exception Handling) - (中等)
+
+*   **问题所在**:
+    `catch (SQLException e) { e.printStackTrace(); }` 这种处理方式只是将错误信息打印到标准错误流（通常是控制台）。
+
+*   **核心危害**:
+    1.  **信息丢失**: 在生产环境中，没人会一直盯着控制台。这些错误信息很容易被忽略，导致问题无法被及时发现和修复。
+    2.  **调用者未知**: 调用 `getManagersByLevel` 方法的代码无法得知操作是否成功。它只会得到一个空列表 `[]`，无法区分是“确实没有符合条件的经理”还是“查询数据库时发生了严重错误”。
+
+---
+
+### 2. 修复方案
+
+1.  **使用 `PreparedStatement` 的参数化查询**:
+    将SQL语句中的变量替换为占位符 `?`，然后使用 `PreparedStatement` 的 `setXxx()` 方法（如 `setInt`, `setString`）来安全地绑定参数。这是防止SQL注入的**标准最佳实践**。
+
+2.  **使用 `try-with-resources` 语句**:
+    这是Java 7引入的特性，可以自动管理和关闭实现了 `AutoCloseable` 接口的资源（如 `Connection`, `PreparedStatement`, `ResultSet`）。这能确保无论代码正常执行还是抛出异常，资源都会被正确关闭，从而彻底解决资源泄露问题。
+
+3.  **改进异常处理**:
+    在 `catch` 块中，应该将异常记录到日志系统（如SLF4J, Log4j），然后向上抛出一个运行时异常（`RuntimeException`）或者一个自定义的业务异常。这样，调用者就能知道操作失败并进行相应的处理。
+
+---
+
+### 3. 修复后的代码
+
+下面是应用了以上所有修复方案的最终代码。
+
+```java
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+// 假设你有一个日志框架，比如 SLF4J
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class ManagerDAO {
+
+    // 建议使用日志框架来记录错误
+    private static final Logger logger = LoggerFactory.getLogger(ManagerDAO.class);
+
+    // 假设 getConnection() 是一个获取数据库连接的方法
+    private Connection getConnection() throws SQLException {
+        // ... 实现获取数据库连接的逻辑，例如从连接池获取
+        return null; // 这里只是一个示例
+    }
+
+    /**
+     * 根据级别安全地查询经理列表。
+     * @param level 经理的级别
+     * @return 经理列表，如果发生错误则会抛出运行时异常
+     */
+    public List<Manager> getManagersByLevel(int level) {
+        List<Manager> managers = new ArrayList<>();
+        // 使用占位符 (?) 来防止SQL注入
+        String sql = "SELECT id, name, salary, level, department FROM employee WHERE level = ?";
+
+        // 使用 try-with-resources 确保资源（Connection, PreparedStatement, ResultSet）被自动关闭
+        try (Connection connection = this.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+            // 安全地设置参数，第一个 '?' 对应索引 1
+            preparedStatement.setInt(1, level);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    Manager manager = new Manager();
+                    manager.setId(resultSet.getInt("id"));
+                    manager.setName(resultSet.getString("name"));
+                    manager.setSalary(resultSet.getDouble("salary"));
+                    manager.setLevel(resultSet.getInt("level"));
+                    manager.setDepartment(resultSet.getString("department"));
+                    managers.add(manager);
+                }
+            }
+        } catch (SQLException e) {
+            // 记录详细的错误日志
+            logger.error("Error fetching managers by level: {}", level, e);
+            // 向上层抛出异常，通知调用者操作失败
+            throw new RuntimeException("数据库查询失败，无法获取经理列表", e);
+        }
+        return managers;
+    }
+}
+
+// 假设的 Manager 类
+class Manager {
+    private int id;
+    private String name;
+    private double salary;
+    private int level;
+    private String department;
+
+    // Getters and Setters
+    public void setId(int id) { this.id = id; }
+    public void setName(String name) { this.name = name; }
+    public void setSalary(double salary) { this.salary = salary; }
+    public void setLevel(int level) { this.level = level; }
+    public void setDepartment(String department) { this.department = department; }
+}
+
+```
+
+### 总结
+
+| 问题点             | 原代码做法                     | 修复后做法                                                                       |
+|-------------------|------------------------------|--------------------------------------------------------------------------------|
+| **SQL注入**       | 字符串拼接 `"...level = " + level` | 使用 `PreparedStatement` 和占位符 `?`，并通过 `setInt()` 绑定参数。             |
+| **资源泄露**      | 没有关闭 `PreparedStatement`, `ResultSet` | 使用 `try-with-resources` 语句自动管理和关闭所有JDBC资源。                    |
+| **异常处理**      | `e.printStackTrace()`          | 使用日志框架记录错误，并向上层抛出 `RuntimeException`，使错误可被上层捕获和处理。 |
+| **查询字段** (优化) | `SELECT *`                     | 明确列出所需字段 `SELECT id, name, ...`，提高查询效率和代码可读性。           |

@@ -1,0 +1,72 @@
+Duration: 10.81 seconds.
+Output:
+# EmployeeDao 接口代码注释
+
+```java
+package com.employee.app.dao;
+
+import java.sql.SQLException;
+import java.util.List;
+import com.employee.app.entity.Employee;
+
+/**
+ * This interface defines the operations that can be performed on Employee objects in the database.
+ * 该接口定义了可以对数据库中的员工对象执行的操作。
+ */
+public interface EmployeeDao {
+
+  /**
+   * 添加新员工到数据库
+   * @param newEmployee 要添加的员工对象
+   * @return 添加成功返回true，否则返回false
+   * @throws SQLException 数据库操作异常
+   */
+  Boolean addEmployee(Employee newEmployee) throws SQLException;
+  
+  /**
+   * 根据员工ID获取员工信息
+   * @param employeeId 员工ID
+   * @return 返回对应ID的员工对象，如果不存在则返回null
+   */
+  Employee getEmployee(Integer employeeId);
+  
+  /**
+   * 更新员工信息
+   * @param updateEmployee 包含更新信息的员工对象
+   * @return 更新成功返回true，否则返回false
+   */
+  Boolean updateEmployee(Employee updateEmployee);
+  
+  /**
+   * 更新员工姓名
+   * @param employeeId 员工ID
+   * @param name 新的员工姓名
+   * @return 更新成功返回true，否则返回false
+   */
+  Boolean updateEmployeeName(Integer employeeId, String name);
+  
+  /**
+   * 根据ID删除员工
+   * @param employeeId 要删除的员工ID
+   * @return 删除成功返回true，否则返回false
+   */
+  Boolean deleteEmployee(Integer employeeId);
+  
+  /**
+   * 获取所有员工列表
+   * @return 返回包含所有员工对象的列表
+   */
+  List<Employee> getAllEmployees();
+  
+  /**
+   * 更新员工薪资
+   * @param employeeId 员工ID
+   * @param name 员工姓名（参数名称可能有误，应为salary）
+   * @return 更新成功返回true，否则返回false
+   */
+  Boolean updateEmployeeSalary(Integer employeeId, String name);
+
+}
+```
+
+注意：`updateEmployeeSalary`方法的参数名可能存在问题，第二个参数应该是`salary`而不是`name`。在实际应用中，您可能需要修正这个方法的参数类型和名称。

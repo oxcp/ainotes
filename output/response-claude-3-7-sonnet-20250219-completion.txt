@@ -1,0 +1,275 @@
+Duration: 28.142 seconds.
+Output:
+# Calculator Single-Page App
+
+I'll create a self-contained calculator in a single HTML file with all the required features.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #333;
+        }
+
+        .calculator {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 350px;
+            padding: 20px;
+        }
+
+        .display {
+            width: 100%;
+            height: 60px;
+            margin-bottom: 20px;
+            padding: 10px;
+            font-size: 28px;
+            text-align: right;
+            background-color: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-gap: 10px;
+        }
+
+        button {
+            padding: 15px 0;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #f0f0f0;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #e0e0e0;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .operator {
+            background-color: #4dabf7;
+            color: white;
+        }
+
+        .operator:hover {
+            background-color: #339af0;
+        }
+
+        .equals {
+            background-color: #ff922b;
+            color: white;
+        }
+
+        .equals:hover {
+            background-color: #fd7e14;
+        }
+
+        .clear {
+            background-color: #fa5252;
+            color: white;
+        }
+
+        .clear:hover {
+            background-color: #e03131;
+        }
+
+        @media (max-width: 480px) {
+            .calculator {
+                width: 95%;
+                padding: 15px;
+            }
+
+            .display {
+                height: 50px;
+                font-size: 24px;
+            }
+
+            button {
+                padding: 12px 0;
+                font-size: 16px;
+            }
+        }
+
+        @media (max-height: 600px) {
+            .calculator {
+                max-width: 300px;
+                padding: 10px;
+            }
+
+            .display {
+                height: 40px;
+                margin-bottom: 10px;
+            }
+
+            button {
+                padding: 10px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="display" id="display">0</div>
+        <div class="buttons">
+            <button class="clear" onclick="clearDisplay()">C</button>
+            <button onclick="appendToDisplay('(')">(</button>
+            <button onclick="appendToDisplay(')')">)</button>
+            <button class="operator" onclick="appendToDisplay('/')">÷</button>
+            
+            <button onclick="appendToDisplay('7')">7</button>
+            <button onclick="appendToDisplay('8')">8</button>
+            <button onclick="appendToDisplay('9')">9</button>
+            <button class="operator" onclick="appendToDisplay('*')">×</button>
+            
+            <button onclick="appendToDisplay('4')">4</button>
+            <button onclick="appendToDisplay('5')">5</button>
+            <button onclick="appendToDisplay('6')">6</button>
+            <button class="operator" onclick="appendToDisplay('-')">-</button>
+            
+            <button onclick="appendToDisplay('1')">1</button>
+            <button onclick="appendToDisplay('2')">2</button>
+            <button onclick="appendToDisplay('3')">3</button>
+            <button class="operator" onclick="appendToDisplay('+')">+</button>
+            
+            <button onclick="appendToDisplay('0')">0</button>
+            <button onclick="appendToDisplay('.')">.</button>
+            <button onclick="backspace()">⌫</button>
+            <button class="equals" onclick="calculate()">=</button>
+        </div>
+    </div>
+
+    <script>
+        let currentDisplay = '0';
+        let calculationPerformed = false;
+        const displayElement = document.getElementById('display');
+
+        function updateDisplay() {
+            displayElement.textContent = currentDisplay;
+        }
+
+        function appendToDisplay(value) {
+            if (currentDisplay === '0' || calculationPerformed) {
+                currentDisplay = value;
+                calculationPerformed = false;
+            } else {
+                currentDisplay += value;
+            }
+            updateDisplay();
+        }
+
+        function clearDisplay() {
+            currentDisplay = '0';
+            updateDisplay();
+        }
+
+        function backspace() {
+            if (currentDisplay.length > 1) {
+                currentDisplay = currentDisplay.slice(0, -1);
+            } else {
+                currentDisplay = '0';
+            }
+            updateDisplay();
+        }
+
+        function calculate() {
+            try {
+                // Replace × with * and ÷ with / for calculation
+                let expression = currentDisplay.replace(/×/g, '*').replace(/÷/g, '/');
+                
+                // Evaluate the expression
+                const result = eval(expression);
+                
+                // Convert result to string and handle decimal places
+                if (Number.isInteger(result)) {
+                    currentDisplay = result.toString();
+                } else {
+                    // Limit to 10 decimal places to avoid floating point issues
+                    currentDisplay = result.toFixed(10).replace(/\.?0+$/, '');
+                }
+                
+                calculationPerformed = true;
+                updateDisplay();
+            } catch (error) {
+                currentDisplay = 'Error';
+                calculationPerformed = true;
+                updateDisplay();
+            }
+        }
+
+        // Initialize display
+        updateDisplay();
+
+        // Add keyboard support
+        document.addEventListener('keydown', function(event) {
+            const key = event.key;
+            
+            if (/[0-9]/.test(key)) {
+                appendToDisplay(key);
+            } else if (key === '+' || key === '-' || key === '*' || key === '/') {
+                appendToDisplay(key);
+            } else if (key === '.') {
+                appendToDisplay('.');
+            } else if (key === 'Enter' || key === '=') {
+                calculate();
+            } else if (key === 'Backspace') {
+                backspace();
+            } else if (key === 'Escape' || key === 'c' || key === 'C') {
+                clearDisplay();
+            } else if (key === '(' || key === ')') {
+                appendToDisplay(key);
+            }
+        });
+    </script>
+</body>
+</html>
+```
+
+## Features and Details
+
+1. **Basic Calculator Operations**
+   - Addition (+), Subtraction (-), Multiplication (×), Division (÷)
+   - Support for parentheses to control operation order
+   - Decimal point for floating-point calculations
+
+2. **User Interface**
+   - Clean, light theme with a modern design
+   - Responsive layout that adapts to different screen sizes
+   - Clear button (C) to reset calculations
+   - Backspace button (⌫) to delete the last entered character
+
+3. **User Experience**
+   - Beautiful buttons with hover and active states for better feedback
+   - Color-coded buttons (operators in blue, equals in orange, clear in red)
+   - Error handling for invalid expressions
+
+4. **Additional Features**
+   - Keyboard support for faster input
+   - Automatic formatting of results (removes trailing zeros)
+   - Scalable design that works on mobile and desktop
+
+The calculator is designed to be intuitive and user-friendly while maintaining a clean, light aesthetic. The responsive design ensures it works well on devices of various sizes.

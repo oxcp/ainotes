@@ -1,0 +1,293 @@
+Duration: 31.971 seconds.
+Output:
+我将为您的 `EmployeeServiceImpl` 类生成完整的单元测试用例。以下是使用 JUnit 5 和 Mockito 框架的测试代码：
+
+```java
+package com.employee.app.service;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.*;
+
+import java.sql.SQLException;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.employee.app.dao.EmployeeDao;
+import com.employee.app.entity.Employee;
+import com.employee.app.exception.EmployeeException;
+
+@ExtendWith(MockitoExtension.class)
+class EmployeeServiceImplTest {
+
+    @Mock
+    private EmployeeDao employeeRepository;
+
+    @InjectMocks
+    private EmployeeServiceImpl employeeService;
+
+    private Employee testEmployee;
+
+    @BeforeEach
+    void setUp() {
+        testEmployee = new Employee();
+        testEmployee.setId(1);
+        testEmployee.setName("John Doe");
+        testEmployee.setEmail("john.doe@example.com");
+        // 根据您的 Employee 实体类添加其他属性
+    }
+
+    // ===== registerEmployee 方法测试 =====
+
+    @Test
+    void testRegisterEmployee_Success() throws SQLException, EmployeeException {
+        // Arrange
+        when(employeeRepository.getEmployee(testEmployee.getId())).thenReturn(testEmployee);
+        doNothing().when(employeeRepository).addEmployee(any(Employee.class));
+
+        // Act
+        Employee result = employeeService.registerEmployee(testEmployee);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(testEmployee.getId(), result.getId());
+        assertEquals(testEmployee.getName(), result.getName());
+        verify(employeeRepository, times(1)).addEmployee(testEmployee);
+        verify(employeeRepository, times(1)).getEmployee(testEmployee.getId());
+    }
+
+    @Test
+    void testRegisterEmployee_SqlException_ThrowsEmployeeException() throws SQLException {
+        // Arrange
+        doThrow(new SQLException("Database error")).when(employeeRepository).addEmployee(any(Employee.class));
+
+        // Act & Assert
+        EmployeeException exception = assertThrows(EmployeeException.class, () -> {
+            employeeService.registerEmployee(testEmployee);
+        });
+
+        assertTrue(exception.getMessage().contains("Employee could not be added."));
+        verify(employeeRepository, times(1)).addEmployee(testEmployee);
+        verify(employeeRepository, never()).getEmployee(anyInt());
+    }
+
+    // ===== getEmployeeByID 方法测试 =====
+
+    @Test
+    void testGetEmployeeByID_Success() throws EmployeeException {
+        // Arrange
+        when(employeeRepository.getEmployee(1)).thenReturn(testEmployee);
+
+        // Act
+        Employee result = employeeService.getEmployeeByID(1);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(testEmployee.getId(), result.getId());
+        assertEquals(testEmployee.getName(), result.getName());
+        verify(employeeRepository, times(1)).getEmployee(1);
+    }
+
+    @Test
+    void testGetEmployeeByID_EmployeeNotFound_ThrowsEmployeeException() {
+        // Arrange
+        when(employeeRepository.getEmployee(999)).thenReturn(null);
+
+        // Act & Assert
+        EmployeeException exception = assertThrows(EmployeeException.class, () -> {
+            employeeService.getEmployeeByID(999);
+        });
+
+        assertEquals("Employee not found.", exception.getMessage());
+        verify(employeeRepository, times(1)).getEmployee(999);
+    }
+
+    // ===== updateEmployee 方法测试 =====
+
+    @Test
+    void testUpdateEmployee_Success() throws EmployeeException {
+        // Arrange
+        Employee updatedEmployee = new Employee();
+        updatedEmployee.setId(1);
+        updatedEmployee.setName("Jane Doe");
+        updatedEmployee.setEmail("jane.doe@example.com");
+
+        when(employeeRepository.getEmployee(1)).thenReturn(testEmployee).thenReturn(updatedEmployee);
+        doNothing().when(employeeRepository).updateEmployee(any(Employee.class));
+
+        // Act
+        Employee result = employeeService.updateEmployee(updatedEmployee);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(updatedEmployee.getId(), result.getId());
+        assertEquals(updatedEmployee.getName(), result.getName());
+        verify(employeeRepository, times(2)).getEmployee(1); // 调用两次：检查存在 + 返回更新后的员工
+        verify(employeeRepository, times(1)).updateEmployee(updatedEmployee);
+    }
+
+    @Test
+    void testUpdateEmployee_EmployeeNotFound_ThrowsEmployeeException() {
+        // Arrange
+        Employee updateEmployee = new Employee();
+        updateEmployee.setId(999);
+        when(employeeRepository.getEmployee(999)).thenReturn(null);
+
+        // Act & Assert
+        EmployeeException exception = assertThrows(EmployeeException.class, () -> {
+            employeeService.updateEmployee(updateEmployee);
+        });
+
+        assertEquals("Employee id not found to update", exception.getMessage());
+        verify(employeeRepository, times(1)).getEmployee(999);
+        verify(employeeRepository, never()).updateEmployee(any(Employee.class));
+    }
+
+    // ===== deleteEmmployeeById 方法测试 =====
+
+    @Test
+    void testDeleteEmployeeById_Success() throws EmployeeException {
+        // Arrange
+        when(employeeRepository.getEmployee(1)).thenReturn(testEmployee);
+        doNothing().when(employeeRepository).deleteEmployee(anyInt());
+
+        // Act
+        Employee result = employeeService.deleteEmmployeeById(1);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(testEmployee.getId(), result.getId());
+        assertEquals(testEmployee.getName(), result.getName());
+        verify(employeeRepository, times(1)).getEmployee(1);
+        verify(employeeRepository, times(2)).deleteEmployee(1); // 注意：代码中调用了两次 deleteEmployee
+    }
+
+    @Test
+    void testDeleteEmployeeById_EmployeeNotFound_ThrowsEmployeeException() {
+        // Arrange
+        when(employeeRepository.getEmployee(999)).thenReturn(null);
+
+        // Act & Assert
+        EmployeeException exception = assertThrows(EmployeeException.class, () -> {
+            employeeService.deleteEmmployeeById(999);
+        });
+
+        assertEquals("Employee id not found to delete.", exception.getMessage());
+        verify(employeeRepository, times(1)).getEmployee(999);
+        verify(employeeRepository, never()).deleteEmployee(anyInt());
+    }
+
+    // ===== 边界情况测试 =====
+
+    @Test
+    void testRegisterEmployee_NullEmployee() throws SQLException {
+        // Arrange
+        doNothing().when(employeeRepository).addEmployee(null);
+        when(employeeRepository.getEmployee(null)).thenReturn(null);
+
+        // Act & Assert
+        assertDoesNotThrow(() -> {
+            Employee result = employeeService.registerEmployee(null);
+            assertNull(result);
+        });
+
+        verify(employeeRepository, times(1)).addEmployee(null);
+        verify(employeeRepository, times(1)).getEmployee(null);
+    }
+
+    @Test
+    void testGetEmployeeByID_NullId() {
+        // Arrange
+        when(employeeRepository.getEmployee(null)).thenReturn(null);
+
+        // Act & Assert
+        EmployeeException exception = assertThrows(EmployeeException.class, () -> {
+            employeeService.getEmployeeByID(null);
+        });
+
+        assertEquals("Employee not found.", exception.getMessage());
+        verify(employeeRepository, times(1)).getEmployee(null);
+    }
+
+    @Test
+    void testDeleteEmployeeById_NullId() {
+        // Arrange
+        when(employeeRepository.getEmployee(null)).thenReturn(null);
+
+        // Act & Assert
+        EmployeeException exception = assertThrows(EmployeeException.class, () -> {
+            employeeService.deleteEmmployeeById(null);
+        });
+
+        assertEquals("Employee id not found to delete.", exception.getMessage());
+        verify(employeeRepository, times(1)).getEmployee(null);
+    }
+}
+```
+
+还需要一个测试配置文件，如果您使用 Spring Boot，可以创建 `src/test/resources/application-test.properties`：
+
+```properties
+# 测试配置
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=password
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+```
+
+**Maven 依赖项**（在 `pom.xml` 中添加测试依赖）：
+
+```xml
+<dependencies>
+    <!-- 测试依赖 -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-test</artifactId>
+        <scope>test</scope>
+    </dependency>
+    
+    <!-- JUnit 5 -->
+    <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter</artifactId>
+        <scope>test</scope>
+    </dependency>
+    
+    <!-- Mockito -->
+    <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <scope>test</scope>
+    </dependency>
+    
+    <!-- Mockito JUnit Jupiter -->
+    <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-junit-jupiter</artifactId>
+        <scope>test</scope>
+    </dependency>
+</dependencies>
+```
+
+**测试用例覆盖的场景：**
+
+1. **正常流程测试**：每个方法的成功执行路径
+2. **异常处理测试**：SQLException、EmployeeException 等异常情况
+3. **边界条件测试**：null 值、不存在的 ID 等
+4. **方法调用验证**：确保依赖的 DAO 方法被正确调用
+
+**注意事项：**
+
+1. 我注意到 `deleteEmmployeeById` 方法中有一个 bug：`employeeRespository.deleteEmployee(id);` 被调用了两次，这在测试中也得到了体现
+2. 您可能需要根据实际的 `Employee` 实体类调整测试数据的设置
+3. 根据您的项目结构调整包名和导入语句
+4. 考虑添加集成测试来测试整个服务层与数据库的交互
+
+这些测试用例提供了全面的覆盖，帮助确保您的服务层代码的正确性和健壮性。

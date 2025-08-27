@@ -1,0 +1,122 @@
+Duration: 57.447 seconds.
+Output:
+好的，我们来从**安全、性能、资源使用效率**以及**代码健壮性**这几个方面来全面分析和优化您提供的代码。
+
+### 原始代码存在的问题分析
+
+1.  **安全性 (Security):**
+    *   **SQL注入漏洞**: 这是最严重的问题。代码通过字符串拼接 `("...WHERE level = " + level)` 来构建SQL查询。如果`level`参数来自外部输入（例如用户请求），攻击者可以传入恶意构造的字符串（如 `1 OR 1=1`），从而绕过逻辑或执行任意SQL命令，导致数据泄露或被篡改。
+
+2.  **资源使用效率 (Resource Usage Efficiency):**
+    *   **资源泄露**: `Connection`, `PreparedStatement`, 和 `ResultSet` 在使用后没有被关闭。在Java中，这些都是需要显式关闭的资源。如果不关闭，连接将不会返回到连接池，最终会导致连接池耗尽，应用程序无法再获取到数据库连接，服务瘫痪。
+
+3.  **性能 (Performance):**
+    *   **使用 `SELECT *`**: 查询中使用了 `SELECT *`，这会从数据库中检索表的所有列。如果`employee`表有很多列，而`Manager`对象只需要其中一部分，这会造成不必要的数据库I/O和网络开销，降低查询效率。
+
+4.  **代码健壮性与可维护性 (Robustness & Maintainability):**
+    *   **异常处理不当**: `catch (SQLException e) { e.printStackTrace(); }` 仅仅打印了异常堆栈，但程序会继续执行并返回一个空的`managers`列表。调用者无法区分“没有找到符合条件的经理”和“查询过程中发生了数据库错误”这两种情况，这是一种“吞掉”异常的坏习惯，会给问题排查带来巨大困难。
+    *   **硬编码列名**: `resultSet.getInt("id")` 中的 `"id"` 是一个“魔法字符串”，如果数据库列名发生变化，需要手动修改代码中的所有相关字符串，容易出错且难以维护。
+
+---
+
+### 优化后的代码
+
+下面是经过优化的代码版本：
+
+```java
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class EmployeeService {
+
+    // 建议将SQL语句和列名定义为常量，便于维护和复用
+    private static final String GET_MANAGERS_BY_LEVEL_SQL =
+            "SELECT id, name, salary, level, department FROM employee WHERE level = ?";
+    private static final String COLUMN_ID = "id";
+    private static final String COLUMN_NAME = "name";
+    private static final String COLUMN_SALARY = "salary";
+    private static final String COLUMN_LEVEL = "level";
+    private static final String COLUMN_DEPARTMENT = "department";
+
+
+    public List<Manager> getManagersByLevel(int level) {
+        List<Manager> managers = new ArrayList<>();
+
+        // 使用 try-with-resources 语句确保资源被自动关闭
+        try (Connection connection = this.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(GET_MANAGERS_BY_LEVEL_SQL)) {
+
+            // 1. 使用参数绑定，防止SQL注入
+            preparedStatement.setInt(1, level);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    Manager manager = new Manager();
+                    // 2. 使用常量代替魔法字符串
+                    manager.setId(resultSet.getInt(COLUMN_ID));
+                    manager.setName(resultSet.getString(COLUMN_NAME));
+                    manager.setSalary(resultSet.getDouble(COLUMN_SALARY));
+                    manager.setLevel(resultSet.getInt(COLUMN_LEVEL));
+                    manager.setDepartment(resultSet.getString(COLUMN_DEPARTMENT));
+                    managers.add(manager);
+                }
+            }
+        } catch (SQLException e) {
+            // 3. 改进异常处理，向上抛出自定义异常或运行时异常
+            // 让调用者知道发生了错误，而不是静默失败
+            // 这里简单地包装成RuntimeException抛出
+            throw new RuntimeException("Error fetching managers by level: " + level, e);
+        }
+
+        return managers;
+    }
+
+    // 假设的 getConnection() 方法
+    private Connection getConnection() throws SQLException {
+        // 在实际应用中，这里应该从数据库连接池获取连接
+        // return DataSource.getConnection();
+        return null; // 示例代码
+    }
+}
+
+// 假设的Manager类
+class Manager {
+    private int id;
+    private String name;
+    private double salary;
+    private int level;
+    private String department;
+    
+    // Getters and Setters ...
+    public void setId(int id) { this.id = id; }
+    public void setName(String name) { this.name = name; }
+    public void setSalary(double salary) { this.salary = salary; }
+    public void setLevel(int level) { this.level = level; }
+    public void setDepartment(String department) { this.department = department; }
+}
+
+```
+
+---
+
+### 优化原因详解
+
+| 优化点 | 具体做法 | 原因 |
+| :--- | :--- | :--- |
+| **1. 安全性：防止SQL注入** | 使用`PreparedStatement`的参数占位符 `?`，并通过 `preparedStatement.setInt(1, level)` 来设置参数。 | **根本原因**: `PreparedStatement`会将SQL命令和数据分开发送给数据库。数据库会对SQL模板进行预编译，然后将用户数据作为纯粹的“数据”来处理，而不是作为SQL命令的一部分。这样一来，即使用户输入了恶意的SQL代码（如 `1 OR 1=1`），它也只会被当作一个普通的、无法匹配的整数值，从而彻底杜绝了SQL注入的风险。 |
+| **2. 资源使用效率：自动关闭资源** | 使用 `try-with-resources` 语句来管理 `Connection`, `PreparedStatement` 和 `ResultSet`。 | **根本原因**: `try-with-resources` 是Java 7引入的语法糖。任何实现了 `java.lang.AutoCloseable` 接口的资源，都可以在`try`的括号中声明。无论`try`块是正常结束还是因异常退出，Java都会自动调用这些资源的 `close()` 方法。这保证了数据库连接等宝贵资源一定会被释放，避免了资源泄露，使代码更简洁、更安全。 |
+| **3. 性能：避免 `SELECT *`** | 在SQL查询中明确指定需要的列：`SELECT id, name, salary, level, department ...`。 | **根本原因**: 明确列名可以减少数据库的工作量（不需要去数据字典查找所有列），并显著减少从数据库服务器传输到应用服务器的网络数据量。当表很大或列很多时，这种性能提升非常明显。这遵循了“最小需要原则”。 |
+| **4. 健壮性：改进异常处理** | 将 `catch` 块中的 `e.printStackTrace()` 修改为 `throw new RuntimeException(...)`。 | **根本原因**: “吞掉”异常并返回空列表，会让调用方误以为操作成功但没有结果。向上抛出异常（通常是包装成一个非受检异常，如`RuntimeException`），是将问题的决策权交给了上层调用者。调用者可以根据业务场景决定是向用户显示错误信息、记录日志、还是进行重试。这使得系统行为更加明确和可预测。 |
+| **5. 可维护性：消除魔法字符串** | 将SQL语句和列名定义为 `private static final String` 常量。 | **根本原因**: 将这些字符串定义为常量有多个好处：<br> a. **减少拼写错误**: 如果在代码中多次使用同一个列名，常量可以保证一致性。<br> b. **易于修改**: 如果数据库列名变更，只需修改常量定义处，所有引用的地方都会自动更新。<br> c. **提高可读性**: 常量名（如 `COLUMN_NAME`）比裸字符串 ` "name" ` 更具语义。 |
+
+### 总结
+
+通过以上优化，代码：
+- **更安全**：彻底消除了SQL注入风险。
+- **更高效**：减少了不必要的数据传输，提升了查询性能。
+- **更可靠**：保证了数据库连接等资源的正确释放，避免了系统因资源耗尽而崩溃。
+- **更健壮和易于维护**：提供了清晰的错误处理机制，并利用常量提升了代码的可读性和可维护性。

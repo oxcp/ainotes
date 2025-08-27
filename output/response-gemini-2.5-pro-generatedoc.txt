@@ -1,0 +1,116 @@
+Duration: 54.853 seconds.
+Output:
+好的，这是为您的 Python 程序 `verifier.py` 生成的详细文档。
+
+---
+
+### 程序文档: `verifier.py`
+
+本文档旨在说明 `verifier.py` 脚本的用途、工作原理和使用方法。
+
+#### 1. 用途 (Purpose)
+
+`verifier.py` 是一个命令行工具，其主要目的是**使用指定的大语言模型（LLM）根据给定的提示文件（Prompt File）生成代码**。
+
+它的核心功能是：
+- 读取一个结构化的提示（Prompt）文件。
+- 将解析出的提示内容发送给一个指定的代码生成模型（如 GPT）。
+- 接收模型返回的代码生成结果。
+- 在控制台打印出生成耗时和最终生成的代码内容。
+
+该工具非常适合用于快速测试和验证不同提示（Prompt）在特定模型上的代码生成效果。
+
+#### 2. 工作原理 (How it Works)
+
+该脚本的工作流程可以分解为以下几个步骤：
+
+1.  **启动与参数解析**：
+    - 程序通过命令行启动。
+    - 它会检查是否传入了两个必需的参数：`<model>` 和 `<prompt_file>`。如果参数数量不正确，程序会打印用法提示并退出。
+
+2.  **读取与解析提示文件**：
+    - 程序调用 `Verifier.verify_with_prompt_file` 方法。
+    - 在该方法内部，它使用一个外部依赖 `prompts.Prompt` 模块的 `parse_structured_prompts_file` 函数来读取和解析用户提供的提示文件。这表明提示文件需要遵循 `Prompt` 模块所定义的特定格式。
+
+3.  **调用语言模型**：
+    - 程序会遍历解析出的所有提示。**注意：根据当前代码实现，程序在处理完文件中的第一个提示后就会 `return`，因此实际上它只会处理并验证文件里的第一个提示。**
+    - 它会根据用户在命令行中指定的 `model` 参数来决定调用哪个模型：
+        - 如果 `model` 是 `"gpt"`，它会调用 `gpt.GPT` 模块中的 `code_completion` 方法，并将提示内容传递给它。这部分逻辑很可能封装了对 OpenAI GPT 系列模型 API 的调用。
+        - 如果 `model` 是 `"claude"`，程序会返回一个提示信息，说明该模型尚未实现。
+        - 如果是任何其他模型名称，程序会返回错误信息。
+
+4.  **处理并返回结果**：
+    - 在调用模型 API 之前，程序会记录一个开始时间。
+    - 收到模型的响应后，它会计算总耗时并打印出来。
+    - 它会从模型返回的复杂响应对象中提取出核心的代码内容（即 `completion.choices[0].message.content`）。
+    - 最后，主程序逻辑 (`if __name__ == "__main__":`) 会将这个提取出的代码内容打印到控制台，方便用户查看。
+
+#### 3. 使用方法 (How to Use)
+
+##### 前置条件 (Prerequisites)
+
+1.  **Python 环境**: 确保您的机器上安装了 Python。
+2.  **依赖库**: 您需要安装脚本所依赖的外部库。根据 `import` 语句，您至少需要：
+    - `prompts` 模块：一个自定义的模块，用于解析提示文件。
+    - `gpt` 模块：一个自定义的模块，用于与 GPT API 进行交互。通常这类模块需要依赖 `openai` 库 (`pip install openai`)。
+    - **API 密钥**: `gpt` 模块很可能需要配置一个 API 密钥（例如，通过环境变量 `OPENAI_API_KEY`）才能成功调用模型。
+3.  **提示文件**: 您需要准备一个符合 `Prompt.parse_structured_prompts_file` 方法要求的结构化提示文件。
+
+##### 命令格式 (Command Format)
+
+在您的终端或命令行中，使用以下格式运行脚本：
+
+```bash
+python verifier.py <model> <prompt_file>
+```
+
+##### 参数说明 (Parameter Explanation)
+
+-   `<model>` (必需):
+    -   类型: `字符串`
+    -   描述: 您希望用来生成代码的模型名称。
+    -   支持的值:
+        -   `"gpt"`: 使用 GPT 模型进行代码补全。
+        -   `"claude"`: (当前未实现)
+-   `<prompt_file>` (必需):
+    -   类型: `字符串`
+    -   描述: 包含结构化提示的文件的路径。
+
+##### 示例 (Example)
+
+假设您有一个名为 `generate_function.txt` 的提示文件，内容大致如下（具体格式取决于 `prompts` 模块的定义）：
+
+```
+---
+prompt: >
+  Write a Python function that takes a list of integers and returns a new list with only the even numbers.
+---
+```
+
+要使用 `gpt` 模型来处理这个提示，您可以运行以下命令：
+
+```bash
+python verifier.py gpt generate_function.txt
+```
+
+##### 预期输出
+
+运行上述命令后，您将在控制台看到类似以下的输出：
+
+```
+Verifying prompt: 
+Write a Python function that takes a list of integers and returns a new list with only the even numbers.
+
+Duration: 2.345 seconds.
+
+Code generated:
+def get_even_numbers(numbers):
+    """
+    Takes a list of integers and returns a new list with only the even numbers.
+    
+    :param numbers: A list of integers.
+    :return: A new list containing only the even integers from the input list.
+    """
+    return [num for num in numbers if num % 2 == 0]
+
+```

@@ -1,0 +1,66 @@
+Duration: 10.123 seconds.
+Output:
+# Verifier Documentation
+
+## Purpose
+
+The Verifier is a utility tool designed to test and evaluate AI language models' responses to predefined prompts. It allows developers to systematically verify how different AI models (currently supporting GPT, with placeholder for Claude) respond to structured prompts stored in prompt files.
+
+## Working Principles
+
+The Verifier works through the following steps:
+
+1. Reads structured prompts from a specified file using the `Prompt.parse_structured_prompts_file` method
+2. For each prompt in the file:
+   - Parses the prompt content
+   - Sends the prompt to the specified AI model
+   - Times the response generation
+   - Returns the model's completion content
+
+Currently, the system supports:
+- GPT model through the `GPT.code_completion` method
+- Has a placeholder for Claude model integration (not yet implemented)
+
+## Usage
+
+### Command Line Interface
+
+The Verifier is designed to be used as a command-line tool with the following syntax:
+
+```
+python verifier.py <model> <prompt_file>
+```
+
+Where:
+- `<model>`: The AI model to use for verification (currently supports "gpt")
+- `<prompt_file>`: Path to the file containing structured prompts
+
+### Example
+
+```
+python verifier.py gpt prompts/code_generation.json
+```
+
+### Output
+
+The program will:
+1. Display each prompt being verified
+2. Show how long the model took to generate a response
+3. Output the content of the model's completion
+
+### Dependencies
+
+The Verifier relies on:
+- `prompts` module with a `Prompt` class for parsing prompt files
+- `gpt` module with a `GPT` class for interfacing with GPT models
+- Standard Python libraries: `os`, `json`, `time`, and `sys`
+
+### Error Handling
+
+The program will exit with an error message if:
+- Incorrect number of command-line arguments are provided
+- An unsupported model is specified
+
+## Future Extensions
+
+The code includes a placeholder for Claude model integration, indicating plans to expand model support beyond GPT.
