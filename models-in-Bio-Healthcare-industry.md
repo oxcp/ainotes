@@ -1,0 +1,11 @@
+| Model                  | Developer                | Architecture         | Parameters      | Training Data                        | Performance                        | Use Cases                                              | Limitations                                  | License                        |
+| 对比项         | Stanford-BiomedLM           | LLaMA3-Med42 (v2)         | TxAgent-T1                  | BioGPT 系列                   | BioMistral-7B                |
+|---------------|-----------------------------|---------------------------|-----------------------------|-------------------------------|------------------------------|
+| 开发机构       | Stanford CRFM + MosaicML    | M42 Health                | 哈佛 MIMS 实验室            | 微软研究院                    | 法国学术与医疗机构合作        |
+| 模型架构       | 类 GPT-2                    | 基于 LLaMA 3              | LLaMA 3.1 + 工具调用         | Transformer 架构              | 基于 Mistral                 |
+| 参数规模       | 2.7B                        | 8B / 70B                  | 未公开                      | Base / Large                  | 7B                           |
+| 训练数据       | PubMed 摘要、The Pile       | 医学题库、考试题、对话数据 | TxAgent-Instruct 数据集      | 1500 万篇 PubMed 摘要         | PubMed Central 开放获取数据   |
+| 性能表现       | MedQA 准确率 50.3%           | MedQA 准确率 79.1%（70B）  | 药物推理任务准确率 92.1%     | PubMedQA：78.2%（Base），81.0%（Large） | 10 个医学问答基准上表现优异   |
+| 主要应用场景   | 生物医学问答、文本生成       | 医学问答、病历摘要、临床决策支持 | 药物相互作用分析、禁忌检测、个性化治疗 | 生物医学文本生成、问答、关系抽取 | 医学问答、多语言生物医学 NLP  |
+| 限制说明       | 仅限研究使用，不能用于临床   | 尚未临床验证，仍在人工评估中 | 需高端硬件，研究用途          | 仅供研究使用，非临床用途       | 仅限研究使用，尚未临床验证    |
+| 许可证         | BigScience BLOOM RAIL       | LLaMA 3 社区许可证         | 未公开                       | 未公开                        | 未公开                       |
