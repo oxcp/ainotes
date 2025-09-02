@@ -1,4 +1,3 @@
-| Model                  | Developer                | Architecture         | Parameters      | Training Data                        | Performance                        | Use Cases                                              | Limitations                                  | License                        |
 | 对比项         | Stanford-BiomedLM           | LLaMA3-Med42 (v2)         | TxAgent-T1                  | BioGPT 系列                   | BioMistral-7B                |
 |---------------|-----------------------------|---------------------------|-----------------------------|-------------------------------|------------------------------|
 | 开发机构       | Stanford CRFM + MosaicML    | M42 Health                | 哈佛 MIMS 实验室            | 微软研究院                    | 法国学术与医疗机构合作        |
