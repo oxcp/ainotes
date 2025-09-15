@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Embedded Video Player</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: #f9f9f9;
+        }
+        .video-container {
+            max-width: 720px;
+            margin: auto;
+            background: #fff;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        video {
+            width: 100%;
+            height: auto;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="video-container">
+        <h2>Local MP4 Video Player</h2>
+        <video controls>
+            <source src="azureopagnet.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <p>
+            Place your <strong>sample.mp4</strong> file in the same folder as this HTML file.
+        </p>
+    </div>
+</body>
+</html>
