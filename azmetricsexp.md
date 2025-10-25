@@ -11,6 +11,7 @@ In this guide, we take Azure Container Apps (ACA) running metrics as example, ex
 ## Architecture
 ![Azure Metrics Exporter Architecture](prometheus/azmetricsexporter.png)
 
+The "Azure Metrics Exporter" comes from project [webdevops/azure-metrics-exporter](https://github.com/webdevops/azure-metrics-exporter).
 ---
 
 ## Prerequisites
@@ -73,7 +74,8 @@ Copy the generated Prometheus scrape config for ACA metrics at the bottom of the
 
 ### 7. Restart Prometheus
 
-Restart Prometheus to apply the changes. In the Prometheus UI, go to **Status → Target health** to verify the ACA metrics endpoint is up:
+Restart Prometheus to apply the changes. <br>
+In the Prometheus UI, go to **Status → Target health** to verify the ACA metrics endpoint is up:
 ![Azure Metrics Exporter Targets Health](prometheus/prometheus-target-health.png)
 
 ### 8. Query in Prometheus
@@ -86,7 +88,7 @@ Go to the **Query** page in Prometheus UI and run queries like:
 ![Azure Metrics Exporter Prometheus Query](prometheus/prometheus-query-metrics.png)
 
 
-If you see metrics data, Prometheus is successfully scraping ACA metrics from Azure Metrics Exporter.
+If you see metrics data, Prometheus is successfully collecting ACA metrics from Azure Metrics Exporter.
 
 ---
 
