@@ -11,7 +11,9 @@ In this guide, we take Azure Container Apps (ACA) running metrics as example, ex
 ## Architecture
 ![Azure Metrics Exporter Architecture](prometheus/azmetricsexporter.png)
 
-The "Azure Metrics Exporter" comes from project [webdevops/azure-metrics-exporter](https://github.com/webdevops/azure-metrics-exporter).
+- The "Azure Metrics Exporter" comes from project [webdevops/azure-metrics-exporter](https://github.com/webdevops/azure-metrics-exporter).
+- It connects to Azure Monitor using a service principal, retrieves metrics for specified Azure resources, and exposes them in a Prometheus-compatible format. Prometheus then scrapes these metrics at regular intervals, storing them for querying and analysis. Grafana is used to create dashboards and visualize the collected metrics.
+
 ---
 
 ## Prerequisites
@@ -21,7 +23,7 @@ The "Azure Metrics Exporter" comes from project [webdevops/azure-metrics-exporte
 
 ---
 
-## azure-metrics-exporter Setup
+## Azure Metrics Exporter Setup
 
 ### 1. Configure Azure Service Principal
 
