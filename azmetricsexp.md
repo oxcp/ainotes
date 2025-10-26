@@ -21,10 +21,10 @@ In this guide, we take Azure Container Apps (ACA) running metrics as example, ex
 - An Azure service principal with permissions to read metrics from Azure Monitor.
 - Clone the [azure-metrics-exporter repository](https://github.com/webdevops/azure-metrics-exporter) and use the provided Dockerfile to create a Docker image. Attention the ```docker buildx``` command is required.
 
+_**Tip**: For a quick verification, you can simply use the [all-in-one Kubernetes yaml sample](https://github.com/oxcp/ainotes/blob/main/azmetricsexp-k8s.yml.sample), replacing the environment variables with your actual values. This manifest creates the Azure Monitor Exporter, Prometheus, and Grafana services in your Kubernetes cluster with ```kubectl apply``` commands. After the deployment, you can use command ```kubectl get services -n exporter``` to get the **EXTERNAL-IP** and **PORT(S)** to access the services via Internet. With this quick verification, you can directly jump to step 9 below for "Grafana Configuration"._
 ---
 
 ## Azure Metrics Exporter Setup
-_Tip: For a quick verification, you can simply use the [all-in-one Kubernetes yaml sample](https://github.com/oxcp/ainotes/blob/main/azmetricsexp-k8s.yml.sample), replacing the environment variables with your actual values. This manifest creates the Azure Monitor Exporter, Prometheus, and Grafana services in your Kubernetes cluster with ```kubectl apply``` commands. After the deployment, you can use command ```kubectl get services -n exporter``` to get the **EXTERNAL-IP** and **PORT(S)** to access the services via Internet._
 
 ### 1. Configure Azure Service Principal
 
@@ -68,7 +68,7 @@ Click **Execute Query**. If successful, you will see a response like below:
 
 ---
 
-## Prometheus Integration
+## Prometheus Configuration
 
 ### 6. Get Prometheus Scrape Config
 
@@ -96,7 +96,7 @@ If you see metrics data, Prometheus is successfully collecting ACA metrics from 
 
 ---
 
-## Grafana Integration
+## Grafana Configuration
 
 ### 9. Add Prometheus as Data Source
 
