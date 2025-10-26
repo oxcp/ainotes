@@ -27,7 +27,9 @@ In this guide, we take Azure Container Apps (ACA) running metrics as example, ex
 
 ### 1. Configure Azure Service Principal
 
-Assign the **Contributor** role on the target one or more subscriptions to your Azure service principal.
+For your Azure service principal, assign the **Monitoring Reader** role (or higher permissions) on the target subscriptions. Steps for your reference:
+1. An application must be registered (e.g., Microsoft Entra ID -> App registrations -> New application registration)
+2. The registered application must have reading permission to Azure Monitor (e.g., Subscriptions -> your_subscription -> Access control (IAM) -> Role assignments -> Add -> Add role assignment -> Role : "Monitoring Reader", Select: your_app)
 
 ### 2. Start the azure-metrics-exporter container
 
