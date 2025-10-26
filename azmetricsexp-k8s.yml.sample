@@ -1,0 +1,198 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: exporter
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: exporter
+data:
+  prometheus.yml: |
+    # my global config
+    global:
+      scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+      evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+      # scrape_timeout is set to the global default (10s).
+
+    # Alertmanager configuration
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets:
+              # - alertmanager:9093
+
+    # Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+    rule_files:
+      # - "first_rules.yml"
+      # - "second_rules.yml"
+
+    # A scrape configuration containing exactly one endpoint to scrape:
+    # Here it's Prometheus itself.
+    scrape_configs:
+      # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+      - job_name: "prometheus"
+
+        # metrics_path defaults to '/metrics'
+        # scheme defaults to 'http'.
+
+        static_configs:
+          - targets: ["localhost:9090"]
+           # The label name is added as a label `label_name=<label_value>` to any timeseries scraped from this config.
+            labels:
+              app: "prometheus"
+
+      - job_name: "azure-metrics-exporter"
+        scrape_interval: 1m
+        metrics_path: /probe/metrics/list
+        params:
+          name:
+            - containerapps
+          template:
+            - '{name}_{metric}_{aggregation}_{unit}'
+          subscription:
+            - <your-subscription-id>
+          resourceType:
+            - Microsoft.App/containerapps
+          metric:
+            - Replicas
+            - Requests
+            - CpuPercentage
+            - MemoryPercentage
+          interval:
+            - PT15M
+          timespan:
+            - PT24H
+          validateDimensions:
+            - 'true'
+        static_configs:
+          - targets:
+              - exporter2:8080
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: exporter2
+  namespace: exporter
+spec:
+  selector:
+    app: exporter2
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: LoadBalancer
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: exporter2
+  namespace: exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: exporter2
+  template:
+    metadata:
+      labels:
+        app: exporter2
+    spec:
+      containers:
+        - name: exporter2
+          image: kylerdocker/azmetricsexp:v1
+          ports:
+            - containerPort: 8080
+          env:
+            - name: AZURE_TENANT_ID
+              value: "<your-tenant-id>"
+            - name: AZURE_CLIENT_ID
+              value: "<your-service-principal-client-id>"
+            - name: AZURE_CLIENT_SECRET
+              value: "<your-service-principal-client-secret>"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: exporter
+spec:
+  selector:
+    app: prometheus
+  ports:
+    - protocol: TCP
+      port: 9090
+      targetPort: 9090
+  type: LoadBalancer
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+        - name: prometheus
+          image: prom/prometheus
+          ports:
+            - containerPort: 9090
+          volumeMounts:
+            - name: prometheus-config
+              mountPath: /etc/prometheus/prometheus.yml
+              subPath: prometheus.yml
+      volumes:
+        - name: prometheus-config
+          configMap:
+            name: prometheus-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: exporter
+spec:
+  selector:
+    app: grafana
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+  type: LoadBalancer
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana-enterprise
+          ports:
+            - containerPort: 3000
