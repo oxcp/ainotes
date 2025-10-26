@@ -41,7 +41,6 @@ docker run -d -p 8080:8080 \
    -e AZURE_TENANT_ID="<your-tenant-id>" \
    -e AZURE_CLIENT_ID="<your-client-id>" \
    -e AZURE_CLIENT_SECRET="<your-client-secret>" \
-   -e AZURE_SUBSCRIPTION_ID="<your-subscription-id>" \
    --restart=always --name azmetricsexporter \
    your-docker-image
 ```
