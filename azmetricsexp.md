@@ -21,7 +21,15 @@ In this guide, we take Azure Container Apps (ACA) running metrics as example, ex
 - An Azure service principal with permissions to read metrics from Azure Monitor.
 - Clone the [azure-metrics-exporter repository](https://github.com/webdevops/azure-metrics-exporter) and use the provided Dockerfile to create a Docker image. Attention the ```docker buildx``` command is required.
 
-_**Tip**: For a quick verification, you can simply use the [all-in-one Kubernetes yaml sample](https://github.com/oxcp/ainotes/blob/main/azmetricsexp-k8s.yml.sample), replacing the environment variables with your actual values. This manifest creates the Azure Monitor Exporter, Prometheus, and Grafana services in your Kubernetes cluster with ```kubectl apply``` commands. After the deployment, you can use command ```kubectl get services -n exporter``` to get the **EXTERNAL-IP** and **PORT(S)** to access the services via Internet. With this quick verification, you can directly jump to step 9 below for "Grafana Configuration"._
+_**Tips for quick verification on AKS:**_<br>
+_**Tip 1**: Use the [all-in-one Kubernetes yaml sample](https://github.com/oxcp/ainotes/blob/main/azmetricsexp-k8s.yml.sample), replacing the environment variables with your actual values. This creates the Azure Monitor Exporter, Prometheus, and Grafana services in your Kubernetes cluster with ```kubectl apply -f ``` command. After the deployment, use command ```kubectl get services -n exporter``` to get the **EXTERNAL-IP** and **PORT(S)** to access the services via Internet. With this quick deployment, you can simply jump to step 9 below for "Grafana Configuration"._<br>
+
+_**Tip 2**: If needs ingress, run command ```kubectl apply -f ``` with [azmetricexp-ingress-k8s.yml](https://github.com/oxcp/ainotes/blob/main/azmetricexp-ingress-k8s.yml). After that, use command ```kubectl get ingress -n exporter``` to get the **ADDRESS** and use below URIs to access each service:_<br>
+- **Exporter:** "/exporter/query"
+- **Prometheus:** "/prom/query"
+- **Grafana:** "/"
+
+_To use Ingress on AKS, as the pre-requisite, please enable the **approuting** add-on with command ```az aks approuting enable -g <ResourceGroupName> -n <ClusterName>```[[doc]](https://learn.microsoft.com/en-us/azure/aks/app-routing#enable-on-an-existing-cluster) first._
 
 ---
 
