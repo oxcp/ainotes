@@ -1,0 +1,19 @@
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: jaegertracing
+  namespace: aks-istio-system
+spec:
+  tracing:
+  - providers:
+    - name: jaeger
+
+---
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: mesh-access-logging
+spec:
+  accessLogging:
+  - providers:
+    - name: envoy

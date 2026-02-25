@@ -1,0 +1,59 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: istiomon-ingress
+  namespace: istio-system
+spec:
+  ingressClassName: webapprouting.kubernetes.azure.com
+  rules:
+  - host: kiali.istio.kc
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kiali
+            port:
+              number: 20001
+  - host: jaeger.istio.kc
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: tracing
+            port:
+              number: 80
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prometheus-ingress
+  namespace: monitoring
+spec:
+  ingressClassName: webapprouting.kubernetes.azure.com
+  rules:
+  - host: prometheus.istio.kc
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: prometheus-operated
+            port:
+              number: 9090
+  - host: grafana.istio.kc
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: prometheus-grafana
+            port:
+              number: 80
+

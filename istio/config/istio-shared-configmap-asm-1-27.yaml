@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: istio-shared-configmap-asm-1-27
+  namespace: aks-istio-system
+data:
+  mesh: |-
+    accessLogFile: /dev/stdout
+    defaultConfig:
+      holdApplicationUntilProxyStarts: true
+      tracing:
+        sampling: 10.0
+    enableTracing: true
+    extensionProviders:
+      - name: jaeger
+        zipkin:
+          service: jaeger-collector.istio-system.svc.cluster.local
+          port: 9411

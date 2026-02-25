@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: istiod-monitor
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: istiod
+  namespaceSelector:
+    matchNames:
+      - aks-istio-system  # AKS Istio add-on 的默认命名空间
+  endpoints:
+  - port: http-monitoring  # 对应 Service 中定义的端口名称
+    path: /metrics
