@@ -76,7 +76,7 @@ The sample application "bookinfo" architecture is:
 ![Sample-App-BookInfo-Architecture](Sample-App-BookInfo-Architecture.png)
 
 After the deployment, check your pod in namespace "default" has below annotation:
-```
+```yaml
 prometheus.io/path: /stats/prometheus
 prometheus.io/port: 15020
 prometheus.io/scrape: true
@@ -98,7 +98,7 @@ aks-istio-ingressgateway-external   LoadBalancer   172.168.172.xxx   20.237.160.
 ```
 
 ### Define Istio Gateway and VirtualService for the sample application external accessing
-```
+```yaml
 apiVersion: networking.istio.io/v1beta1
 kind: Gateway
 metadata:
@@ -213,7 +213,7 @@ You can choose either Azure Managed Prometheus or self-managed Prometheus.
 ### Configure Azure Managed Prometheus
 Prepare the file "prometheus-config" for the Managed Prometheus configuration:
 
-```
+```yaml
 global: 
   scrape_interval: 30s
 scrape_configs: 
@@ -237,7 +237,7 @@ scrape_configs:
 ```
 Prepare configmap ama-metrics-settings-configmap in file "ama-metrics-settings-configmap-v1.yaml". <br>
 Sample:
-```
+```yaml
 kind: ConfigMap
 apiVersion: v1
 data:
@@ -395,7 +395,7 @@ spec:
 
 You will also need to define the ServiceMonitor and PodMonitor to instruct self-managed Prometheus how to collect the metrics from service and pods:
 ServiceMonitor sample:
-```
+```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
@@ -413,7 +413,7 @@ spec:
     path: /metrics
 ```
 PodMonitor sample:
-```
+```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 metadata:
@@ -495,7 +495,7 @@ kubectl get secret -n monitoring prometheus-grafana -o jsonpath="{.data.admin-pa
 ### Enable the istio access log
 Access log in the AKS istio-addon is turned off by default, so you need to enable the access log by Telemetry API.
 Define the access log Telemetry object using envoy provider. Sample as below:
-```
+```yaml
 apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
@@ -573,7 +573,7 @@ The AKS Istio add-on does not allow `IstioOperator` CRD customization, so apply 
 kubectl apply -f istio-shared-configmap-asm-1-27.yaml
 ```
 The sample content of the configmap "istio-shared-configmap-asm-1-xx" is as below:
-```
+```yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -594,7 +594,7 @@ data:
           port: 9411
 ``` 
 This defines the detail of the tracing backend. After this, you will need to use Telemetry API to define the tracing. The configmap sample is:
-```
+```yaml
 apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
