@@ -26,7 +26,7 @@ The commands used below are for example assuming the AKS cluster name is `aksdem
 # Start with AKS Istio addon
 ## Intro to AKS Istio addon
 ![AKS-Istio+Monitoring](AKS-Istio+Monitoring.png)
-
+---
 ## Enable AKS Istio Add-on 
 
 ```bash
@@ -95,10 +95,10 @@ You should see output like:
 NAME                                TYPE           CLUSTER-IP        EXTERNAL-IP      PORT(S)                                      AGE
 aks-istio-ingressgateway-external   LoadBalancer   172.168.172.xxx   20.237.160.xx    15021:30330/TCP,80:32290/TCP,443:32407/TCP   5d6h
 ```
-
+---
 ### Define Istio Gateway and VirtualService for the sample application external accessing
 
-Define `Gatway` and `VirtualService` in the same namespace with bookinfo application.
+Define `Gateway` and `VirtualService` in the same namespace with bookinfo application.
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -151,7 +151,7 @@ curl -S "http://20.237.160.xx:80/productpage"
 or in a browser you will see the UI like this:
 ![Sample-App-BookInfo-UI](Sample-App-BookInfo-UI.png)
 
-
+---
 ### Enable Internal Ingress Gateway (Optional)
 
 ```bash
@@ -368,7 +368,7 @@ Then apply with below commands:
 kubectl create configmap ama-metrics-prometheus-config --from-file=monitoring/prometheus-config -n kube-system
 kubectl apply -f ama-metrics-settings-configmap-v1.yaml
 ```
-
+---
 ### Install and configure self-managed Prometheus
 
 Install via helm:
@@ -398,7 +398,8 @@ spec:
 ---
 
 You will also need to define the ServiceMonitor and PodMonitor to instruct self-managed Prometheus how to collect the metrics from service and pods:
-ServiceMonitor sample:
+
+**ServiceMonitor sample:**
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -411,12 +412,12 @@ spec:
       app: istiod
   namespaceSelector:
     matchNames:
-      - aks-istio-system  # AKS Istio add-on 的默认命名空间
+      - aks-istio-system  # AKS Istio add-on default nanespace
   endpoints:
-  - port: http-monitoring  # 对应 Service 中定义的端口名称
+  - port: http-monitoring  # The same port name defined in Services
     path: /metrics
 ```
-PodMonitor sample:
+**PodMonitor sample:**
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
@@ -438,7 +439,7 @@ spec:
 
 ### Query metrics in Prometheus and Grafana
 
-Send 30 requests to generate traffic:
+Send multiple requests to generate traffic. Below sample command sends 30 requests for quick traffic:
 
 ```bash
 for i in $(seq 1 30); do curl -s -o /dev/null "http://20.237.160.xx:80/productpage"; done
@@ -485,20 +486,19 @@ sum by (response_code) (
 ```
 Go to you Grafana UI:
 - If you are using Azure Managed Prometheus, just find the Grafana dashboard entry in the Azure Monitor -> Managed Prometheus portal
-point
-- If you are using self-managed Prometheus, login to the Grafana UI, and point the Data Source to your Prometheus endpoint
+- If you are using self-managed Prometheus, login to the Grafana UI, and you need to point the Data Source to your Prometheus endpoint before you can see data flows in
 
-Tip:
+**Tip:**
 If you cannot find the username/password for your installed Grafana, use below commands to find them out:
 ```bash
 kubectl get secret -n monitoring prometheus-grafana -o jsonpath="{.data.admin-user}" | base64 -d
 kubectl get secret -n monitoring prometheus-grafana -o jsonpath="{.data.admin-password}" | base64 -d
 ```
-
+---
 ## Configuration for AKS Istio add-on monitoring - Access logs
 ### Enable the istio access log
 Access log in the AKS istio-addon is turned off by default, so you need to enable the access log by Telemetry API.
-Define the access log Telemetry object using envoy provider. Sample as below:
+To do this you need to define the access log Telemetry object using envoy provider. Sample as below:
 ```yaml
 apiVersion: telemetry.istio.io/v1
 kind: Telemetry
@@ -510,12 +510,13 @@ spec:
     - name: envoy
 ```
 After turn on the AKS istio-addon access log, the istio-proxy sidecar will write the access log to the stdout.
-
-### Query istio-proxy access logs (GET requests)
+---
+### Query istio-proxy access logs
 You need to turn on the Container Insight for your AKS cluster, after that the access log written to the istio-proxy stdout will be collected and sent to Log Analytics Workspace.
+<br>
 In the AKS portal, go the Log menu entry and the KQL panel. Try KQL to query the access logs by referring below KQL samples:
 
-Sample 1: Istio access logs only (via upstream)
+**Sample 1: Istio access logs only (via upstream)**
 
 ```kql
 ContainerLogV2
@@ -526,7 +527,7 @@ ContainerLogV2
 | order by TimeGenerated desc
 ```
 
-Sample 2: Filter inbound / outbound traffic
+**Sample 2: Filter inbound / outbound traffic**
 
 ```kql
 ContainerLogV2
@@ -536,7 +537,7 @@ ContainerLogV2
 | order by TimeGenerated desc
 ```
 
-Sample 3: Filter by specific service (e.g., productpage)
+**Sample 3: Filter by specific service (e.g., productpage)**
 
 ```kql
 ContainerLogV2
@@ -546,7 +547,7 @@ ContainerLogV2
 | order by TimeGenerated desc
 ```
 
-Sample 4: All-in-one troubleshooting query
+**Sample 4: All-in-one troubleshooting query**
 
 ```kql
 ContainerLogV2
@@ -568,10 +569,11 @@ ContainerLogV2
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.27/samples/addons/jaeger.yaml
 ```
-
+---
 #### Enable Jaeger tracing:
-
-The AKS Istio add-on does not allow `IstioOperator` CRD customization, so apply the shared configmap instead. You need to have a configmap named like "istio-shared-configmap-asm-1-xx" while "xx" is your istio add-on minor revision.
+You need to configure the istio add-on for tracing backend provider, and enable the tracing. But as an managed service, the AKS Istio add-on does not allow `IstioOperator` CRD customization.<br>
+AKS Istio add-on offers the Mesh Config capability to do the work, and you need to apply the shared configmap instead.<br>
+You need to define and apply a configmap named like "istio-shared-configmap-asm-1-xx" while "xx" is your istio add-on minor revision.
 
 ```bash
 kubectl apply -f istio-shared-configmap-asm-1-27.yaml
@@ -597,7 +599,7 @@ data:
           service: jaeger-collector.istio-system.svc.cluster.local
           port: 9411
 ``` 
-This defines the detail of the tracing backend. After this, you will need to use Telemetry API to define the tracing. The configmap sample is:
+This defines the detail of the tracing backend. After this, you will need to use Telemetry API to enable the tracing. The configmap sample is:
 ```yaml
 apiVersion: telemetry.istio.io/v1
 kind: Telemetry
@@ -609,19 +611,30 @@ spec:
   - providers:
     - name: jaeger
 ```
+#### Check the trace on Jaeger UI
+You can see traces in the UI:
+![Tracing_Jaeger_Spans](Tracing_Jaeger_Spans.png)
+**Tip:**
+The concept `span` means the minimum unit be traced that can calculate the time span duration.
+
+Click the trace, and you can see the trace (traffic flows across multiple services, and how much time used in each span):
+![Tracing_Jaeger_TraceTimeline](Tracing_Jaeger_TraceTimeline.png)
+
 ---
 
 ### Tracing with Azure Application Insights
 #### Enable Application Insights with AKS
-Follow the link: https://learn.microsoft.com/en-us/azure/azure-monitor/app/kubernetes-codeless?tabs=portal to enable "AzureMonitorAppMonitoringPreview" feature in your AKS cluster, and configure your namespaces or deployments to be auto instrumented by the Application Insights. After instrumented, you need to restart your workload to let the Application Insights to instrument OpenTelemetry Agent to your application containers.
-
+Follow the link: https://learn.microsoft.com/en-us/azure/azure-monitor/app/kubernetes-codeless?tabs=portal to enable "AzureMonitorAppMonitoringPreview" feature in your AKS cluster, and configure your namespaces or deployments to be auto instrumented by the Application Insights. <br>
+After instrumented, you need to restart your workload to let the Application Insights instrument OpenTelemetry Agent into your application containers.
+---
 #### View the application tracing
 Go to the Azure Monitor -> Insights -> Applications -> Investigate, check the "Application maps", "Performance" etc. to see your application topology and tracing information.
+**Tip:**
+You may not see the service like "productpage" shown in the application map. The reason is the Application Insights AutoInstrument featre only supports Java and Node.js in current preview stage, while the "productpage" service is written not with Java/Node.js.
 
-
+---
 ## Configure Kiali as the AKS Istio add-on dashboard
-
-### 1. Install Kiali
+### Install Kiali
 
 ```bash
 helm install \
@@ -631,10 +644,10 @@ helm install \
   kiali-server \
   kiali-server
 ```
-
+---
 ### Configure Kiali to use self-managed Prometheus & Grafana
 
-Update the Kiali ConfigMap:
+Update the Kiali ConfigMap in below section to provide the url of Prometheus and Grafana:
 
 ```yaml
 data:
