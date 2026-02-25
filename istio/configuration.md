@@ -625,7 +625,7 @@ Click the trace, and you can see the trace (traffic flows across multiple servic
 ### Tracing with Azure Application Insights
 #### Enable Application Insights with AKS
 
-Follow the link: https://learn.microsoft.com/en-us/azure/azure-monitor/app/kubernetes-codeless?tabs=portal to enable "AzureMonitorAppMonitoringPreview" feature in your AKS cluster, and configure your namespaces or deployments to be auto instrumented by the Application Insights. <br>
+Follow the link: `https://learn.microsoft.com/en-us/azure/azure-monitor/app/kubernetes-codeless?tabs=portal` to enable **AzureMonitorAppMonitoringPreview** feature in your AKS cluster, and configure your namespaces or deployments to be auto instrumented by the Application Insights. <br>
 
 After instrumented, you need to restart your workload to let the Application Insights instrument OpenTelemetry Agent into your application containers.
 
