@@ -19,7 +19,7 @@ This repo contains the code & YAML samples and steps for configuring to monitor 
 
 ---
 > **Note:** <br>
-- The commends used below are for example assuming the AKS cluster name is aksdemowus in the Resource Group "aksdemo". Make sure to replace the AKS cluster name and resource group to your own specfiic values.
+The commands used below are for example assuming the AKS cluster name is `aksdemowus` in the Resource Group `aksdemo`. Make sure to replace the AKS cluster name and resource group to your own specfiic values.
 
 ---
 ---
@@ -37,7 +37,7 @@ Verify successful installation
 ```bash
 az aks show -g aksdemo -n aksdemowus --query 'serviceMeshProfile.mode'
 ```
-You should see "Istio" if successful.
+You should see `"Istio"` if successful.
 
 Show Istio version
 
@@ -74,13 +74,13 @@ The sample application "bookinfo" architecture is:
 
 ![Sample-App-BookInfo-Architecture](Sample-App-BookInfo-Architecture.png)
 
-After the deployment, check your pod in namespace "default" has below annotation:
+After the deployment, check your pod in namespace "default" has below annotations:
 ```yaml
 prometheus.io/path: /stats/prometheus
 prometheus.io/port: 15020
 prometheus.io/scrape: true
 ```
-These annotation means istio has successfully inject the sidecar to your pod, and the metrics from this pod can be scraped by Prometheus.
+These annotations mean istio has successfully injected the sidecar to your pod, and the metrics from this pod can be scraped by Prometheus.
 
 ---
 
@@ -97,6 +97,9 @@ aks-istio-ingressgateway-external   LoadBalancer   172.168.172.xxx   20.237.160.
 ```
 
 ### Define Istio Gateway and VirtualService for the sample application external accessing
+
+Define `Gatway` and `VirtualService` in the same namespace with bookinfo application.
+
 ```yaml
 apiVersion: networking.istio.io/v1beta1
 kind: Gateway
@@ -141,11 +144,13 @@ spec:
           number: 9080
 ```
 
-
 ### Verify Connectivity
 ```bash
 curl -S "http://20.237.160.xx:80/productpage"
 ```
+or in a browser you will see the UI like this:
+![Sample-App-BookInfo-UI](Sample-App-BookInfo-UI.png)
+
 
 ### Enable Internal Ingress Gateway (Optional)
 
