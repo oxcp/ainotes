@@ -19,14 +19,13 @@ This repo contains the code & YAML samples and steps for configuring to monitor 
 
 ---
 > **Note:** <br>
-- The commends used below are for example assuming the AKS cluster name is aksdemowus in the Resource Group "aksdemo". Make sure to replace the AKS cluster name and resource group to your own specfiic values.<br>
-- Run all commands from the `AKS/istio` folder!
+- The commends used below are for example assuming the AKS cluster name is aksdemowus in the Resource Group "aksdemo". Make sure to replace the AKS cluster name and resource group to your own specfiic values.
 
 ---
 ---
 # Start with AKS Istio addon
 ## Intro to AKS Istio addon
-- <"TO BE UPDATE">
+![AKS-Istio+Monitoring](AKS-Istio+Monitoring.png)
 
 ## Enable AKS Istio Add-on 
 
