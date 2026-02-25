@@ -437,7 +437,7 @@ spec:
 Send 30 requests to generate traffic:
 
 ```bash
-for i in $(seq 1 30); do curl -s -o /dev/null "http://20.237.160.123:80/productpage"; done
+for i in $(seq 1 30); do curl -s -o /dev/null "http://20.237.160.xx:80/productpage"; done
 ```
 In the Prometheus UI, go to /query console, try below PromQL for example:
 
@@ -659,7 +659,7 @@ Meke sure to generate enough traffic before seeing the data coming. Refer to bel
 i=1
 while true; do
     printf "%s: %d " "$(date '+%H:%M:%S')" "$i"
-    curl -s -o /dev/null -w "%{http_code}\n" "http://20.237.160.123:80/productpage"
+    curl -s -o /dev/null -w "%{http_code}\n" "http://20.237.160.xx:80/productpage"
     i=$((i+1))
     sleep 1
 done
