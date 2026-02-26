@@ -1,14 +1,12 @@
 ## Configuration for monitoring on AKS Istio based Service Mesh Add-on 
 
-Istio is an open-source service mesh to manage the network communication across services in distributed, container based applications, particularly oriented to the modern microservice architecture workloads. The Istio open source project detail can be found at [Istio official website](https://istio.io/latest/).
+Istio is an open-source service mesh to manage the network communication across services in distributed, container based applications, particularly oriented to the modern microservice architecture workloads. The Istio open source project detail can be found at [Istio official website](https://istio.io/latest/). On AKS, Istio is an important feature offering to support Layer 7 container networking demands like ingress controller, microservices discovery, traffic distribution across multiple versions, circuit-breaker, distrubited tracing and more. 
 
-On AKS, Istio is an important feature offering to support Layer 7 container networking demands like ingress controller, microservices features like discovery, traffic distribution across multiple versions, circuit-breaker, distrubited tracing and more. As a key production framework, a completed monitoring for Istio is highly necessary. 
+As a key production framework, a completed monitoring for Istio is highly necessary. Although Azure offers bunch of managed offerings to cover many of the monitoring requests, the whole configuration is still expected to be more flexible to integrate with third party powerful tools like Kiali, to further extend the whole monitoring capabilities for various requests and scenarios.
 
-Although Azure offers bunch of managed offerings to cover many of the monitoring requests, the whole configuration is still expected to be flexible enough to integrate with more powerful tools, to further extend the whole monitoring system capabilities for various monitoring requests and scenarios.
+Istio monitoring covers metrics, access log and tracing, and each has multiple choices on tools for example Azure-managed or Self-managed. The configuration is complex, time consuming because there is no guide to cover all these aspects. You need to refer to many documents from different sources which usually cause too much confusing.
 
-The whole monitoring covers metrics, access log and tracing, and each have multiple choices on tools for example Azure-managed or Self-managed. The whole configuration is complex, time consuming because there is no such a guide to cover all these aspects. You need to refer to many documents from different sources which usually cause more confusing.
-
-This repo guide trys to help user quickly setup a comprehensive monitoring solution, covering metrics, access log and tracing for using AKS Istio add-on. Within the guide, users can also find the comparison on different tools, and the benefits of each of them. To help users quick start the configuration, this repo contains the code & YAML samples and detail steps.
+This repo as a consolidated guide, helping user quickly setup a comprehensive monitoring solution, covering metrics, access log and tracing for using AKS Istio add-on. Within the guide, users can also find the comparison on different tools, and the benefits of each of them. To help users quick start the configuration, this repo contains the code & YAML samples and detail steps.
 
 It includes:
 - Start with AKS Istio addon
