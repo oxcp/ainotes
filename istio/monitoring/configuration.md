@@ -2,28 +2,28 @@
 
 Istio is an open-source service mesh to manage the network communication across services in distributed, container based applications, particularly oriented to the modern microservice architecture workloads. The Istio open source project detail can be found at [Istio official website](https://istio.io/latest/). On AKS, Istio is an important feature offering to support Layer 7 container networking demands like ingress controller, microservices discovery, traffic distribution across multiple versions, circuit-breaker, distrubited tracing and more. 
 
-As a key production framework, a completed monitoring for Istio is highly necessary. Although Azure offers bunch of managed offerings to cover many of the monitoring requests, the whole configuration is still expected to be more flexible to integrate with third party powerful tools like Kiali, to further extend the whole monitoring capabilities for various requests and scenarios.
+As a key production framework, a completed monitoring for Istio is highly necessary. Although Azure offers bunch of managed offerings to cover many of the monitoring requests, the whole configuration is still expected to be more flexible to integrate with third party powerful tools like Jaeger, Kiali, etc, to further extend the whole monitoring capabilities for various requests and scenarios.
 
 Istio monitoring covers metrics, access log and tracing, and each has multiple choices on tools for example Azure-managed or Self-managed. The configuration is complex, time consuming because there is no guide to cover all these aspects. You need to refer to many documents from different sources which usually cause too much confusing.
 
 This repo as a consolidated guide, helping user quickly setup a comprehensive monitoring solution, covering metrics, access log and tracing for using AKS Istio add-on. Within the guide, users can also find the comparison on different tools, and the benefits of each of them. To help users quick start the configuration, this repo contains the code & YAML samples and detail steps.
 
 It includes:
-- Start with AKS Istio addon
-  - Intro to AKS Istio addon
-  - Enable AKS Istio addon
-  - Enable Istio side-car injection
-  - Deploy the sample application
-- How does the monitoring on AKS Istio add-on work
+- [Start with AKS Istio addon](#start-with-aks-istio-addon)
+  - [Intro to AKS Istio addon](#intro-to-aks-istio-addon)
+  - [Enable AKS Istio Add-on](#enable-aks-istio-add-on)
+  - [Enable Istio side-car injection](#Enable-sidecar-injection)
+  - [Deploy the sample application](#deploy-sample-application)
+- [How does the monitoring on AKS Istio add-on work](#how-does-the-monitoring-on-aks-istio-add-on-work)
 - Configuration for AKS Istio add-on monitoring
-  - Metrics
-    - Configure Azure Managed Prometheus and Grafana in Azure Monitor
-    - Install and configure self-managed Prometheus and Grafana
-  - Access logs
-  - Tracing
-    - Traccing with Jaeger
-    - Tracing with Application Insights
-  - Configure Kiali as the AKS Istio add-on dashboard
+  - [Metrics](#configuration-for-aks-istio-add-on-monitoring---metrics)
+    - [Configure Azure Managed Prometheus and Grafana in Azure Monitor](#configure-azure-managed-prometheus)
+    - [Install and configure self-managed Prometheus and Grafana](#install-and-configure-self-managed-prometheus)
+  - [Access logs](#configuration-for-aks-istio-add-on-monitoring---access-logs)
+  - [Tracing](#configuration-for-aks-istio-add-on-monitoring---tracing)
+    - [Traccing with Jaeger](#tracing-with-jaeger)
+    - [Tracing with Application Insights](#tracing-with-azure-application-insights)
+  - [Configure Kiali as the AKS Istio add-on dashboard](#configure-kiali-as-the-aks-istio-add-on-dashboard)
 
 ---
 > **Note:** <br>
@@ -534,7 +534,10 @@ After turn on the AKS istio-addon access log, the istio-proxy sidecar will write
 ### Query istio-proxy access logs
 You need to turn on the Container Insight for your AKS cluster, after that the access log written to the istio-proxy stdout will be collected and sent to Log Analytics Workspace.
 <br>
-In the AKS portal, go the Log menu entry and the KQL panel. Try KQL to query the access logs by referring below KQL samples:
+In the AKS portal, go the Log menu entry and the KQL panel. Try KQL to query the access logs:
+![Access_Log_LogAnalytics](Access_Log_LogAnalytics.png)
+
+ Below lists several KQL samples:
 
 **Sample 1: Istio access logs only (via upstream)**
 
@@ -704,3 +707,5 @@ while true; do
     sleep 1
 done
 ```
+Go to the Kiali UI Traffic Graph, you will see traffic flows:
+https://github.com/user-attachments/assets/4ce086ef-e13d-4d99-b1f0-52c235b36bc5
