@@ -464,7 +464,10 @@ Send multiple requests to generate traffic. Below sample command sends 30 reques
 ```bash
 for i in $(seq 1 30); do curl -s -o /dev/null "http://20.237.160.xx:80/productpage"; done
 ```
-In the Prometheus UI, go to /query console, try below PromQL for example:
+In the Prometheus UI, go to /query console, try PromQL to query metrics:
+![Metrics_Prometheus](Metrics_Prometheus.png)
+
+PromQL examples as below:
 
 **Count all targets by namespace:**
 
@@ -504,9 +507,11 @@ sum by (response_code) (
   )
 )
 ```
-Go to you Grafana UI:
+Go to you Grafana UI, customize your dashboard by exploring the data with the PromQL.
 - If you are using Azure Managed Prometheus, just find the Grafana dashboard entry in the Azure Monitor -> Managed Prometheus portal
 - If you are using self-managed Prometheus, login to the Grafana UI, and you need to point the Data Source to your Prometheus endpoint before you can see data flows in
+
+![Metrics_Grafana](Metrics_Grafana.png)
 
 **Tip:**
 If you cannot find the username/password for your installed Grafana, use below commands to find them out:
