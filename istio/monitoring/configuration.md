@@ -1,4 +1,4 @@
-## Setup completed monitoring for AKS Istio based Service Mesh Add-on 
+## Build completed monitoring for AKS Istio based Service Mesh Add-on 
 
 Istio ([official site](https://istio.io/latest/))is an open-source service mesh to manage the network communication across services in distributed, container based applications, and is now the most preferred service mesh solution for the modern microservice architecture workloads. Istio is an important feature offering on Azure Kubernetes Service(AKS) to support Layer 7 container networking demands like ingress controller, microservices discovery, traffic distribution across multiple versions, circuit-breaker, distrubited tracing and more. 
 
@@ -6,7 +6,7 @@ As a key production framework, a completed monitoring for Istio is highly necess
 
 Istio monitoring covers metrics, access log and tracing, and each has multiple choices on tools for example Azure-managed or Self-managed. Due to the Istio complexity and so many options for choice, it is usually complicated and time consuming. There is no guide to cover all these aspects, and you need to refer to many documents from different sources which cause much confusing.
 
-This repo as a consolidated guide, helping user quickly setup a comprehensive monitoring solution, covering metrics, access log and tracing for using AKS Istio add-on. Within the guide, users can also find the comparison on different tools, and the benefits of each of them. To help users quick start the configuration, this repo contains the code & YAML samples and detail steps.
+This repo as a consolidated guide, helping user quickly setup a completed monitoring solution, covering metrics, access log and tracing for using AKS Istio add-on. Within the guide, users can also find the comparison on different tools, and the benefits of each of them. To help users quick start the configuration, this repo contains the code & YAML samples and detail steps.
 
 It includes:
 - [Start with AKS Istio addon](#start-with-aks-istio-addon)
