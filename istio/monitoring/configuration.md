@@ -660,7 +660,11 @@ After instrumented, you need to restart your workload to let the Application Ins
 ---
 #### View the application tracing
 Go to the Azure Monitor -> Insights -> Applications -> Investigate, check the "Application maps", "Performance" etc. to see your application topology and tracing information.
+
+![Tracing_AppInsights](Tracing_AppInsights.png)
+
 **Tip:**
+
 You may not see the service like "productpage" shown in the application map. The reason is the Application Insights AutoInstrument featre only supports Java and Node.js in current preview stage, while the "productpage" service is written not with Java/Node.js.
 
 ---
@@ -716,4 +720,5 @@ We can use all of these UIs now. For Kiali, go to the Traffic Graph on Kiali UI,
 https://github.com/user-attachments/assets/4ce086ef-e13d-4d99-b1f0-52c235b36bc5
 
 **Tips:**
+
 In above configuration, you probably only have the AKS cluster internal access for self-managed services including Prometheus, Grafana, Jaeger and Kiali. You may want to expose those services for permenant public access with Ingress, or simply use the port forward for temporary debugging access.
