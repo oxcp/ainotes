@@ -696,11 +696,9 @@ data:
           type: "none"
 ```
 
----
-
-## Verify the monitoring configuration
 Now you have finished the configuration for Metrics/Access log/Tracing for the AKS Istio-addon, and you also setup the Kiali as the consolidated console for Istio management.
-Meke sure to generate enough traffic before seeing the data coming. Refer to below sample to continuously generate traffic for monitoring validation:
+
+Let's generate continues traffic to validate our configuration. Refer to below sample to continuously generate traffic by keeping calling to the productpage service with interval 1 second between calls:
 ```bash
 #!/bin/bash
 
@@ -712,6 +710,10 @@ while true; do
     sleep 1
 done
 ```
-Go to the Kiali UI Traffic Graph, you will see traffic flows:
+In addtion to use the Promethues/Grafana/Jaeger/Application Insights UIs, now we also have the Kiali UI ready.
+We can use all of these UIs now. For Kiali, go to the Traffic Graph on Kiali UI, you will see traffic flows:
 
 https://github.com/user-attachments/assets/4ce086ef-e13d-4d99-b1f0-52c235b36bc5
+
+**Tips:**
+In above configuration, you probably only have the AKS cluster internal access for self-managed services including Prometheus, Grafana, Jaeger and Kiali. You may want to expose those services for permenant public access with Ingress, or simply use the port forward for temporary debugging access.
