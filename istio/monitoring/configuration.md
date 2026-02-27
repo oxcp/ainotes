@@ -713,4 +713,5 @@ while true; do
 done
 ```
 Go to the Kiali UI Traffic Graph, you will see traffic flows:
+
 https://github.com/user-attachments/assets/4ce086ef-e13d-4d99-b1f0-52c235b36bc5
