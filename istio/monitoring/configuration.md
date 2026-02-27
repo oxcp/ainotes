@@ -665,7 +665,7 @@ Go to the Azure Monitor -> Insights -> Applications -> Investigate, check the "A
 
 **Tip:**
 
-You may not see the service like "productpage" shown in the application map. The reason is the Application Insights AutoInstrument featre only supports Java and Node.js in current preview stage, while the "productpage" service is written not with Java/Node.js.
+You may not see the service like "productpage" shown in the application map. The reason is the Application Insights AutoInstrument feature only supports Java and Node.js in current preview stage, while the "productpage" service is not written in Java/Node.js.
 
 ---
 ## Configure Kiali as the AKS Istio add-on dashboard
