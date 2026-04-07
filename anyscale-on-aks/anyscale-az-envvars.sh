@@ -19,3 +19,4 @@ ANYSCALE_NAMESPACE=anyscale-operator
 # You should make this unique
 ANYSCALE_CLOUD_INSTANCE_NAME=anyscale-on-azure
 #ANYSCALE_CLOUD_INSTANCE_NAME=anyscale_default_cloud
+ANYSCALE_CLI_TOKEN=aph0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx

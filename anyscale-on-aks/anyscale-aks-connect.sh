@@ -4,7 +4,6 @@ source anyscale-az-envvars.sh
 
 AKS_VNET_SUBNET_ID=$(az network vnet subnet show -g $RESOURCE_GROUP --vnet-name $VNET_NAME -n aks -o tsv --query id)
 STORAGE_SUBNET_ID=$(az network vnet subnet show -g $RESOURCE_GROUP --vnet-name $VNET_NAME -n storage-pe-subnet -o tsv --query id)
-ANYSCALE_CLI_TOKEN=aph0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 # Register the Anyscale cloud instance
 anyscale cloud register \

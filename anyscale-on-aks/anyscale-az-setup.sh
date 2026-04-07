@@ -126,9 +126,9 @@ az role assignment create \
 #############################
 # Create the AKS cluster and the Managed Identity
 #############################
-. anyscale-aks.sh
+. anyscale-aks-gpu-np.sh
 
 #############################
 # Register the Anyscale cloud instance and deploy the Anyscale Operator
 #############################
-. anyscale-connect.sh
+. anyscale-aks-connect.sh
