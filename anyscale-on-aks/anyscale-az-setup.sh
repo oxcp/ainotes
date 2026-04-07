@@ -132,5 +132,3 @@ az role assignment create \
 # Register the Anyscale cloud instance and deploy the Anyscale Operator
 #############################
 . anyscale-connect.sh
-
-echo "Please run gpu-driver.sh to install the GPU driver and device plugin on the cluster"
