@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: storage-pod
+  namespace: anyscale-operator
+spec:
+  serviceAccountName: anyscale-operator
+  restartPolicy: Never
+  volumes:
+    - name: azure-blob
+      persistentVolumeClaim:
+        claimName: anyscale-shared-fuse
+  containers:
+    - name: storage-container
+      image: busybox
+      command: ["/bin/sh"]
+      args: ["-c","sleep 1000"]
+      volumeMounts:
+        - name: azure-blob
+          mountPath: /mnt/cloud-storage

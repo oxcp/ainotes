@@ -1,0 +1,63 @@
+global:
+  cloudDeploymentId: cldrsrc_xxxxxxx
+workloads:
+  instanceTypes:
+    additional:
+      H100:
+        resources:
+          CPU: 32 # should be less than the total CPU of the node
+          GPU: 1
+          memory: 240Gi
+          accelerators:
+            - H100
+        nodeSelector:
+          kubernetes.azure.com/agentpool: h100
+        tolerations:
+        - key: "kubernetes.azure.com/scalesetpriority"
+          operator: "Equal"
+          value: "spot"
+          effect: "NoSchedule"
+        - key: "gpu-type"
+          operator: "Equal"
+          value: "h100"
+          effect: "NoSchedule"
+      
+      A100:
+        resources:
+          CPU: 20 # should be less than the total CPU of the node
+          GPU: 1
+          memory: 180Gi
+          accelerators:
+            - A100-80G
+        nodeSelector:
+          kubernetes.azure.com/agentpool: a100
+        tolerations:
+        - key: "kubernetes.azure.com/scalesetpriority"
+          operator: "Equal"
+          value: "spot"
+          effect: "NoSchedule"
+        - key: "gpu-type"
+          operator: "Equal"
+          value: "a100"
+          effect: "NoSchedule"
+
+      T4-Azure:
+        resources:
+          CPU: 4
+          GPU: 1
+          memory: 28Gi
+          accelerators:
+            - T4
+        nodeSelector:
+          kubernetes.azure.com/agentpool: t4
+        tolerations:
+        - key: "kubernetes.azure.com/scalesetpriority"
+          operator: "Equal"
+          value: "spot"
+          effect: "NoSchedule"
+        - key: "gpu-type"
+          operator: "Equal"
+          value: "t4"
+          effect: "NoSchedule"
+
+

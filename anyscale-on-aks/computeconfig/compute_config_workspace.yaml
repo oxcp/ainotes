@@ -1,0 +1,35 @@
+cloud: anyscale-on-azure
+head_node:
+  instance_type: 4CPU-16GB
+  resources:
+    CPU: 0
+    GPU: 0
+  flags: {}
+worker_nodes:
+  - instance_type: 2CPU-8GB
+    flags: {}
+    min_nodes: 0
+    max_nodes: 10
+    market_type: ON_DEMAND
+
+enable_cross_zone_scaling: false
+auto_select_worker_config: false
+
+flags:
+  cloud_resource_strategy: availability
+  allow-cross-zone-autoscaling: false
+
+# Kubernetes PodSpec patch（strategic merge patch）
+advanced_instance_config:
+  spec:
+    serviceAccountName: anyscale-operator
+    volumes:
+      - name: azure-blob
+        persistentVolumeClaim:
+          claimName: anyscale-shared-fuse
+
+    containers:
+      - name: ray
+        volumeMounts:
+          - name: azure-blob
+            mountPath: /mnt/cloud-storage

@@ -1,0 +1,46 @@
+# service.yaml
+name: deploy-gpt-oss
+image_uri: anyscale/ray-llm:2.52.0-py311-cu128 # Anyscale Ray Serve LLM image. To build an image from a custom Dockerfile, set `containerfile: ./Dockerfile`
+env_vars:
+  AZURE_STORAGE_ACCOUNT: anyscale28120
+compute_config:
+  cloud: anyscale-on-azure
+  head_node:
+    instance_type: 8CPU-32GB
+    resources:
+      CPU: 0
+      GPU: 0
+    flags: {}
+  worker_nodes:
+    - instance_type: A100
+      flags: {}
+      min_nodes: 1
+      max_nodes: 1
+      market_type: SPOT
+
+  enable_cross_zone_scaling: false
+  auto_select_worker_config: false
+  idle_termination_minutes: 120
+  flags:
+    cloud_resource_strategy: availability
+    allow-cross-zone-autoscaling: false
+
+  # Kubernetes PodSpec patch（strategic merge patch）
+  advanced_instance_config:
+    spec:
+      volumes:
+        - name: azure-blob
+          persistentVolumeClaim:
+            claimName: anyscale-shared-fuse
+
+      containers:
+        - name: ray
+          volumeMounts:
+            - name: azure-blob
+              mountPath: /mnt/cloud-storage
+
+working_dir: .
+cloud:
+applications:
+  # Point to your app in your Python module
+  - import_path: server_gpt_oss:app

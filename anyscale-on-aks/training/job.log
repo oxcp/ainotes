@@ -1,0 +1,355 @@
+2026-03-27 10:33:01,805	INFO job_manager.py:579 -- Runtime env is setting up.
+Running entrypoint for job e16e4b39-01d4-48d5-8110-eba38bfbbe28: python train.py
+[2026-03-27 10:33:06,963] [WARNING] [real_accelerator.py:183:get_accelerator] Setting accelerator to CPU. If you have GPU or other accelerator, we were unable to detect it.
+Namespace(model_name='gpt2', dataset_name='ag_news', batch_size=8, num_epochs=3, seq_length=512, learning_rate=1e-06, zero_stage=3, num_workers=2, cpu_only=False, storage_path='/mnt/cloud-storage', resume_experiment=None, debug_steps=0)
+Experiment name: deepspeed_sample_7b670f4c
+2026-03-27 10:33:12,300	INFO worker.py:1680 -- Using address 10.244.2.146:6379 set in the environment variable RAY_ADDRESS
+2026-03-27 10:33:12,301	INFO worker.py:1821 -- Connecting to existing Ray cluster at address: 10.244.2.146:6379...
+2026-03-27 10:33:12,312	INFO worker.py:1998 -- Connected to Ray cluster. View the dashboard at https://session-a5skkilf2ycn6jldicsy9srh1r.i.anyscaleuserdata.com 
+/home/ray/anaconda3/lib/python3.12/site-packages/ray/_private/worker.py:2046: FutureWarning: Tip: In future versions of Ray, Ray will no longer override accelerator visible devices env var if num_gpus=0 or num_gpus=None (default). To enable this behavior and turn off this error message, set RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO=0
+  warnings.warn(
+(TrainController pid=1596) [State Transition] INITIALIZING -> SCHEDULING.
+(TrainController pid=1596) Attempting to start training worker group of size 2 with the following resources: [{'GPU': 1}] * 2
+(RayTrainWorker pid=458, ip=10.244.3.98) Setting up process group for: env:// [rank=0, world_size=2]
+(RayTrainWorker pid=458, ip=10.244.3.98) df: /home/ray/.triton/autotune: No such file or directory
+(RayTrainWorker pid=458, ip=10.244.3.98) HTTP Request: HEAD https://huggingface.co/gpt2/resolve/main/config.json "HTTP/1.1 200 OK"
+(RayTrainWorker pid=458, ip=10.244.3.98) Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+(RayTrainWorker pid=458, ip=10.244.3.98) Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+(RayTrainWorker pid=458, ip=10.244.3.98) HTTP Request: GET https://huggingface.co/gpt2/resolve/main/config.json "HTTP/1.1 200 OK"
+(RayTrainWorker pid=456, ip=10.244.1.37) df: /home/ray/.triton/autotune: No such file or directory
+(RayTrainWorker pid=458, ip=10.244.3.98) HTTP Request: HEAD https://huggingface.co/gpt2/resolve/main/model.safetensors "HTTP/1.1 302 Found"
+(TrainController pid=1596) Started training worker group of size 2: 
+(TrainController pid=1596) - (ip=10.244.3.98, pid=458) world_rank=0, local_rank=0, node_rank=0
+(TrainController pid=1596) - (ip=10.244.1.37, pid=456) world_rank=1, local_rank=0, node_rank=1
+(TrainController pid=1596) [State Transition] SCHEDULING -> RUNNING.
+(RayTrainWorker pid=458, ip=10.244.3.98) HTTP Request: GET https://huggingface.co/api/models/openai-community/gpt2/xet-read-token/607a30d783dfa663caf39e06633721c8d4cfcd7e "HTTP/1.1 200 OK"
+(RayTrainWorker pid=456, ip=10.244.1.37) Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]
+(RayTrainWorker pid=458, ip=10.244.3.98) Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 4578.77it/s]
+(RayTrainWorker pid=456, ip=10.244.1.37) Loading weights: 100%|██████████| 148/148 [00:00<00:00, 4545.04it/s]
+(RayTrainWorker pid=458, ip=10.244.3.98) Model loaded: gpt2 (#parameters: 124439808)
+(RayTrainWorker pid=458, ip=10.244.3.98) /home/ray/anaconda3/lib/python3.12/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+(RayTrainWorker pid=458, ip=10.244.3.98)   return func(*args, **kwargs)
+(RayTrainWorker pid=456, ip=10.244.1.37) HTTP Request: HEAD https://huggingface.co/gpt2/resolve/main/generation_config.json "HTTP/1.1 200 OK" [repeated 3x across cluster] (Ray deduplicates logs by default. Set RAY_DEDUP_LOGS=0 to disable log deduplication, or see https://docs.ray.io/en/master/ray-observability/user-guides/configure-logging.html#log-deduplication for more options.)
+(RayTrainWorker pid=456, ip=10.244.1.37) Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads. [repeated 2x across cluster]
+(RayTrainWorker pid=456, ip=10.244.1.37) HTTP Request: GET https://huggingface.co/gpt2/resolve/main/generation_config.json "HTTP/1.1 200 OK" [repeated 4x across cluster]
+(RayTrainWorker pid=456, ip=10.244.1.37) HTTP Request: HEAD https://huggingface.co/gpt2/resolve/main/model.safetensors "HTTP/1.1 302 Found"
+(RayTrainWorker pid=458, ip=10.244.3.98) HTTP Request: GET https://huggingface.co/api/models/gpt2/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 307 Temporary Redirect"
+(RayTrainWorker pid=458, ip=10.244.3.98) HTTP Request: GET https://huggingface.co/api/models/openai-community/gpt2/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+(RayTrainWorker pid=458, ip=10.244.3.98) HTTP Request: HEAD https://huggingface.co/gpt2/resolve/main/added_tokens.json "HTTP/1.1 404 Not Found"
+(RayTrainWorker pid=458, ip=10.244.3.98) HTTP Request: HEAD https://huggingface.co/datasets/ag_news/resolve/main/README.md "HTTP/1.1 307 Temporary Redirect"
+(RayTrainWorker pid=458, ip=10.244.3.98) HTTP Request: HEAD https://huggingface.co/datasets/fancyzhx/ag_news/resolve/main/README.md "HTTP/1.1 307 Temporary Redirect"
+(RayTrainWorker pid=458, ip=10.244.3.98) HTTP Request: HEAD https://huggingface.co/datasets/ag_news/resolve/eb185aade064a813bc0b7f42de02595523103ca4/ag_news.py "HTTP/1.1 307 Temporary Redirect"
+(RayTrainWorker pid=458, ip=10.244.3.98) HTTP Request: GET https://datasets-server.huggingface.co/info?dataset=ag_news "HTTP/1.1 404 Not Found"
+(RayTrainWorker pid=458, ip=10.244.3.98) HTTP Request: HEAD https://huggingface.co/datasets/fancyzhx/ag_news/resolve/eb185aade064a813bc0b7f42de02595523103ca4/data/train-00000-of-00001.parquet "HTTP/1.1 302 Found"
+(RayTrainWorker pid=456, ip=10.244.1.37) HTTP Request: HEAD https://s3.amazonaws.com/datasets.huggingface.co/datasets/datasets/ag_news/ag_news.py "HTTP/1.1 200 OK" [repeated 14x across cluster]
+(RayTrainWorker pid=456, ip=10.244.1.37) HTTP Request: GET https://huggingface.co/api/datasets/fancyzhx/ag_news/xet-read-token/eb185aade064a813bc0b7f42de02595523103ca4 "HTTP/1.1 200 OK" [repeated 20x across cluster]
+(RayTrainWorker pid=456, ip=10.244.1.37) Generating train split:   0%|          | 0/120000 [00:00<?, ? examples/s]
+(RayTrainWorker pid=456, ip=10.244.1.37) HTTP Request: GET https://huggingface.co/api/datasets/ag_news/tree/eb185aade064a813bc0b7f42de02595523103ca4?recursive=false&expand=false "HTTP/1.1 307 Temporary Redirect" [repeated 9x across cluster]
+(RayTrainWorker pid=456, ip=10.244.1.37) Generating train split: 100%|██████████| 120000/120000 [00:00<00:00, 1597454.82 examples/s]
+(RayTrainWorker pid=456, ip=10.244.1.37) Generating test split:   0%|          | 0/7600 [00:00<?, ? examples/s]Generating test split: 100%|██████████| 7600/7600 [00:00<00:00, 1114219.67 examples/s]
+(RayTrainWorker pid=456, ip=10.244.1.37)               0 COPY_FREE_VARS           2
+(RayTrainWorker pid=456, ip=10.244.1.37) 
+(RayTrainWorker pid=456, ip=10.244.1.37)  67           2 RESUME                   0
+(RayTrainWorker pid=456, ip=10.244.1.37) 
+(RayTrainWorker pid=456, ip=10.244.1.37)  68           4 PUSH_NULL
+(RayTrainWorker pid=456, ip=10.244.1.37)               6 LOAD_DEREF               2 (tokenizer)
+(RayTrainWorker pid=456, ip=10.244.1.37) 
+(RayTrainWorker pid=456, ip=10.244.1.37)  69           8 LOAD_FAST                0 (examples)
+(RayTrainWorker pid=456, ip=10.244.1.37)              10 LOAD_CONST               1 ('text')
+(RayTrainWorker pid=456, ip=10.244.1.37)              12 BINARY_SUBSCR
+(RayTrainWorker pid=456, ip=10.244.1.37) 
+(RayTrainWorker pid=456, ip=10.244.1.37)  70          16 LOAD_CONST               2 ('max_length')
+(RayTrainWorker pid=456, ip=10.244.1.37) 
+(RayTrainWorker pid=456, ip=10.244.1.37)  71          18 LOAD_DEREF               1 (seq_length)
+(RayTrainWorker pid=456, ip=10.244.1.37) 
+(RayTrainWorker pid=456, ip=10.244.1.37)  72          20 LOAD_CONST               3 (True)
+(RayTrainWorker pid=456, ip=10.244.1.37) 
+(RayTrainWorker pid=456, ip=10.244.1.37)  68          22 KW_NAMES                 4 (('padding', 'max_length', 'truncation'))
+(RayTrainWorker pid=456, ip=10.244.1.37)              24 CALL                     4
+(RayTrainWorker pid=456, ip=10.244.1.37)              32 RETURN_VALUE
+(RayTrainWorker pid=456, ip=10.244.1.37) HTTP Request: GET https://huggingface.co/api/models/openai-community/gpt2/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+(RayTrainWorker pid=458, ip=10.244.3.98) 
+(RayTrainWorker pid=458, ip=10.244.3.98) 
+(RayTrainWorker pid=458, ip=10.244.3.98) 
+(RayTrainWorker pid=458, ip=10.244.3.98) 
+(RayTrainWorker pid=458, ip=10.244.3.98) 
+(RayTrainWorker pid=458, ip=10.244.3.98) 
+(RayTrainWorker pid=458, ip=10.244.3.98) 
+(RayTrainWorker pid=456, ip=10.244.1.37) Map (num_proc=1):   0%|          | 0/1200 [00:00<?, ? examples/s]
+(RayTrainWorker pid=456, ip=10.244.1.37) Map (num_proc=1):  83%|████████▎ | 1000/1200 [00:00<00:00, 1055.20 examples/s]
+(RayTrainWorker pid=456, ip=10.244.1.37) HTTP Request: HEAD https://huggingface.co/datasets/fancyzhx/ag_news/resolve/eb185aade064a813bc0b7f42de02595523103ca4/dataset_infos.json "HTTP/1.1 404 Not Found" [repeated 11x across cluster]
+(RayTrainWorker pid=458, ip=10.244.3.98) Map (num_proc=1): 100%|██████████| 1200/1200 [00:01<00:00, 1110.68 examples/s]
+(RayTrainWorker pid=456, ip=10.244.1.37) HTTP Request: HEAD https://huggingface.co/datasets/ag_news/resolve/main/README.md "HTTP/1.1 307 Temporary Redirect"
+(RayTrainWorker pid=456, ip=10.244.1.37) `loss_type=None` was set in the config but it is unrecognized. Using the default loss: `ForCausalLMLoss`.
+(RayTrainWorker pid=456, ip=10.244.1.37) HTTP Request: HEAD https://huggingface.co/datasets/fancyzhx/ag_news/resolve/main/README.md "HTTP/1.1 307 Temporary Redirect"
+(RayTrainWorker pid=456, ip=10.244.1.37) HTTP Request: HEAD https://huggingface.co/datasets/ag_news/resolve/eb185aade064a813bc0b7f42de02595523103ca4/data/test-00000-of-00001.parquet "HTTP/1.1 307 Temporary Redirect" [repeated 9x across cluster]
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 1/75 Loss: 9.384169578552246
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 2/75 Loss: 9.333906173706055
+(RayTrainWorker pid=456, ip=10.244.1.37) HTTP Request: GET https://datasets-server.huggingface.co/info?dataset=ag_news "HTTP/1.1 404 Not Found"
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 3/75 Loss: 9.382205963134766
+(RayTrainWorker pid=456, ip=10.244.1.37) HTTP Request: HEAD https://huggingface.co/datasets/fancyzhx/ag_news/resolve/eb185aade064a813bc0b7f42de02595523103ca4/data/test-00000-of-00001.parquet "HTTP/1.1 302 Found" [repeated 3x across cluster]
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 4/75 Loss: 9.633441925048828
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 5/75 Loss: 9.384514808654785
+(RayTrainWorker pid=458, ip=10.244.3.98) Generating train split:   0%|          | 0/120000 [00:00<?, ? examples/s]
+(RayTrainWorker pid=458, ip=10.244.3.98) Generating train split: 100%|██████████| 120000/120000 [00:00<00:00, 1608666.89 examples/s]
+(RayTrainWorker pid=458, ip=10.244.3.98) Generating test split:   0%|          | 0/7600 [00:00<?, ? examples/s]Generating test split: 100%|██████████| 7600/7600 [00:00<00:00, 1103305.77 examples/s]
+(RayTrainWorker pid=458, ip=10.244.3.98)               0 COPY_FREE_VARS           2
+(RayTrainWorker pid=458, ip=10.244.3.98)  67           2 RESUME                   0
+(RayTrainWorker pid=458, ip=10.244.3.98)  68           4 PUSH_NULL
+(RayTrainWorker pid=458, ip=10.244.3.98)               6 LOAD_DEREF               2 (tokenizer)
+(RayTrainWorker pid=458, ip=10.244.3.98)  69           8 LOAD_FAST                0 (examples)
+(RayTrainWorker pid=458, ip=10.244.3.98)              10 LOAD_CONST               1 ('text')
+(RayTrainWorker pid=458, ip=10.244.3.98)              12 BINARY_SUBSCR
+(RayTrainWorker pid=458, ip=10.244.3.98)  70          16 LOAD_CONST               2 ('max_length')
+(RayTrainWorker pid=458, ip=10.244.3.98)  71          18 LOAD_DEREF               1 (seq_length)
+(RayTrainWorker pid=458, ip=10.244.3.98)  72          20 LOAD_CONST               3 (True)
+(RayTrainWorker pid=458, ip=10.244.3.98)  68          22 KW_NAMES                 4 (('padding', 'max_length', 'truncation'))
+(RayTrainWorker pid=458, ip=10.244.3.98)              24 CALL                     4
+(RayTrainWorker pid=458, ip=10.244.3.98)              32 RETURN_VALUE
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 6/75 Loss: 9.561370849609375
+(RayTrainWorker pid=458, ip=10.244.3.98) Map (num_proc=1):   0%|          | 0/1200 [00:00<?, ? examples/s]
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 7/75 Loss: 9.471664428710938
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 8/75 Loss: 8.949313163757324
+(RayTrainWorker pid=458, ip=10.244.3.98) Map (num_proc=1):  83%|████████▎ | 1000/1200 [00:00<00:00, 1150.29 examples/s]
+(RayTrainWorker pid=456, ip=10.244.1.37) Map (num_proc=1): 100%|██████████| 1200/1200 [00:01<00:00, 1027.94 examples/s]
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 9/75 Loss: 9.520556449890137
+(RayTrainWorker pid=458, ip=10.244.3.98) `loss_type=None` was set in the config but it is unrecognized. Using the default loss: `ForCausalLMLoss`.
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 10/75 Loss: 9.475380897521973
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 11/75 Loss: 9.001115798950195
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 12/75 Loss: 9.387798309326172
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 13/75 Loss: 9.468896865844727
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 14/75 Loss: 9.142663955688477
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 15/75 Loss: 9.036041259765625
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 16/75 Loss: 9.401046752929688
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 17/75 Loss: 9.10081672668457
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 18/75 Loss: 8.89009952545166
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 19/75 Loss: 9.115555763244629
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 20/75 Loss: 9.011717796325684
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 21/75 Loss: 8.74178409576416
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 22/75 Loss: 9.038224220275879
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 23/75 Loss: 9.180323600769043
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 24/75 Loss: 8.660479545593262
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 25/75 Loss: 9.009088516235352
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 26/75 Loss: 9.156436920166016
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 27/75 Loss: 9.005813598632812
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 28/75 Loss: 8.844793319702148
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 29/75 Loss: 8.963479042053223
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 30/75 Loss: 9.609721183776855
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 31/75 Loss: 9.289469718933105
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 32/75 Loss: 8.7445707321167
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 33/75 Loss: 8.596902847290039
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 34/75 Loss: 8.665310859680176
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 35/75 Loss: 8.494576454162598
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 36/75 Loss: 8.66688060760498
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 37/75 Loss: 8.81082820892334
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 38/75 Loss: 8.46786117553711
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 39/75 Loss: 8.351667404174805
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 40/75 Loss: 8.523990631103516
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 41/75 Loss: 8.570979118347168
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 42/75 Loss: 8.292814254760742
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 43/75 Loss: 8.47716236114502
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 44/75 Loss: 8.587047576904297
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 45/75 Loss: 8.68871021270752
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 46/75 Loss: 8.52123737335205
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 47/75 Loss: 8.565732955932617
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 48/75 Loss: 8.318102836608887
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 49/75 Loss: 8.082891464233398
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 50/75 Loss: 8.511090278625488
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 51/75 Loss: 8.23166275024414
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 52/75 Loss: 8.222864151000977
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 53/75 Loss: 8.247109413146973
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 54/75 Loss: 8.444136619567871
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 55/75 Loss: 8.368188858032227
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 56/75 Loss: 8.091049194335938
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 57/75 Loss: 8.11656665802002
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 58/75 Loss: 8.376297950744629
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 59/75 Loss: 7.855035781860352
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 60/75 Loss: 8.449797630310059
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 61/75 Loss: 7.941964626312256
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 62/75 Loss: 7.540109157562256
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 63/75 Loss: 7.044403076171875
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 64/75 Loss: 6.5611467361450195
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 65/75 Loss: 6.766092300415039
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 66/75 Loss: 6.617794513702393
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 67/75 Loss: 7.092318058013916
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 68/75 Loss: 6.89457368850708
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 69/75 Loss: 6.740103244781494
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 70/75 Loss: 6.991580486297607
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 71/75 Loss: 6.673327445983887
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 72/75 Loss: 6.7339582443237305
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 73/75 Loss: 6.548670291900635
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 74/75 Loss: 6.603273391723633
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 0 Step: 75/75 Loss: 6.921635150909424
+(RayTrainWorker pid=458, ip=10.244.3.98) /home/ray/anaconda3/lib/python3.12/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+(RayTrainWorker pid=458, ip=10.244.3.98)   return func(*args, **kwargs)
+(RayTrainWorker pid=458, ip=10.244.3.98) Checkpoint successfully created at: Checkpoint(filesystem=local, path=/mnt/cloud-storage/deepspeed_sample_7b670f4c/checkpoint_2026-03-27_10-34-23.810405)
+(RayTrainWorker pid=458, ip=10.244.3.98) Reporting training result 1: TrainingReport(checkpoint=Checkpoint(filesystem=local, path=/mnt/cloud-storage/deepspeed_sample_7b670f4c/checkpoint_2026-03-27_10-34-23.810405), metrics={'loss': 8.442185433705648, 'epoch': 0}, validation_spec=None)
+(RayTrainWorker pid=458, ip=10.244.3.98) Checkpoint saved successfully for experiment deepspeed_sample_7b670f4c at /tmp/tmpzv7e989b/checkpoint. Metrics: {'loss': 8.442185433705648, 'epoch': 0}
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 1/75 Loss: 6.6511101722717285
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 2/75 Loss: 6.212477207183838
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 3/75 Loss: 6.2624831199646
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 4/75 Loss: 6.586115837097168
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 5/75 Loss: 6.410451412200928
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 6/75 Loss: 6.042379379272461
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 7/75 Loss: 6.398155689239502
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 8/75 Loss: 6.343162536621094
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 9/75 Loss: 6.190533638000488
+(RayTrainWorker pid=456, ip=10.244.1.37) Checkpoint successfully created at: Checkpoint(filesystem=local, path=/mnt/cloud-storage/deepspeed_sample_7b670f4c/checkpoint_2026-03-27_10-34-23.810405)
+(RayTrainWorker pid=456, ip=10.244.1.37) Reporting training result 1: TrainingReport(checkpoint=Checkpoint(filesystem=local, path=/mnt/cloud-storage/deepspeed_sample_7b670f4c/checkpoint_2026-03-27_10-34-23.810405), metrics={'loss': 8.354310633341472, 'epoch': 0}, validation_spec=None)
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 10/75 Loss: 6.333431243896484
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 11/75 Loss: 6.621835231781006
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 12/75 Loss: 6.391783714294434
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 13/75 Loss: 6.304206371307373
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 14/75 Loss: 6.538839817047119
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 15/75 Loss: 6.270941734313965
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 16/75 Loss: 6.014059066772461
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 17/75 Loss: 6.188469886779785
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 18/75 Loss: 6.207841396331787
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 19/75 Loss: 6.222103118896484
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 20/75 Loss: 6.423410892486572
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 21/75 Loss: 6.247275352478027
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 22/75 Loss: 6.166258335113525
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 23/75 Loss: 5.794348239898682
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 24/75 Loss: 5.810431480407715
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 25/75 Loss: 6.080116271972656
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 26/75 Loss: 5.64613151550293
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 27/75 Loss: 5.855741500854492
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 28/75 Loss: 6.080626487731934
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 29/75 Loss: 5.733887672424316
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 30/75 Loss: 5.583713054656982
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 31/75 Loss: 5.560530662536621
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 32/75 Loss: 5.481919765472412
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 33/75 Loss: 5.644789695739746
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 34/75 Loss: 5.075238227844238
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 35/75 Loss: 5.3607964515686035
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 36/75 Loss: 5.366312026977539
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 37/75 Loss: 5.173370361328125
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 38/75 Loss: 5.292738914489746
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 39/75 Loss: 4.719684600830078
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 40/75 Loss: 4.797557353973389
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 41/75 Loss: 4.529481410980225
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 42/75 Loss: 4.717617511749268
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 43/75 Loss: 4.517335891723633
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 44/75 Loss: 4.346734523773193
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 45/75 Loss: 3.8249006271362305
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 46/75 Loss: 3.9798760414123535
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 47/75 Loss: 3.7670204639434814
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 48/75 Loss: 3.6733314990997314
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 49/75 Loss: 3.487243413925171
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 50/75 Loss: 3.5183067321777344
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 51/75 Loss: 3.200692653656006
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 52/75 Loss: 3.1560707092285156
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 53/75 Loss: 3.2929487228393555
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 54/75 Loss: 2.8700294494628906
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 55/75 Loss: 2.9711267948150635
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 56/75 Loss: 2.9145913124084473
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 57/75 Loss: 2.718857526779175
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 58/75 Loss: 3.0183277130126953
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 59/75 Loss: 2.9171831607818604
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 60/75 Loss: 2.6191821098327637
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 61/75 Loss: 2.7402210235595703
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 62/75 Loss: 2.6449382305145264
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 63/75 Loss: 2.534885883331299
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 64/75 Loss: 2.6566710472106934
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 65/75 Loss: 2.497588634490967
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 66/75 Loss: 2.4510114192962646
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 67/75 Loss: 2.5411746501922607
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 68/75 Loss: 2.6537444591522217
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 69/75 Loss: 2.39597225189209
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 70/75 Loss: 2.1503472328186035
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 71/75 Loss: 2.2208549976348877
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 72/75 Loss: 2.7270257472991943
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 73/75 Loss: 2.2013447284698486
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 74/75 Loss: 2.360295295715332
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 1 Step: 75/75 Loss: 2.5894649028778076
+(RayTrainWorker pid=458, ip=10.244.3.98) Checkpoint successfully created at: Checkpoint(filesystem=local, path=/mnt/cloud-storage/deepspeed_sample_7b670f4c/checkpoint_2026-03-27_10-35-09.858452)
+(RayTrainWorker pid=458, ip=10.244.3.98) Reporting training result 2: TrainingReport(checkpoint=Checkpoint(filesystem=local, path=/mnt/cloud-storage/deepspeed_sample_7b670f4c/checkpoint_2026-03-27_10-35-09.858452), metrics={'loss': 4.606555442810059, 'epoch': 1}, validation_spec=None)
+(RayTrainWorker pid=458, ip=10.244.3.98) Checkpoint saved successfully for experiment deepspeed_sample_7b670f4c at /tmp/tmphkb3hpzm/checkpoint. Metrics: {'loss': 4.606555442810059, 'epoch': 1}
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 1/75 Loss: 2.396855115890503
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 2/75 Loss: 2.1571567058563232
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 3/75 Loss: 2.1735432147979736
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 4/75 Loss: 2.0493674278259277
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 5/75 Loss: 2.1939144134521484
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 6/75 Loss: 1.9731537103652954
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 7/75 Loss: 2.056638479232788
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 8/75 Loss: 2.021494150161743
+(RayTrainWorker pid=456, ip=10.244.1.37) Checkpoint successfully created at: Checkpoint(filesystem=local, path=/mnt/cloud-storage/deepspeed_sample_7b670f4c/checkpoint_2026-03-27_10-35-09.858452)
+(RayTrainWorker pid=456, ip=10.244.1.37) Reporting training result 2: TrainingReport(checkpoint=Checkpoint(filesystem=local, path=/mnt/cloud-storage/deepspeed_sample_7b670f4c/checkpoint_2026-03-27_10-35-09.858452), metrics={'loss': 4.638934081395467, 'epoch': 1}, validation_spec=None)
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 9/75 Loss: 2.201887845993042
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 10/75 Loss: 2.0351462364196777
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 11/75 Loss: 2.095397710800171
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 12/75 Loss: 2.247776985168457
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 13/75 Loss: 1.9509552717208862
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 14/75 Loss: 1.6788808107376099
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 15/75 Loss: 1.8855141401290894
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 16/75 Loss: 1.6465013027191162
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 17/75 Loss: 1.9753272533416748
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 18/75 Loss: 1.9318110942840576
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 19/75 Loss: 1.7249960899353027
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 20/75 Loss: 1.8722290992736816
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 21/75 Loss: 1.6777501106262207
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 22/75 Loss: 1.7929871082305908
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 23/75 Loss: 1.7395517826080322
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 24/75 Loss: 1.5916703939437866
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 25/75 Loss: 1.5093233585357666
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 26/75 Loss: 1.9013745784759521
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 27/75 Loss: 1.8062294721603394
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 28/75 Loss: 1.707918405532837
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 29/75 Loss: 1.765246868133545
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 30/75 Loss: 1.595497727394104
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 31/75 Loss: 1.6592439413070679
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 32/75 Loss: 1.5538653135299683
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 33/75 Loss: 1.5230989456176758
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 34/75 Loss: 1.7637012004852295
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 35/75 Loss: 1.4891560077667236
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 36/75 Loss: 1.359502911567688
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 37/75 Loss: 1.5133283138275146
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 38/75 Loss: 1.2847473621368408
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 39/75 Loss: 1.328195333480835
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 40/75 Loss: 1.2265232801437378
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 41/75 Loss: 1.1146153211593628
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 42/75 Loss: 1.148311734199524
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 43/75 Loss: 1.0559550523757935
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 44/75 Loss: 1.2438743114471436
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 45/75 Loss: 0.9602726697921753
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 46/75 Loss: 1.0663355588912964
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 47/75 Loss: 0.8546744585037231
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 48/75 Loss: 0.9097304344177246
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 49/75 Loss: 1.060779094696045
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 50/75 Loss: 1.132202386856079
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 51/75 Loss: 1.0775326490402222
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 52/75 Loss: 0.8873902559280396
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 53/75 Loss: 0.9195339679718018
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 54/75 Loss: 1.0282695293426514
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 55/75 Loss: 0.9241049289703369
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 56/75 Loss: 0.8967247605323792
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 57/75 Loss: 0.780909538269043
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 58/75 Loss: 0.7230616211891174
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 59/75 Loss: 0.7778211832046509
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 60/75 Loss: 1.0812500715255737
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 61/75 Loss: 0.7876291871070862
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 62/75 Loss: 0.8194656372070312
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 63/75 Loss: 0.7950460314750671
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 64/75 Loss: 0.7616719603538513
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 65/75 Loss: 0.6264622211456299
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 66/75 Loss: 0.649882435798645
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 67/75 Loss: 0.7449223399162292
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 68/75 Loss: 0.5857563018798828
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 69/75 Loss: 0.660537600517273
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 70/75 Loss: 0.6636402010917664
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 71/75 Loss: 0.5739972591400146
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 72/75 Loss: 0.6710829734802246
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 73/75 Loss: 0.5913546085357666
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 74/75 Loss: 0.6193325519561768
+(RayTrainWorker pid=458, ip=10.244.3.98) Epoch: 2 Step: 75/75 Loss: 0.7822858095169067
+(RayTrainWorker pid=456, ip=10.244.1.37) Checkpoint successfully created at: Checkpoint(filesystem=local, path=/mnt/cloud-storage/deepspeed_sample_7b670f4c/checkpoint_2026-03-27_10-35-56.322940)
+(RayTrainWorker pid=456, ip=10.244.1.37) Reporting training result 3: TrainingReport(checkpoint=Checkpoint(filesystem=local, path=/mnt/cloud-storage/deepspeed_sample_7b670f4c/checkpoint_2026-03-27_10-35-56.322940), metrics={'loss': 1.3649471767743429, 'epoch': 2}, validation_spec=None)
+(RayTrainWorker pid=458, ip=10.244.3.98) Checkpoint saved successfully for experiment deepspeed_sample_7b670f4c at /tmp/tmpnchaabr2/checkpoint. Metrics: {'loss': 1.360451681613922, 'epoch': 2}
+(TrainController pid=1596) [State Transition] RUNNING -> SHUTTING_DOWN.
+Training finished. Result: Result(metrics={'loss': 1.360451681613922, 'epoch': 2}, checkpoint=Checkpoint(filesystem=local, path=/mnt/cloud-storage/deepspeed_sample_7b670f4c/checkpoint_2026-03-27_10-35-56.322940), error=None, path='/mnt/cloud-storage/deepspeed_sample_7b670f4c', metrics_dataframe=       loss  epoch
+0  8.442185      0
+1  4.606555      1
+2  1.360452      2, best_checkpoints=[(Checkpoint(filesystem=local, path=/mnt/cloud-storage/deepspeed_sample_7b670f4c/checkpoint_2026-03-27_10-34-23.810405), {'loss': 8.442185433705648, 'epoch': 0}), (Checkpoint(filesystem=local, path=/mnt/cloud-storage/deepspeed_sample_7b670f4c/checkpoint_2026-03-27_10-35-09.858452), {'loss': 4.606555442810059, 'epoch': 1}), (Checkpoint(filesystem=local, path=/mnt/cloud-storage/deepspeed_sample_7b670f4c/checkpoint_2026-03-27_10-35-56.322940), {'loss': 1.360451681613922, 'epoch': 2})], _storage_filesystem=<pyarrow._fs.LocalFileSystem object at 0x7fc724456270>)
+(TrainController pid=1596) [State Transition] SHUTTING_DOWN -> FINISHED.
+(RayTrainWorker pid=458, ip=10.244.3.98) Checkpoint successfully created at: Checkpoint(filesystem=local, path=/mnt/cloud-storage/deepspeed_sample_7b670f4c/checkpoint_2026-03-27_10-35-56.322940)
+(RayTrainWorker pid=458, ip=10.244.3.98) Reporting training result 3: TrainingReport(checkpoint=Checkpoint(filesystem=local, path=/mnt/cloud-storage/deepspeed_sample_7b670f4c/checkpoint_2026-03-27_10-35-56.322940), metrics={'loss': 1.360451681613922, 'epoch': 2}, validation_spec=None)

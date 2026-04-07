@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-blob-wi
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: azureblob-fuse-premium
+  csi:
+    driver: blob.csi.azure.com
+    volumeHandle: anyscale28120_anyscale-container
+    volumeAttributes:
+      storageAccount: anyscale28120
+      containerName: anyscale-container
+
+      # 关键字段
+      AzureStorageAuthType: MSI
+      AzureStorageIdentityClientID: 11f9cf53-2cfe-4121-9426-9917f07fcd9a #KUBELET_IDENTITY
+  mountOptions:
+    - -o allow_other
+    - --file-cache-timeout-in-seconds=120
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: anyscale-shared-fuse
+  namespace: anyscale-operator
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+
+  volumeName: pv-blob-wi
+  storageClassName: azureblob-fuse-premium

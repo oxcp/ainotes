@@ -1,0 +1,47 @@
+name: gpt-oss-20b-a100-80g
+service:
+  applications:
+    - name: gpt-oss
+      route_prefix: /
+      import_path: ray.serve.llm:build_openai_app
+
+      args:
+        llm_configs:
+          - model_loading_config:
+              model_id: gpt-oss-20b
+              model_source: openai/gpt-oss-20b
+
+            # ✅ Pin to 80GB A100
+            accelerator_type: A100-80G
+
+            deployment_config:
+              autoscaling_config:
+                min_replicas: 1
+                max_replicas: 1
+                target_num_ongoing_requests_per_replica: 4
+
+            # ✅ vLLM settings optimized for A100-80G
+            engine_kwargs:
+              max_model_len: 32768
+              max_num_seqs: 4
+              max_num_batched_tokens: 16384
+
+      runtime_env:
+        pip:
+          - "ray[serve,llm]>=2.49.0"
+          - "vllm==0.10.1"
+
+# ✅ Declarative compute config
+compute_config:
+  worker_groups:
+    - name: a100-80g-workers
+      min_nodes: 1
+      max_nodes: 1
+
+      required_resources:
+        CPU: 20
+        memory: 180Gi
+        GPU: 1
+
+      required_labels:
+        accelerator_type: A100-80G
