@@ -92,7 +92,7 @@ The table below maps each technical requirement to the implementation approach f
 | # | Requirement | Foundry Agent Host (A) | ACA Sandbox — *Public Preview* (B) | AKS + E2B (C) |
 |---|---|---|---|---|
 | 1 | **State & context persistence** | Built-in agent state store (Cosmos/Blob) | Azure Managed Redis (context cache) + Azure Blob (snapshot) | Redis on AKS + Azure Blob via CSI driver |
-| 2 | **Fast start / scale-to-zero** | Native agent idle eviction + warm resume | ACA Sandbox container pool; idle timeout = 15 min; state flushed to Redis on eviction | KEDA-driven scale-to-zero; state checkpoint before pod termination; pre-warmed pool |
+| 2 | **Fast start / scale-to-zero** | Native agent idle eviction + warm resume | ACA Sandbox container pool; idle timeout = 15 min; state flushed to Redis/Blob on scale-to-zero | KEDA-driven scale-to-zero; state checkpoint before pod termination; pre-warmed pool |
 | 3 | **Isolation** | Per-agent managed sandbox | Per-container OS-level isolation via gVisor (syscall interception); no dedicated VM required | Kata Container Micro-VM per OpenClaw; NetworkPolicy + Namespace isolation |
 | 4 | **Entra ID authentication** | Native AAD integration; user-assigned Managed Identity | ACA Workload Identity (UAMI) + Entra ID token validation at ingress | AAD Workload Identity for Pods; ingress auth via Entra ID App Registration |
 | 5 | **AI Gateway (APIM)** | APIM policy routes all LLM calls; token quota per agent | APIM gateway policy; JWT validation; rate-limiting per container | APIM deployed in VNet; each AKS pod calls APIM internal endpoint |
