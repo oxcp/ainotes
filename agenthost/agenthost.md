@@ -125,7 +125,7 @@ New request arrives   →  Restore from Redis if still warm,
 
 ```
 User / Client App
-     │  ****** (Entra ID)
+     │  access token (Entra ID)
      ▼
 Azure API Management (AI Gateway)
      │  validate-jwt policy
