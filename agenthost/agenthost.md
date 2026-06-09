@@ -4,7 +4,7 @@
 
 - **Target**: Deploy AI-agent workloads (OpenClaw) on Azure for both enterprise (ToB) and consumer (ToC) scenarios.
 - **Core challenges**: per-instance isolation, fast start / scale-to-zero, state persistence, Entra ID auth, and cost control.
-- **Top picks**: Azure AI Foundry Agent Host · Azure Container Apps Dynamic Sessions · AKS + self-built E2B.
+- **Top picks**: Azure AI Foundry Agent Host · Azure Container Apps Sandbox (Public Preview) · AKS + self-built E2B.
 - **Key patterns**: state snapshotted to Redis/Blob before scale-down, restored on warm-up; all LLM calls routed through Azure API Management (AI Gateway); each OpenClaw authenticates as its own Entra ID workload identity.
 - **Duration**: 90 minutes · Mid-level difficulty.
 
@@ -46,7 +46,8 @@
 | **Micro-VM** | Strongest (hypervisor) | Slow (2–10 s) | Low (always-on VM) | AKS + Kata / E2B | ToB high-security | True kernel isolation | Cost, operational overhead |
 | **Container** | Strong (namespace) | Fast (< 2 s) | Good with scale-to-zero | ACA, AKS | ToB / ToC | Mature ecosystem, OCI | Shared kernel |
 | **Process** | Weak (OS process) | Fastest (< 0.5 s) | Best | App Service, Functions | ToC low-risk | Minimal overhead | Noisy-neighbour risk |
-| **Session** | Medium (sandbox) | Fast (< 1 s) | Good | ACA Dynamic Sessions | ToC interactive | Managed, serverless | Limited customisation |
+| **Session** | Medium (sandbox) | Fast (< 1 s) | Good | ACA Dynamic Sessions | ToC interactive / short-lived jobs | Managed, serverless; ideal for one-time code execution | Limited customisation; not suited for long-running agents |
+| **Sandbox** | Strong (OS-level gVisor isolation) | Fast (< 2 s) | Good with scale-to-zero | ACA Sandbox *(Public Preview)* | ToC / ToB long-running agents | OS-level isolation without dedicated VMs; runs alongside standard ACA containers | Public preview; feature set still evolving |
 | **VM** | Strongest | Slowest (> 30 s) | Poorest | Azure VM | Niche / legacy | Full control | Cold-start, cost |
 | **Serverless** | Medium | Fast (< 2 s) | Best (pay-per-exec) | Azure Functions, ACA Jobs | ToC stateless | Zero infra ops | Stateless by design |
 
@@ -55,7 +56,8 @@
 | Azure Resource | Technique | Isolation level | Scale-to-zero | State persistence | Entra ID integration | APIM integration | Best for |
 |---|---|---|---|---|---|---|---|
 | **Azure AI Foundry Agent Host** | Managed agent runtime | Managed (per-agent) | ✅ Native | ✅ Built-in | ✅ Native | ✅ Native | ToB managed, fastest on-ramp |
-| **ACA Dynamic Sessions** | Container sandbox | Strong (per-session) | ✅ Native | ✅ via Blob/Redis | ✅ Workload Identity | ✅ | ToC interactive, ToB dev |
+| **ACA Sandbox** *(Public Preview)* | Container sandbox (OS-level gVisor isolation) | Strong (per-container) | ✅ Native | ✅ via Blob/Redis | ✅ Workload Identity | ✅ | ToC / ToB long-running agents; isolation without dedicated VMs |
+| **ACA Dynamic Sessions** | Container sandbox | Strong (per-session) | ✅ Native | ✅ via Blob/Redis | ✅ Workload Identity | ✅ | ToC short-lived / one-time code execution; not ideal for persistent long-running agents |
 | **AKS + self-built E2B** | Micro-VM or Container | Strongest | ✅ Custom | ✅ Custom | ✅ Workload Identity for Pods | ✅ | ToB high-security, full control |
 | **Azure Container Apps** | Container | Strong | ✅ Native | ✅ via Blob/Redis | ✅ Workload Identity | ✅ | ToB / ToC general |
 | **Azure Functions** | Process / Serverless | Medium | ✅ Native | Limited | ✅ | ✅ | ToC stateless tasks |
@@ -71,8 +73,12 @@ Three complementary solutions are recommended, each optimised for a distinct ope
 | # | Solution | Scenario | Key reason |
 |---|---|---|---|
 | **A** | Azure AI Foundry Agent Host | ToB managed | Fully managed; native agent lifecycle, state, auth; fastest time-to-value |
-| **B** | ACA Dynamic Sessions | ToC / ToB dev | Serverless container sandbox; strong isolation; true scale-to-zero; low ops cost |
+| **B** | ACA Sandbox *(Public Preview)* | ToC / ToB long-running agents | OS-level container isolation via gVisor; long-running agent support; strong isolation without dedicated VMs; true scale-to-zero |
 | **C** | AKS + self-built E2B | ToB high-security | Maximum control; Micro-VM isolation via Kata Containers; custom networking and compliance |
+
+> **Why ACA Sandbox instead of ACA Dynamic Sessions for Solution B?**  
+> ACA Dynamic Sessions is optimised for **one-time or short-lived code execution** (e.g. code interpreter tasks, ephemeral sandboxes). It evicts sessions aggressively and is not designed for long-running stateful agents. **ACA Sandbox** provides OS-level isolation (gVisor) within a regular ACA environment, making it a better fit for persistent, long-running agent workloads. Note that ACA Sandbox is currently in **public preview** — evaluate feature availability and SLA before adopting for production.  
+> ACA Dynamic Sessions is retained in the comparison tables (Sections 2.1 and 2.2) as a valid option for short-lived execution scenarios.
 
 > **Why not Azure Functions or App Service?**  
 > Functions are stateless by design and do not support persistent session contexts without external state management complexity. App Service does not natively scale to zero and carries higher idle cost.
@@ -83,15 +89,15 @@ Three complementary solutions are recommended, each optimised for a distinct ope
 
 The table below maps each technical requirement to the implementation approach for all three selected solutions.
 
-| # | Requirement | Foundry Agent Host (A) | ACA Dynamic Sessions (B) | AKS + E2B (C) |
+| # | Requirement | Foundry Agent Host (A) | ACA Sandbox — *Public Preview* (B) | AKS + E2B (C) |
 |---|---|---|---|---|
 | 1 | **State & context persistence** | Built-in agent state store (Cosmos/Blob) | Azure Managed Redis (context cache) + Azure Blob (snapshot) | Redis on AKS + Azure Blob via CSI driver |
-| 2 | **Fast start / scale-to-zero** | Native agent idle eviction + warm resume | ACA session pool; idle timeout = 15 min; state flushed to Redis on eviction | KEDA-driven scale-to-zero; state checkpoint before pod termination; pre-warmed pool |
-| 3 | **Isolation** | Per-agent managed sandbox | Per-session container with network policy | Kata Container Micro-VM per OpenClaw; NetworkPolicy + Namespace isolation |
+| 2 | **Fast start / scale-to-zero** | Native agent idle eviction + warm resume | ACA Sandbox container pool; idle timeout = 15 min; state flushed to Redis on eviction | KEDA-driven scale-to-zero; state checkpoint before pod termination; pre-warmed pool |
+| 3 | **Isolation** | Per-agent managed sandbox | Per-container OS-level isolation via gVisor (syscall interception); no dedicated VM required | Kata Container Micro-VM per OpenClaw; NetworkPolicy + Namespace isolation |
 | 4 | **Entra ID authentication** | Native AAD integration; user-assigned Managed Identity | ACA Workload Identity (UAMI) + Entra ID token validation at ingress | AAD Workload Identity for Pods; ingress auth via Entra ID App Registration |
-| 5 | **AI Gateway (APIM)** | APIM policy routes all LLM calls; token quota per agent | APIM gateway policy; JWT validation; rate-limiting per session | APIM deployed in VNet; each AKS pod calls APIM internal endpoint |
+| 5 | **AI Gateway (APIM)** | APIM policy routes all LLM calls; token quota per agent | APIM gateway policy; JWT validation; rate-limiting per container | APIM deployed in VNet; each AKS pod calls APIM internal endpoint |
 | 6 | **OpenClaw-to-Gateway auth** | Managed Identity credential → APIM subscription key + OAuth | UAMI credential; APIM validates Entra ID token via validate-jwt policy | Pod Workload Identity → Entra token → APIM OAuth 2.0 token validation |
-| 7 | **Cost saving** | Scale-to-zero after 15 min idle; pay per agent execution | True serverless; session destroyed after idle; Redis TTL auto-evicts stale state | KEDA zero-scale; Spot Node Pool for worker nodes; Redis Basic SKU for dev |
+| 7 | **Cost saving** | Scale-to-zero after 15 min idle; pay per agent execution | True serverless; container destroyed after idle; Redis TTL auto-evicts stale state | KEDA zero-scale; Spot Node Pool for worker nodes; Redis Basic SKU for dev |
 
 ---
 
@@ -186,7 +192,47 @@ flowchart TD
 
 ---
 
-### Solution B — ACA Dynamic Sessions (ToC / ToB Dev)
+### Solution B — ACA Sandbox (ToC / ToB Long-Running Agents) *(Public Preview)*
+
+> **Note:** Azure Container Apps Sandbox is currently in **public preview**. Review the [feature documentation](https://learn.microsoft.com/en-us/azure/container-apps/sandboxes-overview) for current limitations and SLA before adopting for production workloads.
+
+> **ACA Dynamic Sessions vs ACA Sandbox:** ACA Dynamic Sessions is designed for **short-lived, one-time code execution** (e.g. ephemeral code interpreter tasks). Its aggressive session eviction makes it unsuitable for long-running stateful agents. ACA Sandbox runs your container workloads with OS-level gVisor isolation directly within a standard ACA environment, providing the persistent runtime and strong isolation that long-running agents require.
+
+```mermaid
+flowchart TD
+    user["👤 Consumer / Enterprise User\n(Entra External ID or AAD)"]
+    apim["Azure API Management\n(AI Gateway)"]
+    aca["ACA Sandbox\n(gVisor-isolated container per agent)"]
+    redis["Azure Managed Redis\n(hot state)"]
+    blob["Azure Blob Storage\n(cold snapshot)"]
+    aoai["Azure OpenAI"]
+    entra["Azure Entra ID\n(Workload Identity / UAMI)"]
+
+    user -->|"HTTPS + token"| apim
+    apim -->|"route to agent container"| aca
+    aca <-->|"read/write context"| redis
+    aca -->|"scale-to-zero flush"| blob
+    blob -->|"cold restore"| aca
+    aca -->|"UAMI token"| entra
+    entra -->|"access token"| aca
+    aca -->|"LLM call via APIM"| apim
+    apim --> aoai
+```
+
+**Workflow:**
+1. User authenticates; client presents token to APIM.
+2. APIM validates token; routes to the ACA Sandbox-enabled container environment with `agent-id` header.
+3. ACA resolves the target agent container — resumes existing (warm) or starts a new gVisor-isolated container.
+4. OpenClaw container loads state from Redis if TTL valid; else restores from Blob.
+5. OpenClaw processes the request; calls LLM via APIM using its UAMI credential.
+6. Idle detection: after 15 min, ACA scales the container to zero; lifecycle hook flushes state to Redis + Blob.
+7. Next request restores from Redis (< 500 ms) or Blob (< 3 s).
+
+---
+
+### Solution B (Alternative) — ACA Dynamic Sessions *(for short-lived tasks)*
+
+> ACA Dynamic Sessions is retained here for comparison. It is best suited for **one-time or short-lived code execution** (e.g. sandboxed code interpreter, ephemeral computation). If your scenario requires long-running, persistent agent state, prefer **ACA Sandbox** above.
 
 ```mermaid
 flowchart TD
@@ -302,13 +348,15 @@ flowchart TD
 
 ---
 
-### Module 3 — Solution B: ACA Dynamic Sessions (15 min)
+### Module 3 — Solution B: ACA Sandbox (15 min)
 
 | Time | Activity |
 |---|---|
-| 0:50–0:55 | Create ACA Environment; enable Dynamic Sessions pool |
-| 0:55–1:00 | Push OpenClaw container image to ACR; configure session lifecycle hook (flush to Redis/Blob on eviction) |
-| 1:00–1:05 | Test end-to-end: send requests, observe session creation, trigger idle timeout, verify restore |
+| 0:50–0:55 | Create ACA Environment; enable Sandbox feature (note: Public Preview) |
+| 0:55–1:00 | Push OpenClaw container image to ACR; configure ACA app with Sandbox isolation and lifecycle hook (flush to Redis/Blob on scale-to-zero) |
+| 1:00–1:05 | Test end-to-end: send requests, observe container isolation, trigger idle timeout, verify state restore |
+
+> **Comparison moment:** briefly contrast ACA Sandbox (long-running agents, gVisor OS-level isolation) with ACA Dynamic Sessions (short-lived/one-time code execution, session-scoped containers) to reinforce when to use each.
 
 ---
 
@@ -325,7 +373,7 @@ flowchart TD
 
 | Time | Activity |
 |---|---|
-| 1:15–1:20 | Solution comparison recap; guidance on choosing A vs B vs C |
+| 1:15–1:20 | Solution comparison recap; guidance on choosing A vs B (ACA Sandbox) vs C; when to consider ACA Dynamic Sessions |
 | 1:20–1:25 | Cost optimisation tips: Redis TTL tuning, Blob Cool tier, APIM Consumption SKU, KEDA scale rules |
 | 1:25–1:30 | Q&A and next steps (production hardening checklist) |
 
