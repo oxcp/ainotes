@@ -176,7 +176,7 @@ flowchart TD
 ```
 
 **Workflow:**
-1. User authenticates via Entra ID SSO; receives ******
+1. User authenticates via Entra ID SSO; receives an access token.
 2. Client sends request to APIM; `validate-jwt` policy authenticates and routes to Foundry Agent Host endpoint.
 3. Foundry Agent Host looks up OpenClaw instance state in Redis (warm) or Blob (cold restore).
 4. OpenClaw processes the request; calls LLM via APIM using its Managed Identity credential.
