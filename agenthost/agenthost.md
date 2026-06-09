@@ -285,7 +285,7 @@ flowchart TD
 | Time | Activity | Commands / Portal steps |
 |---|---|---|
 | 0:10–0:15 | Create Resource Group, Azure Managed Redis (Basic SKU), Azure Blob Storage | `az group create` · `az redis create` |
-| 0:15–0:20 | Deploy Azure API Management (Consumption tier) | Portal or `az apim create` |
+| 0:15–0:20 | Deploy Azure API Management (Consumption tier for Solutions A/B; use a VNet-capable tier for Solution C) | Portal or `az apim create` |
 | 0:20–0:25 | Register Entra ID App; create User-Assigned Managed Identity for OpenClaw | `az ad app create` · `az identity create` |
 | 0:25–0:30 | Configure APIM `validate-jwt` policy and LLM backend (Azure OpenAI) | APIM policy editor |
 
