@@ -111,7 +111,7 @@ New request arrives   →  Restore from Redis if still warm,
 ```
 
 > **Recommended storage per tier**
-> - **Hot** (active session): Azure Managed Redis — sub-millisecond latency, automatic failover.
+> - **Hot** (active session): Azure Managed Redis (choose an HA tier for automatic failover) — sub-millisecond latency.
 > - **Warm** (idle < 24 h): Redis with TTL.
 > - **Cold** (archived / scale-to-zero): Azure Blob Storage (Cool tier), versioned containers.
 
