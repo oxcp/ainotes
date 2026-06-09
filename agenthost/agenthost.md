@@ -166,7 +166,7 @@ flowchart TD
     aoai["Azure OpenAI\n(GPT-4o)"]
     entra["Azure Entra ID\n(Managed Identity)"]
 
-    user -->|"HTTPS + ******"| apim
+    user -->|"HTTPS + access token"| apim
     apim -->|"validate-jwt → route"| foundry
     foundry <-->|"read/write state"| state
     foundry -->|"Managed Identity credential"| apim
