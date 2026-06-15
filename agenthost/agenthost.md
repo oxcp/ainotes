@@ -116,8 +116,8 @@ Lifecycle event          Action
 ─────────────────────    ─────────────────────────────────────────────────────────
 New OpenClaw started  →  Load state from Azure Managed Redis (AMR) first;
                          if not found, restore from Blob
-Active conversation   →  Persist status to AMR + Blob (dual-write)
-Scale-to-zero trigger →  Flush latest status from AMR to Azure Blob
+Active conversation   →  Persist state to AMR + Blob (dual-write)
+Scale-to-zero trigger →  Flush latest state from AMR to Azure Blob
                          (versioned, immutable, cost-effective long-term)
 New request arrives   →  Restore from AMR first; fallback to Blob if AMR miss
 ```
