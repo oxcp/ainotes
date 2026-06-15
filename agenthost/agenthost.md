@@ -1,10 +1,10 @@
-# OpenClaw Hosting on Azure — Workshop Design Proposal
+# OpenClaw Hosting on Azure — Workshop Design
 
 ## Outline
 
 - **Target**: Deploy AI-agent workloads (OpenClaw) on Azure for both enterprise (ToB) and consumer (ToC) scenarios.
 - **Core challenges**: per-instance isolation, fast start / scale-to-zero, state persistence, Entra ID auth, and cost control.
-- **Top picks**: Azure AI Foundry Agent Host · Azure Container Apps Sandbox (Public Preview) · AKS + self-built E2B.
+- **Top picks**: Azure AI Foundry Host Agent · Azure Container Apps Sandbox (Public Preview) · AKS + self-built E2B.
 - **Key patterns**: state snapshotted to Redis/Blob before scale-down, restored on warm-up; all LLM calls routed through Azure API Management (AI Gateway); each OpenClaw authenticates as its own Entra ID workload identity.
 - **Duration**: 90 minutes · Mid-level difficulty.
 
@@ -43,6 +43,7 @@
 
 | Technique | Isolation | Cold-start | Cost efficiency | Azure fit | Suitable for | Advantage | Weakness |
 |---|---|---|---|---|---|---|---|
+| **AI Foundry Host Agent** | Managed (per-agent) | Fast (< 1 s) | Best (pay-per-exec) | Azure AI Foundry | ToB managed | Native agent lifecycle, built-in state & auth | Limited customisation |
 | **Micro-VM** | Strongest (hypervisor) | Slow (2–10 s) | Low (always-on VM) | AKS + Kata / E2B | ToB high-security | True kernel isolation | Cost, operational overhead |
 | **Container** | Strong (namespace) | Fast (< 2 s) | Good with scale-to-zero | ACA, AKS | ToB / ToC | Mature ecosystem, OCI | Shared kernel |
 | **Process** | Weak (OS process) | Fastest (< 0.5 s) | Best | App Service, Functions | ToC low-risk | Minimal overhead | Noisy-neighbour risk |
@@ -51,11 +52,12 @@
 | **VM** | Strongest | Slowest (> 30 s) | Poorest | Azure VM | Niche / legacy | Full control | Cold-start, cost |
 | **Serverless** | Medium | Fast (< 2 s) | Best (pay-per-exec) | Azure Functions, ACA Jobs | ToC stateless | Zero infra ops | Stateless by design |
 
+
 ### 2.2 Azure Resource Comparison
 
 | Azure Resource | Technique | Isolation level | Scale-to-zero | State persistence | Entra ID integration | APIM integration | Best for |
 |---|---|---|---|---|---|---|---|
-| **Azure AI Foundry Agent Host** | Managed agent runtime | Managed (per-agent) | ✅ Native | ✅ Built-in | ✅ Native | ✅ Native | ToB managed, fastest on-ramp |
+| **Azure AI Foundry Host Agent** | Managed agent runtime | Managed (per-agent) | ✅ Native | ✅ Built-in | ✅ Native | ✅ Native | ToB managed, fastest on-ramp |
 | **ACA Sandbox** *(Public Preview)* | Container sandbox (OS-level gVisor isolation) | Strong (per-container) | ✅ Native | ✅ via Blob/Redis | ✅ Workload Identity | ✅ | ToC / ToB long-running agents; isolation without dedicated VMs |
 | **ACA Dynamic Sessions** | Container sandbox | Strong (per-session) | ✅ Native | ✅ via Blob/Redis | ✅ Workload Identity | ✅ | ToC short-lived / one-time code execution; not ideal for persistent long-running agents |
 | **AKS + self-built E2B** | Micro-VM or Container | Strongest | ✅ Custom | ✅ Custom | ✅ Workload Identity for Pods | ✅ | ToB high-security, full control |
@@ -72,7 +74,7 @@ Three complementary solutions are recommended, each optimised for a distinct ope
 
 | # | Solution | Scenario | Key reason |
 |---|---|---|---|
-| **A** | Azure AI Foundry Agent Host | ToB managed | Fully managed; native agent lifecycle, state, auth; fastest time-to-value |
+| **A** | Azure AI Foundry Host Agent | ToB managed | Fully managed; native agent lifecycle, state, auth; fastest time-to-value |
 | **B** | ACA Sandbox *(Public Preview)* | ToC / ToB long-running agents | OS-level container isolation via gVisor; long-running agent support; strong isolation without dedicated VMs; true scale-to-zero |
 | **C** | AKS + self-built E2B | ToB high-security | Maximum control; Micro-VM isolation via Kata Containers; custom networking and compliance |
 
@@ -89,7 +91,7 @@ Three complementary solutions are recommended, each optimised for a distinct ope
 
 The table below maps each technical requirement to the implementation approach for all three selected solutions.
 
-| # | Requirement | Foundry Agent Host (A) | ACA Sandbox — *Public Preview* (B) | AKS + E2B (C) |
+| # | Requirement | Foundry Host Agent (A) | ACA Sandbox — *Public Preview* (B) | AKS + E2B (C) |
 |---|---|---|---|---|
 | 1 | **State & context persistence** | Built-in agent state store (Cosmos/Blob) | Azure Managed Redis (context cache) + Azure Blob (snapshot) | Redis on AKS + Azure Blob via CSI driver |
 | 2 | **Fast start / scale-to-zero** | Native agent idle eviction + warm resume | ACA Sandbox container pool; idle timeout = 15 min; state flushed to Redis/Blob on scale-to-zero | KEDA-driven scale-to-zero; state checkpoint before pod termination; pre-warmed pool |
@@ -161,7 +163,7 @@ Key APIM policies applied to the LLM backend:
 
 ## 6. Solution Architectures
 
-### Solution A — Azure AI Foundry Agent Host (ToB Managed)
+### Solution A — Azure AI Foundry Host Agent (ToB Managed)
 
 ```mermaid
 flowchart TD
@@ -183,8 +185,8 @@ flowchart TD
 
 **Workflow:**
 1. User authenticates via Entra ID SSO; receives an access token.
-2. Client sends request to APIM; `validate-jwt` policy authenticates and routes to Foundry Agent Host endpoint.
-3. Foundry Agent Host looks up OpenClaw instance state in Redis (warm) or Blob (cold restore).
+2. Client sends request to APIM; `validate-jwt` policy authenticates and routes to Foundry Host Agent endpoint.
+3. Foundry Host Agent looks up OpenClaw instance state in Redis (warm) or Blob (cold restore).
 4. OpenClaw processes the request; calls LLM via APIM using its Managed Identity credential.
 5. APIM enforces per-agent token quota; routes to Azure OpenAI.
 6. Response streams back to user.
@@ -337,7 +339,7 @@ flowchart TD
 
 ---
 
-### Module 2 — Solution A: Foundry Agent Host (20 min)
+### Module 2 — Solution A: Foundry Host Agent (20 min)
 
 | Time | Activity |
 |---|---|
