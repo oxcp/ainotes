@@ -6,13 +6,15 @@
 - **Core challenges**: per-instance isolation, fast start / scale-to-zero, state persistence, Entra ID auth, and cost control.
 - **Top picks**: Azure AI Foundry Host Agent · Azure Container Apps Sandbox (Public Preview) · AKS + self-built E2B.
 - **Key patterns**: state snapshotted to Redis/Blob before scale-down, restored on warm-up; all LLM calls routed through Azure API Management (AI Gateway); each OpenClaw authenticates as its own Entra ID workload identity.
-- **Duration**: 90 minutes · Mid-level difficulty.
+- **Duration**: 120 minutes · Mid-level difficulty.
 
 ---
 
 ## 1. Target Scenarios
 
 ### 1.1 ToB — Enterprise / Business
+
+**Enterprise deployments prioritize security, governance, and strict tenant isolation. Multi-tenant SaaS platforms and large organizations require strong audit trails, compliance controls, and predictable scaling with reserved capacity.**
 
 | Dimension | Detail |
 |---|---|
@@ -25,6 +27,8 @@
 | Priority | Security · Governance · Reliability |
 
 ### 1.2 ToC — Consumer / End-user
+
+**Consumer deployments prioritize cost efficiency, speed, and simplicity. High volume of short-lived sessions, lighter isolation requirements, and aggressive scale-to-zero enable pay-per-use pricing models suitable for individual users and small teams.**
 
 | Dimension | Detail |
 |---|---|
@@ -169,7 +173,7 @@ Key APIM policies applied to the LLM backend:
 flowchart TD
     user["👤 Enterprise User\n(Entra ID SSO)"]
     apim["Azure API Management\n(AI Gateway)"]
-    foundry["Azure AI Foundry\nAgent Host"]
+    foundry["Azure AI Foundry\nHost Agent"]
     state["Azure Managed Redis\n+ Azure Blob Storage"]
     aoai["Azure OpenAI\n(GPT-4o)"]
     entra["Azure Entra ID\n(Managed Identity)"]
@@ -190,7 +194,7 @@ flowchart TD
 4. OpenClaw processes the request; calls LLM via APIM using its Managed Identity credential.
 5. APIM enforces per-agent token quota; routes to Azure OpenAI.
 6. Response streams back to user.
-7. If idle > 15 min, Agent Host evicts instance; state checkpointed to Blob.
+7. If idle > 15 min, Host Agent evicts instance; state checkpointed to Blob.
 
 ---
 
@@ -261,7 +265,7 @@ flowchart TD
 1. User authenticates; client presents token to APIM.
 2. APIM validates token; forwards to ACA Sessions manager with `session-id` header.
 3. Session manager looks up existing session (warm) or creates new container sandbox.
-4. OpenClaw container starts (< 2 s); loads state from Redis if TTL valid; else restores from Blob.
+4. OpenClaw container starts (< 2 s); loads state from Azure MnRedis if TTL valid; else restores from Blob.
 5. OpenClaw calls LLM via APIM using its UAMI credential.
 6. Idle detection: after 15 min, ACA evicts session; lifecycle hook flushes state to Redis + Blob.
 7. Next request restores from Redis (< 500 ms) or Blob (< 3 s).
@@ -308,7 +312,7 @@ flowchart TD
 
 ---
 
-## 7. Workshop Flow (90 minutes)
+## 7. Workshop Flow (120 minutes)
 
 ### Prerequisites (before workshop)
 
@@ -350,34 +354,34 @@ flowchart TD
 
 ---
 
-### Module 3 — Solution B: ACA Sandbox (15 min)
+### Module 3 — Solution B: ACA Sandbox (20 min)
 
 | Time | Activity |
 |---|---|
 | 0:50–0:55 | Create ACA Environment; enable Sandbox feature (note: Public Preview) |
 | 0:55–1:00 | Push OpenClaw container image to ACR; configure ACA app with Sandbox isolation and lifecycle hook (flush to Redis/Blob on scale-to-zero) |
 | 1:00–1:05 | Test end-to-end: send requests, observe container isolation, trigger idle timeout, verify state restore |
-
-> **Comparison moment:** briefly contrast ACA Sandbox (long-running agents, gVisor OS-level isolation) with ACA Dynamic Sessions (short-lived/one-time code execution, session-scoped containers) to reinforce when to use each.
-
----
-
-### Module 4 — Solution C: AKS + E2B (10 min, optional / demo)
-
-| Time | Activity |
-|---|---|
-| 1:05–1:10 | Walk through AKS cluster with KEDA and Kata Container runtime node pool |
-| 1:10–1:15 | Demo: E2B Sandbox Manager spawns Kata Container; KEDA scales to zero; cold restore from Blob |
+| 1:05–1:10 | Comparison moment: briefly contrast ACA Sandbox (long-running agents, gVisor OS-level isolation) with ACA Dynamic Sessions (short-lived/one-time code execution, session-scoped containers) |
 
 ---
 
-### Module 5 — Wrap-up and Q&A (15 min)
+### Module 4 — Solution C: AKS + E2B (20 min)
 
 | Time | Activity |
 |---|---|
-| 1:15–1:20 | Solution comparison recap; guidance on choosing A vs B (ACA Sandbox) vs C; when to consider ACA Dynamic Sessions |
-| 1:20–1:25 | Cost optimisation tips: Redis TTL tuning, Blob Cool tier, APIM Consumption SKU, KEDA scale rules |
-| 1:25–1:30 | Q&A and next steps (production hardening checklist) |
+| 1:10–1:15 | Walk through AKS cluster with KEDA and Kata Container runtime node pool |
+| 1:15–1:20 | Deploy E2B Sandbox Manager and OpenClaw workload to AKS |
+| 1:20–1:25 | Demo: E2B Sandbox Manager spawns Kata Container; KEDA scales to zero; cold restore from Blob |
+| 1:25–1:30 | Test end-to-end workflow and verify state checkpoint/restore |
+
+---
+
+### Module 5 — Wrap-up and Q&A (10 min)
+
+| Time | Activity |
+|---|---|
+| 1:30–1:35 | Solution comparison recap; guidance on choosing A vs B vs C; when to consider ACA Dynamic Sessions |
+| 1:35–2:00 | Cost optimisation tips: Redis TTL tuning, Blob Cool tier, APIM Consumption SKU, KEDA scale rules; Q&A and next steps (production hardening checklist) |
 
 ---
 
