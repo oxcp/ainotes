@@ -29,6 +29,8 @@
 | [module-04](./module-04/README.md) | Solution C: AKS + E2B | 30 min | README · deploy.sh · aks.bicep · e2b-manager.yaml · openclaw-deployment.yaml · keda-scaledobject.yaml · Dockerfile |
 | [module-05](./module-05/README.md) | Wrap-up and Q&A | 10 min | README |
 
+---
+
 ## Workshop structure
 ```
 agenthost/
@@ -67,4 +69,18 @@ agenthost/
 └── module-05/
     └── README.md                ← Comparison recap, decision guide, cost tips, prod checklist
 ```
+
+---
+
+## Tips
+- **Bicep IaC** — module-01 uses a subscription-scoped `main.bicep` that delegates to `core.bicep` (resource group scope); modules 02–04 each have self-contained deployment Bicep files targeting their respective Azure resources.
+
+- **Scale-to-zero lifecycle hook** — `lifecycle-hook.sh` (module-03, copied into module-04 build context) runs on SIGTERM, exporting agent state from Redis to Blob Storage before the container stops — implementing the AMR-first/Blob-fallback pattern described in the design doc.
+
+- **KEDA ScaledObject** (module-04) provides both HTTP-based and Redis list-based scaling triggers with a 30-minute cooldown, scaling `openclaw-agent` to zero on idle.
+
+- **Kata Container RuntimeClass** is defined in `openclaw-deployment.yaml` and applied to the agent workload node pool (tainted `kata=true:NoSchedule`).
+
+- **APIM XML policies** in modules 01 and 02 apply `validate-jwt`, `rate-limit-by-key`, retry with exponential back-off, and response caching.
+
 
