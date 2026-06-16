@@ -1,0 +1,63 @@
+# container-app.yaml — Module 3: ACA Container App manifest (YAML alternative)
+# Deploy with: az containerapp create --resource-group <rg> --environment <env> --yaml container-app.yaml
+
+name: openclaw-agent
+type: Microsoft.App/containerApps
+location: eastus
+identity:
+  type: UserAssigned
+  userAssignedIdentities:
+    /subscriptions/<subscriptionId>/resourceGroups/rg-openclaw-workshop/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-openclaw: {}
+properties:
+  environmentId: /subscriptions/<subscriptionId>/resourceGroups/rg-openclaw-workshop/providers/Microsoft.App/managedEnvironments/aca-env-openclaw
+  workloadProfileName: sandbox
+  configuration:
+    ingress:
+      external: true
+      targetPort: 8080
+      transport: http
+      allowInsecure: false
+    registries:
+      - server: acropenclaw.azurecr.io
+        identity: /subscriptions/<subscriptionId>/resourceGroups/rg-openclaw-workshop/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-openclaw
+    secrets:
+      - name: redis-conn
+        # Reference Key Vault secret for Redis connection string
+        keyVaultUrl: https://kv-openclaw.vault.azure.net/secrets/redis-connection-string
+        identity: /subscriptions/<subscriptionId>/resourceGroups/rg-openclaw-workshop/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-openclaw
+  template:
+    containers:
+      - name: openclaw-agent
+        image: acropenclaw.azurecr.io/openclaw-agent:latest
+        resources:
+          cpu: 1.0
+          memory: 2Gi
+        env:
+          - name: OPENCLAW_STATE_BACKEND
+            value: redis
+          - name: OPENCLAW_REDIS_CONNECTION
+            secretRef: redis-conn
+          - name: OPENCLAW_BLOB_CONTAINER
+            value: openclaw-state
+          - name: OPENCLAW_STORAGE_ACCOUNT
+            value: stcopenclaw
+          - name: OPENCLAW_APIM_ENDPOINT
+            value: https://apim-openclaw.azure-api.net
+          - name: AZURE_CLIENT_ID
+            value: <identityClientId>
+        probes:
+          - type: Liveness
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+    scale:
+      minReplicas: 0
+      maxReplicas: 10
+      rules:
+        - name: http-scaling
+          http:
+            metadata:
+              concurrentRequests: "10"
+    terminationGracePeriodSeconds: 60
