@@ -18,6 +18,15 @@
 
 ---
 
+## Prerequisites (before workshop)
+
+- Azure subscription with Contributor access
+- Azure CLI installed (`az login` completed)
+- Docker Desktop (for local image testing)
+- VS Code + Azure Container Apps extension
+
+---
+
 ## Workshop Modules
 
 | Module | Topic | Duration | Files |
@@ -82,5 +91,3 @@ agenthost/
 - **Kata Container RuntimeClass** is defined in `openclaw-deployment.yaml` and applied to the agent workload node pool (tainted `kata=true:NoSchedule`).
 
 - **APIM XML policies** in modules 01 and 02 apply `validate-jwt`, `rate-limit-by-key`, retry with exponential back-off, and response caching.
-
-

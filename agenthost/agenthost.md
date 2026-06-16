@@ -303,15 +303,6 @@ flowchart TD
 
 ## 7. Workshop Flow (120 minutes)
 
-### Prerequisites (before workshop)
-
-- Azure subscription with Contributor access
-- Azure CLI installed (`az login` completed)
-- Docker Desktop (for local image testing)
-- VS Code + Azure Container Apps extension
-
----
-
 ### Module 0 — Introduction (10 min)
 
 Problem framing and architecture overview. [See Module 0](./module-0/README.md)
