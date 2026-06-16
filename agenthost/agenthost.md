@@ -314,65 +314,37 @@ flowchart TD
 
 ### Module 0 — Introduction (10 min)
 
-| Time | Activity |
-|---|---|
-| 0:00–0:05 | Problem framing: what is OpenClaw? Why host AI agents on Azure? |
-| 0:05–0:10 | Architecture overview: three solutions, key components (APIM, Entra ID, state store) |
+Problem framing and architecture overview. [See Module 0](./module-0/README.md)
 
 ---
 
 ### Module 1 — Core Infrastructure Setup (20 min)
 
-| Time | Activity | Commands / Portal steps |
-|---|---|---|
-| 0:10–0:15 | Create Resource Group, Azure Managed Redis (Basic SKU), Azure Blob Storage | `az group create` · `az redis create` |
-| 0:15–0:20 | Deploy Azure API Management (Consumption tier for Solutions A/B; use a VNet-capable tier for Solution C) | Portal or `az apim create` |
-| 0:20–0:25 | Register Entra ID App; create User-Assigned Managed Identity for OpenClaw | `az ad app create` · `az identity create` |
-| 0:25–0:30 | Configure APIM `validate-jwt` policy and LLM backend (Azure OpenAI) | APIM policy editor |
+Deploy foundational Azure services: Resource Group, Managed Redis, Blob Storage, APIM, Entra ID, and Key Vault. [See Module 1](./module-1/README.md)
 
 ---
 
 ### Module 2 — Solution A: Foundry Host Agent (20 min)
 
-| Time | Activity |
-|---|---|
-| 0:30–0:35 | Create Azure AI Foundry project; configure agent runtime |
-| 0:35–0:40 | Deploy OpenClaw agent definition; set state store (Redis connection string via Key Vault reference) |
-| 0:40–0:45 | Assign Managed Identity to agent; test LLM call via APIM |
-| 0:45–0:50 | Trigger scale-to-zero; verify state checkpoint in Blob; restore and continue conversation |
+Host AI agents using Azure AI Foundry with integrated state management and scale-to-zero. [See Module 2](./module-2/README.md)
 
 ---
 
 ### Module 3 — Solution B: ACA Sandbox (30 min)
 
-| Time | Activity |
-|---|---|
-| 0:50–0:55 | Create ACA Environment; enable Sandbox feature (note: Public Preview) |
-| 0:55–1:00 | Push OpenClaw container image to ACR; configure ACA app with Sandbox isolation and lifecycle hook (flush AMR state to Blob on scale-to-zero) |
-| 1:00–1:05 | Test end-to-end: send requests, observe container isolation, trigger idle timeout, verify state restore |
-| 1:05–1:15 | Deep dive: Sandbox networking, resource limits, and debugging tools; hands-on configuration of scaling policies |
-| 1:15–1:20 | Comparison moment: briefly contrast ACA Sandbox (long-running agents, gVisor OS-level isolation) with ACA Dynamic Sessions (short-lived/one-time code execution, session-scoped containers) |
+Deploy agents in Azure Container Apps with gVisor-based sandbox isolation and dynamic scaling. [See Module 3](./module-3/README.md)
 
 ---
 
 ### Module 4 — Solution C: AKS + E2B (30 min)
 
-| Time | Activity |
-|---|---|
-| 1:20–1:25 | Walk through AKS cluster with KEDA and Kata Container runtime node pool |
-| 1:25–1:30 | Deploy E2B Sandbox Manager and OpenClaw workload to AKS |
-| 1:30–1:35 | Demo: E2B Sandbox Manager spawns Kata Container; KEDA scales to zero; cold restore from Blob |
-| 1:35–1:45 | Hands-on: Configure Kata Container resource limits, test multi-agent scaling, monitor KEDA metrics |
-| 1:45–1:50 | Test end-to-end workflow and verify state checkpoint/restore |
+Run agents on AKS with Kata Containers and KEDA-driven scale-to-zero orchestration. [See Module 4](./module-4/README.md)
 
 ---
 
 ### Module 5 — Wrap-up and Q&A (10 min)
 
-| Time | Activity |
-|---|---|
-| 1:50–1:55 | Solution comparison recap; guidance on choosing A vs B vs C; when to consider ACA Dynamic Sessions |
-| 1:55–2:00 | Cost optimisation tips: Redis TTL tuning, Blob Cool tier, APIM Consumption SKU, KEDA scale rules; Q&A and next steps (production hardening checklist) |
+Solution comparison, selection guidance, and cost optimisation strategies. [See Module 5](./module-5/README.md)
 
 ---
 
