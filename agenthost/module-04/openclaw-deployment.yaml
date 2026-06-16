@@ -1,0 +1,158 @@
+# openclaw-deployment.yaml — Module 4: OpenClaw agent workload on AKS
+# Deploys OpenClaw as a Kubernetes Deployment with Kata Container runtime class.
+# Replace <ACR_NAME>, <IMAGE_TAG>, and <NAMESPACE> before applying,
+# or use deploy.sh which performs sed substitution automatically.
+
+---
+# RuntimeClass for Kata Containers (Micro-VM isolation)
+apiVersion: node.k8s.io/v1
+kind: RuntimeClass
+metadata:
+  name: kata-containers
+handler: kata
+scheduling:
+  nodeSelector:
+    kata-containers: "true"
+  tolerations:
+    - key: kata
+      operator: Equal
+      value: "true"
+      effect: NoSchedule
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openclaw-agent
+  namespace: <NAMESPACE>
+  labels:
+    app: openclaw-agent
+    component: agent-runtime
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openclaw-agent
+  template:
+    metadata:
+      labels:
+        app: openclaw-agent
+        component: agent-runtime
+      annotations:
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: openclaw-sa
+      # Use Kata Container runtime for Micro-VM isolation
+      runtimeClassName: kata-containers
+      tolerations:
+        - key: kata
+          operator: Equal
+          value: "true"
+          effect: NoSchedule
+      # Pre-termination hook: checkpoint state to Blob before pod termination
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: openclaw-agent
+          image: <ACR_NAME>.azurecr.io/openclaw-agent:<IMAGE_TAG>
+          ports:
+            - containerPort: 8080
+              name: http
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/app/lifecycle-hook.sh"]
+          env:
+            - name: AGENT_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPENCLAW_STATE_BACKEND
+              value: "redis"
+            - name: OPENCLAW_REDIS_CONNECTION
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-redis
+                  key: connection-string
+            - name: OPENCLAW_STORAGE_ACCOUNT
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-config
+                  key: storage-account
+            - name: OPENCLAW_BLOB_CONTAINER
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-config
+                  key: blob-container
+            - name: OPENCLAW_APIM_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-config
+                  key: apim-endpoint
+            - name: OPENCLAW_REDIS_TTL_SECONDS
+              value: "3600"
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "2000m"
+              memory: "2Gi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openclaw-agent
+  namespace: <NAMESPACE>
+  labels:
+    app: openclaw-agent
+spec:
+  selector:
+    app: openclaw-agent
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: ClusterIP
+
+---
+# NetworkPolicy: restrict ingress to E2B Manager and APIM VNet gateway only
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: openclaw-agent-netpol
+  namespace: <NAMESPACE>
+spec:
+  podSelector:
+    matchLabels:
+      app: openclaw-agent
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: e2b-sandbox-manager
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    # Allow outbound to Redis (6380) and HTTPS (443) only
+    - ports:
+        - protocol: TCP
+          port: 6380
+        - protocol: TCP
+          port: 443

@@ -1,0 +1,140 @@
+# e2b-manager.yaml — Module 4: E2B Sandbox Manager deployment
+# Manages the lifecycle of Kata Container sandboxes for OpenClaw agents.
+# Replace <ACR_NAME>, <IMAGE_TAG>, and <NAMESPACE> before applying,
+# or use deploy.sh which performs sed substitution automatically.
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e2b-sandbox-manager
+  namespace: <NAMESPACE>
+  labels:
+    app: e2b-sandbox-manager
+    component: sandbox-control-plane
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: e2b-sandbox-manager
+  template:
+    metadata:
+      labels:
+        app: e2b-sandbox-manager
+        component: sandbox-control-plane
+      annotations:
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: openclaw-sa
+      containers:
+        - name: e2b-sandbox-manager
+          image: <ACR_NAME>.azurecr.io/openclaw-agent:<IMAGE_TAG>
+          command: ["python", "-m", "src.e2b_manager"]
+          ports:
+            - containerPort: 8090
+              name: http
+          env:
+            - name: E2B_MODE
+              value: "manager"
+            - name: OPENCLAW_NAMESPACE
+              value: "<NAMESPACE>"
+            - name: OPENCLAW_KATA_RUNTIME
+              value: "kata-containers"
+            - name: OPENCLAW_STATE_BACKEND
+              value: "redis"
+            - name: OPENCLAW_REDIS_CONNECTION
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-redis
+                  key: connection-string
+            - name: OPENCLAW_STORAGE_ACCOUNT
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-config
+                  key: storage-account
+            - name: OPENCLAW_BLOB_CONTAINER
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-config
+                  key: blob-container
+            - name: OPENCLAW_APIM_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-config
+                  key: apim-endpoint
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8090
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8090
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: e2b-sandbox-manager
+  namespace: <NAMESPACE>
+  labels:
+    app: e2b-sandbox-manager
+spec:
+  selector:
+    app: e2b-sandbox-manager
+  ports:
+    - protocol: TCP
+      port: 8090
+      targetPort: 8090
+  type: ClusterIP
+
+---
+# ServiceAccount for Workload Identity (OIDC federation with UAMI)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: openclaw-sa
+  namespace: <NAMESPACE>
+  annotations:
+    azure.workload.identity/client-id: "<IDENTITY_CLIENT_ID>"
+  labels:
+    azure.workload.identity/use: "true"
+
+---
+# ClusterRole to allow E2B Manager to create/delete pods (Kata sandboxes)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: e2b-sandbox-manager-role
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "pods/exec"]
+    verbs: ["get", "list", "watch", "create", "delete", "patch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: e2b-sandbox-manager-binding
+subjects:
+  - kind: ServiceAccount
+    name: openclaw-sa
+    namespace: <NAMESPACE>
+roleRef:
+  kind: ClusterRole
+  name: e2b-sandbox-manager-role
+  apiGroup: rbac.authorization.k8s.io
