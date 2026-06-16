@@ -94,7 +94,7 @@ TOKEN=$(az account get-access-token \
 
 # Send a test request through APIM
 curl -X POST "$APIM_ENDPOINT/llm-api/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-01" \
-  -H "Authorization: ******" \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -H "x-agent-id: openclaw-test-001" \
   -d '{"messages":[{"role":"user","content":"Hello from OpenClaw!"}],"max_tokens":100}'

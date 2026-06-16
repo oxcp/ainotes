@@ -45,7 +45,7 @@ REDIS_HOST=$(az redis show \
   --query hostName \
   --output tsv)
 
-REDIS_CONN="${REDIS_HOST}:6380,******"
+REDIS_CONN="${REDIS_HOST}:6380,${REDIS_KEY},ssl=True,abortConnect=False"
 
 echo "==> [4/6] Granting AcrPull role to UAMI"
 IDENTITY_PRINCIPAL=$(az identity show \

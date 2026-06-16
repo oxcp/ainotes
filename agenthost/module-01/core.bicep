@@ -1,6 +1,8 @@
 // core.bicep — Module 1: Shared resource deployments within the resource group
 // Called as a module from main.bicep (targetScope = resourceGroup).
 
+targetScope = 'resourceGroup'
+
 param location string
 param redisName string
 param storageAccountName string

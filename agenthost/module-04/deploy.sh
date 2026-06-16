@@ -81,7 +81,7 @@ REDIS_HOST=$(az redis show \
 
 kubectl create secret generic openclaw-redis \
   --namespace "$NAMESPACE" \
-  --from-literal=connection-string="${REDIS_HOST}:6380,******" \
+  --from-literal=connection-string="${REDIS_HOST}:6380,${REDIS_KEY},ssl=True,abortConnect=False" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 kubectl create secret generic openclaw-config \

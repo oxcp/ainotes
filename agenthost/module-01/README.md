@@ -87,7 +87,8 @@ az apim api policy create \
 | File | Description |
 |---|---|
 | `setup.sh` | Automated bash script for full infrastructure setup |
-| `main.bicep` | Bicep IaC template for all shared Azure resources |
+| `main.bicep` | Bicep subscription-scoped entry point (creates Resource Group, calls core.bicep) |
+| `core.bicep` | Bicep IaC template for all shared Azure resources (Redis, Storage, APIM, UAMI) |
 | `apim-policy.xml` | APIM policy: `validate-jwt`, rate-limit, retry, Azure OpenAI backend |
 
 ---

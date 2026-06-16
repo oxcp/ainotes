@@ -24,7 +24,8 @@ COPY --from=builder /app/deps /app/deps
 COPY --from=builder /app/src /app/src
 
 # Lifecycle hook: flush state to Blob on SIGTERM (pre-termination hook)
-COPY ../module-03/lifecycle-hook.sh /app/lifecycle-hook.sh
+# lifecycle-hook.sh is shared with module-03; copy it into this build context before building.
+COPY lifecycle-hook.sh /app/lifecycle-hook.sh
 RUN chmod +x /app/lifecycle-hook.sh
 
 ENV PYTHONPATH="/app/deps"

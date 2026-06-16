@@ -41,7 +41,7 @@ REDIS_HOST=$(az redis show \
 az keyvault secret set \
   --vault-name "$KV_NAME" \
   --name "redis-connection-string" \
-  --value "${REDIS_HOST}:6380,******" \
+  --value "${REDIS_HOST}:6380,${REDIS_KEY},ssl=True,abortConnect=False" \
   --output none
 
 # Grant the UAMI read access to Key Vault secrets
@@ -82,7 +82,11 @@ az ml agent create \
   --resource-group "$RESOURCE_GROUP" \
   --workspace-name "$FOUNDRY_PROJECT_NAME" \
   --file agent-definition.json \
-  --output none || echo "    Note: az ml agent CLI extension may not be installed. Deploy via Azure Portal or REST API."
+  --output none || {
+  echo "    Note: az ml agent CLI extension not found."
+  echo "    Install it with: az extension add --name ml"
+  echo "    Or deploy via the Azure Portal: AI Foundry > Project > Agents > New Agent"
+}
 
 echo "==> [5/5] Granting UAMI Blob Data Contributor role on Storage"
 STORAGE_SCOPE=$(az storage account show \
