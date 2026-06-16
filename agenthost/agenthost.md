@@ -1,21 +1,5 @@
 # OpenClaw Hosting on Azure Workshop
 
-## Outline
-
-- **Target Scenarios**: Two deployment profiles (ToB Enterprise vs. ToC Consumer) with distinct priorities for isolation, scale, auth, and cost.
-- **Hosting Techniques**: Options compared across isolation, cold-start, cost efficiency, and Azure fit.
-- **Solutions Selected**:
-  - **Solution A**: Azure AI Foundry Host Agent (ToB managed) — fastest on-ramp, native state & auth.
-  - **Solution B**: ACA Sandbox (ToC/ToB long-running agents) — OS-level gVisor isolation, true serverless, public preview.
-  - **Solution C**: AKS + E2B (ToB high-security) — maximum control, Kata Container micro-VMs, custom networking.
-- **Implemented Features**: Requirement mapping across state persistence, scale-to-zero, isolation, auth, and AI Gateway integration.
-- **Technical Considerations**: State persistence design (AMR hot / Blob cold), fast-start optimisation, Entra ID auth architecture, APIM AI Gateway pattern.
-- **Architectures & Workflows**: Architecture diagrams and step-by-step flows for each solution.
-- **Workshop Schedule**: 120-minute hands-on covering core infra setup, all selected solutions, and wrap-up with cost-saving levers.
-- **Cost Saving Consideration**： Cost saving approaches with fittable solutions
-
----
-
 ## 1. Target Scenarios
 
 ### 1.1 ToB — Enterprise / Business
