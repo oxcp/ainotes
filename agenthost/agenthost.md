@@ -1,12 +1,18 @@
-# OpenClaw Hosting on Azure — Workshop Design
+# OpenClaw Hosting on Azure Workshop
 
 ## Outline
 
-- **Target**: Deploy AI-agent workloads (OpenClaw) on Azure for both enterprise (ToB) and consumer (ToC) scenarios.
-- **Core challenges**: per-instance isolation, fast start / scale-to-zero, state persistence, Entra ID auth, and cost control.
-- **Top picks**: Azure AI Foundry Host Agent · Azure Container Apps Sandbox (Public Preview) · AKS + self-built E2B.
-- **Key patterns**: state persisted to Azure Managed Redis (AMR) + Blob during active runtime, flushed from AMR to Blob before scale-down, and restored from AMR-first with Blob fallback on startup; all LLM calls routed through Azure API Management (AI Gateway); each OpenClaw authenticates as its own Entra ID workload identity.
-- **Duration**: 120 minutes · Mid-level difficulty.
+- **Target Scenarios**: Two deployment profiles (ToB Enterprise vs. ToC Consumer) with distinct priorities for isolation, scale, auth, and cost.
+- **Hosting Techniques**: Options compared across isolation, cold-start, cost efficiency, and Azure fit (e.g., AI Foundry Host Agent, Containers, Sandbox, Micro-VMs).
+- **Solutions Selected**:
+  - **Solution A**: Azure AI Foundry Host Agent (ToB managed) — fastest on-ramp, native state & auth.
+  - **Solution B**: ACA Sandbox (ToC/ToB long-running agents) — OS-level gVisor isolation, true serverless, public preview.
+  - **Solution C**: AKS + E2B (ToB high-security) — maximum control, Kata Container micro-VMs, custom networking.
+- **Implemented Features**: Requirement mapping across state persistence, scale-to-zero, isolation, auth, and AI Gateway integration.
+- **Technical Considerations**: State persistence design (AMR hot / Blob cold), fast-start optimisation, Entra ID auth architecture, APIM AI Gateway pattern.
+- **Architectures & Workflows**: Detailed mermaid diagrams and step-by-step flows for each solution.
+- **Workshop Schedule**: 120-minute hands-on covering core infra setup, all three solutions, and wrap-up with cost-saving levers.
+- **Cost Saving Consideration**： Cost saving approaches with fittable solutions
 
 ---
 
