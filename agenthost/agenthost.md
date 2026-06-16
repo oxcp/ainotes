@@ -1,4 +1,4 @@
-# OpenClaw Hosting on Azure Workshop
+# OpenClaw Hosting on Azure Workshop Design
 
 ## 1. Target Scenarios
 
@@ -305,37 +305,37 @@ flowchart TD
 
 ### Module 0 — Introduction (10 min)
 
-Problem framing and architecture overview. [See Module 0](./module-0/README.md)
+Problem framing and architecture overview. [See Module 0](./module-00/README.md)
 
 ---
 
 ### Module 1 — Core Infrastructure Setup (20 min)
 
-Deploy foundational Azure services: Resource Group, Managed Redis, Blob Storage, APIM, Entra ID, and Key Vault. [See Module 1](./module-1/README.md)
+Deploy foundational Azure services: Resource Group, Managed Redis, Blob Storage, APIM, Entra ID, and Key Vault. [See Module 1](./module-01/README.md)
 
 ---
 
 ### Module 2 — Solution A: Foundry Host Agent (20 min)
 
-Host AI agents using Azure AI Foundry with integrated state management and scale-to-zero. [See Module 2](./module-2/README.md)
+Host AI agents using Azure AI Foundry with integrated state management and scale-to-zero. [See Module 2](./module-02/README.md)
 
 ---
 
 ### Module 3 — Solution B: ACA Sandbox (30 min)
 
-Deploy agents in Azure Container Apps with gVisor-based sandbox isolation and dynamic scaling. [See Module 3](./module-3/README.md)
+Deploy agents in Azure Container Apps with gVisor-based sandbox isolation and dynamic scaling. [See Module 3](./module-03/README.md)
 
 ---
 
 ### Module 4 — Solution C: AKS + E2B (30 min)
 
-Run agents on AKS with Kata Containers and KEDA-driven scale-to-zero orchestration. [See Module 4](./module-4/README.md)
+Run agents on AKS with Kata Containers and KEDA-driven scale-to-zero orchestration. [See Module 4](./module-04/README.md)
 
 ---
 
 ### Module 5 — Wrap-up and Q&A (10 min)
 
-Solution comparison, selection guidance, and cost optimisation strategies. [See Module 5](./module-5/README.md)
+Solution comparison, selection guidance, and cost optimisation strategies. [See Module 5](./module-05/README.md)
 
 ---
 
