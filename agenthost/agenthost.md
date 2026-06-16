@@ -5,7 +5,7 @@
 - **Target**: Deploy AI-agent workloads (OpenClaw) on Azure for both enterprise (ToB) and consumer (ToC) scenarios.
 - **Core challenges**: per-instance isolation, fast start / scale-to-zero, state persistence, Entra ID auth, and cost control.
 - **Top picks**: Azure AI Foundry Host Agent · Azure Container Apps Sandbox (Public Preview) · AKS + self-built E2B.
-- **Key patterns**: state snapshotted to Redis/Blob before scale-down, restored on warm-up; all LLM calls routed through Azure API Management (AI Gateway); each OpenClaw authenticates as its own Entra ID workload identity.
+- **Key patterns**: state persisted to Azure Managed Redis (AMR) + Blob during active runtime, flushed from AMR to Blob before scale-down, and restored from AMR-first with Blob fallback on startup; all LLM calls routed through Azure API Management (AI Gateway); each OpenClaw authenticates as its own Entra ID workload identity.
 - **Duration**: 120 minutes · Mid-level difficulty.
 
 ---
@@ -98,12 +98,12 @@ The table below maps each technical requirement to the implementation approach f
 | # | Requirement | Foundry Host Agent (A) | ACA Sandbox — *Public Preview* (B) | AKS + E2B (C) |
 |---|---|---|---|---|
 | 1 | **State & context persistence** | Built-in agent state store (Cosmos/Blob) | Azure Managed Redis (context cache) + Azure Blob (snapshot) | Redis on AKS + Azure Blob via CSI driver |
-| 2 | **Fast start / scale-to-zero** | Native agent idle eviction + warm resume | ACA Sandbox container pool; idle timeout = 15 min; state flushed to Redis/Blob on scale-to-zero | KEDA-driven scale-to-zero; state checkpoint before pod termination; pre-warmed pool |
+| 2 | **Fast start / scale-to-zero** | Native agent idle eviction + warm resume | ACA Sandbox container pool; idle timeout = 30 min; state flushed from AMR to Blob on scale-to-zero | KEDA-driven scale-to-zero; state checkpoint before pod termination; pre-warmed pool |
 | 3 | **Isolation** | Per-agent managed sandbox | Per-container OS-level isolation via gVisor (syscall interception); no dedicated VM required | Kata Container Micro-VM per OpenClaw; NetworkPolicy + Namespace isolation |
 | 4 | **Entra ID authentication** | Native AAD integration; user-assigned Managed Identity | ACA Workload Identity (UAMI) + Entra ID token validation at ingress | AAD Workload Identity for Pods; ingress auth via Entra ID App Registration |
 | 5 | **AI Gateway (APIM)** | APIM policy routes all LLM calls; token quota per agent | APIM gateway policy; JWT validation; rate-limiting per container | APIM deployed in VNet; each AKS pod calls APIM internal endpoint |
 | 6 | **OpenClaw-to-Gateway auth** | Managed Identity credential → APIM subscription key + OAuth | UAMI credential; APIM validates Entra ID token via validate-jwt policy | Pod Workload Identity → Entra token → APIM OAuth 2.0 token validation |
-| 7 | **Cost saving** | Scale-to-zero after 15 min idle; pay per agent execution | True serverless; container destroyed after idle; Redis TTL auto-evicts stale state | KEDA zero-scale; Spot Node Pool for worker nodes; Redis Basic SKU for dev |
+| 7 | **Cost saving** | Scale-to-zero after 30 min idle; pay per agent execution | True serverless; container destroyed after idle; Redis TTL auto-evicts stale state | KEDA zero-scale; Spot Node Pool for worker nodes; Redis Basic SKU for dev |
 
 ---
 
@@ -113,18 +113,17 @@ The table below maps each technical requirement to the implementation approach f
 
 ```
 Lifecycle event          Action
-─────────────────────    ──────────────────────────────────────────
-New OpenClaw started  →  Load state from Redis (TTL 24 h) or Blob
-Active conversation   →  Write-through to Redis (hot cache)
-Scale-to-zero trigger →  Flush Redis state → snapshot to Azure Blob
+─────────────────────    ─────────────────────────────────────────────────────────
+New OpenClaw started  →  Load state from Azure Managed Redis (AMR) first;
+                         if not found, restore from Blob
+Active conversation   →  Persist state to AMR + Blob (dual-write)
+Scale-to-zero trigger →  Flush latest state from AMR to Azure Blob
                          (versioned, immutable, cost-effective long-term)
-New request arrives   →  Restore from Redis if still warm,
-                         else restore from Blob → warm Redis
+New request arrives   →  Restore from AMR first; fallback to Blob if AMR miss
 ```
 
 > **Recommended storage per tier**
 > - **Hot** (active session): Azure Managed Redis (choose an HA tier for automatic failover) — sub-millisecond latency.
-> - **Warm** (idle < 24 h): Redis with TTL.
 > - **Cold** (archived / scale-to-zero): Azure Blob Storage (Cool tier), versioned containers.
 
 ### 5.2 Fast-Start Optimisation
@@ -190,11 +189,11 @@ flowchart TD
 **Workflow:**
 1. User authenticates via Entra ID SSO; receives an access token.
 2. Client sends request to APIM; `validate-jwt` policy authenticates and routes to Foundry Host Agent endpoint.
-3. Foundry Host Agent looks up OpenClaw instance state in Redis (warm) or Blob (cold restore).
+3. Foundry Host Agent loads OpenClaw instance state from AMR first, then Blob if AMR has no state.
 4. OpenClaw processes the request; calls LLM via APIM using its Managed Identity credential.
 5. APIM enforces per-agent token quota; routes to Azure OpenAI.
 6. Response streams back to user.
-7. If idle > 15 min, Host Agent evicts instance; state checkpointed to Blob.
+7. If idle > 30 min, Host Agent evicts instance; state flushed from AMR and checkpointed to Blob.
 
 ---
 
@@ -229,10 +228,10 @@ flowchart TD
 1. User authenticates; client presents token to APIM.
 2. APIM validates token; routes to the ACA Sandbox-enabled container environment with `agent-id` header.
 3. ACA resolves the target agent container — resumes existing (warm) or starts a new gVisor-isolated container.
-4. OpenClaw container loads state from Redis if TTL valid; else restores from Blob.
+4. OpenClaw container loads state from AMR first; if not found, restores from Blob.
 5. OpenClaw processes the request; calls LLM via APIM using its UAMI credential.
-6. Idle detection: after 15 min, ACA scales the container to zero; lifecycle hook flushes state to Redis + Blob.
-7. Next request restores from Redis (< 500 ms) or Blob (< 3 s).
+6. Idle detection: after 30 min, ACA scales the container to zero; lifecycle hook flushes state from AMR to Blob.
+7. Next request restores from AMR (< 500 ms) or Blob (< 3 s).
 
 ---
 
@@ -265,10 +264,10 @@ flowchart TD
 1. User authenticates; client presents token to APIM.
 2. APIM validates token; forwards to ACA Sessions manager with `session-id` header.
 3. Session manager looks up existing session (warm) or creates new container sandbox.
-4. OpenClaw container starts (< 2 s); loads state from Azure MnRedis if TTL valid; else restores from Blob.
+4. OpenClaw container starts (< 2 s); loads state from AMR first; else restores from Blob.
 5. OpenClaw calls LLM via APIM using its UAMI credential.
-6. Idle detection: after 15 min, ACA evicts session; lifecycle hook flushes state to Redis + Blob.
-7. Next request restores from Redis (< 500 ms) or Blob (< 3 s).
+6. Idle detection: after 30 min, ACA evicts session; lifecycle hook flushes state from AMR to Blob.
+7. Next request restores from AMR (< 500 ms) or Blob (< 3 s).
 
 ---
 
@@ -308,7 +307,7 @@ flowchart TD
 5. If cold (KEDA scaled to zero): Sandbox Manager starts new Kata Container, restores Blob snapshot to Redis, then Redis → container memory.
 6. OpenClaw processes request; issues LLM call to APIM private endpoint using Workload Identity credential.
 7. APIM validates token, enforces quota, routes to Azure OpenAI private endpoint.
-8. KEDA monitors queue depth; scales Kata Containers to zero after 15 min idle; pre-termination hook checkpoints state to Blob.
+8. KEDA monitors queue depth; scales Kata Containers to zero after 30 min idle; pre-termination hook checkpoints state to Blob.
 
 ---
 
@@ -359,7 +358,7 @@ flowchart TD
 | Time | Activity |
 |---|---|
 | 0:50–0:55 | Create ACA Environment; enable Sandbox feature (note: Public Preview) |
-| 0:55–1:00 | Push OpenClaw container image to ACR; configure ACA app with Sandbox isolation and lifecycle hook (flush to Redis/Blob on scale-to-zero) |
+| 0:55–1:00 | Push OpenClaw container image to ACR; configure ACA app with Sandbox isolation and lifecycle hook (flush AMR state to Blob on scale-to-zero) |
 | 1:00–1:05 | Test end-to-end: send requests, observe container isolation, trigger idle timeout, verify state restore |
 | 1:05–1:10 | Comparison moment: briefly contrast ACA Sandbox (long-running agents, gVisor OS-level isolation) with ACA Dynamic Sessions (short-lived/one-time code execution, session-scoped containers) |
 
