@@ -353,25 +353,27 @@ flowchart TD
 
 ---
 
-### Module 3 — Solution B: ACA Sandbox (20 min)
+### Module 3 — Solution B: ACA Sandbox (30 min)
 
 | Time | Activity |
 |---|---|
 | 0:50–0:55 | Create ACA Environment; enable Sandbox feature (note: Public Preview) |
 | 0:55–1:00 | Push OpenClaw container image to ACR; configure ACA app with Sandbox isolation and lifecycle hook (flush AMR state to Blob on scale-to-zero) |
 | 1:00–1:05 | Test end-to-end: send requests, observe container isolation, trigger idle timeout, verify state restore |
-| 1:05–1:10 | Comparison moment: briefly contrast ACA Sandbox (long-running agents, gVisor OS-level isolation) with ACA Dynamic Sessions (short-lived/one-time code execution, session-scoped containers) |
+| 1:05–1:15 | Deep dive: Sandbox networking, resource limits, and debugging tools; hands-on configuration of scaling policies |
+| 1:15–1:20 | Comparison moment: briefly contrast ACA Sandbox (long-running agents, gVisor OS-level isolation) with ACA Dynamic Sessions (short-lived/one-time code execution, session-scoped containers) |
 
 ---
 
-### Module 4 — Solution C: AKS + E2B (20 min)
+### Module 4 — Solution C: AKS + E2B (30 min)
 
 | Time | Activity |
 |---|---|
-| 1:10–1:15 | Walk through AKS cluster with KEDA and Kata Container runtime node pool |
-| 1:15–1:20 | Deploy E2B Sandbox Manager and OpenClaw workload to AKS |
-| 1:20–1:25 | Demo: E2B Sandbox Manager spawns Kata Container; KEDA scales to zero; cold restore from Blob |
-| 1:25–1:30 | Test end-to-end workflow and verify state checkpoint/restore |
+| 1:20–1:25 | Walk through AKS cluster with KEDA and Kata Container runtime node pool |
+| 1:25–1:30 | Deploy E2B Sandbox Manager and OpenClaw workload to AKS |
+| 1:30–1:35 | Demo: E2B Sandbox Manager spawns Kata Container; KEDA scales to zero; cold restore from Blob |
+| 1:35–1:45 | Hands-on: Configure Kata Container resource limits, test multi-agent scaling, monitor KEDA metrics |
+| 1:45–1:50 | Test end-to-end workflow and verify state checkpoint/restore |
 
 ---
 
@@ -379,22 +381,21 @@ flowchart TD
 
 | Time | Activity |
 |---|---|
-| 1:30–1:35 | Solution comparison recap; guidance on choosing A vs B vs C; when to consider ACA Dynamic Sessions |
-| 1:35–2:00 | Cost optimisation tips: Redis TTL tuning, Blob Cool tier, APIM Consumption SKU, KEDA scale rules; Q&A and next steps (production hardening checklist) |
+| 1:50–1:55 | Solution comparison recap; guidance on choosing A vs B vs C; when to consider ACA Dynamic Sessions |
+| 1:55–2:00 | Cost optimisation tips: Redis TTL tuning, Blob Cool tier, APIM Consumption SKU, KEDA scale rules; Q&A and next steps (production hardening checklist) |
 
 ---
 
-## 8. Cost Saving Summary
+## 8. Cost Saving Consideration
 
 | Lever | Impact | Applies to |
 |---|---|---|
-| Scale-to-zero (15-min idle) | Eliminate compute cost during off-hours | A · B · C |
+| Scale-to-zero (30-min idle) | Eliminate compute cost during off-hours | A · B · C |
 | APIM Consumption SKU | Pay per call; no gateway idle cost | A · B · C |
 | Azure Managed Redis Basic | ~60 % cheaper than Standard for dev/test | A · B · C |
 | Blob Cool tier for cold state | ~50 % cheaper than Hot tier | A · B · C |
 | AKS Spot Node Pool | Up to 90 % discount for interruptible workloads | C |
 | Azure OpenAI PTU (reserved) | Predictable cost for high-volume ToB | A · B · C |
-| Redis TTL eviction (24 h) | Auto-clean stale state; avoid unbounded growth | A · B |
 
 ---
 
