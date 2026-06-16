@@ -339,17 +339,4 @@ Solution comparison, selection guidance, and cost optimisation strategies. [See 
 
 ---
 
-## 8. Cost Saving Consideration
-
-| Lever | Impact | Applies to |
-|---|---|---|
-| Scale-to-zero (30-min idle) | Eliminate compute cost during off-hours | A · B · C |
-| APIM Consumption SKU | Pay per call; no gateway idle cost | A · B · C |
-| Azure Managed Redis Basic | ~60 % cheaper than Standard for dev/test | A · B · C |
-| Blob Cool tier for cold state | ~50 % cheaper than Hot tier | A · B · C |
-| AKS Spot Node Pool | Up to 90 % discount for interruptible workloads | C |
-| Azure OpenAI PTU (reserved) | Predictable cost for high-volume ToB | A · B · C |
-
----
-
 *Document version 1.0 — prepared for the Azure AI Agent Hosting Workshop*
