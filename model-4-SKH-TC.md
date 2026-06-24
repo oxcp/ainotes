@@ -93,15 +93,48 @@
 ---
 
 ## 模型API輸出
-| 模型                   | 本质类型                                    | API主要输出             | 是否需要处理向量 |
+| 模型                   | 本質類型                                    | API主要輸出             | 是否需要處理向量 |
 | -------------------- | --------------------------------------- | ------------------- | -------- |
 | Virchow Family       | Pathology Foundation Model（Embedding）   | Pathology Embedding | ❌ 需要     |
 | RAD-DINO             | Medical Image Encoder（Embedding）        | Image Embedding     | ❌ 需要     |
-| FCDD                 | Anomaly Detection Model                 | 异常分数+热力图            | ✅ 不需要    |
-| MedImageParse Family | Segmentation/Detection Foundation Model | 分割Mask、检测框、识别结果     | ✅ 不需要    |
-| PRISM                | Multimodal Generative Foundation Model  | 报告、癌症分类、Biomarker预测 | ✅ 不需要    |
+| FCDD                 | Anomaly Detection Model                 | 異常分數+熱力圖            | ✅ 不需要    |
+| MedImageParse Family | Segmentation/Detection Foundation Model | 分割Mask、偵測框、識別結果     | ✅ 不需要    |
+| PRISM                | Multimodal Generative Foundation Model  | 報告、癌症分類、Biomarker預測 | ✅ 不需要    |
 | Prov-GigaPath        | Whole-slide Foundation Model（Embedding） | Slide Embedding     | ❌ 需要     |
-| CXR ReportGen        | Image→Report Generation Model           | 结构化放射报告             | ✅ 不需要    |
+| CXR ReportGen        | Image→Report Generation Model           | 結構化放射報告             | ✅ 不需要    |
+
+**提示：**
+
+根據API返回數據的使用方式，可依照以下方式分類：
+
+第一類：直接返回結果
+
+✅ PRISM
+
+✅ CXR ReportGen
+
+✅ FCDD
+
+✅ MedImageParse
+
+第二類：返回 Embedding，需要後續處理
+
+❌ Virchow Family
+
+❌ RAD-DINO
+
+❌ Prov-GigaPath
+
+**總結：**
+- Virchow、RAD-DINO、Prov-GigaPath 屬於「編碼器（Encoder）／Embedding 模型」，主要輸出特徵向量，需要搭配下游分類器、檢索系統或微調模型才能產生最終結果。
+- FCDD、MedImageParse 屬於「任務型模型（Task Model）」，可直接輸出異常檢測、分割（Segmentation）或識別結果。
+- PRISM、CXR ReportGen 則屬於「生成式診斷模型（Generative Diagnostic Model）」，最符合「呼叫 API 後直接取得結果」的使用模式，例如：
+  - 癌症檢測
+  - 癌症分型（Subtyping）
+  - 生物標記（Biomarker）預測
+  - 病理報告生成
+  - 胸部 X 光報告生成
+  - 放射學診斷結果生成
 
 ---
 
