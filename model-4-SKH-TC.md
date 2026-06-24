@@ -92,6 +92,19 @@
 
 ---
 
+## 模型API輸出
+| 模型                   | 本质类型                                    | API主要输出             | 是否需要处理向量 |
+| -------------------- | --------------------------------------- | ------------------- | -------- |
+| Virchow Family       | Pathology Foundation Model（Embedding）   | Pathology Embedding | ❌ 需要     |
+| RAD-DINO             | Medical Image Encoder（Embedding）        | Image Embedding     | ❌ 需要     |
+| FCDD                 | Anomaly Detection Model                 | 异常分数+热力图            | ✅ 不需要    |
+| MedImageParse Family | Segmentation/Detection Foundation Model | 分割Mask、检测框、识别结果     | ✅ 不需要    |
+| PRISM                | Multimodal Generative Foundation Model  | 报告、癌症分类、Biomarker预测 | ✅ 不需要    |
+| Prov-GigaPath        | Whole-slide Foundation Model（Embedding） | Slide Embedding     | ❌ 需要     |
+| CXR ReportGen        | Image→Report Generation Model           | 结构化放射报告             | ✅ 不需要    |
+
+---
+
 ## 廠商影像的適應性
 | 模型名稱            | 是否報告廠商差異 | 訓練資料來源                                   | 潛在影響因素                                         |
 |---------------------|------------------|-----------------------------------------------|------------------------------------------------------|
