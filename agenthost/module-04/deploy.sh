@@ -99,7 +99,8 @@ sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|${IMAGE_TAG}|g; s|<NAMESPACE>|${N
 sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|${IMAGE_TAG}|g; s|<NAMESPACE>|${NAMESPACE}|g" \
   agent-deployment.yaml | kubectl apply -f -
 
-kubectl apply -f keda-scaledobject.yaml
+sed "s|<NAMESPACE>|${NAMESPACE}|g" \
+  keda-scaledobject.yaml | kubectl apply -f -
 
 echo "==> [8/8] Waiting for E2B Manager to be ready"
 kubectl rollout status deployment/e2b-sandbox-manager \
