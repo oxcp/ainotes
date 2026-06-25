@@ -30,15 +30,15 @@ if ! az login --identity --username "${AZURE_CLIENT_ID:-}" --allow-no-subscripti
   echo "[lifecycle-hook] WARNING: UAMI authentication failed. Blob upload may fail."
 fi
 
-# Export agent state from Redis to a local JSON file via the agent CLI
-# The agent process must support: agent state export --agent-id <id> --output <file>
-if command -v agent &>/dev/null; then
-  agent state export \
+# Export agent state from Redis to a local JSON file via the agent-host CLI
+# The agent process must support: agent-host state export --agent-id <id> --output <file>
+if command -v agent-host &>/dev/null; then
+  agent-host state export \
     --agent-id "$AGENT_ID" \
     --output "$STATE_FILE" \
     --redis-connection "${AGENT_REDIS_CONNECTION:-}"
 else
-  echo "[lifecycle-hook] WARNING: agent CLI not found; attempting fallback Python export"
+  echo "[lifecycle-hook] WARNING: agent-host CLI not found; attempting fallback Python export"
   python3 -c "
 import os, json, redis, sys
 conn = os.environ.get('AGENT_REDIS_CONNECTION', '')

@@ -27,7 +27,7 @@
       </issuers>
       <required-claims>
         <claim name="roles" match="any">
-          <value>Agent.Invoke</value>
+          <value>AgentHost.Invoke</value>
         </claim>
       </required-claims>
     </validate-jwt>
