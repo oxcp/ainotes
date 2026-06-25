@@ -39,6 +39,12 @@ IDENTITY_ID=$(az identity show \
   --query id \
   --output tsv)
 
+IDENTITY_CLIENT_ID=$(az identity show \
+  --resource-group "$RESOURCE_GROUP" \
+  --name "$IDENTITY_NAME" \
+  --query clientId \
+  --output tsv)
+
 az deployment group create \
   --resource-group "$RESOURCE_GROUP" \
   --template-file aks.bicep \
@@ -93,7 +99,7 @@ kubectl create secret generic agent-config \
 
 echo "==> [7/8] Deploying E2B Sandbox Manager and agent workload"
 # Replace ACR_NAME placeholder in manifests
-sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|${IMAGE_TAG}|g; s|<NAMESPACE>|${NAMESPACE}|g" \
+sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|${IMAGE_TAG}|g; s|<NAMESPACE>|${NAMESPACE}|g; s|<IDENTITY_CLIENT_ID>|${IDENTITY_CLIENT_ID}|g" \
   e2b-manager.yaml | kubectl apply -f -
 
 sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|${IMAGE_TAG}|g; s|<NAMESPACE>|${NAMESPACE}|g" \
