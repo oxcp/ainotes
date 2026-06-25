@@ -13,10 +13,10 @@ apiVersion: http.keda.sh/v1alpha1
 kind: HTTPScaledObject
 metadata:
   name: agent-host-http-scaler
-  namespace: <NAMESPACE>
+  namespace: <NAMESPACE>  # substituted by deploy.sh
 spec:
   hosts:
-    - agent-host.agent.svc.cluster.local
+    - agent-host.<NAMESPACE>.svc.cluster.local
   targetPendingRequests: 10
   scaledownPeriod: 1800   # 30 minutes idle → scale to zero
   scaleTargetRef:
