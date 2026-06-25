@@ -114,14 +114,22 @@ kubectl create secret generic agent-redis \
   --from-literal=connection-string="${REDIS_HOST}:6380,******" \
   --dry-run=client -o yaml | kubectl apply -f -
 
+IDENTITY_CLIENT_ID=$(az identity show \
+  --resource-group "$RESOURCE_GROUP" \
+  --name "$IDENTITY_NAME" \
+  --query clientId --output tsv)
+
 # Deploy E2B Sandbox Manager
-kubectl apply -f e2b-manager.yaml
+sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|${IMAGE_TAG}|g; s|<NAMESPACE>|${NAMESPACE}|g; s|<IDENTITY_CLIENT_ID>|${IDENTITY_CLIENT_ID}|g" \
+  e2b-manager.yaml | kubectl apply -f -
 
 # Deploy agent workload
-kubectl apply -f agent-deployment.yaml
+sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|${IMAGE_TAG}|g; s|<NAMESPACE>|${NAMESPACE}|g" \
+  agent-deployment.yaml | kubectl apply -f -
 
 # Apply KEDA ScaledObject
-kubectl apply -f keda-scaledobject.yaml
+sed "s|<NAMESPACE>|${NAMESPACE}|g" \
+  keda-scaledobject.yaml | kubectl apply -f -
 ```
 
 ---
