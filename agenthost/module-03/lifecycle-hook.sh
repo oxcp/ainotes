@@ -44,7 +44,7 @@ import os, json, redis, sys
 conn = os.environ.get('AGENT_REDIS_CONNECTION', '')
 host, rest = conn.split(':6380,', 1) if ':6380,' in conn else (conn, '')
 r = redis.Redis(host=host, port=6380, ssl=True, decode_responses=True)
-key = f'agent:state:{os.environ[\"AGENT_ID\"]}'
+key = f'agent:state:${AGENT_ID}'
 state = r.get(key)
 if state:
     with open('${STATE_FILE}', 'w') as f:
