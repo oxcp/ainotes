@@ -13,10 +13,10 @@ apiVersion: http.keda.sh/v1alpha1
 kind: HTTPScaledObject
 metadata:
   name: agent-host-http-scaler
-  namespace: agent
+  namespace: <NAMESPACE>
 spec:
   hosts:
-    - agent-host.agent.svc.cluster.local
+    - agent-host.<NAMESPACE>.svc.cluster.local
   targetPendingRequests: 10
   scaledownPeriod: 1800   # 30 minutes idle → scale to zero
   scaleTargetRef:
@@ -35,7 +35,7 @@ apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
   name: agent-host-redis-scaler
-  namespace: agent
+  namespace: <NAMESPACE>
 spec:
   scaleTargetRef:
     name: agent-host
@@ -59,7 +59,7 @@ apiVersion: keda.sh/v1alpha1
 kind: TriggerAuthentication
 metadata:
   name: agent-redis-trigger-auth
-  namespace: agent
+  namespace: <NAMESPACE>
 spec:
   secretTargetRef:
     - parameter: password
