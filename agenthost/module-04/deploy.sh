@@ -98,14 +98,15 @@ kubectl create secret generic agent-config \
   --dry-run=client -o yaml | kubectl apply -f -
 
 echo "==> [7/8] Deploying E2B Sandbox Manager and agent workload"
-# Replace manifest placeholders (ACR_NAME/IMAGE_TAG/NAMESPACE/IDENTITY_CLIENT_ID)
+# Replace placeholders in manifests
 sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|${IMAGE_TAG}|g; s|<NAMESPACE>|${NAMESPACE}|g; s|<IDENTITY_CLIENT_ID>|${IDENTITY_CLIENT_ID}|g" \
   e2b-manager.yaml | kubectl apply -f -
 
 sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|${IMAGE_TAG}|g; s|<NAMESPACE>|${NAMESPACE}|g" \
   agent-deployment.yaml | kubectl apply -f -
 
-kubectl apply -f keda-scaledobject.yaml
+sed "s|<NAMESPACE>|${NAMESPACE}|g" \
+  keda-scaledobject.yaml | kubectl apply -f -
 
 echo "==> [8/8] Waiting for E2B Manager to be ready"
 kubectl rollout status deployment/e2b-sandbox-manager \
