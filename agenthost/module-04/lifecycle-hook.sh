@@ -39,6 +39,7 @@ if command -v agent-host &>/dev/null; then
     --redis-connection "${AGENT_REDIS_CONNECTION:-}"
 else
   echo "[lifecycle-hook] WARNING: agent-host CLI not found; attempting fallback Python export"
+  export AGENT_ID
   python3 -c "
 import os, json, redis, sys
 conn = os.environ.get('AGENT_REDIS_CONNECTION', '')
