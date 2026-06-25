@@ -16,7 +16,7 @@
 
 set -euo pipefail
 
-AGENT_ID="${AGENT_ID:-unknown}"
+export AGENT_ID="${AGENT_ID:-unknown}"
 STORAGE_ACCOUNT="${AGENT_STORAGE_ACCOUNT:-stcagenthost}"
 CONTAINER="${AGENT_BLOB_CONTAINER:-agent-state}"
 STATE_FILE="/tmp/agent-state-${AGENT_ID}.json"
