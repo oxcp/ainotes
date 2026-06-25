@@ -6,28 +6,28 @@
 targetScope = 'subscription'
 
 @description('Name of the resource group to create')
-param resourceGroupName string = 'rg-openclaw-workshop'
+param resourceGroupName string = 'rg-agenthost-workshop'
 
 @description('Azure region for all resources')
 param location string = 'eastus'
 
 @description('Azure Managed Redis cache name')
-param redisName string = 'redis-openclaw'
+param redisName string = 'redis-agenthost'
 
 @description('Blob Storage account name (3-24 chars, lowercase alphanumeric)')
-param storageAccountName string = 'stcopenclaw'
+param storageAccountName string = 'stcagenthost'
 
 @description('API Management service name')
-param apimName string = 'apim-openclaw'
+param apimName string = 'apim-agenthost'
 
 @description('APIM publisher email')
 param apimPublisherEmail string = 'admin@example.com'
 
 @description('APIM publisher name')
-param apimPublisherName string = 'OpenClaw Workshop'
+param apimPublisherName string = 'Agent Hosting Workshop'
 
 @description('User-Assigned Managed Identity name')
-param identityName string = 'id-openclaw'
+param identityName string = 'id-agenthost'
 
 @description('Azure OpenAI endpoint URL')
 param aoaiEndpoint string

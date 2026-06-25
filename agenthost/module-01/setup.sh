@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
 # setup.sh — Module 1: Core Infrastructure Setup
-# Provisions shared Azure resources for the OpenClaw workshop.
+# Provisions shared Azure resources for the agent hosting workshop.
 # Usage: ./setup.sh
 # Set variables below or export them before running.
 
 set -euo pipefail
 
-RESOURCE_GROUP="${RESOURCE_GROUP:-rg-openclaw-workshop}"
+RESOURCE_GROUP="${RESOURCE_GROUP:-rg-agenthost-workshop}"
 LOCATION="${LOCATION:-eastus}"
-REDIS_NAME="${REDIS_NAME:-redis-openclaw}"
-STORAGE_ACCOUNT="${STORAGE_ACCOUNT:-stcopenclaw}"
-APIM_NAME="${APIM_NAME:-apim-openclaw}"
+REDIS_NAME="${REDIS_NAME:-redis-agenthost}"
+STORAGE_ACCOUNT="${STORAGE_ACCOUNT:-stcagenthost}"
+APIM_NAME="${APIM_NAME:-apim-agenthost}"
 APIM_PUBLISHER_EMAIL="${APIM_PUBLISHER_EMAIL:-admin@example.com}"
-APIM_PUBLISHER_NAME="${APIM_PUBLISHER_NAME:-OpenClaw Workshop}"
-IDENTITY_NAME="${IDENTITY_NAME:-id-openclaw}"
-ENTRA_APP_NAME="${ENTRA_APP_NAME:-app-openclaw}"
+APIM_PUBLISHER_NAME="${APIM_PUBLISHER_NAME:-Agent Hosting Workshop}"
+IDENTITY_NAME="${IDENTITY_NAME:-id-agenthost}"
+ENTRA_APP_NAME="${ENTRA_APP_NAME:-app-agenthost}"
 AOAI_ENDPOINT="${AOAI_ENDPOINT:-}"
 
 echo "==> [1/6] Creating Resource Group: $RESOURCE_GROUP in $LOCATION"
@@ -52,7 +52,7 @@ az storage account blob-service-properties update \
 # Create a container for cold state snapshots
 az storage container create \
   --account-name "$STORAGE_ACCOUNT" \
-  --name "openclaw-state" \
+  --name "agent-state" \
   --auth-mode login \
   --output none
 

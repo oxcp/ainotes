@@ -1,15 +1,15 @@
 # container-app.yaml — Module 3: ACA Container App manifest (YAML alternative)
 # Deploy with: az containerapp create --resource-group <rg> --environment <env> --yaml container-app.yaml
 
-name: openclaw-agent
+name: agent-host
 type: Microsoft.App/containerApps
 location: eastus
 identity:
   type: UserAssigned
   userAssignedIdentities:
-    /subscriptions/<subscriptionId>/resourceGroups/rg-openclaw-workshop/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-openclaw: {}
+    /subscriptions/<subscriptionId>/resourceGroups/rg-agenthost-workshop/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-agenthost: {}
 properties:
-  environmentId: /subscriptions/<subscriptionId>/resourceGroups/rg-openclaw-workshop/providers/Microsoft.App/managedEnvironments/aca-env-openclaw
+  environmentId: /subscriptions/<subscriptionId>/resourceGroups/rg-agenthost-workshop/providers/Microsoft.App/managedEnvironments/aca-env-agenthost
   workloadProfileName: sandbox
   configuration:
     ingress:
@@ -18,31 +18,31 @@ properties:
       transport: http
       allowInsecure: false
     registries:
-      - server: acropenclaw.azurecr.io
-        identity: /subscriptions/<subscriptionId>/resourceGroups/rg-openclaw-workshop/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-openclaw
+      - server: acragenthost.azurecr.io
+        identity: /subscriptions/<subscriptionId>/resourceGroups/rg-agenthost-workshop/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-agenthost
     secrets:
       - name: redis-conn
         # Reference Key Vault secret for Redis connection string
-        keyVaultUrl: https://kv-openclaw.vault.azure.net/secrets/redis-connection-string
-        identity: /subscriptions/<subscriptionId>/resourceGroups/rg-openclaw-workshop/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-openclaw
+        keyVaultUrl: https://kv-agenthost.vault.azure.net/secrets/redis-connection-string
+        identity: /subscriptions/<subscriptionId>/resourceGroups/rg-agenthost-workshop/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-agenthost
   template:
     containers:
-      - name: openclaw-agent
-        image: acropenclaw.azurecr.io/openclaw-agent:latest
+      - name: agent-host
+        image: acragenthost.azurecr.io/agent-host:latest
         resources:
           cpu: 1.0
           memory: 2Gi
         env:
-          - name: OPENCLAW_STATE_BACKEND
+          - name: AGENT_STATE_BACKEND
             value: redis
-          - name: OPENCLAW_REDIS_CONNECTION
+          - name: AGENT_REDIS_CONNECTION
             secretRef: redis-conn
-          - name: OPENCLAW_BLOB_CONTAINER
-            value: openclaw-state
-          - name: OPENCLAW_STORAGE_ACCOUNT
-            value: stcopenclaw
-          - name: OPENCLAW_APIM_ENDPOINT
-            value: https://apim-openclaw.azure-api.net
+          - name: AGENT_BLOB_CONTAINER
+            value: agent-state
+          - name: AGENT_STORAGE_ACCOUNT
+            value: stcagenthost
+          - name: AGENT_APIM_ENDPOINT
+            value: https://apim-agenthost.azure-api.net
           - name: AZURE_CLIENT_ID
             value: <identityClientId>
         probes:

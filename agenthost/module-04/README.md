@@ -2,12 +2,12 @@
 
 ## Overview
 
-Deploy OpenClaw on **Azure Kubernetes Service (AKS)** with a self-built **E2B Sandbox Manager** and **Kata Container** Micro-VM isolation. This solution provides maximum control and the strongest isolation for high-security ToB scenarios.
+Deploy agents on **Azure Kubernetes Service (AKS)** with a self-built **E2B Sandbox Manager** and **Kata Container** Micro-VM isolation. This solution provides maximum control and the strongest isolation for high-security ToB scenarios.
 
 ## Learning Objectives
 
 - Walk through an AKS cluster with KEDA and Kata Container runtime node pool
-- Deploy the E2B Sandbox Manager and OpenClaw workload to AKS
+- Deploy the E2B Sandbox Manager and agent workload to AKS
 - Observe KEDA scaling to zero and cold state restore from Blob
 - Configure Kata Container resource limits and test multi-agent scaling
 
@@ -16,7 +16,7 @@ Deploy OpenClaw on **Azure Kubernetes Service (AKS)** with a self-built **E2B Sa
 | Time | Activity |
 |---|---|
 | 1:20–1:25 | Walk through AKS cluster with KEDA and Kata Container runtime node pool |
-| 1:25–1:30 | Deploy E2B Sandbox Manager and OpenClaw workload to AKS |
+| 1:25–1:30 | Deploy E2B Sandbox Manager and agent workload to AKS |
 | 1:30–1:35 | Demo: E2B Sandbox Manager spawns Kata Container; KEDA scales to zero; cold restore from Blob |
 | 1:35–1:45 | Hands-on: Configure Kata Container resource limits, test multi-agent scaling, monitor KEDA metrics |
 | 1:45–1:50 | Test end-to-end workflow and verify state checkpoint/restore |
@@ -34,15 +34,15 @@ Deploy OpenClaw on **Azure Kubernetes Service (AKS)** with a self-built **E2B Sa
 ## Step 1 — Set Environment Variables
 
 ```bash
-export RESOURCE_GROUP="rg-openclaw-workshop"
+export RESOURCE_GROUP="rg-agenthost-workshop"
 export LOCATION="eastus"
-export AKS_NAME="aks-openclaw"
-export ACR_NAME="acropenclaw"
-export IDENTITY_NAME="id-openclaw"
-export REDIS_NAME="redis-openclaw"
-export STORAGE_ACCOUNT="stcopenclaw"
-export APIM_ENDPOINT="https://apim-openclaw.azure-api.net"
-export NAMESPACE="openclaw"
+export AKS_NAME="aks-agenthost"
+export ACR_NAME="acragenthost"
+export IDENTITY_NAME="id-agenthost"
+export REDIS_NAME="redis-agenthost"
+export STORAGE_ACCOUNT="stcagenthost"
+export APIM_ENDPOINT="https://apim-agenthost.azure-api.net"
+export NAMESPACE="agent"
 ```
 
 ---
@@ -93,7 +93,7 @@ helm install keda kedacore/keda \
 
 ---
 
-## Step 5 — Deploy OpenClaw Workloads to AKS
+## Step 5 — Deploy Agent Workloads to AKS
 
 ```bash
 # Create namespace
@@ -109,7 +109,7 @@ REDIS_HOST=$(az redis show \
   --name "$REDIS_NAME" \
   --query hostName --output tsv)
 
-kubectl create secret generic openclaw-redis \
+kubectl create secret generic agent-redis \
   --namespace "$NAMESPACE" \
   --from-literal=connection-string="${REDIS_HOST}:6380,******" \
   --dry-run=client -o yaml | kubectl apply -f -
@@ -117,8 +117,8 @@ kubectl create secret generic openclaw-redis \
 # Deploy E2B Sandbox Manager
 kubectl apply -f e2b-manager.yaml
 
-# Deploy OpenClaw workload
-kubectl apply -f openclaw-deployment.yaml
+# Deploy agent workload
+kubectl apply -f agent-deployment.yaml
 
 # Apply KEDA ScaledObject
 kubectl apply -f keda-scaledobject.yaml
@@ -145,15 +145,15 @@ kubectl get pods -n "$NAMESPACE" -w
 | `deploy.sh` | Automated bash script: AKS, ACR, KEDA, and workload deployment |
 | `aks.bicep` | Bicep IaC template for AKS cluster with Kata Container node pool |
 | `e2b-manager.yaml` | Kubernetes Deployment for E2B Sandbox Manager |
-| `openclaw-deployment.yaml` | Kubernetes Deployment for OpenClaw agent workload |
+| `agent-deployment.yaml` | Kubernetes Deployment for agent workload |
 | `keda-scaledobject.yaml` | KEDA ScaledObject for scale-to-zero based on request queue depth |
-| `Dockerfile` | Container image for the OpenClaw agent (same as Module 3) |
+| `Dockerfile` | Container image for the agent (same as Module 3) |
 
 ---
 
 ## Architecture Notes
 
-- **Kata Containers** provide Micro-VM isolation (hardware virtualisation) for each OpenClaw instance — stronger than gVisor but with higher overhead.
+- **Kata Containers** provide Micro-VM isolation (hardware virtualisation) for each agent instance — stronger than gVisor but with higher overhead.
 - **KEDA** scales the E2B Sandbox Manager to zero after 30 min idle; a pre-termination hook checkpoints state to Blob.
 - **Azure Workload Identity** (AAD Pod Identity successor) authenticates pods to Azure services without secrets.
 - **APIM** is deployed in VNet-injection mode for private connectivity to the AKS cluster.

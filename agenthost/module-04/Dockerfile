@@ -1,4 +1,4 @@
-# Dockerfile — Module 4: OpenClaw Agent Container Image (AKS / Kata Container)
+# Dockerfile — Module 4: Agent Container Image (AKS / Kata Container)
 # Multi-stage build — same base image used for both ACA Sandbox (Module 3) and AKS (Module 4).
 
 # ── Stage 1: Build ─────────────────────────────────────────────────────────────
@@ -16,7 +16,7 @@ COPY src/ ./src/
 FROM python:3.12-slim AS runtime
 
 # Non-root user for security
-RUN groupadd -r openclaw && useradd -r -g openclaw openclaw
+RUN groupadd -r agent && useradd -r -g agent agent
 
 WORKDIR /app
 
@@ -30,17 +30,17 @@ RUN chmod +x /app/lifecycle-hook.sh
 
 ENV PYTHONPATH="/app/deps"
 ENV PYTHONUNBUFFERED="1"
-ENV OPENCLAW_LOG_LEVEL="INFO"
-ENV OPENCLAW_STATE_BACKEND="redis"
-ENV OPENCLAW_REDIS_TTL_SECONDS="3600"
-ENV OPENCLAW_BLOB_CONTAINER="openclaw-state"
+ENV AGENT_LOG_LEVEL="INFO"
+ENV AGENT_STATE_BACKEND="redis"
+ENV AGENT_REDIS_TTL_SECONDS="3600"
+ENV AGENT_BLOB_CONTAINER="agent-state"
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')" || exit 1
 
 STOPSIGNAL SIGTERM
 
-USER openclaw
+USER agent
 
 EXPOSE 8080
 

@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 # deploy.sh — Module 2: Solution A — Azure AI Foundry Host Agent
-# Deploys Azure AI Foundry Hub, Project, Key Vault, and OpenClaw agent definition.
+# Deploys Azure AI Foundry Hub, Project, Key Vault, and agent definition.
 # Usage: ./deploy.sh
 # Prerequisites: Module 1 infrastructure must be deployed first.
 
 set -euo pipefail
 
-RESOURCE_GROUP="${RESOURCE_GROUP:-rg-openclaw-workshop}"
+RESOURCE_GROUP="${RESOURCE_GROUP:-rg-agenthost-workshop}"
 LOCATION="${LOCATION:-eastus}"
-FOUNDRY_HUB_NAME="${FOUNDRY_HUB_NAME:-hub-openclaw}"
-FOUNDRY_PROJECT_NAME="${FOUNDRY_PROJECT_NAME:-proj-openclaw}"
-IDENTITY_NAME="${IDENTITY_NAME:-id-openclaw}"
-REDIS_NAME="${REDIS_NAME:-redis-openclaw}"
-STORAGE_ACCOUNT="${STORAGE_ACCOUNT:-stcopenclaw}"
-KV_NAME="${KV_NAME:-kv-openclaw}"
+FOUNDRY_HUB_NAME="${FOUNDRY_HUB_NAME:-hub-agenthost}"
+FOUNDRY_PROJECT_NAME="${FOUNDRY_PROJECT_NAME:-proj-agenthost}"
+IDENTITY_NAME="${IDENTITY_NAME:-id-agenthost}"
+REDIS_NAME="${REDIS_NAME:-redis-agenthost}"
+STORAGE_ACCOUNT="${STORAGE_ACCOUNT:-stcagenthost}"
+KV_NAME="${KV_NAME:-kv-agenthost}"
 APIM_ENDPOINT="${APIM_ENDPOINT:-}"
 
 echo "==> [1/5] Deploying Azure Key Vault: $KV_NAME"
@@ -77,7 +77,7 @@ az deployment group create \
       keyVaultName="$KV_NAME" \
   --output none
 
-echo "==> [4/5] Deploying OpenClaw agent definition"
+echo "==> [4/5] Deploying agent definition"
 az ml agent create \
   --resource-group "$RESOURCE_GROUP" \
   --workspace-name "$FOUNDRY_PROJECT_NAME" \

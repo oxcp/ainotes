@@ -2,7 +2,7 @@
 
 ## Overview
 
-Provision the shared Azure infrastructure used by all three OpenClaw hosting solutions: Resource Group, Azure Managed Redis, Azure Blob Storage, Azure API Management, Entra ID App Registration, and User-Assigned Managed Identity.
+Provision the shared Azure infrastructure used by all three agent hosting solutions: Resource Group, Azure Managed Redis, Azure Blob Storage, Azure API Management, Entra ID App Registration, and User-Assigned Managed Identity.
 
 ## Learning Objectives
 
@@ -16,7 +16,7 @@ Provision the shared Azure infrastructure used by all three OpenClaw hosting sol
 |---|---|---|
 | 0:10–0:15 | Create Resource Group, Azure Managed Redis (Basic SKU), Azure Blob Storage | `az group create` · `az redis create` |
 | 0:15–0:20 | Deploy Azure API Management (Consumption tier for Solutions A/B; VNet-capable for Solution C) | Portal or `az apim create` |
-| 0:20–0:25 | Register Entra ID App; create User-Assigned Managed Identity for OpenClaw | `az ad app create` · `az identity create` |
+| 0:20–0:25 | Register Entra ID App; create User-Assigned Managed Identity for the agent | `az ad app create` · `az identity create` |
 | 0:25–0:30 | Configure APIM `validate-jwt` policy and LLM backend (Azure OpenAI) | APIM policy editor |
 
 ---
@@ -32,12 +32,12 @@ Provision the shared Azure infrastructure used by all three OpenClaw hosting sol
 ## Step 1 — Set Environment Variables
 
 ```bash
-export RESOURCE_GROUP="rg-openclaw-workshop"
+export RESOURCE_GROUP="rg-agenthost-workshop"
 export LOCATION="eastus"
-export REDIS_NAME="redis-openclaw"
-export STORAGE_ACCOUNT="stcopenclaw"
-export APIM_NAME="apim-openclaw"
-export IDENTITY_NAME="id-openclaw"
+export REDIS_NAME="redis-agenthost"
+export STORAGE_ACCOUNT="stcagenthost"
+export APIM_NAME="apim-agenthost"
+export IDENTITY_NAME="id-agenthost"
 export AOAI_ENDPOINT="https://<your-aoai-resource>.openai.azure.com/"
 ```
 

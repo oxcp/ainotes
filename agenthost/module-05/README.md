@@ -85,11 +85,11 @@ Recap the three solutions, provide decision guidance, and share cost optimisatio
 
 ## Next Steps
 
-- Review the [OpenClaw Hosting on Azure Workshop](../agenthost.md) design document
+- Review the [Agent Hosting on Azure Workshop](../agenthost.md) design document
 - Explore the [Azure AI Foundry documentation](https://learn.microsoft.com/en-us/azure/ai-studio/)
 - Review [ACA Sandbox overview](https://learn.microsoft.com/en-us/azure/container-apps/sandboxes-overview) for production readiness
 - Consider [KEDA HTTP Add-on](https://github.com/kedacore/http-add-on) for HTTP-driven scaling in Module 4
 
 ---
 
-*Workshop completed — OpenClaw Hosting on Azure, 120 minutes.*
+*Workshop completed — Agent Hosting on Azure, 120 minutes.*

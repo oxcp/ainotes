@@ -1,7 +1,7 @@
 {
   "$schema": "https://azuremlschemas.azureedge.net/latest/agent.schema.json",
-  "name": "openclaw-agent",
-  "display_name": "OpenClaw AI Agent",
+  "name": "agent-host",
+  "display_name": "Hosted AI Agent",
   "description": "Stateful AI agent with AMR-first state persistence and APIM LLM routing.",
   "version": "1.0",
   "type": "host_agent",
@@ -11,29 +11,29 @@
     "state_store": {
       "type": "redis",
       "connection_string_secret": {
-        "key_vault_uri": "https://kv-openclaw.vault.azure.net/",
+        "key_vault_uri": "https://kv-agenthost.vault.azure.net/",
         "secret_name": "redis-connection-string"
       },
       "fallback": {
         "type": "blob",
-        "container": "openclaw-state",
-        "storage_account": "stcopenclaw"
+        "container": "agent-state",
+        "storage_account": "stcagenthost"
       }
     },
     "auth": {
       "type": "managed_identity",
-      "identity_resource_id": "/subscriptions/{subscriptionId}/resourceGroups/rg-openclaw-workshop/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-openclaw"
+      "identity_resource_id": "/subscriptions/{subscriptionId}/resourceGroups/rg-agenthost-workshop/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-agenthost"
     },
     "llm_backend": {
-      "endpoint": "https://apim-openclaw.azure-api.net/llm-api",
+      "endpoint": "https://apim-agenthost.azure-api.net/llm-api",
       "model": "gpt-4o",
       "api_version": "2024-02-01"
     }
   },
   "environment_variables": {
-    "OPENCLAW_LOG_LEVEL": "INFO",
-    "OPENCLAW_STATE_BACKEND": "redis",
-    "OPENCLAW_REDIS_TTL_SECONDS": "3600",
-    "OPENCLAW_BLOB_CONTAINER": "openclaw-state"
+    "AGENT_LOG_LEVEL": "INFO",
+    "AGENT_STATE_BACKEND": "redis",
+    "AGENT_REDIS_TTL_SECONDS": "3600",
+    "AGENT_BLOB_CONTAINER": "agent-state"
   }
 }

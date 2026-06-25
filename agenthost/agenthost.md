@@ -1,4 +1,4 @@
-# OpenClaw Hosting on Azure Workshop Design
+# Agent Hosting on Azure Workshop Design
 
 ## 1. Target Scenarios
 
@@ -9,7 +9,7 @@
 | Dimension | Detail |
 |---|---|
 | Typical users | Enterprise IT, internal dev teams, B2B SaaS platforms |
-| Scale | Tens to thousands of named OpenClaw instances per tenant |
+| Scale | Tens to thousands of named agent instances per tenant |
 | Isolation requirement | Strong — tenant/department boundaries, audit trail |
 | Auth | Azure Entra ID (AAD) — SSO, RBAC, Conditional Access |
 | Compliance | Data residency, private networking (VNet), RBAC |
@@ -89,10 +89,10 @@ The table below maps each technical requirement to the implementation approach f
 |---|---|---|---|---|
 | 1 | **State & context persistence** | Built-in agent state store (Cosmos/Blob) | Azure Managed Redis (context cache) + Azure Blob (snapshot) | Redis on AKS + Azure Blob via CSI driver |
 | 2 | **Fast start / scale-to-zero** | Native agent idle eviction + warm resume | ACA Sandbox container pool; idle timeout = 30 min; state flushed from AMR to Blob on scale-to-zero | KEDA-driven scale-to-zero; state checkpoint before pod termination; pre-warmed pool |
-| 3 | **Isolation** | Per-agent managed sandbox | Per-container OS-level isolation via gVisor (syscall interception); no dedicated VM required | Kata Container Micro-VM per OpenClaw; NetworkPolicy + Namespace isolation |
+| 3 | **Isolation** | Per-agent managed sandbox | Per-container OS-level isolation via gVisor (syscall interception); no dedicated VM required | Kata Container Micro-VM per agent; NetworkPolicy + Namespace isolation |
 | 4 | **Entra ID authentication** | Native AAD integration; user-assigned Managed Identity | ACA Workload Identity (UAMI) + Entra ID token validation at ingress | AAD Workload Identity for Pods; ingress auth via Entra ID App Registration |
 | 5 | **AI Gateway (APIM)** | APIM policy routes all LLM calls; token quota per agent | APIM gateway policy; JWT validation; rate-limiting per container | APIM deployed in VNet; each AKS pod calls APIM internal endpoint |
-| 6 | **OpenClaw-to-Gateway auth** | Managed Identity credential → APIM subscription key + OAuth | UAMI credential; APIM validates Entra ID token via validate-jwt policy | Pod Workload Identity → Entra token → APIM OAuth 2.0 token validation |
+| 6 | **Agent-to-Gateway auth** | Managed Identity credential → APIM subscription key + OAuth | UAMI credential; APIM validates Entra ID token via validate-jwt policy | Pod Workload Identity → Entra token → APIM OAuth 2.0 token validation |
 | 7 | **Cost saving** | Scale-to-zero after 30 min idle; pay per agent execution | True serverless; container destroyed after idle; Redis TTL auto-evicts stale state | KEDA zero-scale; Spot Node Pool for worker nodes; Redis Basic SKU for dev |
 
 ---
@@ -104,7 +104,7 @@ The table below maps each technical requirement to the implementation approach f
 ```
 Lifecycle event          Action
 ─────────────────────    ─────────────────────────────────────────────────────────
-New OpenClaw started  →  Load state from Azure Managed Redis (AMR) first;
+New agent started  →  Load state from Azure Managed Redis (AMR) first;
                          if not found, restore from Blob
 Active conversation   →  Persist state to AMR + Blob (dual-write)
 Scale-to-zero trigger →  Flush latest state from AMR to Azure Blob
@@ -131,7 +131,7 @@ User / Client App
 Azure API Management (AI Gateway)
      │  validate-jwt policy
      ▼
-OpenClaw instance
+agent instance
      │  Managed Identity / Workload Identity credential
      ▼
 Azure API Management (LLM route)
@@ -140,14 +140,14 @@ Azure API Management (LLM route)
 Azure OpenAI / external LLM
 ```
 
-- **ToB**: Entra ID App Registration with RBAC roles; Conditional Access policies; Managed Identity per OpenClaw.
+- **ToB**: Entra ID App Registration with RBAC roles; Conditional Access policies; Managed Identity per agent.
 - **ToC**: Entra External ID (B2C); anonymous-to-authenticated escalation supported.
 
 ### 5.4 APIM AI Gateway Pattern
 
 Key APIM policies applied to the LLM backend:
-1. `validate-jwt` — verify Workload Identity token from OpenClaw.
-2. `rate-limit-by-key` — per OpenClaw instance token quota.
+1. `validate-jwt` — verify Workload Identity token from the agent.
+2. `rate-limit-by-key` — per agent instance token quota.
 3. `azure-openai-token-limit` — semantic token counting.
 4. `retry` — automatic retry on 429 / 5xx with exponential back-off.
 5. `cache-lookup` / `cache-store` — response caching for identical prompts.
@@ -179,8 +179,8 @@ flowchart TD
 **Workflow:**
 1. User authenticates via Entra ID SSO; receives an access token.
 2. Client sends request to APIM; `validate-jwt` policy authenticates and routes to Foundry Host Agent endpoint.
-3. Foundry Host Agent loads OpenClaw instance state from AMR first, then Blob if AMR has no state.
-4. OpenClaw processes the request; calls LLM via APIM using its Managed Identity credential.
+3. Foundry Host Agent loads agent instance state from AMR first, then Blob if AMR has no state.
+4. agent processes the request; calls LLM via APIM using its Managed Identity credential.
 5. APIM enforces per-agent token quota; routes to Azure OpenAI.
 6. Response streams back to user.
 7. If idle > 30 min, Host Agent evicts instance; state flushed from AMR and checkpointed to Blob.
@@ -218,8 +218,8 @@ flowchart TD
 1. User authenticates; client presents token to APIM.
 2. APIM validates token; routes to the ACA Sandbox-enabled container environment with `agent-id` header.
 3. ACA resolves the target agent container — resumes existing (warm) or starts a new gVisor-isolated container.
-4. OpenClaw container loads state from AMR first; if not found, restores from Blob.
-5. OpenClaw processes the request; calls LLM via APIM using its UAMI credential.
+4. agent container loads state from AMR first; if not found, restores from Blob.
+5. agent processes the request; calls LLM via APIM using its UAMI credential.
 6. Idle detection: after 30 min, ACA scales the container to zero; lifecycle hook flushes state from AMR to Blob.
 7. Next request restores from AMR (< 500 ms) or Blob (< 3 s).
 
@@ -254,8 +254,8 @@ flowchart TD
 1. User authenticates; client presents token to APIM.
 2. APIM validates token; forwards to ACA Sessions manager with `session-id` header.
 3. Session manager looks up existing session (warm) or creates new container sandbox.
-4. OpenClaw container starts (< 2 s); loads state from AMR first; else restores from Blob.
-5. OpenClaw calls LLM via APIM using its UAMI credential.
+4. agent container starts (< 2 s); loads state from AMR first; else restores from Blob.
+5. Agent calls LLM via APIM using its UAMI credential.
 6. Idle detection: after 30 min, ACA evicts session; lifecycle hook flushes state from AMR to Blob.
 7. Next request restores from AMR (< 500 ms) or Blob (< 3 s).
 
@@ -268,7 +268,7 @@ flowchart TD
     user["👤 Enterprise User\n(Entra ID + MFA)"]
     apim["Azure API Management\n(AI Gateway, VNet-injected)"]
     ingress["AKS Ingress\n(NGINX + OAuth2-Proxy)"]
-    e2b["E2B Sandbox Manager\n(Kata Container per OpenClaw)"]
+    e2b["E2B Sandbox Manager\n(Kata Container per agent)"]
     kata["Kata Container\n(Micro-VM isolation)"]
     redis["Azure Managed Redis\n(hot state)"]
     blob["Azure Blob\n(cold snapshot, CSI mount)"]
@@ -292,10 +292,10 @@ flowchart TD
 **Workflow:**
 1. User authenticates via Entra ID (MFA enforced); token forwarded to APIM.
 2. APIM (VNet-injected) routes to AKS ingress; OAuth2-Proxy validates token.
-3. E2B Sandbox Manager checks for existing Kata Container for this `openclaw-id`.
+3. E2B Sandbox Manager checks for existing Kata Container for this `agent-id`.
 4. If warm: resume container (< 1 s); load Redis state.
 5. If cold (KEDA scaled to zero): Sandbox Manager starts new Kata Container, restores Blob snapshot to Redis, then Redis → container memory.
-6. OpenClaw processes request; issues LLM call to APIM private endpoint using Workload Identity credential.
+6. agent processes request; issues LLM call to APIM private endpoint using Workload Identity credential.
 7. APIM validates token, enforces quota, routes to Azure OpenAI private endpoint.
 8. KEDA monitors queue depth; scales Kata Containers to zero after 30 min idle; pre-termination hook checkpoints state to Blob.
 
