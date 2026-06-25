@@ -1,5 +1,5 @@
-# keda-scaledobject.yaml — Module 4: KEDA ScaledObject for OpenClaw on AKS
-# Scales the openclaw-agent deployment to zero after 30 min of inactivity
+# keda-scaledobject.yaml — Module 4: KEDA ScaledObject for the agent on AKS
+# Scales the agent-host deployment to zero after 30 min of inactivity
 # (no messages in the request queue). Scales up on incoming queue messages.
 #
 # This example uses an HTTP-based KEDA scaler via the KEDA HTTP Add-on.
@@ -12,18 +12,18 @@
 apiVersion: http.keda.sh/v1alpha1
 kind: HTTPScaledObject
 metadata:
-  name: openclaw-agent-http-scaler
-  namespace: openclaw
+  name: agent-host-http-scaler
+  namespace: agent
 spec:
   hosts:
-    - openclaw-agent.openclaw.svc.cluster.local
+    - agent-host.agent.svc.cluster.local
   targetPendingRequests: 10
   scaledownPeriod: 1800   # 30 minutes idle → scale to zero
   scaleTargetRef:
-    name: openclaw-agent
+    name: agent-host
     kind: Deployment
     apiVersion: apps/v1
-    service: openclaw-agent
+    service: agent-host
     port: 80
   replicas:
     min: 0
@@ -34,11 +34,11 @@ spec:
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
-  name: openclaw-agent-redis-scaler
-  namespace: openclaw
+  name: agent-host-redis-scaler
+  namespace: agent
 spec:
   scaleTargetRef:
-    name: openclaw-agent
+    name: agent-host
   minReplicaCount: 0
   maxReplicaCount: 10
   cooldownPeriod: 1800   # 30 minutes
@@ -47,21 +47,21 @@ spec:
     - type: redis
       metadata:
         address: <REDIS_HOST>:6380
-        listName: openclaw:request-queue
+        listName: agent:request-queue
         listLength: "5"
         enableTLS: "true"
       authenticationRef:
-        name: openclaw-redis-trigger-auth
+        name: agent-redis-trigger-auth
 
 ---
 # TriggerAuthentication for Redis (references the Kubernetes secret)
 apiVersion: keda.sh/v1alpha1
 kind: TriggerAuthentication
 metadata:
-  name: openclaw-redis-trigger-auth
-  namespace: openclaw
+  name: agent-redis-trigger-auth
+  namespace: agent
 spec:
   secretTargetRef:
     - parameter: password
-      name: openclaw-redis
+      name: agent-redis
       key: connection-string

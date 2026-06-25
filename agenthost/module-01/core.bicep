@@ -62,7 +62,7 @@ resource blobService 'Microsoft.Storage/storageAccounts/blobServices@2023-01-01'
 
 resource stateContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-01-01' = {
   parent: blobService
-  name: 'openclaw-state'
+  name: 'agent-state'
   properties: {
     publicAccess: 'None'
   }

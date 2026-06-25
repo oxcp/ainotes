@@ -1,5 +1,5 @@
 # e2b-manager.yaml — Module 4: E2B Sandbox Manager deployment
-# Manages the lifecycle of Kata Container sandboxes for OpenClaw agents.
+# Manages the lifecycle of Kata Container sandboxes for agents.
 # Replace <ACR_NAME>, <IMAGE_TAG>, and <NAMESPACE> before applying,
 # or use deploy.sh which performs sed substitution automatically.
 
@@ -25,10 +25,10 @@ spec:
       annotations:
         azure.workload.identity/use: "true"
     spec:
-      serviceAccountName: openclaw-sa
+      serviceAccountName: agent-sa
       containers:
         - name: e2b-sandbox-manager
-          image: <ACR_NAME>.azurecr.io/openclaw-agent:<IMAGE_TAG>
+          image: <ACR_NAME>.azurecr.io/agent-host:<IMAGE_TAG>
           command: ["python", "-m", "src.e2b_manager"]
           ports:
             - containerPort: 8090
@@ -36,31 +36,31 @@ spec:
           env:
             - name: E2B_MODE
               value: "manager"
-            - name: OPENCLAW_NAMESPACE
+            - name: AGENT_NAMESPACE
               value: "<NAMESPACE>"
-            - name: OPENCLAW_KATA_RUNTIME
+            - name: AGENT_KATA_RUNTIME
               value: "kata-containers"
-            - name: OPENCLAW_STATE_BACKEND
+            - name: AGENT_STATE_BACKEND
               value: "redis"
-            - name: OPENCLAW_REDIS_CONNECTION
+            - name: AGENT_REDIS_CONNECTION
               valueFrom:
                 secretKeyRef:
-                  name: openclaw-redis
+                  name: agent-redis
                   key: connection-string
-            - name: OPENCLAW_STORAGE_ACCOUNT
+            - name: AGENT_STORAGE_ACCOUNT
               valueFrom:
                 secretKeyRef:
-                  name: openclaw-config
+                  name: agent-config
                   key: storage-account
-            - name: OPENCLAW_BLOB_CONTAINER
+            - name: AGENT_BLOB_CONTAINER
               valueFrom:
                 secretKeyRef:
-                  name: openclaw-config
+                  name: agent-config
                   key: blob-container
-            - name: OPENCLAW_APIM_ENDPOINT
+            - name: AGENT_APIM_ENDPOINT
               valueFrom:
                 secretKeyRef:
-                  name: openclaw-config
+                  name: agent-config
                   key: apim-endpoint
           resources:
             requests:
@@ -104,7 +104,7 @@ spec:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: openclaw-sa
+  name: agent-sa
   namespace: <NAMESPACE>
   annotations:
     azure.workload.identity/client-id: "<IDENTITY_CLIENT_ID>"
@@ -132,7 +132,7 @@ metadata:
   name: e2b-sandbox-manager-binding
 subjects:
   - kind: ServiceAccount
-    name: openclaw-sa
+    name: agent-sa
     namespace: <NAMESPACE>
 roleRef:
   kind: ClusterRole

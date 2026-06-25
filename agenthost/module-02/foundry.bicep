@@ -1,6 +1,6 @@
 // foundry.bicep — Module 2: Azure AI Foundry Hub and Project
 // Deploys an Azure AI Foundry Hub linked to existing storage and key vault,
-// then creates a Project within the Hub for OpenClaw agent hosting.
+// then creates a Project within the Hub for agent hosting.
 
 param location string
 param hubName string
@@ -34,8 +34,8 @@ resource foundryHub 'Microsoft.MachineLearningServices/workspaces@2024-04-01' = 
     }
   }
   properties: {
-    friendlyName: 'OpenClaw Workshop Hub'
-    description: 'Azure AI Foundry Hub for OpenClaw agent hosting workshop'
+    friendlyName: 'Agent Hosting Workshop Hub'
+    description: 'Azure AI Foundry Hub for agent hosting workshop'
     storageAccount: storage.id
     keyVault: keyVault.id
     hbiWorkspace: false
@@ -54,8 +54,8 @@ resource foundryProject 'Microsoft.MachineLearningServices/workspaces@2024-04-01
     }
   }
   properties: {
-    friendlyName: 'OpenClaw Workshop Project'
-    description: 'Project for deploying OpenClaw Host Agent'
+    friendlyName: 'Agent Hosting Workshop Project'
+    description: 'Project for deploying Host Agent'
     hubResourceId: foundryHub.id
   }
 }

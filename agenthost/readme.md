@@ -1,4 +1,4 @@
-# OpenClaw Hosting on Azure Workshop
+# Agent Hosting on Azure Workshop
 
 ## Workshop Outline
 
@@ -31,7 +31,7 @@
 | [module-01](./module-01/README.md) | Core Infrastructure Setup | 20 min | README · setup.sh · main.bicep · core.bicep · apim-policy.xml |
 | [module-02](./module-02/README.md) | Solution A: Foundry Host Agent | 20 min | README · deploy.sh · foundry.bicep · agent-definition.json · apim-policy.xml |
 | [module-03](./module-03/README.md) | Solution B: ACA Sandbox | 30 min | README · deploy.sh · aca.bicep · Dockerfile · container-app.yaml · lifecycle-hook.sh |
-| [module-04](./module-04/README.md) | Solution C: AKS + E2B | 30 min | README · deploy.sh · aks.bicep · e2b-manager.yaml · openclaw-deployment.yaml · keda-scaledobject.yaml · Dockerfile |
+| [module-04](./module-04/README.md) | Solution C: AKS + E2B | 30 min | README · deploy.sh · aks.bicep · e2b-manager.yaml · agent-deployment.yaml · keda-scaledobject.yaml · Dockerfile |
 | [module-05](./module-05/README.md) | Wrap-up and Q&A | 10 min | README |
 
 ---
@@ -42,7 +42,7 @@ agenthost/
 ├── readme.md                    ← List workshop modules, structure
 ├── agenthost.md                 ← Design consideration for the workshop
 ├── module-00/
-│   └── README.md                ← Introduction: OpenClaw overview, state pattern, 3 solutions
+│   └── README.md                ← Introduction: agent overview, state pattern, 3 solutions
 ├── module-01/
 │   ├── README.md                ← Core infra setup steps
 │   ├── setup.sh                 ← Azure CLI bash script (RG, Redis, Blob, APIM, Entra ID, UAMI)
@@ -53,7 +53,7 @@ agenthost/
 │   ├── README.md                ← Foundry Host Agent deployment steps
 │   ├── deploy.sh                ← Key Vault, Foundry Hub/Project, UAMI role assignments
 │   ├── foundry.bicep            ← Azure AI Foundry Hub + Project Bicep
-│   ├── agent-definition.json   ← OpenClaw agent spec (state store, UAMI, LLM backend)
+│   ├── agent-definition.json   ← agent spec (state store, UAMI, LLM backend)
 │   └── apim-policy.xml          ← APIM policy with caching for Foundry backend
 ├── module-03/
 │   ├── README.md                ← ACA Sandbox deployment steps + comparison table
@@ -67,7 +67,7 @@ agenthost/
 │   ├── deploy.sh                ← AKS, KEDA Helm install, K8s secrets, workload deployment
 │   ├── aks.bicep                ← AKS with Kata Container node pool + Workload Identity
 │   ├── e2b-manager.yaml         ← K8s Deployment/Service/RBAC for E2B Sandbox Manager
-│   ├── openclaw-deployment.yaml ← K8s Deployment with Kata RuntimeClass + NetworkPolicy
+│   ├── agent-deployment.yaml    ← K8s Deployment with Kata RuntimeClass + NetworkPolicy
 │   ├── keda-scaledobject.yaml   ← KEDA HTTP + Redis ScaledObject (30 min idle → 0 replicas)
 │   ├── Dockerfile               ← Multi-stage Python image (same pattern as module-03)
 │   └── lifecycle-hook.sh        ← Copy of lifecycle hook for module-04 build context
@@ -82,8 +82,8 @@ agenthost/
 
 - **Scale-to-zero lifecycle hook** — `lifecycle-hook.sh` (module-03, copied into module-04 build context) runs on SIGTERM, exporting agent state from Redis to Blob Storage before the container stops — implementing the AMR-first/Blob-fallback pattern described in the design doc.
 
-- **KEDA ScaledObject** (module-04) provides both HTTP-based and Redis list-based scaling triggers with a 30-minute cooldown, scaling `openclaw-agent` to zero on idle.
+- **KEDA ScaledObject** (module-04) provides both HTTP-based and Redis list-based scaling triggers with a 30-minute cooldown, scaling `agent-host` to zero on idle.
 
-- **Kata Container RuntimeClass** is defined in `openclaw-deployment.yaml` and applied to the agent workload node pool (tainted `kata=true:NoSchedule`).
+- **Kata Container RuntimeClass** is defined in `agent-deployment.yaml` and applied to the agent workload node pool (tainted `kata=true:NoSchedule`).
 
 - **APIM XML policies** in modules 01 and 02 apply `validate-jwt`, `rate-limit-by-key`, retry with exponential back-off, and response caching.

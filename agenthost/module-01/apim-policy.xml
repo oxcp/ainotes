@@ -3,7 +3,7 @@
   Apply to the "llm-api" API (all operations) in Azure API Management.
 
   Policies applied (inbound):
-    1. validate-jwt   — verify Entra ID token from OpenClaw Workload Identity
+    1. validate-jwt   — verify Entra ID token from the agent Workload Identity
     2. rate-limit-by-key — per-caller token quota
     3. set-backend-service — route to Azure OpenAI backend
   Policies applied (backend):
@@ -27,7 +27,7 @@
       </issuers>
       <required-claims>
         <claim name="roles" match="any">
-          <value>OpenClaw.Agent</value>
+          <value>Agent.Invoke</value>
         </claim>
       </required-claims>
     </validate-jwt>

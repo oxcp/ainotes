@@ -1,5 +1,5 @@
-# openclaw-deployment.yaml — Module 4: OpenClaw agent workload on AKS
-# Deploys OpenClaw as a Kubernetes Deployment with Kata Container runtime class.
+# agent-deployment.yaml — Module 4: agent workload on AKS
+# Deploys the agent as a Kubernetes Deployment with Kata Container runtime class.
 # Replace <ACR_NAME>, <IMAGE_TAG>, and <NAMESPACE> before applying,
 # or use deploy.sh which performs sed substitution automatically.
 
@@ -23,25 +23,25 @@ scheduling:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: openclaw-agent
+  name: agent-host
   namespace: <NAMESPACE>
   labels:
-    app: openclaw-agent
+    app: agent-host
     component: agent-runtime
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: openclaw-agent
+      app: agent-host
   template:
     metadata:
       labels:
-        app: openclaw-agent
+        app: agent-host
         component: agent-runtime
       annotations:
         azure.workload.identity/use: "true"
     spec:
-      serviceAccountName: openclaw-sa
+      serviceAccountName: agent-sa
       # Use Kata Container runtime for Micro-VM isolation
       runtimeClassName: kata-containers
       tolerations:
@@ -52,8 +52,8 @@ spec:
       # Pre-termination hook: checkpoint state to Blob before pod termination
       terminationGracePeriodSeconds: 60
       containers:
-        - name: openclaw-agent
-          image: <ACR_NAME>.azurecr.io/openclaw-agent:<IMAGE_TAG>
+        - name: agent-host
+          image: <ACR_NAME>.azurecr.io/agent-host:<IMAGE_TAG>
           ports:
             - containerPort: 8080
               name: http
@@ -66,29 +66,29 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-            - name: OPENCLAW_STATE_BACKEND
+            - name: AGENT_STATE_BACKEND
               value: "redis"
-            - name: OPENCLAW_REDIS_CONNECTION
+            - name: AGENT_REDIS_CONNECTION
               valueFrom:
                 secretKeyRef:
-                  name: openclaw-redis
+                  name: agent-redis
                   key: connection-string
-            - name: OPENCLAW_STORAGE_ACCOUNT
+            - name: AGENT_STORAGE_ACCOUNT
               valueFrom:
                 secretKeyRef:
-                  name: openclaw-config
+                  name: agent-config
                   key: storage-account
-            - name: OPENCLAW_BLOB_CONTAINER
+            - name: AGENT_BLOB_CONTAINER
               valueFrom:
                 secretKeyRef:
-                  name: openclaw-config
+                  name: agent-config
                   key: blob-container
-            - name: OPENCLAW_APIM_ENDPOINT
+            - name: AGENT_APIM_ENDPOINT
               valueFrom:
                 secretKeyRef:
-                  name: openclaw-config
+                  name: agent-config
                   key: apim-endpoint
-            - name: OPENCLAW_REDIS_TTL_SECONDS
+            - name: AGENT_REDIS_TTL_SECONDS
               value: "3600"
           resources:
             requests:
@@ -114,13 +114,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: openclaw-agent
+  name: agent-host
   namespace: <NAMESPACE>
   labels:
-    app: openclaw-agent
+    app: agent-host
 spec:
   selector:
-    app: openclaw-agent
+    app: agent-host
   ports:
     - protocol: TCP
       port: 80
@@ -132,12 +132,12 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: openclaw-agent-netpol
+  name: agent-host-netpol
   namespace: <NAMESPACE>
 spec:
   podSelector:
     matchLabels:
-      app: openclaw-agent
+      app: agent-host
   policyTypes:
     - Ingress
     - Egress

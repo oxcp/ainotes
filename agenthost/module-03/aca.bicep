@@ -1,6 +1,6 @@
 // aca.bicep — Module 3: ACA Sandbox deployment
 // Deploys Azure Container Apps Environment (with Sandbox workload profile),
-// and an ACA Container App for the OpenClaw agent.
+// and an ACA Container App for the agent.
 
 param location string
 param acrName string
@@ -79,31 +79,31 @@ resource acaApp 'Microsoft.App/containerApps@2024-03-01' = {
     template: {
       containers: [
         {
-          name: 'openclaw-agent'
-          image: '${acrName}.azurecr.io/openclaw-agent:${imageTag}'
+          name: 'agent-host'
+          image: '${acrName}.azurecr.io/agent-host:${imageTag}'
           resources: {
             cpu: json('1.0')
             memory: '2Gi'
           }
           env: [
             {
-              name: 'OPENCLAW_STATE_BACKEND'
+              name: 'AGENT_STATE_BACKEND'
               value: 'redis'
             }
             {
-              name: 'OPENCLAW_REDIS_CONNECTION'
+              name: 'AGENT_REDIS_CONNECTION'
               secretRef: 'redis-conn'
             }
             {
-              name: 'OPENCLAW_BLOB_CONTAINER'
-              value: 'openclaw-state'
+              name: 'AGENT_BLOB_CONTAINER'
+              value: 'agent-state'
             }
             {
-              name: 'OPENCLAW_STORAGE_ACCOUNT'
+              name: 'AGENT_STORAGE_ACCOUNT'
               value: storageAccountName
             }
             {
-              name: 'OPENCLAW_APIM_ENDPOINT'
+              name: 'AGENT_APIM_ENDPOINT'
               value: apimEndpoint
             }
             {

@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
 # deploy.sh — Module 4: Solution C — AKS + E2B
 # Provisions AKS cluster with Kata Container node pool, installs KEDA,
-# deploys E2B Sandbox Manager and OpenClaw workload.
+# deploys E2B Sandbox Manager and agent workload.
 # Usage: ./deploy.sh
 # Prerequisites: Module 1 infrastructure must be deployed first.
 
 set -euo pipefail
 
-RESOURCE_GROUP="${RESOURCE_GROUP:-rg-openclaw-workshop}"
+RESOURCE_GROUP="${RESOURCE_GROUP:-rg-agenthost-workshop}"
 LOCATION="${LOCATION:-eastus}"
-AKS_NAME="${AKS_NAME:-aks-openclaw}"
-ACR_NAME="${ACR_NAME:-acropenclaw}"
-IDENTITY_NAME="${IDENTITY_NAME:-id-openclaw}"
-REDIS_NAME="${REDIS_NAME:-redis-openclaw}"
-STORAGE_ACCOUNT="${STORAGE_ACCOUNT:-stcopenclaw}"
+AKS_NAME="${AKS_NAME:-aks-agenthost}"
+ACR_NAME="${ACR_NAME:-acragenthost}"
+IDENTITY_NAME="${IDENTITY_NAME:-id-agenthost}"
+REDIS_NAME="${REDIS_NAME:-redis-agenthost}"
+STORAGE_ACCOUNT="${STORAGE_ACCOUNT:-stcagenthost}"
 APIM_ENDPOINT="${APIM_ENDPOINT:-}"
-NAMESPACE="${NAMESPACE:-openclaw}"
+NAMESPACE="${NAMESPACE:-agent}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 
 echo "==> [1/8] Creating Azure Container Registry (if not exists): $ACR_NAME"
@@ -27,10 +27,10 @@ az acr create \
   --admin-enabled false \
   --output none 2>/dev/null || echo "    ACR already exists."
 
-echo "==> [2/8] Building and pushing OpenClaw image to ACR"
+echo "==> [2/8] Building and pushing the agent image to ACR"
 az acr login --name "$ACR_NAME"
-docker build -t "${ACR_NAME}.azurecr.io/openclaw-agent:${IMAGE_TAG}" .
-docker push "${ACR_NAME}.azurecr.io/openclaw-agent:${IMAGE_TAG}"
+docker build -t "${ACR_NAME}.azurecr.io/agent-host:${IMAGE_TAG}" .
+docker push "${ACR_NAME}.azurecr.io/agent-host:${IMAGE_TAG}"
 
 echo "==> [3/8] Deploying AKS cluster via Bicep"
 IDENTITY_ID=$(az identity show \
@@ -79,25 +79,25 @@ REDIS_HOST=$(az redis show \
   --query hostName \
   --output tsv)
 
-kubectl create secret generic openclaw-redis \
+kubectl create secret generic agent-redis \
   --namespace "$NAMESPACE" \
   --from-literal=connection-string="${REDIS_HOST}:6380,${REDIS_KEY},ssl=True,abortConnect=False" \
   --dry-run=client -o yaml | kubectl apply -f -
 
-kubectl create secret generic openclaw-config \
+kubectl create secret generic agent-config \
   --namespace "$NAMESPACE" \
   --from-literal=storage-account="$STORAGE_ACCOUNT" \
-  --from-literal=blob-container="openclaw-state" \
+  --from-literal=blob-container="agent-state" \
   --from-literal=apim-endpoint="$APIM_ENDPOINT" \
   --dry-run=client -o yaml | kubectl apply -f -
 
-echo "==> [7/8] Deploying E2B Sandbox Manager and OpenClaw workload"
+echo "==> [7/8] Deploying E2B Sandbox Manager and agent workload"
 # Replace ACR_NAME placeholder in manifests
 sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|${IMAGE_TAG}|g; s|<NAMESPACE>|${NAMESPACE}|g" \
   e2b-manager.yaml | kubectl apply -f -
 
 sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|${IMAGE_TAG}|g; s|<NAMESPACE>|${NAMESPACE}|g" \
-  openclaw-deployment.yaml | kubectl apply -f -
+  agent-deployment.yaml | kubectl apply -f -
 
 kubectl apply -f keda-scaledobject.yaml
 

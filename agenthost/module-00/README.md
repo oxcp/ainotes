@@ -2,11 +2,11 @@
 
 ## Overview
 
-This module introduces the OpenClaw AI agent framework and explains why hosting it on Azure is a compelling choice for both enterprise (ToB) and consumer (ToC) scenarios.
+This module introduces the agent hosting framework and explains why hosting it on Azure is a compelling choice for both enterprise (ToB) and consumer (ToC) scenarios.
 
 ## Learning Objectives
 
-- Understand what OpenClaw is and its core architecture
+- Understand what a hosted agent is and its core architecture
 - Recognise the three Azure hosting solutions covered in this workshop
 - Identify the key Azure components: APIM, Entra ID, Redis, and Blob Storage
 
@@ -14,14 +14,14 @@ This module introduces the OpenClaw AI agent framework and explains why hosting 
 
 | Time | Activity |
 |---|---|
-| 0:00–0:05 | Problem framing: what is OpenClaw? Why host AI agents on Azure? |
+| 0:00–0:05 | Problem framing: what is a hosted agent? Why host AI agents on Azure? |
 | 0:05–0:10 | Architecture overview: three solutions, key components (APIM, Entra ID, state store) |
 
 ---
 
-## What is OpenClaw?
+## What is a hosted agent?
 
-OpenClaw is a stateful AI agent runtime. Each agent instance:
+A hosted agent is a stateful AI agent runtime. Each agent instance:
 
 - Maintains persistent conversation context across multiple turns
 - Authenticates to LLM backends via Azure Managed Identity / Workload Identity

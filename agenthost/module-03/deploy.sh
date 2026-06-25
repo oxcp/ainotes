@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
 # deploy.sh — Module 3: Solution B — ACA Sandbox
-# Creates ACR, builds and pushes OpenClaw image, deploys ACA Environment
+# Creates ACR, builds and pushes the agent image, deploys ACA Environment
 # with Sandbox feature, and configures the ACA App with scale-to-zero lifecycle hook.
 # Usage: ./deploy.sh
 # Prerequisites: Module 1 infrastructure must be deployed first.
 
 set -euo pipefail
 
-RESOURCE_GROUP="${RESOURCE_GROUP:-rg-openclaw-workshop}"
+RESOURCE_GROUP="${RESOURCE_GROUP:-rg-agenthost-workshop}"
 LOCATION="${LOCATION:-eastus}"
-ACR_NAME="${ACR_NAME:-acropenclaw}"
-ACA_ENV_NAME="${ACA_ENV_NAME:-aca-env-openclaw}"
-ACA_APP_NAME="${ACA_APP_NAME:-openclaw-agent}"
-REDIS_NAME="${REDIS_NAME:-redis-openclaw}"
-STORAGE_ACCOUNT="${STORAGE_ACCOUNT:-stcopenclaw}"
-IDENTITY_NAME="${IDENTITY_NAME:-id-openclaw}"
+ACR_NAME="${ACR_NAME:-acragenthost}"
+ACA_ENV_NAME="${ACA_ENV_NAME:-aca-env-agenthost}"
+ACA_APP_NAME="${ACA_APP_NAME:-agent-host}"
+REDIS_NAME="${REDIS_NAME:-redis-agenthost}"
+STORAGE_ACCOUNT="${STORAGE_ACCOUNT:-stcagenthost}"
+IDENTITY_NAME="${IDENTITY_NAME:-id-agenthost}"
 APIM_ENDPOINT="${APIM_ENDPOINT:-}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 
@@ -27,10 +27,10 @@ az acr create \
   --admin-enabled false \
   --output none
 
-echo "==> [2/6] Building and pushing OpenClaw container image"
+echo "==> [2/6] Building and pushing agent container image"
 az acr login --name "$ACR_NAME"
-docker build -t "${ACR_NAME}.azurecr.io/openclaw-agent:${IMAGE_TAG}" .
-docker push "${ACR_NAME}.azurecr.io/openclaw-agent:${IMAGE_TAG}"
+docker build -t "${ACR_NAME}.azurecr.io/agent-host:${IMAGE_TAG}" .
+docker push "${ACR_NAME}.azurecr.io/agent-host:${IMAGE_TAG}"
 
 echo "==> [3/6] Retrieving Redis connection string and Storage key"
 REDIS_KEY=$(az redis list-keys \

@@ -2,12 +2,12 @@
 
 ## Overview
 
-Deploy OpenClaw as an Azure AI Foundry Host Agent — the fastest managed on-ramp for ToB enterprise scenarios. Foundry handles agent lifecycle, built-in state, and native Entra ID authentication.
+Deploy the agent as an Azure AI Foundry Host Agent — the fastest managed on-ramp for ToB enterprise scenarios. Foundry handles agent lifecycle, built-in state, and native Entra ID authentication.
 
 ## Learning Objectives
 
 - Create an Azure AI Foundry project and configure the agent runtime
-- Deploy the OpenClaw agent definition with Redis state store
+- Deploy the agent definition with Redis state store
 - Assign a Managed Identity to the agent and route LLM calls through APIM
 - Trigger scale-to-zero and verify state checkpoint/restore
 
@@ -16,7 +16,7 @@ Deploy OpenClaw as an Azure AI Foundry Host Agent — the fastest managed on-ram
 | Time | Activity |
 |---|---|
 | 0:30–0:35 | Create Azure AI Foundry project; configure agent runtime |
-| 0:35–0:40 | Deploy OpenClaw agent definition; set state store (Redis connection string via Key Vault reference) |
+| 0:35–0:40 | Deploy agent definition; set state store (Redis connection string via Key Vault reference) |
 | 0:40–0:45 | Assign Managed Identity to agent; test LLM call via APIM |
 | 0:45–0:50 | Trigger scale-to-zero; verify state checkpoint in Blob; restore and continue conversation |
 
@@ -32,15 +32,15 @@ Deploy OpenClaw as an Azure AI Foundry Host Agent — the fastest managed on-ram
 ## Step 1 — Set Environment Variables
 
 ```bash
-export RESOURCE_GROUP="rg-openclaw-workshop"
+export RESOURCE_GROUP="rg-agenthost-workshop"
 export LOCATION="eastus"
-export FOUNDRY_HUB_NAME="hub-openclaw"
-export FOUNDRY_PROJECT_NAME="proj-openclaw"
-export IDENTITY_NAME="id-openclaw"
-export REDIS_NAME="redis-openclaw"
-export STORAGE_ACCOUNT="stcopenclaw"
-export KV_NAME="kv-openclaw"
-export APIM_ENDPOINT="https://apim-openclaw.azure-api.net"
+export FOUNDRY_HUB_NAME="hub-agenthost"
+export FOUNDRY_PROJECT_NAME="proj-agenthost"
+export IDENTITY_NAME="id-agenthost"
+export REDIS_NAME="redis-agenthost"
+export STORAGE_ACCOUNT="stcagenthost"
+export KV_NAME="kv-agenthost"
+export APIM_ENDPOINT="https://apim-agenthost.azure-api.net"
 ```
 
 ---
@@ -70,9 +70,9 @@ chmod +x deploy.sh
 
 ---
 
-## Step 3 — Deploy the OpenClaw Agent Definition
+## Step 3 — Deploy the Agent Definition
 
-The `agent-definition.json` file describes the OpenClaw agent to the Foundry runtime.
+The `agent-definition.json` file describes the agent to the Foundry runtime.
 
 ```bash
 # Deploy agent definition via Azure AI Foundry CLI (or REST API)
@@ -96,8 +96,8 @@ TOKEN=$(az account get-access-token \
 curl -X POST "$APIM_ENDPOINT/llm-api/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-01" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -H "x-agent-id: openclaw-test-001" \
-  -d '{"messages":[{"role":"user","content":"Hello from OpenClaw!"}],"max_tokens":100}'
+  -H "x-agent-id: agent-test-001" \
+  -d '{"messages":[{"role":"user","content":"Hello from the agent!"}],"max_tokens":100}'
 ```
 
 ---
@@ -108,7 +108,7 @@ curl -X POST "$APIM_ENDPOINT/llm-api/openai/deployments/gpt-4o/chat/completions?
 # Observe the agent state in Blob Storage after idle eviction
 az storage blob list \
   --account-name "$STORAGE_ACCOUNT" \
-  --container-name "openclaw-state" \
+  --container-name "agent-state" \
   --auth-mode login \
   --output table
 ```
@@ -121,7 +121,7 @@ az storage blob list \
 |---|---|
 | `deploy.sh` | Automated bash script for Foundry Hub, Project, Key Vault, and agent deployment |
 | `foundry.bicep` | Bicep IaC template for Azure AI Foundry Hub and Project |
-| `agent-definition.json` | OpenClaw agent definition for the Foundry runtime |
+| `agent-definition.json` | agent definition for the Foundry runtime |
 | `apim-policy.xml` | APIM policy scoped to the Foundry agent backend |
 
 ---
