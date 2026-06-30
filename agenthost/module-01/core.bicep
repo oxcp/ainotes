@@ -10,6 +10,8 @@ param apimName string
 param apimPublisherEmail string
 param apimPublisherName string
 param identityName string
+param keyVaultName string
+param acrName string
 param aoaiEndpoint string
 param tenantId string
 param apimAudience string
@@ -115,8 +117,41 @@ resource aoaiBackend 'Microsoft.ApiManagement/service/backends@2023-05-01-previe
   }
 }
 
+// ── Azure Key Vault (RBAC-enabled) ───────────────────────────────────────────
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
+  name: keyVaultName
+  location: location
+  properties: {
+    tenantId: tenantId
+    sku: {
+      family: 'A'
+      name: 'standard'
+    }
+    enableRbacAuthorization: true
+    enableSoftDelete: true
+    enablePurgeProtection: true
+    publicNetworkAccess: 'Enabled'
+  }
+}
+
+// ── Azure Container Registry ─────────────────────────────────────────────────
+resource acr 'Microsoft.ContainerRegistry/registries@2023-07-01' = {
+  name: acrName
+  location: location
+  sku: {
+    name: 'Standard'
+  }
+  properties: {
+    adminUserEnabled: false
+  }
+}
+
 // ── Outputs ──────────────────────────────────────────────────────────────────
 output redisHostName string = redis.properties.hostName
 output storageAccountName string = storage.name
 output apimServiceUrl string = 'https://${apim.properties.gatewayUrl}'
 output identityClientId string = identity.properties.clientId
+output keyVaultName string = keyVault.name
+output keyVaultUri string = keyVault.properties.vaultUri
+output acrName string = acr.name
+output acrLoginServer string = acr.properties.loginServer

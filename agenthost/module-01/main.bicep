@@ -1,5 +1,6 @@
 // main.bicep — Module 1: Core Infrastructure
 // Deploys a Resource Group, Azure Managed Redis, Blob Storage, APIM,
+// Azure Key Vault, Azure Container Registry,
 // Entra ID app registration (via deployment script), and UAMI.
 // Deploy with: az deployment sub create --location <loc> --template-file main.bicep --parameters ...
 
@@ -29,6 +30,12 @@ param apimPublisherName string = 'Agent Hosting Workshop'
 @description('User-Assigned Managed Identity name')
 param identityName string = 'id-agenthost'
 
+@description('Azure Key Vault name (3-24 chars, alphanumeric and dashes)')
+param keyVaultName string = 'kv-agenthost'
+
+@description('Azure Container Registry name (5-50 chars, lowercase alphanumeric)')
+param acrName string = 'acragenthost'
+
 @description('Azure OpenAI endpoint URL')
 param aoaiEndpoint string = 'https://kacai-3055-resource.services.ai.azure.com/openai/v1'
 
@@ -45,6 +52,8 @@ var redisNameWithSuffix = '${redisName}-${deploymentSuffix}'
 var storageAccountNameWithSuffix = '${storageAccountName}${deploymentSuffix}'
 var apimNameWithSuffix = '${apimName}-${deploymentSuffix}'
 var identityNameWithSuffix = '${identityName}-${deploymentSuffix}'
+var keyVaultNameWithSuffix = '${keyVaultName}-${deploymentSuffix}'
+var acrNameWithSuffix = '${acrName}${deploymentSuffix}'
 
 // ── Resource Group ──────────────────────────────────────────────────────────
 resource rg 'Microsoft.Resources/resourceGroups@2023-07-01' = {
@@ -67,6 +76,8 @@ module coreResources 'core.bicep' = {
     apimPublisherEmail: apimPublisherEmail
     apimPublisherName: apimPublisherName
     identityName: identityNameWithSuffix
+    keyVaultName: keyVaultNameWithSuffix
+    acrName: acrNameWithSuffix
     aoaiEndpoint: aoaiEndpoint
     tenantId: tenantId
     apimAudience: apimAudience
@@ -78,3 +89,7 @@ output redisHostName string = coreResources.outputs.redisHostName
 output storageAccountName string = coreResources.outputs.storageAccountName
 output apimServiceUrl string = coreResources.outputs.apimServiceUrl
 output identityClientId string = coreResources.outputs.identityClientId
+output keyVaultName string = coreResources.outputs.keyVaultName
+output keyVaultUri string = coreResources.outputs.keyVaultUri
+output acrName string = coreResources.outputs.acrName
+output acrLoginServer string = coreResources.outputs.acrLoginServer

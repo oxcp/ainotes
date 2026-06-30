@@ -2,7 +2,7 @@
 
 ## Overview
 
-Provision the shared Azure infrastructure used by all three agent hosting solutions: Resource Group, Azure Managed Redis, Azure Blob Storage, Azure API Management, Entra ID App Registration, and User-Assigned Managed Identity.
+Provision the shared Azure infrastructure used by all three agent hosting solutions: Resource Group, Azure Managed Redis, Azure Blob Storage, Azure API Management, Azure Key Vault, Azure Container Registry, Entra ID App Registration, and User-Assigned Managed Identity.
 
 ## Learning Objectives
 
@@ -16,6 +16,7 @@ Provision the shared Azure infrastructure used by all three agent hosting soluti
 |---|---|---|
 | 0:10–0:15 | Create Resource Group, Azure Managed Redis (Basic SKU), Azure Blob Storage | `az group create` · `az redis create` |
 | 0:15–0:20 | Deploy Azure API Management (Consumption tier for Solutions A/B; VNet-capable for Solution C) | Portal or `az apim create` |
+| 0:20–0:22 | Create Azure Key Vault and Azure Container Registry for later modules | `az keyvault create` · `az acr create` |
 | 0:20–0:25 | Register Entra ID App; create User-Assigned Managed Identity for the agent | `az ad app create` · `az identity create` |
 | 0:25–0:30 | Configure APIM `validate-jwt` policy and LLM backend (Azure OpenAI) | APIM policy editor |
 
@@ -78,7 +79,7 @@ az deployment group create \
 |---|---|
 | `setup.sh` | Automated bash script for full infrastructure setup |
 | `main.bicep` | Bicep subscription-scoped entry point (creates Resource Group, calls core.bicep) |
-| `core.bicep` | Bicep IaC template for all shared Azure resources (Redis, Storage, APIM, UAMI) |
+| `core.bicep` | Bicep IaC template for all shared Azure resources (Redis, Storage, APIM, Key Vault, ACR, UAMI) |
 | `apim-api-policy.bicep` | Bicep IaC template to create API in APIM and apply the policy defined `apim-policy.xml` file |
 | `apim-policy.xml` | APIM policy: `validate-jwt`, rate-limit, retry, Azure OpenAI backend |
 
