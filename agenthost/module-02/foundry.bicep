@@ -2,29 +2,43 @@
 // Deploys an Azure AI Foundry Hub linked to existing storage and key vault,
 // then creates a Project within the Hub for agent hosting.
 
-param location string
-param hubName string
-param projectName string
-param identityName string
-param storageAccountName string
-param keyVaultName string
+targetScope = 'resourceGroup'
+
+param location string = 'eastus2'
+param hubName string = 'hub-agenthost'
+param projectName string = 'proj-agenthost'
+param identityName string = 'id-agenthost'
+param redisName string = 'redis-agenthost'
+param storageAccountName string = 'stcagenthost'
+param keyVaultName string = 'kv-agenthost'
+
+var deploymentSuffix = contains(resourceGroup().tags, 'deploymentSuffix') ? resourceGroup().tags['deploymentSuffix'] : ''
+var apimNameWithSuffix = '${apimName}-${deploymentSuffix}'
+
+var redisNameWithSuffix = '${redisName}-${deploymentSuffix}'
+var storageAccountNameWithSuffix = '${storageAccountName}${deploymentSuffix}'
+var identityNameWithSuffix = '${identityName}-${deploymentSuffix}'
+var keyVaultNameWithSuffix = '${keyVaultName}-${deploymentSuffix}'
+var hubNameWithSuffix = '${hubName}-${deploymentSuffix}'
+var projNameWithSuffix = '${projectName}-${deploymentSuffix}'
+
 
 // ── Reference existing resources from Module 1 ──────────────────────────────
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = {
-  name: identityName
+  name: identityNameWithSuffix
 }
 
 resource storage 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
-  name: storageAccountName
+  name: storageAccountNameWithSuffix
 }
 
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
-  name: keyVaultName
+  name: keyVaultNameWithSuffix
 }
 
 // ── Azure AI Foundry Hub ─────────────────────────────────────────────────────
 resource foundryHub 'Microsoft.MachineLearningServices/workspaces@2024-04-01' = {
-  name: hubName
+  name: hubNameWithSuffix
   location: location
   kind: 'Hub'
   identity: {
@@ -44,7 +58,7 @@ resource foundryHub 'Microsoft.MachineLearningServices/workspaces@2024-04-01' = 
 
 // ── Azure AI Foundry Project ─────────────────────────────────────────────────
 resource foundryProject 'Microsoft.MachineLearningServices/workspaces@2024-04-01' = {
-  name: projectName
+  name: projNameWithSuffix
   location: location
   kind: 'Project'
   identity: {

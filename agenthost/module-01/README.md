@@ -64,14 +64,10 @@ chmod +x setup.sh
 
 Create API in APIM and apply the policy defined `apim-policy.xml` file:
 
-**Tip:** replace the "<apim-agenthost-xxxxxxxxx>" with your APIM resource name
-
 ```bash
 az deployment group create \
   -g $RESOURCE_GROUP  \
-  -f apim-api-policy.bicep \
-  --parameters \
-      apimName=<apim-agenthost-xxxxxxxxx>
+  -f apim-api-policy.bicep 
 ```
 
 ---

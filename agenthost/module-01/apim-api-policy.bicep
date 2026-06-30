@@ -3,12 +3,15 @@
 
 targetScope = 'resourceGroup'
 
-param apimName string
+param apimName string = 'apim-agenthost'
 param tenantId string = subscription().tenantId
 param apimAudience string = 'api://agenthost'
 
+var deploymentSuffix = contains(resourceGroup().tags, 'deploymentSuffix') ? resourceGroup().tags['deploymentSuffix'] : ''
+var apimNameWithSuffix = '${apimName}-${deploymentSuffix}'
+
 resource apim 'Microsoft.ApiManagement/service@2023-05-01-preview' existing = {
-  name: apimName
+  name: apimNameWithSuffix
 }
 
 // Existing backend deployed in core.bicep
@@ -63,3 +66,4 @@ resource llmApiPolicy 'Microsoft.ApiManagement/service/apis/policies@2023-05-01-
 }
 
 output llmApiPath string = llmApi.properties.path
+output deploymentSuffix string = deploymentSuffix

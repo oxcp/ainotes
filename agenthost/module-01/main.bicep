@@ -9,7 +9,7 @@ targetScope = 'subscription'
 param resourceGroupName string = 'rg-agenthost-workshop'
 
 @description('Azure region for all resources')
-param location string = 'westus'
+param location string = 'eastus2'
 
 @description('Azure Managed Redis cache name')
 param redisName string = 'redis-agenthost'
@@ -50,6 +50,9 @@ var identityNameWithSuffix = '${identityName}-${deploymentSuffix}'
 resource rg 'Microsoft.Resources/resourceGroups@2023-07-01' = {
   name: resourceGroupName
   location: location
+  tags: {
+    deploymentSuffix: deploymentSuffix
+  }
 }
 
 // ── Resources deployed into the RG ──────────────────────────────────────────
@@ -71,7 +74,7 @@ module coreResources 'core.bicep' = {
 }
 
 output resourceGroupName string = rg.name
-//output redisHostName string = coreResources.outputs.redisHostName
-//output storageAccountName string = coreResources.outputs.storageAccountName
+output redisHostName string = coreResources.outputs.redisHostName
+output storageAccountName string = coreResources.outputs.storageAccountName
 output apimServiceUrl string = coreResources.outputs.apimServiceUrl
 output identityClientId string = coreResources.outputs.identityClientId

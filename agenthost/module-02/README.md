@@ -33,7 +33,7 @@ Deploy the agent as an Azure AI Foundry Host Agent — the fastest managed on-ra
 
 ```bash
 export RESOURCE_GROUP="rg-agenthost-workshop"
-export LOCATION="eastus"
+export LOCATION="eastus2"
 export FOUNDRY_HUB_NAME="hub-agenthost"
 export FOUNDRY_PROJECT_NAME="proj-agenthost"
 export IDENTITY_NAME="id-agenthost"
