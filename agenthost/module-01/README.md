@@ -17,7 +17,7 @@ Provision the shared Azure infrastructure used by all three agent hosting soluti
 | 0:10–0:15 | Create Resource Group, Azure Managed Redis (Basic SKU), Azure Blob Storage | `az group create` · `az redis create` |
 | 0:15–0:20 | Deploy Azure API Management (Consumption tier for Solutions A/B; VNet-capable for Solution C) | Portal or `az apim create` |
 | 0:20–0:22 | Create Azure Key Vault and Azure Container Registry for later modules | `az keyvault create` · `az acr create` |
-| 0:20–0:25 | Register Entra ID App; create User-Assigned Managed Identity for the agent | `az ad app create` · `az identity create` |
+| 0:22–0:25 | Register Entra ID App; create User-Assigned Managed Identity for the agent | `az ad app create` · `az identity create` |
 | 0:25–0:30 | Configure APIM `validate-jwt` policy and LLM backend (Azure OpenAI) | APIM policy editor |
 
 ---
