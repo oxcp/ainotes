@@ -33,7 +33,7 @@
     </validate-jwt>
 
     <!-- 2. Rate-limit by caller subscription key (100 calls / 60 s) -->
-    <rate-limit-by-key calls="100" renewal-period="60" counter-key="@(context.Subscription.Id)" />
+    <!--rate-limit-by-key calls="100" renewal-period="60" counter-key="@(context.Subscription.Id)" /-->
 
     <!-- 3. Route to the Azure OpenAI backend registered in Module 1 -->
     <set-backend-service backend-id="azure-openai" />

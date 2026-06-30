@@ -11,6 +11,8 @@ param apimPublisherEmail string
 param apimPublisherName string
 param identityName string
 param aoaiEndpoint string
+param tenantId string
+param apimAudience string
 
 // ── User-Assigned Managed Identity ──────────────────────────────────────────
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
@@ -18,21 +20,27 @@ resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' 
   location: location
 }
 
-// ── Azure Managed Redis (Basic C0) ──────────────────────────────────────────
-resource redis 'Microsoft.Cache/redis@2023-08-01' = {
+// ── Azure Managed Redis (Balanced B0) ───────────────────────────────────────
+resource redis 'Microsoft.Cache/redisEnterprise@2025-07-01' = {
   name: redisName
   location: location
+  sku: {
+    name: 'Balanced_B0'
+  }
   properties: {
-    sku: {
-      name: 'Basic'
-      family: 'C'
-      capacity: 0
-    }
-    enableNonSslPort: false
-    minimumTlsVersion: '1.2'
-    redisConfiguration: {
-      'maxmemory-policy': 'allkeys-lru'
-    }
+    publicNetworkAccess: 'Enabled'
+  }
+}
+
+resource redisDefaultDb 'Microsoft.Cache/redisEnterprise/databases@2025-07-01' = {
+  parent: redis
+  name: 'default'
+  properties: {
+    clientProtocol: 'Encrypted'
+    clusteringPolicy: 'OSSCluster'
+    evictionPolicy: 'AllKeysLRU'
+
+    publicNetworkAccess: 'Enabled'
   }
 }
 

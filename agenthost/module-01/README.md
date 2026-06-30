@@ -33,11 +33,7 @@ Provision the shared Azure infrastructure used by all three agent hosting soluti
 
 ```bash
 export RESOURCE_GROUP="rg-agenthost-workshop"
-export LOCATION="eastus"
-export REDIS_NAME="redis-agenthost"
-export STORAGE_ACCOUNT="stcagenthost"
-export APIM_NAME="apim-agenthost"
-export IDENTITY_NAME="id-agenthost"
+export LOCATION="eastus2"
 export AOAI_ENDPOINT="https://<your-aoai-resource>.openai.azure.com/"
 ```
 
@@ -52,10 +48,6 @@ az deployment sub create \
   --parameters \
       resourceGroupName="$RESOURCE_GROUP" \
       location="$LOCATION" \
-      redisName="$REDIS_NAME" \
-      storageAccountName="$STORAGE_ACCOUNT" \
-      apimName="$APIM_NAME" \
-      identityName="$IDENTITY_NAME" \
       aoaiEndpoint="$AOAI_ENDPOINT"
 ```
 
@@ -70,14 +62,15 @@ chmod +x setup.sh
 
 ## Step 3 — Configure APIM Policy
 
-Apply the `apim-policy.xml` file to the APIM LLM API via the Azure Portal or Azure CLI:
+Create API in APIM and apply the policy defined `apim-policy.xml` file:
+**Tip:** replace the "<apim-agenthost-xxxxxxxxx>" with your APIM resource name
 
 ```bash
-az apim api policy create \
-  --resource-group "$RESOURCE_GROUP" \
-  --service-name "$APIM_NAME" \
-  --api-id "llm-api" \
-  --xml-file apim-policy.xml
+az deployment group create \
+  -g $RESOURCE_GROUP  \
+  -f apim-api-policy.bicep \
+  --parameters \
+      apimName=<apim-agenthost-xxxxxxxxx>
 ```
 
 ---
@@ -89,6 +82,7 @@ az apim api policy create \
 | `setup.sh` | Automated bash script for full infrastructure setup |
 | `main.bicep` | Bicep subscription-scoped entry point (creates Resource Group, calls core.bicep) |
 | `core.bicep` | Bicep IaC template for all shared Azure resources (Redis, Storage, APIM, UAMI) |
+| `apim-api-policy.bicep` | Bicep IaC template to create API in APIM and apply the policy defined `apim-policy.xml` file |
 | `apim-policy.xml` | APIM policy: `validate-jwt`, rate-limit, retry, Azure OpenAI backend |
 
 ---

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # setup.sh — Module 1: Core Infrastructure Setup
 # Provisions shared Azure resources for the agent hosting workshop.
 # Usage: ./setup.sh
@@ -7,7 +7,7 @@
 set -euo pipefail
 
 RESOURCE_GROUP="${RESOURCE_GROUP:-rg-agenthost-workshop}"
-LOCATION="${LOCATION:-eastus}"
+LOCATION="${LOCATION:-eastus2}"
 REDIS_NAME="${REDIS_NAME:-redis-agenthost}"
 STORAGE_ACCOUNT="${STORAGE_ACCOUNT:-stcagenthost}"
 APIM_NAME="${APIM_NAME:-apim-agenthost}"
@@ -15,7 +15,7 @@ APIM_PUBLISHER_EMAIL="${APIM_PUBLISHER_EMAIL:-admin@example.com}"
 APIM_PUBLISHER_NAME="${APIM_PUBLISHER_NAME:-Agent Hosting Workshop}"
 IDENTITY_NAME="${IDENTITY_NAME:-id-agenthost}"
 ENTRA_APP_NAME="${ENTRA_APP_NAME:-app-agenthost}"
-AOAI_ENDPOINT="${AOAI_ENDPOINT:-}"
+AOAI_ENDPOINT="${AOAI_ENDPOINT:-https://kacai-3055-resource.services.ai.azure.com/openai/v1}"
 
 echo "==> [1/6] Creating Resource Group: $RESOURCE_GROUP in $LOCATION"
 az group create \
@@ -23,13 +23,21 @@ az group create \
   --location "$LOCATION" \
   --output none
 
-echo "==> [2/6] Creating Azure Managed Redis (Basic SKU): $REDIS_NAME"
-az redis create \
+echo "==> [2/6] Creating Azure Managed Redis (Balanced_B0): $REDIS_NAME"
+az redisenterprise create \
   --resource-group "$RESOURCE_GROUP" \
-  --name "$REDIS_NAME" \
+  --cluster-name "$REDIS_NAME" \
   --location "$LOCATION" \
-  --sku Basic \
-  --vm-size c0 \
+  --sku Balanced_B0 \
+  --output none
+
+az redisenterprise database create \
+  --resource-group "$RESOURCE_GROUP" \
+  --cluster-name "$REDIS_NAME" \
+  --name default \
+  --client-protocol Encrypted \
+  --clustering-policy OSSCluster \
+  --eviction-policy AllKeysLRU \
   --output none
 
 echo "==> [3/6] Creating Azure Blob Storage account: $STORAGE_ACCOUNT"
