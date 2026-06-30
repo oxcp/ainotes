@@ -19,13 +19,15 @@ APIM_ENDPOINT="${APIM_ENDPOINT:-}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 
 echo "==> [1/6] Creating Azure Container Registry (if not exists): $ACR_NAME"
-az acr create \
-  --resource-group "$RESOURCE_GROUP" \
-  --name "$ACR_NAME" \
-  --location "$LOCATION" \
-  --sku Basic \
-  --admin-enabled false \
-  --output none 2>/dev/null || echo "    ACR already exists."
+if ! az acr show --resource-group "$RESOURCE_GROUP" --name "$ACR_NAME" --output none 2>/dev/null; then
+  az acr create \
+    --resource-group "$RESOURCE_GROUP" \
+    --name "$ACR_NAME" \
+    --location "$LOCATION" \
+    --sku Basic \
+    --admin-enabled false \
+    --output none
+fi
 
 echo "==> [2/6] Building and pushing agent container image"
 az acr login --name "$ACR_NAME"
