@@ -8,7 +8,17 @@ set -euo pipefail
 
 RESOURCE_GROUP="${RESOURCE_GROUP:-rg-agenthost-workshop}"
 LOCATION="${LOCATION:-eastus2}"
-DEPLOYMENT_SUFFIX="${DEPLOYMENT_SUFFIX:-$(date -u +%H%M%S%3N)}" # requires GNU date (Linux/Azure Cloud Shell); on macOS install coreutils: brew install coreutils
+# Generate a 9-digit UTC suffix (HHmmssfff) to match main.bicep's utcNow('HHmmssfff')
+if [[ -z "${DEPLOYMENT_SUFFIX:-}" ]]; then
+  if date -u +%H%M%S%3N >/dev/null 2>&1; then
+    DEPLOYMENT_SUFFIX="$(date -u +%H%M%S%3N)"
+  elif command -v gdate >/dev/null 2>&1; then
+    DEPLOYMENT_SUFFIX="$(gdate -u +%H%M%S%3N)"
+  else
+    echo "DEPLOYMENT_SUFFIX not set and GNU date is required. On macOS: brew install coreutils and use gdate (or export DEPLOYMENT_SUFFIX manually)." >&2
+    exit 1
+  fi
+fi
 REDIS_NAME="${REDIS_NAME:-redis-agenthost-${DEPLOYMENT_SUFFIX}}"
 STORAGE_ACCOUNT="${STORAGE_ACCOUNT:-stcagenthost${DEPLOYMENT_SUFFIX}}"
 APIM_NAME="${APIM_NAME:-apim-agenthost-${DEPLOYMENT_SUFFIX}}"
