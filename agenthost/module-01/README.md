@@ -63,6 +63,7 @@ chmod +x setup.sh
 ## Step 3 — Configure APIM Policy
 
 Create API in APIM and apply the policy defined `apim-policy.xml` file:
+
 **Tip:** replace the "<apim-agenthost-xxxxxxxxx>" with your APIM resource name
 
 ```bash
