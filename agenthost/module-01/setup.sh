@@ -8,21 +8,33 @@ set -euo pipefail
 
 RESOURCE_GROUP="${RESOURCE_GROUP:-rg-agenthost-workshop}"
 LOCATION="${LOCATION:-eastus2}"
-REDIS_NAME="${REDIS_NAME:-redis-agenthost}"
-STORAGE_ACCOUNT="${STORAGE_ACCOUNT:-stcagenthost}"
-APIM_NAME="${APIM_NAME:-apim-agenthost}"
+# Generate a 9-digit UTC suffix (HHmmssfff) to match main.bicep's utcNow('HHmmssfff')
+if [[ -z "${DEPLOYMENT_SUFFIX:-}" ]]; then
+  if date -u +%H%M%S%3N >/dev/null 2>&1; then
+    DEPLOYMENT_SUFFIX="$(date -u +%H%M%S%3N)"
+  elif command -v gdate >/dev/null 2>&1; then
+    DEPLOYMENT_SUFFIX="$(gdate -u +%H%M%S%3N)"
+  else
+    echo "DEPLOYMENT_SUFFIX not set and GNU date is required. On macOS: brew install coreutils and use gdate (or export DEPLOYMENT_SUFFIX manually)." >&2
+    exit 1
+  fi
+fi
+REDIS_NAME="${REDIS_NAME:-redis-agenthost-${DEPLOYMENT_SUFFIX}}"
+STORAGE_ACCOUNT="${STORAGE_ACCOUNT:-stcagenthost${DEPLOYMENT_SUFFIX}}"
+APIM_NAME="${APIM_NAME:-apim-agenthost-${DEPLOYMENT_SUFFIX}}"
 APIM_PUBLISHER_EMAIL="${APIM_PUBLISHER_EMAIL:-admin@example.com}"
 APIM_PUBLISHER_NAME="${APIM_PUBLISHER_NAME:-Agent Hosting Workshop}"
-IDENTITY_NAME="${IDENTITY_NAME:-id-agenthost}"
+IDENTITY_NAME="${IDENTITY_NAME:-id-agenthost-${DEPLOYMENT_SUFFIX}}"
 ENTRA_APP_NAME="${ENTRA_APP_NAME:-app-agenthost}"
-KV_NAME="${KV_NAME:-kv-agenthost}"
-ACR_NAME="${ACR_NAME:-acragenthost}"
+KV_NAME="${KV_NAME:-kv-agenthost-${DEPLOYMENT_SUFFIX}}"
+ACR_NAME="${ACR_NAME:-acragenthost${DEPLOYMENT_SUFFIX}}"
 AOAI_ENDPOINT="${AOAI_ENDPOINT:-https://kacai-3055-resource.services.ai.azure.com/openai/v1}"
 
 echo "==> [1/8] Creating Resource Group: $RESOURCE_GROUP in $LOCATION"
 az group create \
   --name "$RESOURCE_GROUP" \
   --location "$LOCATION" \
+  --tags deploymentSuffix="$DEPLOYMENT_SUFFIX" \
   --output none
 
 echo "==> [2/8] Creating Azure Managed Redis (Balanced_B0): $REDIS_NAME"
