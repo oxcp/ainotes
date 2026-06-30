@@ -15,15 +15,17 @@ APIM_PUBLISHER_EMAIL="${APIM_PUBLISHER_EMAIL:-admin@example.com}"
 APIM_PUBLISHER_NAME="${APIM_PUBLISHER_NAME:-Agent Hosting Workshop}"
 IDENTITY_NAME="${IDENTITY_NAME:-id-agenthost}"
 ENTRA_APP_NAME="${ENTRA_APP_NAME:-app-agenthost}"
+KV_NAME="${KV_NAME:-kv-agenthost}"
+ACR_NAME="${ACR_NAME:-acragenthost}"
 AOAI_ENDPOINT="${AOAI_ENDPOINT:-https://kacai-3055-resource.services.ai.azure.com/openai/v1}"
 
-echo "==> [1/6] Creating Resource Group: $RESOURCE_GROUP in $LOCATION"
+echo "==> [1/8] Creating Resource Group: $RESOURCE_GROUP in $LOCATION"
 az group create \
   --name "$RESOURCE_GROUP" \
   --location "$LOCATION" \
   --output none
 
-echo "==> [2/6] Creating Azure Managed Redis (Balanced_B0): $REDIS_NAME"
+echo "==> [2/8] Creating Azure Managed Redis (Balanced_B0): $REDIS_NAME"
 az redisenterprise create \
   --resource-group "$RESOURCE_GROUP" \
   --cluster-name "$REDIS_NAME" \
@@ -40,7 +42,7 @@ az redisenterprise database create \
   --eviction-policy AllKeysLRU \
   --output none
 
-echo "==> [3/6] Creating Azure Blob Storage account: $STORAGE_ACCOUNT"
+echo "==> [3/8] Creating Azure Blob Storage account: $STORAGE_ACCOUNT"
 az storage account create \
   --resource-group "$RESOURCE_GROUP" \
   --name "$STORAGE_ACCOUNT" \
@@ -64,7 +66,7 @@ az storage container create \
   --auth-mode login \
   --output none
 
-echo "==> [4/6] Creating Azure API Management (Consumption SKU): $APIM_NAME"
+echo "==> [4/8] Creating Azure API Management (Consumption SKU): $APIM_NAME"
 az apim create \
   --resource-group "$RESOURCE_GROUP" \
   --name "$APIM_NAME" \
@@ -74,7 +76,23 @@ az apim create \
   --sku-name Consumption \
   --output none
 
-echo "==> [5/6] Registering Entra ID App: $ENTRA_APP_NAME"
+echo "==> [5/8] Creating Azure Key Vault (RBAC-enabled): $KV_NAME"
+az keyvault create \
+  --resource-group "$RESOURCE_GROUP" \
+  --name "$KV_NAME" \
+  --location "$LOCATION" \
+  --enable-rbac-authorization true \
+  --output none
+
+echo "==> [6/8] Creating Azure Container Registry (Standard SKU): $ACR_NAME"
+az acr create \
+  --resource-group "$RESOURCE_GROUP" \
+  --name "$ACR_NAME" \
+  --location "$LOCATION" \
+  --sku Standard \
+  --output none
+
+echo "==> [7/8] Registering Entra ID App: $ENTRA_APP_NAME"
 APP_ID=$(az ad app create \
   --display-name "$ENTRA_APP_NAME" \
   --sign-in-audience AzureADMyOrg \
@@ -82,7 +100,7 @@ APP_ID=$(az ad app create \
   --output tsv)
 echo "    App ID: $APP_ID"
 
-echo "==> [6/6] Creating User-Assigned Managed Identity: $IDENTITY_NAME"
+echo "==> [8/8] Creating User-Assigned Managed Identity: $IDENTITY_NAME"
 az identity create \
   --resource-group "$RESOURCE_GROUP" \
   --name "$IDENTITY_NAME" \
@@ -103,6 +121,8 @@ echo "    Resource Group : $RESOURCE_GROUP"
 echo "    Redis          : $REDIS_NAME"
 echo "    Storage        : $STORAGE_ACCOUNT"
 echo "    APIM           : $APIM_NAME"
+echo "    Key Vault      : $KV_NAME"
+echo "    ACR            : $ACR_NAME"
 echo "    Entra App ID   : $APP_ID"
 echo "    Identity ID    : $IDENTITY_CLIENT_ID"
 echo ""
