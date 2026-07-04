@@ -2,61 +2,39 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code generation compare</title>
-    <link rel="stylesheet" href="codegen.css">
-
+    <title>AI Notes - Home</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; background: #f9f9f9; }
+        h1 { color: #333; }
+        ul.category-list { list-style: none; padding: 0; }
+        ul.category-list li { margin: 1em 0; }
+        ul.category-list a {
+            text-decoration: none;
+            color: #1976d2;
+            font-size: 1.2em;
+            padding: 0.5em 1em;
+            background: #e3f2fd;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        ul.category-list a:hover {
+            background: #bbdefb;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <div class="panel-a" id="panel-a">
-            <div class="panel-title">Scenarios</div>
-            <ul>
-                <li onclick="showMessage('completion')">代码生成</li>
-                <li onclick="showMessage('QnA')">智能问答</li>
-                <li onclick="showMessage('explain')">解释代码</li>
-                <li onclick="showMessage('erranalysis')">报错分析</li>
-                <li onclick="showMessage('optimization')">优化代码</li>
-                <li onclick="showMessage('unittestcase')">生成单测</li>
-                <li onclick="showMessage('codecomments')">代码注释</li>
-                <li onclick="showMessage('generatedoc')">文档生成</li>
-                <li onclick="showMessage('codetranslation')">代码翻译</li>
-                <li onclick="showMessage('securitycheck')">安全检查</li>
-            </ul>
-        </div>
-        <div class="splitter splitter-vertical" id="splitter-a-b"></div>
-        <div class="right-section" id="right-section">
-            <div class="panel-b" id="panel-b">
-                <div class="panel-title">Prompts</div>
-                <div id="panel-b-content">Prompts here will be used across all models for code generation.</div>
-            </div>
-            <div class="splitter splitter-horizontal" id="splitter-b-cd"></div>
-            <div class="bottom-panels" id="bottom-panels">
-                <div class="panel-c" id="panel-c">
-                    <div class="panel-title">Response of Azure GPT5</div>
-                    <div id="panel-c-content">Response from GPT5 here:</div>
-                </div>
-                <div class="splitter splitter-vertical" id="splitter-c-d"></div>
-                <div class="panel-d" id="panel-d">
-                    <div class="panel-title">
-                        Response of 
-                        <select id="model-select" onchange="handleModelSelect(event)">
-                            <option value="claude-opus-4-1-20250805">claude-opus-4-1-20250805</option>
-                            <option value="claude-sonnet-4-20250514">claude-sonnet-4-20250514</option>
-                            <option value="claude-3-7-sonnet-20250219">claude-3-7-sonnet-20250219</option>
-                            <option value="gemini-2.5-pro">gemini-2.5-pro</option>
-                        </select>
-                    </div>
-                    <div id="panel-d-content">Response from <span id="selected-model-text">Claude Opus 4.1</span> here:</div>
-                </div>
-            </div>
-            <script>
-
-            </script>
-        </div>
-    </div>
-    <script src="codegen.js"></script>
-    
+    <h1>Welcome to AI Notes</h1>
+    <p>Select a category to explore:</p>
+    <ul class="category-list">
+        <li><a href="compare-codegen-ingeneral.html">GPT-5 Code Generation comparison in general</a></li>
+        <li><a href="compare-codegen-realcases.html">GPT-5 Code Generation comparison in real scenarios</a></li>
+        <li><a href="https://github.com/oxcp/aiexec/blob/main/agents/azureop.md">AzureOpAgent: An AI Agent assisting people in Azure operations</a></li>
+        <li><a href="models-in-Bio-Healthcare-industry.html">GPT-5 comparisons in Bio-Healthcare</a></li>
+        <li><a href="model-4-SKH.html">Medical image models comparison</a></li>
+        <li><a href="https://github.com/oxcp/ainotes/blob/main/azmetricsexp.md">Exporting Azure Metrics to Prometheus+Grafana</a></li>
+        <li><a href="https://github.com/oxcp/ainotes/blob/main/istio/monitoring/configuration.md">Build completed monitoring for AKS Istio based Service Mesh Add-on</a></li>
+        <li><a href="https://github.com/oxcp/ainotes/blob/main/k8s/multiclustermgmt.md">Multi-cluster management for Kubernetes</a></li>
+    </ul>
 </body>
-
 </html>
