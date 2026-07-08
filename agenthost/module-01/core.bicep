@@ -16,6 +16,32 @@ param acrName string
 param tenantId string
 param apimAudience string
 
+@description('Foundry (AIServices) resource name, already suffixed by main.bicep')
+param foundryResourceName string
+
+@description('Foundry project name')
+param projectName string
+
+@description('Default azd environment tag applied to the Foundry account')
+param azdEnvName string
+
+@description('Model deployment name to create in Foundry')
+param modelDeploymentName string
+
+@description('Model version to deploy')
+param modelVersion string
+
+// Cognitive Services OpenAI User — lets APIM's managed identity call Foundry
+// inference when the account has disableLocalAuth = true (keys disabled).
+var openAiUserRoleId = '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
+var gatewayApiPath = 'foundry'
+
+// API-scope policy: route to the Foundry backend and attach an Entra ID token
+// obtained from APIM's user-assigned managed identity. When client-id is set
+// and output-token-variable-name is omitted, the token is written to the
+// Authorization header automatically.
+var gatewayPolicyXml = '<policies><inbound><base /><set-backend-service backend-id="foundry-host-agent" /><authentication-managed-identity resource="https://cognitiveservices.azure.com" client-id="${identity.properties.clientId}" /></inbound><backend><base /></backend><outbound><base /></outbound><on-error><base /></on-error></policies>'
+
 // ── User-Assigned Managed Identity ──────────────────────────────────────────
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: identityName
@@ -146,6 +172,344 @@ resource acr 'Microsoft.ContainerRegistry/registries@2023-07-01' = {
   }
 }
 
+// ── Foundry (AIServices) account ─────────────────────────────────────────────
+resource foundryAccount 'Microsoft.CognitiveServices/accounts@2026-03-01' = {
+  name: foundryResourceName
+  location: location
+  tags: {
+    'azd-env-name': azdEnvName
+  }
+  sku: {
+    name: 'S0'
+  }
+  kind: 'AIServices'
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {
+    apiProperties: {}
+    customSubDomainName: foundryResourceName
+    networkAcls: {
+      defaultAction: 'Allow'
+      virtualNetworkRules: []
+      ipRules: []
+    }
+    allowProjectManagement: true
+    defaultProject: projectName
+    associatedProjects: [
+      projectName
+    ]
+    publicNetworkAccess: 'Enabled'
+    disableLocalAuth: true
+  }
+}
+
+// ── APIM Backend — Foundry hosted-agent inference ────────────────────────────
+// The gateway policy routes to this backend via <set-backend-service
+// backend-id="foundry-host-agent" />, making APIM the AI gateway for the
+// Foundry model calls.
+resource foundryBackend 'Microsoft.ApiManagement/service/backends@2023-05-01-preview' = {
+  parent: apim
+  name: 'foundry-host-agent'
+  properties: {
+    description: 'Foundry AIServices inference backend for the hosted agent'
+    url: foundryAccount.properties.endpoint
+    protocol: 'http'
+    tls: {
+      validateCertificateChain: true
+      validateCertificateName: true
+    }
+  }
+}
+
+// ── RBAC — APIM managed identity → Foundry inference ─────────────────────────
+// Required because foundryAccount.disableLocalAuth = true; APIM authenticates
+// to Foundry with Entra ID via its user-assigned managed identity.
+resource foundryOpenAiRbac 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(foundryAccount.id, identity.id, openAiUserRoleId)
+  scope: foundryAccount
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', openAiUserRoleId)
+    principalId: identity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// ── APIM AI Gateway API — exposes Foundry OpenAI inference ───────────────────
+resource foundryGatewayApi 'Microsoft.ApiManagement/service/apis@2023-05-01-preview' = {
+  parent: apim
+  name: 'foundry-ai-gateway'
+  properties: {
+    displayName: 'Foundry AI Gateway'
+    description: 'AI gateway exposing the Foundry OpenAI inference endpoint through APIM with managed-identity auth.'
+    path: gatewayApiPath
+    protocols: [
+      'https'
+    ]
+    subscriptionRequired: false
+    serviceUrl: '${foundryAccount.properties.endpoint}openai'
+  }
+}
+
+resource foundryGatewayOp 'Microsoft.ApiManagement/service/apis/operations@2023-05-01-preview' = {
+  parent: foundryGatewayApi
+  name: 'chat-completions'
+  properties: {
+    displayName: 'Chat Completions'
+    method: 'POST'
+    urlTemplate: '/deployments/{deployment-id}/chat/completions'
+    templateParameters: [
+      {
+        name: 'deployment-id'
+        type: 'string'
+        required: true
+      }
+    ]
+  }
+}
+
+resource foundryGatewayPolicy 'Microsoft.ApiManagement/service/apis/policies@2023-05-01-preview' = {
+  parent: foundryGatewayApi
+  name: 'policy'
+  properties: {
+    format: 'rawxml'
+    value: gatewayPolicyXml
+  }
+  dependsOn: [
+    foundryBackend
+  ]
+}
+
+// ── Defender for AI ──────────────────────────────────────────────────────────
+resource foundryDefender 'Microsoft.CognitiveServices/accounts/defenderForAISettings@2026-03-01' = {
+  parent: foundryAccount
+  name: 'Default'
+  properties: {
+    state: 'Enabled'
+  }
+  dependsOn: [
+    foundryProject
+  ]
+}
+
+// ── Foundry project ──────────────────────────────────────────────────────────
+resource foundryProject 'Microsoft.CognitiveServices/accounts/projects@2026-03-01' = {
+  parent: foundryAccount
+  name: projectName
+  location: location
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {
+    description: '${projectName} Project'
+    displayName: projectName
+  }
+  dependsOn: [
+    foundryModel
+  ]
+}
+
+// ── Model deployment ─────────────────────────────────────────────────────────
+resource foundryModel 'Microsoft.CognitiveServices/accounts/deployments@2026-03-01' = {
+  parent: foundryAccount
+  name: modelDeploymentName
+  sku: {
+    name: 'GlobalStandard'
+    capacity: 50
+  }
+  properties: {
+    model: {
+      format: 'OpenAI'
+      name: modelDeploymentName
+      version: modelVersion
+    }
+    versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
+    currentCapacity: 50
+    raiPolicyName: 'Microsoft.DefaultV2'
+    deploymentState: 'Running'
+  }
+  // Cognitive Services serializes control-plane writes; depend on the RAI
+  // policies so the referenced Microsoft.DefaultV2 exists before deployment
+  // and to avoid 409 conflicts on the shared account.
+  dependsOn: [
+    raiPolicyDefault
+    raiPolicyDefaultV2
+  ]
+}
+
+// ── RAI Policies ─────────────────────────────────────────────────────────────
+resource raiPolicyDefault 'Microsoft.CognitiveServices/accounts/raiPolicies@2026-03-01' = {
+  parent: foundryAccount
+  name: 'Microsoft.Default'
+  properties: {
+    mode: 'Blocking'
+    contentFilters: [
+      {
+        name: 'Hate'
+        severityThreshold: 'Medium'
+        blocking: true
+        enabled: true
+        source: 'Prompt'
+        action: 'NONE'
+      }
+      {
+        name: 'Hate'
+        severityThreshold: 'Medium'
+        blocking: true
+        enabled: true
+        source: 'Completion'
+        action: 'NONE'
+      }
+      {
+        name: 'Sexual'
+        severityThreshold: 'Medium'
+        blocking: true
+        enabled: true
+        source: 'Prompt'
+        action: 'NONE'
+      }
+      {
+        name: 'Sexual'
+        severityThreshold: 'Medium'
+        blocking: true
+        enabled: true
+        source: 'Completion'
+        action: 'NONE'
+      }
+      {
+        name: 'Violence'
+        severityThreshold: 'Medium'
+        blocking: true
+        enabled: true
+        source: 'Prompt'
+        action: 'NONE'
+      }
+      {
+        name: 'Violence'
+        severityThreshold: 'Medium'
+        blocking: true
+        enabled: true
+        source: 'Completion'
+        action: 'NONE'
+      }
+      {
+        name: 'Selfharm'
+        severityThreshold: 'Medium'
+        blocking: true
+        enabled: true
+        source: 'Prompt'
+        action: 'NONE'
+      }
+      {
+        name: 'Selfharm'
+        severityThreshold: 'Medium'
+        blocking: true
+        enabled: true
+        source: 'Completion'
+        action: 'NONE'
+      }
+    ]
+  }
+}
+
+resource raiPolicyDefaultV2 'Microsoft.CognitiveServices/accounts/raiPolicies@2026-03-01' = {
+  parent: foundryAccount
+  name: 'Microsoft.DefaultV2'
+  dependsOn: [
+    raiPolicyDefault
+  ]
+  properties: {
+    mode: 'Blocking'
+    contentFilters: [
+      {
+        name: 'Hate'
+        severityThreshold: 'Medium'
+        blocking: true
+        enabled: true
+        source: 'Prompt'
+        action: 'NONE'
+      }
+      {
+        name: 'Hate'
+        severityThreshold: 'Medium'
+        blocking: true
+        enabled: true
+        source: 'Completion'
+        action: 'NONE'
+      }
+      {
+        name: 'Sexual'
+        severityThreshold: 'Medium'
+        blocking: true
+        enabled: true
+        source: 'Prompt'
+        action: 'NONE'
+      }
+      {
+        name: 'Sexual'
+        severityThreshold: 'Medium'
+        blocking: true
+        enabled: true
+        source: 'Completion'
+        action: 'NONE'
+      }
+      {
+        name: 'Violence'
+        severityThreshold: 'Medium'
+        blocking: true
+        enabled: true
+        source: 'Prompt'
+        action: 'NONE'
+      }
+      {
+        name: 'Violence'
+        severityThreshold: 'Medium'
+        blocking: true
+        enabled: true
+        source: 'Completion'
+        action: 'NONE'
+      }
+      {
+        name: 'Selfharm'
+        severityThreshold: 'Medium'
+        blocking: true
+        enabled: true
+        source: 'Prompt'
+        action: 'NONE'
+      }
+      {
+        name: 'Selfharm'
+        severityThreshold: 'Medium'
+        blocking: true
+        enabled: true
+        source: 'Completion'
+        action: 'NONE'
+      }
+      {
+        name: 'Jailbreak'
+        blocking: true
+        enabled: true
+        source: 'Prompt'
+        action: 'NONE'
+      }
+      {
+        name: 'Protected Material Text'
+        blocking: true
+        enabled: true
+        source: 'Completion'
+        action: 'NONE'
+      }
+      {
+        name: 'Protected Material Code'
+        blocking: false
+        enabled: true
+        source: 'Completion'
+        action: 'NONE'
+      }
+    ]
+  }
+}
+
 // ── Outputs ──────────────────────────────────────────────────────────────────
 output redisHostName string = redis.properties.hostName
 output storageAccountName string = storage.name
@@ -155,3 +519,10 @@ output keyVaultName string = keyVault.name
 output keyVaultUri string = keyVault.properties.vaultUri
 output acrName string = acr.name
 output acrLoginServer string = acr.properties.loginServer
+output foundryResourceName string = foundryAccount.name
+output foundryProjectName string = foundryProject.name
+output foundryProjectId string = foundryProject.id
+output foundryProjectEndpoint string = 'https://${foundryResourceName}.services.ai.azure.com/api/projects/${projectName}'
+output modelDeploymentName string = foundryModel.name
+output apimFoundryBackendName string = foundryBackend.name
+output apimFoundryGatewayUrl string = 'https://${apim.properties.gatewayUrl}/${gatewayApiPath}'

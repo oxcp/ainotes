@@ -29,6 +29,14 @@ ENTRA_APP_NAME="${ENTRA_APP_NAME:-app-agenthost}"
 KV_NAME="${KV_NAME:-kv-agenthost-${DEPLOYMENT_SUFFIX}}"
 ACR_NAME="${ACR_NAME:-acragenthost${DEPLOYMENT_SUFFIX}}"
 AOAI_ENDPOINT="${AOAI_ENDPOINT:-https://kacai-3055-resource.services.ai.azure.com/openai/v1}"
+FOUNDRY_NAME="${FOUNDRY_NAME:-foundry-agenthost-${DEPLOYMENT_SUFFIX}}"
+PROJECT_NAME="${PROJECT_NAME:-maf-agent-basic-resp}"
+AZD_ENV_NAME="${AZD_ENV_NAME:-maf-agent-basic-resp-dev}"
+MODEL_DEPLOYMENT_NAME="${MODEL_DEPLOYMENT_NAME:-gpt-5.4-mini}"
+MODEL_VERSION="${MODEL_VERSION:-2026-03-17}"
+CS_API_VERSION="2026-03-01"
+APIM_API_VERSION="2023-05-01-preview"
+OPENAI_USER_ROLE_ID="5e0bd9bd-7b93-4f28-af87-19fc36ad61bd"
 
 echo "==> [1/8] Creating Resource Group: $RESOURCE_GROUP in $LOCATION"
 az group create \
@@ -126,6 +134,164 @@ IDENTITY_CLIENT_ID=$(az identity show \
   --output tsv)
 echo "    Identity Client ID: $IDENTITY_CLIENT_ID"
 
+IDENTITY_PRINCIPAL_ID=$(az identity show \
+  --resource-group "$RESOURCE_GROUP" \
+  --name "$IDENTITY_NAME" \
+  --query principalId \
+  --output tsv)
+
+# ── Foundry (AIServices) stack ───────────────────────────────────────────────
+# Re-implements module-01 core.bicep's Foundry resources in az CLI. Resources
+# without native CLI coverage (project, Defender for AI, RAI policies, APIM
+# backend/API/policy) are created with `az rest`.
+SUBSCRIPTION_ID="$(az account show --query id --output tsv)"
+FOUNDRY_ID="/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.CognitiveServices/accounts/${FOUNDRY_NAME}"
+APIM_ID="/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.ApiManagement/service/${APIM_NAME}"
+TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_DIR"' EXIT
+
+echo "==> [Foundry 1/9] Creating Foundry (AIServices) account: $FOUNDRY_NAME"
+az cognitiveservices account create \
+  --resource-group "$RESOURCE_GROUP" \
+  --name "$FOUNDRY_NAME" \
+  --location "$LOCATION" \
+  --kind AIServices \
+  --sku S0 \
+  --custom-domain "$FOUNDRY_NAME" \
+  --assign-identity \
+  --yes \
+  --output none
+
+echo "==> [Foundry 2/9] Enabling project management and tagging the account"
+az rest \
+  --method patch \
+  --url "https://management.azure.com${FOUNDRY_ID}?api-version=${CS_API_VERSION}" \
+  --headers "Content-Type=application/json" \
+  --body "{\"tags\":{\"azd-env-name\":\"${AZD_ENV_NAME}\"},\"properties\":{\"allowProjectManagement\":true,\"defaultProject\":\"${PROJECT_NAME}\",\"associatedProjects\":[\"${PROJECT_NAME}\"],\"publicNetworkAccess\":\"Enabled\"}}" \
+  --output none
+
+echo "==> [Foundry 3/9] Creating RAI policies (Microsoft.Default, Microsoft.DefaultV2)"
+cat > "$TMP_DIR/rai-default.json" <<'JSON'
+{"properties":{"mode":"Blocking","contentFilters":[
+  {"name":"Hate","severityThreshold":"Medium","blocking":true,"enabled":true,"source":"Prompt","action":"NONE"},
+  {"name":"Hate","severityThreshold":"Medium","blocking":true,"enabled":true,"source":"Completion","action":"NONE"},
+  {"name":"Sexual","severityThreshold":"Medium","blocking":true,"enabled":true,"source":"Prompt","action":"NONE"},
+  {"name":"Sexual","severityThreshold":"Medium","blocking":true,"enabled":true,"source":"Completion","action":"NONE"},
+  {"name":"Violence","severityThreshold":"Medium","blocking":true,"enabled":true,"source":"Prompt","action":"NONE"},
+  {"name":"Violence","severityThreshold":"Medium","blocking":true,"enabled":true,"source":"Completion","action":"NONE"},
+  {"name":"Selfharm","severityThreshold":"Medium","blocking":true,"enabled":true,"source":"Prompt","action":"NONE"},
+  {"name":"Selfharm","severityThreshold":"Medium","blocking":true,"enabled":true,"source":"Completion","action":"NONE"}
+]}}
+JSON
+az rest \
+  --method put \
+  --url "https://management.azure.com${FOUNDRY_ID}/raiPolicies/Microsoft.Default?api-version=${CS_API_VERSION}" \
+  --headers "Content-Type=application/json" \
+  --body "@$TMP_DIR/rai-default.json" \
+  --output none
+
+cat > "$TMP_DIR/rai-defaultv2.json" <<'JSON'
+{"properties":{"mode":"Blocking","contentFilters":[
+  {"name":"Hate","severityThreshold":"Medium","blocking":true,"enabled":true,"source":"Prompt","action":"NONE"},
+  {"name":"Hate","severityThreshold":"Medium","blocking":true,"enabled":true,"source":"Completion","action":"NONE"},
+  {"name":"Sexual","severityThreshold":"Medium","blocking":true,"enabled":true,"source":"Prompt","action":"NONE"},
+  {"name":"Sexual","severityThreshold":"Medium","blocking":true,"enabled":true,"source":"Completion","action":"NONE"},
+  {"name":"Violence","severityThreshold":"Medium","blocking":true,"enabled":true,"source":"Prompt","action":"NONE"},
+  {"name":"Violence","severityThreshold":"Medium","blocking":true,"enabled":true,"source":"Completion","action":"NONE"},
+  {"name":"Selfharm","severityThreshold":"Medium","blocking":true,"enabled":true,"source":"Prompt","action":"NONE"},
+  {"name":"Selfharm","severityThreshold":"Medium","blocking":true,"enabled":true,"source":"Completion","action":"NONE"},
+  {"name":"Jailbreak","blocking":true,"enabled":true,"source":"Prompt","action":"NONE"},
+  {"name":"Protected Material Text","blocking":true,"enabled":true,"source":"Completion","action":"NONE"},
+  {"name":"Protected Material Code","blocking":false,"enabled":true,"source":"Completion","action":"NONE"}
+]}}
+JSON
+az rest \
+  --method put \
+  --url "https://management.azure.com${FOUNDRY_ID}/raiPolicies/Microsoft.DefaultV2?api-version=${CS_API_VERSION}" \
+  --headers "Content-Type=application/json" \
+  --body "@$TMP_DIR/rai-defaultv2.json" \
+  --output none
+
+echo "==> [Foundry 4/9] Enabling Defender for AI"
+az rest \
+  --method put \
+  --url "https://management.azure.com${FOUNDRY_ID}/defenderForAISettings/Default?api-version=${CS_API_VERSION}" \
+  --headers "Content-Type=application/json" \
+  --body "{\"properties\":{\"state\":\"Enabled\"}}" \
+  --output none
+
+echo "==> [Foundry 5/9] Creating project: $PROJECT_NAME"
+az rest \
+  --method put \
+  --url "https://management.azure.com${FOUNDRY_ID}/projects/${PROJECT_NAME}?api-version=${CS_API_VERSION}" \
+  --headers "Content-Type=application/json" \
+  --body "{\"location\":\"${LOCATION}\",\"identity\":{\"type\":\"SystemAssigned\"},\"properties\":{\"description\":\"${PROJECT_NAME} Project\",\"displayName\":\"${PROJECT_NAME}\"}}" \
+  --output none
+
+echo "==> [Foundry 6/9] Deploying model $MODEL_DEPLOYMENT_NAME (GlobalStandard, capacity 50)"
+az rest \
+  --method put \
+  --url "https://management.azure.com${FOUNDRY_ID}/deployments/${MODEL_DEPLOYMENT_NAME}?api-version=${CS_API_VERSION}" \
+  --headers "Content-Type=application/json" \
+  --body "{\"sku\":{\"name\":\"GlobalStandard\",\"capacity\":50},\"properties\":{\"model\":{\"format\":\"OpenAI\",\"name\":\"${MODEL_DEPLOYMENT_NAME}\",\"version\":\"${MODEL_VERSION}\"},\"versionUpgradeOption\":\"OnceNewDefaultVersionAvailable\",\"currentCapacity\":50,\"raiPolicyName\":\"Microsoft.DefaultV2\"}}" \
+  --output none
+
+echo "==> [Foundry 7/9] Disabling local auth (Entra ID only) on the account"
+az rest \
+  --method patch \
+  --url "https://management.azure.com${FOUNDRY_ID}?api-version=${CS_API_VERSION}" \
+  --headers "Content-Type=application/json" \
+  --body "{\"properties\":{\"disableLocalAuth\":true}}" \
+  --output none
+
+FOUNDRY_ENDPOINT="$(az cognitiveservices account show \
+  --resource-group "$RESOURCE_GROUP" \
+  --name "$FOUNDRY_NAME" \
+  --query properties.endpoint \
+  --output tsv)"
+
+echo "==> [Foundry 8/9] Registering APIM backend and granting OpenAI User role to the UAMI"
+az rest \
+  --method put \
+  --url "https://management.azure.com${APIM_ID}/backends/foundry-host-agent?api-version=${APIM_API_VERSION}" \
+  --headers "Content-Type=application/json" \
+  --body "{\"properties\":{\"description\":\"Foundry AIServices inference backend for the hosted agent\",\"url\":\"${FOUNDRY_ENDPOINT}\",\"protocol\":\"http\",\"tls\":{\"validateCertificateChain\":true,\"validateCertificateName\":true}}}" \
+  --output none
+
+# Required because the account sets disableLocalAuth=true; APIM calls Foundry
+# with an Entra ID token from the user-assigned managed identity.
+az role assignment create \
+  --assignee-object-id "$IDENTITY_PRINCIPAL_ID" \
+  --assignee-principal-type ServicePrincipal \
+  --role "$OPENAI_USER_ROLE_ID" \
+  --scope "$FOUNDRY_ID" \
+  --output none
+
+echo "==> [Foundry 9/9] Publishing the APIM AI gateway API (path /foundry)"
+az rest \
+  --method put \
+  --url "https://management.azure.com${APIM_ID}/apis/foundry-ai-gateway?api-version=${APIM_API_VERSION}" \
+  --headers "Content-Type=application/json" \
+  --body "{\"properties\":{\"displayName\":\"Foundry AI Gateway\",\"description\":\"AI gateway exposing the Foundry OpenAI inference endpoint through APIM with managed-identity auth.\",\"path\":\"foundry\",\"protocols\":[\"https\"],\"subscriptionRequired\":false,\"serviceUrl\":\"${FOUNDRY_ENDPOINT}openai\"}}" \
+  --output none
+
+az rest \
+  --method put \
+  --url "https://management.azure.com${APIM_ID}/apis/foundry-ai-gateway/operations/chat-completions?api-version=${APIM_API_VERSION}" \
+  --headers "Content-Type=application/json" \
+  --body "{\"properties\":{\"displayName\":\"Chat Completions\",\"method\":\"POST\",\"urlTemplate\":\"/deployments/{deployment-id}/chat/completions\",\"templateParameters\":[{\"name\":\"deployment-id\",\"type\":\"string\",\"required\":true}]}}" \
+  --output none
+
+cat > "$TMP_DIR/gateway-policy.json" <<JSON
+{"properties":{"format":"rawxml","value":"<policies><inbound><base /><set-backend-service backend-id=\"foundry-host-agent\" /><authentication-managed-identity resource=\"https://cognitiveservices.azure.com\" client-id=\"${IDENTITY_CLIENT_ID}\" /></inbound><backend><base /></backend><outbound><base /></outbound><on-error><base /></on-error></policies>"}}
+JSON
+az rest \
+  --method put \
+  --url "https://management.azure.com${APIM_ID}/apis/foundry-ai-gateway/policies/policy?api-version=${APIM_API_VERSION}" \
+  --headers "Content-Type=application/json" \
+  --body "@$TMP_DIR/gateway-policy.json" \
+  --output none
+
 echo ""
 echo "==> Infrastructure provisioned successfully."
 echo ""
@@ -137,5 +303,9 @@ echo "    Key Vault      : $KV_NAME"
 echo "    ACR            : $ACR_NAME"
 echo "    Entra App ID   : $APP_ID"
 echo "    Identity ID    : $IDENTITY_CLIENT_ID"
+echo "    Foundry        : $FOUNDRY_NAME"
+echo "    Project        : $PROJECT_NAME"
+echo "    Model          : $MODEL_DEPLOYMENT_NAME (GlobalStandard, cap 50)"
+echo "    AI Gateway     : https://${APIM_NAME}.azure-api.net/foundry"
 echo ""
-echo "Next: apply apim-policy.xml to APIM and proceed to module-02."
+echo "Next: proceed to module-02 to deploy the hosted agent with azd."

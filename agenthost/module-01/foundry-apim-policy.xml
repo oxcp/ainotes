@@ -1,6 +1,9 @@
 <!--
-  apim-policy.xml — Module 2: APIM policy scoped to the Foundry Host Agent backend
-  Apply to the "foundry-agent-api" API in Azure API Management.
+  foundry-apim-policy.xml — Module 1: reference APIM policy for the Foundry AI gateway
+  Reference only. The live gateway policy is provisioned inline by core.bicep
+  (var gatewayPolicyXml) and by setup.sh. Use this file as a richer starting
+  point (validate-jwt, rate-limit, caching) that you can merge into the
+  "foundry-ai-gateway" API scoped to the "foundry-host-agent" backend.
 
   Inbound:
     1. validate-jwt   — verify Entra ID token (Managed Identity credential from the agent)
