@@ -12,7 +12,7 @@ param apimPublisherName string
 param identityName string
 param keyVaultName string
 param acrName string
-param aoaiEndpoint string
+//param aoaiEndpoint string
 param tenantId string
 param apimAudience string
 
@@ -103,19 +103,19 @@ resource apim 'Microsoft.ApiManagement/service@2023-05-01-preview' = {
 }
 
 // ── APIM Backend — Azure OpenAI ──────────────────────────────────────────────
-resource aoaiBackend 'Microsoft.ApiManagement/service/backends@2023-05-01-preview' = {
-  parent: apim
-  name: 'azure-openai'
-  properties: {
-    description: 'Azure OpenAI LLM backend'
-    url: aoaiEndpoint
-    protocol: 'http'
-    tls: {
-      validateCertificateChain: true
-      validateCertificateName: true
-    }
-  }
-}
+//resource aoaiBackend 'Microsoft.ApiManagement/service/backends@2023-05-01-preview' = {
+//  parent: apim
+//  name: 'azure-openai'
+//  properties: {
+//    description: 'Azure OpenAI LLM backend'
+//    url: aoaiEndpoint
+//    protocol: 'http'
+//    tls: {
+//      validateCertificateChain: true
+//      validateCertificateName: true
+//    }
+//  }
+//}
 
 // ── Azure Key Vault (RBAC-enabled) ───────────────────────────────────────────
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {

@@ -1,8 +1,8 @@
 {
   "$schema": "https://azuremlschemas.azureedge.net/latest/agent.schema.json",
-  "name": "agent-host",
-  "display_name": "Hosted AI Agent",
-  "description": "Stateful AI agent with AMR-first state persistence and APIM LLM routing.",
+  "name": "maf-agent-basic-resp",
+  "display_name": "MAF Agent Basic Responses",
+  "description": "Hosted agent for the maf-agent-basic-resp Foundry project with APIM-routed model calls.",
   "version": "1.0",
   "type": "host_agent",
   "properties": {
@@ -11,22 +11,22 @@
     "state_store": {
       "type": "redis",
       "connection_string_secret": {
-        "key_vault_uri": "https://kv-agenthost.vault.azure.net/",
+        "key_vault_uri": "https://kv-agenthost-<deploymentSuffix>.vault.azure.net/",
         "secret_name": "redis-connection-string"
       },
       "fallback": {
         "type": "blob",
         "container": "agent-state",
-        "storage_account": "stcagenthost"
+        "storage_account": "stcagenthost<deploymentSuffix>"
       }
     },
     "auth": {
       "type": "managed_identity",
-      "identity_resource_id": "/subscriptions/{subscriptionId}/resourceGroups/rg-agenthost-workshop/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-agenthost"
+      "identity_resource_id": "/subscriptions/{subscriptionId}/resourceGroups/rg-agenthost-workshop/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-agenthost-<deploymentSuffix>"
     },
     "llm_backend": {
-      "endpoint": "https://apim-agenthost.azure-api.net/llm-api",
-      "model": "gpt-4o",
+      "endpoint": "https://apim-agenthost-<deploymentSuffix>.azure-api.net/llm-api",
+      "model": "gpt-5.4-mini",
       "api_version": "2024-02-01"
     }
   },

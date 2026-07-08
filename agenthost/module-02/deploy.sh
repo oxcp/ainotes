@@ -1,112 +1,32 @@
 #!/usr/bin/env bash
-# deploy.sh — Module 2: Solution A — Azure AI Foundry Host Agent
-# Deploys Azure AI Foundry Hub, Project, Key Vault, and agent definition.
+# Module 2 deployment helper for the Foundry hosted-agent flow.
 # Usage: ./deploy.sh
 # Prerequisites: Module 1 infrastructure must be deployed first.
 
 set -euo pipefail
 
 RESOURCE_GROUP="${RESOURCE_GROUP:-rg-agenthost-workshop}"
-LOCATION="${LOCATION:-eastus}"
-FOUNDRY_HUB_NAME="${FOUNDRY_HUB_NAME:-hub-agenthost}"
-FOUNDRY_PROJECT_NAME="${FOUNDRY_PROJECT_NAME:-proj-agenthost}"
-IDENTITY_NAME="${IDENTITY_NAME:-id-agenthost}"
-REDIS_NAME="${REDIS_NAME:-redis-agenthost}"
-STORAGE_ACCOUNT="${STORAGE_ACCOUNT:-stcagenthost}"
-KV_NAME="${KV_NAME:-kv-agenthost}"
-APIM_ENDPOINT="${APIM_ENDPOINT:-}"
+LOCATION="${LOCATION:-eastus2}"
+FOUNDRY_RESOURCE_NAME="${FOUNDRY_RESOURCE_NAME:-foundry-agenthost}"
+PROJECT_NAME="${PROJECT_NAME:-maf-agent-basic-resp}"
+APIM_NAME="${APIM_NAME:-apim-agenthost}"
 
-echo "==> [1/5] Deploying Azure Key Vault: $KV_NAME"
-az keyvault create \
-  --resource-group "$RESOURCE_GROUP" \
-  --name "$KV_NAME" \
-  --location "$LOCATION" \
-  --enable-rbac-authorization true \
-  --output none
-
-# Store Redis connection string in Key Vault
-echo "==> [2/5] Storing Redis connection string in Key Vault"
-REDIS_KEY=$(az redis list-keys \
-  --resource-group "$RESOURCE_GROUP" \
-  --name "$REDIS_NAME" \
-  --query primaryKey \
-  --output tsv)
-
-REDIS_HOST=$(az redis show \
-  --resource-group "$RESOURCE_GROUP" \
-  --name "$REDIS_NAME" \
-  --query hostName \
-  --output tsv)
-
-az keyvault secret set \
-  --vault-name "$KV_NAME" \
-  --name "redis-connection-string" \
-  --value "${REDIS_HOST}:6380,${REDIS_KEY},ssl=True,abortConnect=False" \
-  --output none
-
-# Grant the UAMI read access to Key Vault secrets
-IDENTITY_PRINCIPAL=$(az identity show \
-  --resource-group "$RESOURCE_GROUP" \
-  --name "$IDENTITY_NAME" \
-  --query principalId \
-  --output tsv)
-
-KV_SCOPE=$(az keyvault show \
-  --resource-group "$RESOURCE_GROUP" \
-  --name "$KV_NAME" \
-  --query id \
-  --output tsv)
-
-az role assignment create \
-  --assignee-object-id "$IDENTITY_PRINCIPAL" \
-  --assignee-principal-type ServicePrincipal \
-  --role "Key Vault Secrets User" \
-  --scope "$KV_SCOPE" \
-  --output none
-
-echo "==> [3/5] Deploying Azure AI Foundry Hub and Project via Bicep"
+echo "==> Deploying Foundry resource and project"
 az deployment group create \
   --resource-group "$RESOURCE_GROUP" \
-  --template-file foundry.bicep \
+  --template-file hostedagent.bicep \
   --parameters \
-      location="$LOCATION" \
-      hubName="$FOUNDRY_HUB_NAME" \
-      projectName="$FOUNDRY_PROJECT_NAME" \
-      identityName="$IDENTITY_NAME" \
-      storageAccountName="$STORAGE_ACCOUNT" \
-      keyVaultName="$KV_NAME" \
-  --output none
-
-echo "==> [4/5] Deploying agent definition"
-az ml agent create \
-  --resource-group "$RESOURCE_GROUP" \
-  --workspace-name "$FOUNDRY_PROJECT_NAME" \
-  --file agent-definition.json \
-  --output none || {
-  echo "    Note: az ml agent CLI extension not found."
-  echo "    Install it with: az extension add --name ml"
-  echo "    Or deploy via the Azure Portal: AI Foundry > Project > Agents > New Agent"
-}
-
-echo "==> [5/5] Granting UAMI Blob Data Contributor role on Storage"
-STORAGE_SCOPE=$(az storage account show \
-  --resource-group "$RESOURCE_GROUP" \
-  --name "$STORAGE_ACCOUNT" \
-  --query id \
-  --output tsv)
-
-az role assignment create \
-  --assignee-object-id "$IDENTITY_PRINCIPAL" \
-  --assignee-principal-type ServicePrincipal \
-  --role "Storage Blob Data Contributor" \
-  --scope "$STORAGE_SCOPE" \
-  --output none
+    location="$LOCATION" \
+    foundryResourceName="$FOUNDRY_RESOURCE_NAME" \
+    projectName="$PROJECT_NAME" \
+    apimName="$APIM_NAME"
 
 echo ""
-echo "==> Solution A (Foundry Host Agent) deployed successfully."
+echo "==> Foundry infrastructure deployment complete"
 echo ""
-echo "    Foundry Hub     : $FOUNDRY_HUB_NAME"
-echo "    Foundry Project : $FOUNDRY_PROJECT_NAME"
-echo "    Key Vault       : $KV_NAME"
-echo ""
-echo "Next: test LLM call via APIM endpoint: $APIM_ENDPOINT"
+echo "Next steps:"
+echo "  1. Initialize the hosted agent from the sample azure.yaml"
+echo "  2. Run azd provision"
+echo "  3. Run azd ai agent run"
+echo "  4. Run azd deploy"
+echo "  5. Invoke with azd ai agent invoke \"Hi\""

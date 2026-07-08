@@ -38,7 +38,7 @@ param acrName string = 'acragenthost'
 
 @description('Azure OpenAI endpoint URL')
 //param aoaiEndpoint string = 'https://kacai-3055-resource.services.ai.azure.com/openai/v1'
-param aoaiEndpoint string = 'https://kacai-3055-resource.services.ai.azure.com/api/projects/kacai-3055'
+//param aoaiEndpoint string = 'https://kacai-3055-resource.services.ai.azure.com/api/projects/kacai-3055'
 
 @description('Entra ID tenant ID used by the LLM API validate-jwt policy')
 param tenantId string = subscription().tenantId
@@ -79,7 +79,7 @@ module coreResources 'core.bicep' = {
     identityName: identityNameWithSuffix
     keyVaultName: keyVaultNameWithSuffix
     acrName: acrNameWithSuffix
-    aoaiEndpoint: aoaiEndpoint
+    //aoaiEndpoint: aoaiEndpoint
     tenantId: tenantId
     apimAudience: apimAudience
   }
