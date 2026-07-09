@@ -2,19 +2,19 @@
 
 ## Overview
 
-The Foundry infrastructure — the `foundry-agenthost-<deploymentSuffix>` account, the `maf-agent-basic-resp` project, the `gpt-5.4-mini` deployment, Defender for AI, the RAI policies, and the APIM AI gateway — is provisioned by **module-01**. This module deploys the hosted agent itself with `azd`, following the official Microsoft Foundry hosted-agent sample:
+The Foundry infrastructure — the `foundry-agenthost-<deploymentSuffix>` account, the `maf-agent-prj` project, the `gpt-5.4-mini` deployment, Defender for AI, the RAI policies, and the APIM AI gateway — is provisioned by **module-01**. This module deploys the hosted agent itself with `azd`, following the official Microsoft Foundry hosted-agent sample:
 
 https://github.com/microsoft-foundry/foundry-samples/tree/main/samples/python/hosted-agents/agent-framework/responses/01-basic
 
 ## Learning Objectives
 
 - Use `azd` to initialize, provision, run locally, deploy, and invoke the hosted agent
-- Target the `maf-agent-basic-resp` project and `gpt-5.4-mini` deployment created in module-01
+- Target the `maf-agent-prj` project and `gpt-5.4-mini` deployment created in module-01
 - Route LLM calls through the APIM AI gateway created in module-01
 
 ## Prerequisites
 
-- Module 1 already deployed (Foundry account `foundry-agenthost-<deploymentSuffix>`, project `maf-agent-basic-resp`, model `gpt-5.4-mini`)
+- Module 1 already deployed (Foundry account `foundry-agenthost-<deploymentSuffix>`, project `maf-agent-prj`, model `gpt-5.4-mini`)
 - The module-01 resource group still contains the `deploymentSuffix` tag
 - Azure CLI, Azure Developer CLI, and Docker Desktop installed
 - The Microsoft Foundry extension for azd installed: `azd ext install microsoft.foundry`
@@ -32,7 +32,7 @@ azd ext install microsoft.foundry
 azd ai agent init -m ../module-02/azure.yaml
 ```
 
-When prompted, select the Foundry project that matches `maf-agent-basic-resp` and keep the agent name aligned with the sample. If you prefer the upstream source, the same manifest is published in the Microsoft Foundry sample repository.
+When prompted, select the Foundry project that matches `maf-agent-prj` and keep the agent name aligned with the sample. If you prefer the upstream source, the same manifest is published in the Microsoft Foundry sample repository.
 
 ## Step 2 — Provision and run locally
 
@@ -88,7 +88,7 @@ azd ai agent invoke "Hi"
 
 ## Step 5 — Call the model through the APIM AI gateway
 
-The APIM AI gateway in front of Foundry is provisioned by **module-01** (backend `foundry-host-agent`, API `foundry-ai-gateway` at path `/foundry`, with managed-identity auth). Retrieve the gateway URL from the module-01 outputs and call it:
+The APIM AI gateway in front of Foundry is provisioned by **module-01** (backend `foundry-backend`, API `foundry-ai-gateway` at path `/foundry`, with managed-identity auth). Retrieve the gateway URL from the module-01 outputs and call it:
 
 ```bash
 az deployment sub show \

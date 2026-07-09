@@ -21,6 +21,7 @@ def main():
 
     agent = Agent(
         client=client,
+        name="maf-agent",
         instructions="You are a friendly assistant. Keep your answers brief.",
         # History will be managed by the hosting infrastructure, thus there
         # is no need to store history by the service. Learn more at:

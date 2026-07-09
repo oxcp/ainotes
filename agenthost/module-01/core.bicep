@@ -40,7 +40,7 @@ var gatewayApiPath = 'foundry'
 // obtained from APIM's user-assigned managed identity. When client-id is set
 // and output-token-variable-name is omitted, the token is written to the
 // Authorization header automatically.
-var gatewayPolicyXml = '<policies><inbound><base /><set-backend-service backend-id="foundry-host-agent" /><authentication-managed-identity resource="https://cognitiveservices.azure.com" client-id="${identity.properties.clientId}" /></inbound><backend><base /></backend><outbound><base /></outbound><on-error><base /></on-error></policies>'
+var gatewayPolicyXml = '<policies><inbound><base /><set-backend-service backend-id="foundry-backend" /><authentication-managed-identity resource="https://cognitiveservices.azure.com" client-id="${identity.properties.clientId}" /></inbound><backend><base /></backend><outbound><base /></outbound><on-error><base /></on-error></policies>'
 
 // ── User-Assigned Managed Identity ──────────────────────────────────────────
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
@@ -206,11 +206,11 @@ resource foundryAccount 'Microsoft.CognitiveServices/accounts@2026-03-01' = {
 
 // ── APIM Backend — Foundry hosted-agent inference ────────────────────────────
 // The gateway policy routes to this backend via <set-backend-service
-// backend-id="foundry-host-agent" />, making APIM the AI gateway for the
+// backend-id="foundry-backend" />, making APIM the AI gateway for the
 // Foundry model calls.
 resource foundryBackend 'Microsoft.ApiManagement/service/backends@2023-05-01-preview' = {
   parent: apim
-  name: 'foundry-host-agent'
+  name: 'foundry-backend'
   properties: {
     description: 'Foundry AIServices inference backend for the hosted agent'
     url: foundryAccount.properties.endpoint

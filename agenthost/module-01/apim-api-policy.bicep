@@ -7,6 +7,9 @@ param apimName string = 'apim-agenthost'
 param tenantId string = subscription().tenantId
 param apimAudience string = 'api://agenthost'
 
+@description('AI gateway backend name created in core.bicep (from main.bicep output apimFoundryBackendName)')
+param foundryBackendName string = 'foundry-backend'
+
 var deploymentSuffix = contains(resourceGroup().tags, 'deploymentSuffix') ? resourceGroup().tags['deploymentSuffix'] : ''
 var apimNameWithSuffix = '${apimName}-${deploymentSuffix}'
 
@@ -14,10 +17,10 @@ resource apim 'Microsoft.ApiManagement/service@2023-05-01-preview' existing = {
   name: apimNameWithSuffix
 }
 
-// Existing backend deployed in core.bicep
-resource aoaiBackend 'Microsoft.ApiManagement/service/backends@2023-05-01-preview' existing = {
+// Existing AI gateway backend deployed in core.bicep
+resource foundryBackend 'Microsoft.ApiManagement/service/backends@2023-05-01-preview' existing = {
   parent: apim
-  name: 'azure-openai'
+  name: foundryBackendName
 }
 
 resource nvTenantId 'Microsoft.ApiManagement/service/namedValues@2023-05-01-preview' = {
@@ -59,7 +62,7 @@ resource llmApiPolicy 'Microsoft.ApiManagement/service/apis/policies@2023-05-01-
     value: loadTextContent('apim-policy.xml')
   }
   dependsOn: [
-    aoaiBackend
+    foundryBackend
     nvTenantId
     nvApimAudience
   ]

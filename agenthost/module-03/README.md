@@ -13,16 +13,6 @@ Deploy the agent as a containerised workload on **Azure Container Apps (ACA) San
 - Configure ACA app with Sandbox isolation and a scale-to-zero lifecycle hook
 - Test end-to-end flow and verify state restore from Blob after idle eviction
 
-## Schedule
-
-| Time | Activity |
-|---|---|
-| 0:50–0:55 | Create ACA Environment; enable Sandbox feature (note: Public Preview) |
-| 0:55–1:00 | Push agent container image to ACR; configure ACA app with Sandbox isolation and lifecycle hook (flush AMR state to Blob on scale-to-zero) |
-| 1:00–1:05 | Test end-to-end: send requests, observe container isolation, trigger idle timeout, verify state restore |
-| 1:05–1:15 | Deep dive: Sandbox networking, resource limits, and debugging tools; hands-on configuration of scaling policies |
-| 1:15–1:20 | Comparison moment: ACA Sandbox (long-running, gVisor) vs ACA Dynamic Sessions (short-lived/one-time) |
-
 ---
 
 ## Prerequisites

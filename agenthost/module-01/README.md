@@ -1,4 +1,4 @@
-# Module 1 — Core Infrastructure Setup (20 min)
+# Module 1 — Core Infrastructure Setup (30 min)
 
 ## Overview
 
@@ -9,21 +9,10 @@ Provision the shared Azure infrastructure used by all three agent hosting soluti
 - Deploy shared Azure infrastructure using Bicep IaC
 - Configure APIM with a `validate-jwt` policy and Azure OpenAI backend
 - Register an Entra ID application and create a User-Assigned Managed Identity
-- Create a Foundry resource named `foundry-agenthost-<deploymentSuffix>` with the project `maf-agent-basic-resp`
+- Create a Foundry resource named `foundry-agenthost-<deploymentSuffix>` with the project `maf-agent-prj`
 - Deploy `gpt-5.4-mini` (capacity 50) and enable Defender for AI
 - Apply the `Microsoft.Default` and `Microsoft.DefaultV2` RAI policies
 - Expose Foundry inference through APIM as an AI gateway (backend + RBAC + API/policy)
-
-## Schedule
-
-| Time | Activity | Commands / Portal steps |
-|---|---|---|
-| 0:10–0:15 | Create Resource Group, Azure Managed Redis (Basic SKU), Azure Blob Storage | `az group create` · `az redis create` |
-| 0:15–0:20 | Deploy Azure API Management (Consumption tier for Solutions A/B; VNet-capable for Solution C) | Portal or `az apim create` |
-| 0:20–0:22 | Create Azure Key Vault and Azure Container Registry for later modules | `az keyvault create` · `az acr create` |
-| 0:22–0:25 | Register Entra ID App; create User-Assigned Managed Identity for the agent | `az ad app create` · `az identity create` |
-| 0:25–0:30 | Configure APIM `validate-jwt` policy and LLM backend (Azure OpenAI) | APIM policy editor |
-| 0:30–0:35 | Create the Foundry account, project, `gpt-5.4-mini` deployment, Defender for AI, RAI policies, and the APIM AI gateway | `core.bicep` / `setup.sh` |
 
 ---
 
@@ -84,8 +73,8 @@ az deployment group create \
 
 `core.bicep` provisions the Foundry stack and wires the module-01 API Management instance as its AI gateway:
 
-1. **Foundry account** `foundry-agenthost-<deploymentSuffix>` (kind `AIServices`, `disableLocalAuth: true`) with the project `maf-agent-basic-resp`, the `gpt-5.4-mini` deployment (GlobalStandard, capacity 50), Defender for AI, and the `Microsoft.Default` / `Microsoft.DefaultV2` RAI policies.
-2. **Backend** `foundry-host-agent` → the Foundry inference endpoint (`foundryAccount.properties.endpoint`).
+1. **Foundry account** `foundry-agenthost-<deploymentSuffix>` (kind `AIServices`, `disableLocalAuth: true`) with the project `maf-agent-prj`, the `gpt-5.4-mini` deployment (GlobalStandard, capacity 50), Defender for AI, and the `Microsoft.Default` / `Microsoft.DefaultV2` RAI policies.
+2. **Backend** `foundry-backend` → the Foundry inference endpoint (`foundryAccount.properties.endpoint`).
 3. **RBAC** — the module-01 UAMI is granted **Cognitive Services OpenAI User** on the Foundry account.
 4. **API** `foundry-ai-gateway` (path `/foundry`) with a `chat-completions` operation and an API-scope policy that routes to the backend and attaches a managed-identity token via `authentication-managed-identity` (resource `https://cognitiveservices.azure.com`).
 
@@ -128,7 +117,7 @@ az deployment sub show \
 | `foundryResourceName` | Foundry account name (`foundry-agenthost-<suffix>`) |
 | `foundryProjectName` / `foundryProjectId` / `foundryProjectEndpoint` | Foundry project identifiers (project endpoint consumed by module-02) |
 | `modelDeploymentName` | Deployed model name (`gpt-5.4-mini`) |
-| `apimFoundryBackendName` | APIM backend name (`foundry-host-agent`) |
+| `apimFoundryBackendName` | APIM backend name (`foundry-backend`) |
 | `apimFoundryGatewayUrl` | APIM AI gateway URL for Foundry inference |
 
 ---

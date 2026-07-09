@@ -30,8 +30,8 @@ KV_NAME="${KV_NAME:-kv-agenthost-${DEPLOYMENT_SUFFIX}}"
 ACR_NAME="${ACR_NAME:-acragenthost${DEPLOYMENT_SUFFIX}}"
 AOAI_ENDPOINT="${AOAI_ENDPOINT:-https://kacai-3055-resource.services.ai.azure.com/openai/v1}"
 FOUNDRY_NAME="${FOUNDRY_NAME:-foundry-agenthost-${DEPLOYMENT_SUFFIX}}"
-PROJECT_NAME="${PROJECT_NAME:-maf-agent-basic-resp}"
-AZD_ENV_NAME="${AZD_ENV_NAME:-maf-agent-basic-resp-dev}"
+PROJECT_NAME="${PROJECT_NAME:-maf-agent-prj}"
+AZD_ENV_NAME="${AZD_ENV_NAME:-maf-agent-dev}"
 MODEL_DEPLOYMENT_NAME="${MODEL_DEPLOYMENT_NAME:-gpt-5.4-mini}"
 MODEL_VERSION="${MODEL_VERSION:-2026-03-17}"
 CS_API_VERSION="2026-03-01"
@@ -253,7 +253,7 @@ FOUNDRY_ENDPOINT="$(az cognitiveservices account show \
 echo "==> [Foundry 8/9] Registering APIM backend and granting OpenAI User role to the UAMI"
 az rest \
   --method put \
-  --url "https://management.azure.com${APIM_ID}/backends/foundry-host-agent?api-version=${APIM_API_VERSION}" \
+  --url "https://management.azure.com${APIM_ID}/backends/foundry-backend?api-version=${APIM_API_VERSION}" \
   --headers "Content-Type=application/json" \
   --body "{\"properties\":{\"description\":\"Foundry AIServices inference backend for the hosted agent\",\"url\":\"${FOUNDRY_ENDPOINT}\",\"protocol\":\"http\",\"tls\":{\"validateCertificateChain\":true,\"validateCertificateName\":true}}}" \
   --output none
@@ -283,7 +283,7 @@ az rest \
   --output none
 
 cat > "$TMP_DIR/gateway-policy.json" <<JSON
-{"properties":{"format":"rawxml","value":"<policies><inbound><base /><set-backend-service backend-id=\"foundry-host-agent\" /><authentication-managed-identity resource=\"https://cognitiveservices.azure.com\" client-id=\"${IDENTITY_CLIENT_ID}\" /></inbound><backend><base /></backend><outbound><base /></outbound><on-error><base /></on-error></policies>"}}
+{"properties":{"format":"rawxml","value":"<policies><inbound><base /><set-backend-service backend-id=\"foundry-backend\" /><authentication-managed-identity resource=\"https://cognitiveservices.azure.com\" client-id=\"${IDENTITY_CLIENT_ID}\" /></inbound><backend><base /></backend><outbound><base /></outbound><on-error><base /></on-error></policies>"}}
 JSON
 az rest \
   --method put \

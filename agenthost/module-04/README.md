@@ -11,16 +11,6 @@ Deploy agents on **Azure Kubernetes Service (AKS)** with a self-built **E2B Sand
 - Observe KEDA scaling to zero and cold state restore from Blob
 - Configure Kata Container resource limits and test multi-agent scaling
 
-## Schedule
-
-| Time | Activity |
-|---|---|
-| 1:20–1:25 | Walk through AKS cluster with KEDA and Kata Container runtime node pool |
-| 1:25–1:30 | Deploy E2B Sandbox Manager and agent workload to AKS |
-| 1:30–1:35 | Demo: E2B Sandbox Manager spawns Kata Container; KEDA scales to zero; cold restore from Blob |
-| 1:35–1:45 | Hands-on: Configure Kata Container resource limits, test multi-agent scaling, monitor KEDA metrics |
-| 1:45–1:50 | Test end-to-end workflow and verify state checkpoint/restore |
-
 ---
 
 ## Prerequisites

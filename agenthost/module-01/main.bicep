@@ -52,10 +52,10 @@ param apimAudience string = 'api://agenthost'
 param foundryResourceName string = 'foundry-agenthost'
 
 @description('Foundry project name')
-param projectName string = 'maf-agent-basic-resp'
+param projectName string = 'maf-agent-prj'
 
 @description('Default azd environment tag applied to the Foundry account')
-param azdEnvName string = 'maf-agent-basic-resp-dev'
+param azdEnvName string = 'maf-agent-dev'
 
 @description('Model deployment name to create in Foundry')
 param modelDeploymentName string = 'gpt-5.4-mini'

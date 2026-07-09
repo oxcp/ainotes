@@ -5,7 +5,7 @@
   Policies applied (inbound):
     1. validate-jwt   — verify Entra ID token from the agent Workload Identity
     2. rate-limit-by-key — per-caller token quota
-    3. set-backend-service — route to Azure OpenAI backend
+    3. set-backend-service — route to the AI gateway backend
   Policies applied (backend):
     4. retry — exponential back-off on 429 / 5xx
   Policies applied (outbound):
@@ -35,8 +35,8 @@
     <!-- 2. Rate-limit by caller subscription key (100 calls / 60 s) -->
     <!--rate-limit-by-key calls="100" renewal-period="60" counter-key="@(context.Subscription.Id)" /-->
 
-    <!-- 3. Route to the Azure OpenAI backend registered in Module 1 -->
-    <set-backend-service backend-id="azure-openai" />
+    <!-- 3. Route to the AI gateway backend registered in Module 1 -->
+    <set-backend-service backend-id="foundry-backend" />
 
     <!-- Forward the agent-id header for traceability -->
     <set-header name="x-agent-id" exists-action="skip">

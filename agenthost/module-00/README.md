@@ -1,4 +1,4 @@
-# Module 0 — Introduction (10 min)
+# Module 0 — Introduction (5 min)
 
 ## Overview
 
@@ -9,13 +9,6 @@ This module introduces the agent hosting framework and explains why hosting it o
 - Understand what a hosted agent is and its core architecture
 - Recognise the three Azure hosting solutions covered in this workshop
 - Identify the key Azure components: APIM, Entra ID, Redis, and Blob Storage
-
-## Schedule
-
-| Time | Activity |
-|---|---|
-| 0:00–0:05 | Problem framing: what is a hosted agent? Why host AI agents on Azure? |
-| 0:05–0:10 | Architecture overview: three solutions, key components (APIM, Entra ID, state store) |
 
 ---
 

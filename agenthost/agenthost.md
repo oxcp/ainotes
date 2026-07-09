@@ -303,13 +303,13 @@ flowchart TD
 
 ## 7. Workshop Flow (120 minutes)
 
-### Module 0 — Introduction (10 min)
+### Module 0 — Introduction (5 min)
 
 Problem framing and architecture overview. [See Module 0](./module-00/README.md)
 
 ---
 
-### Module 1 — Core Infrastructure Setup (20 min)
+### Module 1 — Core Infrastructure Setup (30 min)
 
 Deploy foundational Azure services: Resource Group, Managed Redis, Blob Storage, APIM, Entra ID, and Key Vault. [See Module 1](./module-01/README.md)
 
@@ -333,7 +333,7 @@ Run agents on AKS with Kata Containers and KEDA-driven scale-to-zero orchestrati
 
 ---
 
-### Module 5 — Wrap-up and Q&A (10 min)
+### Module 5 — Wrap-up and Q&A (5 min)
 
 Solution comparison, selection guidance, and cost optimisation strategies. [See Module 5](./module-05/README.md)
 

@@ -1,15 +1,8 @@
-# Module 5 — Wrap-up and Q&A (10 min)
+# Module 5 — Wrap-up and Q&A (5 min)
 
 ## Overview
 
 Recap the three solutions, provide decision guidance, and share cost optimisation tips for production deployments.
-
-## Schedule
-
-| Time | Activity |
-|---|---|
-| 1:50–1:55 | Solution comparison recap; guidance on choosing A vs B vs C; when to consider ACA Dynamic Sessions |
-| 1:55–2:00 | Cost optimisation tips: Redis TTL tuning, Blob Cool tier, APIM Consumption SKU, KEDA scale rules; Q&A and next steps |
 
 ---
 
