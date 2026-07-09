@@ -63,8 +63,9 @@ param modelDeploymentName string = 'gpt-5.4-mini'
 @description('Model version to deploy')
 param modelVersion string = '2026-03-17'
 
-@description('9-digit deployment suffix with milliseconds (auto-generated per deployment by default)')
-param deploymentSuffix string = utcNow('HHmmssfff')
+@description('random deployment suffix from input parameters')
+//param deploymentSuffix string = utcNow('HHmmssfff')
+param deploymentSuffix string
 
 var redisNameWithSuffix = '${redisName}-${deploymentSuffix}'
 var storageAccountNameWithSuffix = '${storageAccountName}${deploymentSuffix}'
