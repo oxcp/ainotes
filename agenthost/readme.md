@@ -28,7 +28,7 @@
 | Module | Topic | Duration | Files |
 |---|---|---|---|
 | [module-00](./module-00/README.md) | Introduction | 5 min | README |
-| [module-01](./module-01/README.md) | Core Infrastructure Setup | 30 min | README · setup.sh · main.bicep · core.bicep · apim-policy.xml · apim-api-policy.bicep · foundry-apim-policy.xml |
+| [module-01](./module-01/README.md) | Core Infrastructure Setup | 30 min | README · setup.sh · main.bicep · core.bicep |
 | [module-02](./module-02/README.md) | Solution A: Foundry Hosted Agent | 20 min | README · azure.yaml · src/ (main.py, requirements.txt, Dockerfile) · agent-definition.json |
 | [module-03](./module-03/README.md) | Solution B: ACA Sandbox | 30 min | README · deploy.sh · aca.bicep · Dockerfile · container-app.yaml · lifecycle-hook.sh |
 | [module-04](./module-04/README.md) | Solution C: AKS + E2B | 30 min | README · deploy.sh · aks.bicep · e2b-manager.yaml · agent-deployment.yaml · keda-scaledobject.yaml · Dockerfile |
@@ -47,10 +47,7 @@ agenthost/
 │   ├── README.md                ← Core infra setup steps
 │   ├── setup.sh                 ← Azure CLI bash script (RG, Redis, Blob, APIM, Entra ID, UAMI, Foundry stack)
 │   ├── main.bicep               ← Subscription-scoped Bicep entry point
-│   ├── core.bicep               ← Resource group Bicep (Redis, Storage, APIM, UAMI, Foundry account + project + model + Defender + RAI + AI gateway)
-│   ├── apim-api-policy.bicep    ← APIM LLM API + policy deployment
-│   ├── apim-policy.xml          ← APIM: validate-jwt, rate-limit, retry, Azure OpenAI backend
-│   └── foundry-apim-policy.xml  ← Reference APIM policy for the Foundry AI gateway
+│   └── core.bicep               ← Resource group Bicep (Redis, Storage, APIM, UAMI, Foundry account + project + model + Defender + AI gateway)
 ├── module-02/
 │   ├── README.md                ← Foundry hosted-agent azd deployment steps
 │   ├── azure.yaml               ← Hosted-agent manifest used by azd init

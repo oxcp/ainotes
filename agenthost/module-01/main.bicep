@@ -41,10 +41,10 @@ param acrName string = 'acragenthost'
 //param aoaiEndpoint string = 'https://kacai-3055-resource.services.ai.azure.com/openai/v1'
 //param aoaiEndpoint string = 'https://kacai-3055-resource.services.ai.azure.com/api/projects/kacai-3055'
 
-@description('Entra ID tenant ID used by the LLM API validate-jwt policy')
+@description('Entra ID tenant ID used by the APIM AI gateway validate-jwt policy')
 param tenantId string = subscription().tenantId
 
-@description('Audience (App ID URI / client ID) expected in the JWT by the LLM API policy')
+@description('Audience (App ID URI / client ID) expected in the JWT by the APIM AI gateway')
 param apimAudience string = 'api://agenthost'
 
 @description('Foundry (AIServices) resource name prefix')
@@ -98,7 +98,6 @@ module coreResources 'core.bicep' = {
     identityName: identityNameWithSuffix
     keyVaultName: keyVaultNameWithSuffix
     acrName: acrNameWithSuffix
-    //aoaiEndpoint: aoaiEndpoint
     tenantId: tenantId
     apimAudience: apimAudience
     foundryResourceName: foundryResourceNameWithSuffix

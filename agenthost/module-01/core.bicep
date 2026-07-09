@@ -12,8 +12,9 @@ param apimPublisherName string
 param identityName string
 param keyVaultName string
 param acrName string
-//param aoaiEndpoint string
 param tenantId string
+
+@description('Audience (App ID URI / client ID) expected in the caller JWT by the APIM AI gateway')
 param apimAudience string
 
 @description('Foundry (AIServices) resource name, already suffixed by main.bicep')
@@ -33,14 +34,49 @@ param modelVersion string
 
 // Cognitive Services OpenAI User — lets APIM's managed identity call Foundry
 // inference when the account has disableLocalAuth = true (keys disabled).
+// Includes the data action Microsoft.CognitiveServices/accounts/OpenAI/responses/*.
 var openAiUserRoleId = '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
+// Azure AI User (formerly "Azure AI User", now "Foundry User") — grants
+// Microsoft.CognitiveServices/* data actions so the UAMI can call the Foundry
+// Responses API via the https://ai.azure.com audience.
+var foundryUserRoleId = '53ca6127-db72-4b80-b1b0-d745d6d5456d'
 var gatewayApiPath = 'foundry'
+var entraLoginEndpoint = environment().authentication.loginEndpoint
 
-// API-scope policy: route to the Foundry backend and attach an Entra ID token
-// obtained from APIM's user-assigned managed identity. When client-id is set
-// and output-token-variable-name is omitted, the token is written to the
-// Authorization header automatically.
-var gatewayPolicyXml = '<policies><inbound><base /><set-backend-service backend-id="foundry-backend" /><authentication-managed-identity resource="https://cognitiveservices.azure.com" client-id="${identity.properties.clientId}" /></inbound><backend><base /></backend><outbound><base /></outbound><on-error><base /></on-error></policies>'
+// APIM validates the caller's Entra ID token, then replaces backend auth with
+// the APIM user-assigned managed identity when forwarding to Foundry.
+var gatewayPolicyTemplate = '''
+<policies>
+  <inbound>
+    <base />
+    <validate-jwt header-name="Authorization" failed-validation-httpcode="401" failed-validation-error-message="Unauthorized: invalid or missing token">
+      <openid-config url="__LOGIN_ENDPOINT____TENANT_ID__/v2.0/.well-known/openid-configuration" />
+      <audiences>
+        <audience>__APIM_AUDIENCE__</audience>
+      </audiences>
+      <issuers>
+        <issuer>https://sts.windows.net/__TENANT_ID__/</issuer>
+        <issuer>__LOGIN_ENDPOINT____TENANT_ID__/v2.0</issuer>
+      </issuers>
+    </validate-jwt>
+    <set-backend-service backend-id="foundry-backend" />
+    <authentication-managed-identity resource="https://ai.azure.com" client-id="__CLIENT_ID__" />
+  </inbound>
+  <backend>
+    <base />
+  </backend>
+  <outbound>
+    <base />
+  </outbound>
+  <on-error>
+    <base />
+  </on-error>
+</policies>
+'''
+var gatewayPolicyWithClientId = replace(gatewayPolicyTemplate, '__CLIENT_ID__', identity.properties.clientId)
+var gatewayPolicyWithTenant = replace(gatewayPolicyWithClientId, '__TENANT_ID__', tenantId)
+var gatewayPolicyWithLoginEndpoint = replace(gatewayPolicyWithTenant, '__LOGIN_ENDPOINT__', entraLoginEndpoint)
+var gatewayPolicyXml = replace(gatewayPolicyWithLoginEndpoint, '__APIM_AUDIENCE__', apimAudience)
 
 // ── User-Assigned Managed Identity ──────────────────────────────────────────
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
@@ -67,8 +103,6 @@ resource redisDefaultDb 'Microsoft.Cache/redisEnterprise/databases@2025-07-01' =
     clientProtocol: 'Encrypted'
     clusteringPolicy: 'OSSCluster'
     evictionPolicy: 'AllKeysLRU'
-
-    publicNetworkAccess: 'Enabled'
   }
 }
 
@@ -103,45 +137,6 @@ resource stateContainer 'Microsoft.Storage/storageAccounts/blobServices/containe
     publicAccess: 'None'
   }
 }
-
-// ── Azure API Management (Consumption SKU) ──────────────────────────────────
-resource apim 'Microsoft.ApiManagement/service@2023-05-01-preview' = {
-  name: apimName
-  location: location
-  sku: {
-    name: 'Consumption'
-    capacity: 0
-  }
-  identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${identity.id}': {}
-    }
-  }
-  properties: {
-    publisherEmail: apimPublisherEmail
-    publisherName: apimPublisherName
-    customProperties: {
-      'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10': 'false'
-      'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11': 'false'
-    }
-  }
-}
-
-// ── APIM Backend — Azure OpenAI ──────────────────────────────────────────────
-//resource aoaiBackend 'Microsoft.ApiManagement/service/backends@2023-05-01-preview' = {
-//  parent: apim
-//  name: 'azure-openai'
-//  properties: {
-//    description: 'Azure OpenAI LLM backend'
-//    url: aoaiEndpoint
-//    protocol: 'http'
-//    tls: {
-//      validateCertificateChain: true
-//      validateCertificateName: true
-//    }
-//  }
-//}
 
 // ── Azure Key Vault (RBAC-enabled) ───────────────────────────────────────────
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
@@ -204,20 +199,70 @@ resource foundryAccount 'Microsoft.CognitiveServices/accounts@2026-03-01' = {
   }
 }
 
-// ── APIM Backend — Foundry hosted-agent inference ────────────────────────────
-// The gateway policy routes to this backend via <set-backend-service
-// backend-id="foundry-backend" />, making APIM the AI gateway for the
-// Foundry model calls.
-resource foundryBackend 'Microsoft.ApiManagement/service/backends@2023-05-01-preview' = {
-  parent: apim
-  name: 'foundry-backend'
+// ── Foundry project ──────────────────────────────────────────────────────────
+resource foundryProject 'Microsoft.CognitiveServices/accounts/projects@2026-03-01' = {
+  parent: foundryAccount
+  name: projectName
+  location: location
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
-    description: 'Foundry AIServices inference backend for the hosted agent'
-    url: foundryAccount.properties.endpoint
-    protocol: 'http'
-    tls: {
-      validateCertificateChain: true
-      validateCertificateName: true
+    description: '${projectName} Project'
+    displayName: projectName
+  }
+  dependsOn: [
+    foundryModel
+  ]
+}
+
+// ── Model deployment ─────────────────────────────────────────────────────────
+resource foundryModel 'Microsoft.CognitiveServices/accounts/deployments@2026-03-01' = {
+  parent: foundryAccount
+  name: modelDeploymentName
+  sku: {
+    name: 'GlobalStandard'
+    capacity: 50
+  }
+  properties: {
+    model: {
+      format: 'OpenAI'
+      name: modelDeploymentName
+      version: modelVersion
+    }
+    versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
+    currentCapacity: 50
+    raiPolicyName: 'Microsoft.DefaultV2'
+    deploymentState: 'Running'
+  }
+}
+
+
+//---------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------
+// API Mamagement provisioning
+//
+
+// ── Azure API Management (Basic v2 SKU) ─────────────────────────────────────
+resource apim 'Microsoft.ApiManagement/service@2023-05-01-preview' = {
+  name: apimName
+  location: location
+  sku: {
+    name: 'BasicV2'
+    capacity: 1
+  }
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${identity.id}': {}
+    }
+  }
+  properties: {
+    publisherEmail: apimPublisherEmail
+    publisherName: apimPublisherName
+    customProperties: {
+      'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10': 'false'
+      'Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11': 'false'
     }
   }
 }
@@ -235,32 +280,101 @@ resource foundryOpenAiRbac 'Microsoft.Authorization/roleAssignments@2022-04-01' 
   }
 }
 
+// Azure AI User (Foundry User) — broader Foundry data-plane access covering the
+// Responses API when APIM forwards with the https://ai.azure.com audience.
+resource foundryAiUserRbac 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(foundryAccount.id, identity.id, foundryUserRoleId)
+  scope: foundryAccount
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', foundryUserRoleId)
+    principalId: identity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// ── Register APIM as the Foundry project's AI Gateway ────────────────────────
+// Creates a Foundry connection of category 'ApiManagement' so the project's
+// model/inference traffic is governed through the APIM AI gateway. The Agents
+// service authenticates to the gateway with the project's managed identity
+// against the Cognitive Services audience. target = APIM gateway URL + the
+// foundry-ai-gateway API path.
+resource foundryApimGatewayConnection 'Microsoft.CognitiveServices/accounts/projects/connections@2025-04-01-preview' = {
+  parent: foundryProject
+  name: 'foundry-apim-gateway'
+  properties: {
+    category: 'ApiManagement'
+    target: '${apim.properties.gatewayUrl}/${foundryGatewayApi.properties.path}'
+    // 'ProjectManagedIdentity' is a valid runtime authType for Foundry
+    // connections; the current type definition lags, so suppress BCP036.
+    #disable-next-line BCP036
+    authType: 'ProjectManagedIdentity'
+    audience: 'https://ai.azure.com'
+    isSharedToAll: true
+    credentials: {}
+    metadata: {
+      inferenceAPIVersion: 'preview'
+    }
+  }
+}
+
+// ── APIM Backend — Foundry hosted-agent inference ────────────────────────────
+// The gateway policy routes to this backend via <set-backend-service
+// backend-id="foundry-backend" />, making APIM the AI gateway for the
+// Foundry model calls.
+resource foundryBackend 'Microsoft.ApiManagement/service/backends@2023-05-01-preview' = {
+  parent: apim
+  name: 'foundry-backend'
+  properties: {
+    description: 'Foundry AIServices Responses API (openai/v1) backend'
+    url: '${foundryAccount.properties.endpoint}openai/v1'
+    protocol: 'http'
+    tls: {
+      validateCertificateChain: true
+      validateCertificateName: true
+    }
+  }
+}
+
 // ── APIM AI Gateway API — exposes Foundry OpenAI inference ───────────────────
 resource foundryGatewayApi 'Microsoft.ApiManagement/service/apis@2023-05-01-preview' = {
   parent: apim
   name: 'foundry-ai-gateway'
   properties: {
     displayName: 'Foundry AI Gateway'
-    description: 'AI gateway exposing the Foundry OpenAI inference endpoint through APIM with managed-identity auth.'
+    description: 'AI gateway exposing the Foundry Responses API (openai/v1/responses) through APIM with caller Entra ID validation and managed-identity backend auth.'
     path: gatewayApiPath
     protocols: [
       'https'
     ]
     subscriptionRequired: false
-    serviceUrl: '${foundryAccount.properties.endpoint}openai'
+    serviceUrl: '${foundryAccount.properties.endpoint}openai/v1'
   }
 }
 
+// Responses API: model name is supplied in the request body, so the operation
+// has no path parameter. Callers POST /foundry/responses with {"model":"..."}.
 resource foundryGatewayOp 'Microsoft.ApiManagement/service/apis/operations@2023-05-01-preview' = {
   parent: foundryGatewayApi
-  name: 'chat-completions'
+  name: 'responses'
   properties: {
-    displayName: 'Chat Completions'
+    displayName: 'Create Response'
     method: 'POST'
-    urlTemplate: '/deployments/{deployment-id}/chat/completions'
+    urlTemplate: '/responses'
+  }
+}
+
+// Retrieve a previously created response by its ID:
+// GET /foundry/responses/{response-id}
+resource foundryGatewayGetOp 'Microsoft.ApiManagement/service/apis/operations@2023-05-01-preview' = {
+  parent: foundryGatewayApi
+  name: 'get-response'
+  properties: {
+    displayName: 'Get Response'
+    method: 'GET'
+    urlTemplate: '/responses/{response-id}'
     templateParameters: [
       {
-        name: 'deployment-id'
+        name: 'response-id'
         type: 'string'
         required: true
       }
@@ -292,69 +406,6 @@ resource foundryDefender 'Microsoft.CognitiveServices/accounts/defenderForAISett
   ]
 }
 
-// ── Foundry project ──────────────────────────────────────────────────────────
-resource foundryProject 'Microsoft.CognitiveServices/accounts/projects@2026-03-01' = {
-  parent: foundryAccount
-  name: projectName
-  location: location
-  identity: {
-    type: 'SystemAssigned'
-  }
-  properties: {
-    description: '${projectName} Project'
-    displayName: projectName
-  }
-  dependsOn: [
-    foundryModel
-  ]
-}
-
-// ── Register APIM as the Foundry project's AI Gateway ────────────────────────
-// Creates a Foundry connection of category 'ApiManagement' so the project's
-// model/inference traffic is governed through the APIM AI gateway. The Agents
-// service authenticates to the gateway with the project's managed identity
-// against the Cognitive Services audience. target = APIM gateway URL + the
-// foundry-ai-gateway API path.
-resource foundryApimGatewayConnection 'Microsoft.CognitiveServices/accounts/projects/connections@2025-04-01-preview' = {
-  parent: foundryProject
-  name: 'foundry-apim-gateway'
-  properties: {
-    category: 'ApiManagement'
-    target: '${apim.properties.gatewayUrl}/${foundryGatewayApi.properties.path}'
-    // 'ProjectManagedIdentity' is a valid runtime authType for Foundry
-    // connections; the current type definition lags, so suppress BCP036.
-    #disable-next-line BCP036
-    authType: 'ProjectManagedIdentity'
-    audience: 'https://cognitiveservices.azure.com'
-    isSharedToAll: true
-    credentials: {}
-    metadata: {
-      deploymentInPath: 'true'
-      inferenceAPIVersion: '2024-02-01'
-    }
-  }
-}
-
-// ── Model deployment ─────────────────────────────────────────────────────────
-resource foundryModel 'Microsoft.CognitiveServices/accounts/deployments@2026-03-01' = {
-  parent: foundryAccount
-  name: modelDeploymentName
-  sku: {
-    name: 'GlobalStandard'
-    capacity: 50
-  }
-  properties: {
-    model: {
-      format: 'OpenAI'
-      name: modelDeploymentName
-      version: modelVersion
-    }
-    versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
-    currentCapacity: 50
-    raiPolicyName: 'Microsoft.DefaultV2'
-    deploymentState: 'Running'
-  }
-}
 
 // ── Outputs ──────────────────────────────────────────────────────────────────
 output redisHostName string = redis.properties.hostName

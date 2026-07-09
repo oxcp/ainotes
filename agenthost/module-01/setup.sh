@@ -86,14 +86,14 @@ az storage container create \
   --auth-mode login \
   --output none
 
-echo "==> [4/8] Creating Azure API Management (Consumption SKU): $APIM_NAME"
+echo "==> [4/8] Creating Azure API Management (Basic v2 SKU): $APIM_NAME"
 az apim create \
   --resource-group "$RESOURCE_GROUP" \
   --name "$APIM_NAME" \
   --location "$LOCATION" \
   --publisher-email "$APIM_PUBLISHER_EMAIL" \
   --publisher-name "$APIM_PUBLISHER_NAME" \
-  --sku-name Consumption \
+  --sku-name BasicV2 \
   --output none
 
 echo "==> [5/8] Creating Azure Key Vault (RBAC-enabled): $KV_NAME"

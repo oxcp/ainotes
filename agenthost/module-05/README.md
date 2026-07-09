@@ -51,7 +51,7 @@ Recap the three solutions, provide decision guidance, and share cost optimisatio
 | Lever | Impact | Applies to |
 |---|---|---|
 | Scale-to-zero (30-min idle) | Eliminate compute cost during off-hours | A · B · C |
-| APIM Consumption SKU | Pay per call; no gateway idle cost | A · B · C |
+| APIM Basic v2 SKU | Eligible for Foundry native AI Gateway; fixed baseline cost | A · B · C |
 | Azure Managed Redis Basic SKU | ~60% cheaper than Standard for dev/test | A · B · C |
 | Blob Cool tier for cold state | ~50% cheaper than Hot tier | A · B · C |
 | Redis TTL tuning | Auto-evict stale agent state; reduce memory cost | A · B · C |

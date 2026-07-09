@@ -21,6 +21,7 @@ The Foundry account ships with:
 - Defender for AI
 - Two RAI content-safety policies
 - The APIM AI gateway that fronts its inference endpoint
+- An APIM Basic v2 instance that is eligible for Foundry AI Gateway association
 
 ## Learning Objectives
 
@@ -76,33 +77,31 @@ chmod +x setup.sh
 
 ---
 
-## Step 3 — Configure APIM Policy
-
-Create API in APIM and apply the policy defined `apim-policy.xml` file:
-
-```bash
-az deployment group create \
-  -g $RESOURCE_GROUP  \
-  -f apim-api-policy.bicep 
-```
-
----
-
-## Step 4 — Foundry AI gateway (provisioned with the core deployment)
+## Step 3 — Foundry AI gateway (provisioned with the core deployment)
 
 `core.bicep` provisions the Foundry stack and wires the module-01 API Management instance as its AI gateway:
 
-1. **Foundry account** `foundry-agenthost-<deploymentSuffix>` (kind `AIServices`, `disableLocalAuth: true`) with the project `maf-agent-prj`, the `gpt-5.4-mini` deployment (GlobalStandard, capacity 50), Defender for AI, and the `Microsoft.Default` / `Microsoft.DefaultV2` RAI policies.
-2. **Backend** `foundry-backend` → the Foundry inference endpoint (`foundryAccount.properties.endpoint`).
-3. **RBAC** — the module-01 UAMI is granted **Cognitive Services OpenAI User** on the Foundry account.
-4. **API** `foundry-ai-gateway` (path `/foundry`) with a `chat-completions` operation and an API-scope policy that routes to the backend and attaches a managed-identity token via `authentication-managed-identity` (resource `https://cognitiveservices.azure.com`).
+1. **Foundry account** `foundry-agenthost-<deploymentSuffix>` (kind `AIServices`, `disableLocalAuth: true`) with the project `maf-agent-prj`, the `gpt-5.4-mini` deployment (GlobalStandard, capacity 50), and Defender for AI.
+2. **APIM** `apim-agenthost-<deploymentSuffix>` is created on the **Basic v2** tier so it is eligible for Foundry's native AI Gateway feature.
+3. **Backend** `foundry-backend` → the Foundry Responses endpoint (`${foundryAccount.properties.endpoint}openai/v1`).
+4. **RBAC** — the module-01 UAMI is granted **Cognitive Services OpenAI User** and **Azure AI User** on the Foundry account.
+5. **API** `foundry-ai-gateway` (path `/foundry`) with `responses` (`POST /responses`) and `get-response` (`GET /responses/{response-id}`) operations, plus an API-scope policy that validates the caller's Entra ID token (`validate-jwt`) and then forwards to the backend with a managed-identity token via `authentication-managed-identity` (resource `https://ai.azure.com`).
 
-Call the model through the gateway (the gateway URL is the `apimFoundryGatewayUrl` output):
+To make this APIM instance appear in **Microsoft Foundry portal → Operate → Admin console → AI Gateway**, you still need one manual portal step after deployment:
+
+1. Open **AI Gateway**.
+2. Select **Add AI Gateway**.
+3. Choose **Use existing**.
+4. Select the deployed `apim-agenthost-<deploymentSuffix>` instance.
+5. Open the gateway entry and select **Add project to gateway** for `maf-agent-prj`.
+
+Call the model through the gateway (the gateway URL is the `apimFoundryGatewayUrl` output). The caller sends its own Entra ID token; APIM validates it and forwards to Foundry with its managed identity:
 
 ```bash
-curl -X POST "https://apim-agenthost-<suffix>.azure-api.net/foundry/deployments/gpt-5.4-mini/chat/completions?api-version=2024-02-01" \
+curl -X POST "https://apim-agenthost-<suffix>.azure-api.net/foundry/responses" \
+  -H "Authorization: Bearer <caller Entra ID token, aud=api://agenthost>" \
   -H "Content-Type: application/json" \
-  -d '{"messages":[{"role":"user","content":"Hello through the APIM AI gateway"}],"max_tokens":64}'
+  -d '{"model":"gpt-5.4-mini","input":"Hello through the APIM AI gateway"}'
 ```
 
 Retrieve the key outputs after deployment:
@@ -121,10 +120,7 @@ az deployment sub show \
 |---|---|
 | `setup.sh` | Automated bash script for full infrastructure setup (core resources + Foundry stack via `az` / `az rest`) |
 | `main.bicep` | Bicep subscription-scoped entry point (creates Resource Group, calls core.bicep) |
-| `core.bicep` | Bicep IaC template for all shared Azure resources (Redis, Storage, APIM, Key Vault, ACR, UAMI) **and** the Foundry stack (account, project, `gpt-5.4-mini`, Defender for AI, RAI policies, APIM AI gateway) |
-| `apim-api-policy.bicep` | Bicep IaC template to create the LLM API in APIM and apply the policy defined in `apim-policy.xml` |
-| `apim-policy.xml` | APIM policy: `validate-jwt`, rate-limit, retry, Azure OpenAI backend |
-| `foundry-apim-policy.xml` | Reference APIM policy for the Foundry AI gateway (validate-jwt, rate-limit, caching) you can merge into the `foundry-ai-gateway` API |
+| `core.bicep` | Bicep IaC template for all shared Azure resources (Redis, Storage, APIM Basic v2, Key Vault, ACR, UAMI) **and** the Foundry stack (account, project, `gpt-5.4-mini`, Defender for AI, APIM AI gateway) |
 
 ---
 
