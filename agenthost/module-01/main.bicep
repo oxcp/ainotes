@@ -125,3 +125,5 @@ output foundryProjectEndpoint string = coreResources.outputs.foundryProjectEndpo
 output modelDeploymentName string = coreResources.outputs.modelDeploymentName
 output apimFoundryBackendName string = coreResources.outputs.apimFoundryBackendName
 output apimFoundryGatewayUrl string = coreResources.outputs.apimFoundryGatewayUrl
+output foundryApimGatewayConnectionName string = coreResources.outputs.foundryApimGatewayConnectionName
+output deploymentStatus object = coreResources.outputs.deploymentStatus

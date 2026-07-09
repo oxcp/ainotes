@@ -53,16 +53,16 @@ export LOCATION="eastus2"
 ## Step 2 — Deploy Infrastructure via Bicep
 
 ```bash
-DEPLOYMENT_SUFFIX=$(openssl rand -hex 3)
+SN=$(openssl rand -hex 3)
 
 az deployment sub create \
-  --name "main-$DEPLOYMENT_SUFFIX" \
+  --name "main-$SN" \
   --location "$LOCATION" \
   --template-file main.bicep \
   --parameters \
       resourceGroupName="$RESOURCE_GROUP" \
       location="$LOCATION" \
-      deploymentSuffix = "$DEPLOYMENT_SUFFIX"
+      deploymentSuffix="$SN"
 ```
 
 Or run the automated script (provisions the core resources **and** the full Foundry stack via `az` / `az rest`):

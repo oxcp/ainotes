@@ -309,6 +309,32 @@ resource foundryProject 'Microsoft.CognitiveServices/accounts/projects@2026-03-0
   ]
 }
 
+// ── Register APIM as the Foundry project's AI Gateway ────────────────────────
+// Creates a Foundry connection of category 'ApiManagement' so the project's
+// model/inference traffic is governed through the APIM AI gateway. The Agents
+// service authenticates to the gateway with the project's managed identity
+// against the Cognitive Services audience. target = APIM gateway URL + the
+// foundry-ai-gateway API path.
+resource foundryApimGatewayConnection 'Microsoft.CognitiveServices/accounts/projects/connections@2025-04-01-preview' = {
+  parent: foundryProject
+  name: 'foundry-apim-gateway'
+  properties: {
+    category: 'ApiManagement'
+    target: '${apim.properties.gatewayUrl}/${foundryGatewayApi.properties.path}'
+    // 'ProjectManagedIdentity' is a valid runtime authType for Foundry
+    // connections; the current type definition lags, so suppress BCP036.
+    #disable-next-line BCP036
+    authType: 'ProjectManagedIdentity'
+    audience: 'https://cognitiveservices.azure.com'
+    isSharedToAll: true
+    credentials: {}
+    metadata: {
+      deploymentInPath: 'true'
+      inferenceAPIVersion: '2024-02-01'
+    }
+  }
+}
+
 // ── Model deployment ─────────────────────────────────────────────────────────
 resource foundryModel 'Microsoft.CognitiveServices/accounts/deployments@2026-03-01' = {
   parent: foundryAccount
@@ -328,186 +354,6 @@ resource foundryModel 'Microsoft.CognitiveServices/accounts/deployments@2026-03-
     raiPolicyName: 'Microsoft.DefaultV2'
     deploymentState: 'Running'
   }
-  // Cognitive Services serializes control-plane writes; depend on the RAI
-  // policies so the referenced Microsoft.DefaultV2 exists before deployment
-  // and to avoid 409 conflicts on the shared account.
-  dependsOn: [
-    raiPolicyDefault
-    raiPolicyDefaultV2
-  ]
-}
-
-// ── RAI Policies ─────────────────────────────────────────────────────────────
-resource raiPolicyDefault 'Microsoft.CognitiveServices/accounts/raiPolicies@2026-03-01' = {
-  parent: foundryAccount
-  name: 'Microsoft.Default'
-  properties: {
-    mode: 'Blocking'
-    contentFilters: [
-      {
-        name: 'Hate'
-        severityThreshold: 'Medium'
-        blocking: true
-        enabled: true
-        source: 'Prompt'
-        action: 'NONE'
-      }
-      {
-        name: 'Hate'
-        severityThreshold: 'Medium'
-        blocking: true
-        enabled: true
-        source: 'Completion'
-        action: 'NONE'
-      }
-      {
-        name: 'Sexual'
-        severityThreshold: 'Medium'
-        blocking: true
-        enabled: true
-        source: 'Prompt'
-        action: 'NONE'
-      }
-      {
-        name: 'Sexual'
-        severityThreshold: 'Medium'
-        blocking: true
-        enabled: true
-        source: 'Completion'
-        action: 'NONE'
-      }
-      {
-        name: 'Violence'
-        severityThreshold: 'Medium'
-        blocking: true
-        enabled: true
-        source: 'Prompt'
-        action: 'NONE'
-      }
-      {
-        name: 'Violence'
-        severityThreshold: 'Medium'
-        blocking: true
-        enabled: true
-        source: 'Completion'
-        action: 'NONE'
-      }
-      {
-        name: 'Selfharm'
-        severityThreshold: 'Medium'
-        blocking: true
-        enabled: true
-        source: 'Prompt'
-        action: 'NONE'
-      }
-      {
-        name: 'Selfharm'
-        severityThreshold: 'Medium'
-        blocking: true
-        enabled: true
-        source: 'Completion'
-        action: 'NONE'
-      }
-    ]
-  }
-}
-
-resource raiPolicyDefaultV2 'Microsoft.CognitiveServices/accounts/raiPolicies@2026-03-01' = {
-  parent: foundryAccount
-  name: 'Microsoft.DefaultV2'
-  dependsOn: [
-    raiPolicyDefault
-  ]
-  properties: {
-    mode: 'Blocking'
-    contentFilters: [
-      {
-        name: 'Hate'
-        severityThreshold: 'Medium'
-        blocking: true
-        enabled: true
-        source: 'Prompt'
-        action: 'NONE'
-      }
-      {
-        name: 'Hate'
-        severityThreshold: 'Medium'
-        blocking: true
-        enabled: true
-        source: 'Completion'
-        action: 'NONE'
-      }
-      {
-        name: 'Sexual'
-        severityThreshold: 'Medium'
-        blocking: true
-        enabled: true
-        source: 'Prompt'
-        action: 'NONE'
-      }
-      {
-        name: 'Sexual'
-        severityThreshold: 'Medium'
-        blocking: true
-        enabled: true
-        source: 'Completion'
-        action: 'NONE'
-      }
-      {
-        name: 'Violence'
-        severityThreshold: 'Medium'
-        blocking: true
-        enabled: true
-        source: 'Prompt'
-        action: 'NONE'
-      }
-      {
-        name: 'Violence'
-        severityThreshold: 'Medium'
-        blocking: true
-        enabled: true
-        source: 'Completion'
-        action: 'NONE'
-      }
-      {
-        name: 'Selfharm'
-        severityThreshold: 'Medium'
-        blocking: true
-        enabled: true
-        source: 'Prompt'
-        action: 'NONE'
-      }
-      {
-        name: 'Selfharm'
-        severityThreshold: 'Medium'
-        blocking: true
-        enabled: true
-        source: 'Completion'
-        action: 'NONE'
-      }
-      {
-        name: 'Jailbreak'
-        blocking: true
-        enabled: true
-        source: 'Prompt'
-        action: 'NONE'
-      }
-      {
-        name: 'Protected Material Text'
-        blocking: true
-        enabled: true
-        source: 'Completion'
-        action: 'NONE'
-      }
-      {
-        name: 'Protected Material Code'
-        blocking: false
-        enabled: true
-        source: 'Completion'
-        action: 'NONE'
-      }
-    ]
-  }
 }
 
 // ── Outputs ──────────────────────────────────────────────────────────────────
@@ -526,3 +372,20 @@ output foundryProjectEndpoint string = 'https://${foundryResourceName}.services.
 output modelDeploymentName string = foundryModel.name
 output apimFoundryBackendName string = foundryBackend.name
 output apimFoundryGatewayUrl string = 'https://${apim.properties.gatewayUrl}/${gatewayApiPath}'
+output foundryApimGatewayConnectionName string = foundryApimGatewayConnection.name
+
+// ── Deployment status ────────────────────────────────────────────────────────
+// Bicep is declarative and can't print mid-deployment, so surface each
+// resource's final provisioning state as a single status object. It is
+// reported once the deployment completes (e.g. via `az deployment ... show`).
+output deploymentStatus object = {
+  redis: redis.properties.provisioningState
+  redisDefaultDb: redisDefaultDb.properties.provisioningState
+  storage: storage.properties.provisioningState
+  apim: apim.properties.provisioningState
+  keyVault: keyVault.properties.provisioningState
+  acr: acr.properties.provisioningState
+  foundryAccount: foundryAccount.properties.provisioningState
+  foundryProject: foundryProject.properties.provisioningState
+  foundryModel: foundryModel.properties.provisioningState
+}
