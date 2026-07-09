@@ -54,8 +54,7 @@ agenthost/
 ├── module-02/
 │   ├── README.md                ← Foundry hosted-agent azd deployment steps
 │   ├── azure.yaml               ← Hosted-agent manifest used by azd init
-│   ├── src/agent-framework-agent-basic-responses/ ← Agent Framework app (main.py, requirements.txt, Dockerfile)
-│   └── agent-definition.json   ← agent spec (state store, UAMI, LLM backend)
+│   └── src/maf-agent/           ← Agent Framework app (main.py, requirements.txt, Dockerfile)
 ├── module-03/
 │   ├── README.md                ← ACA Sandbox deployment steps + comparison table
 │   ├── deploy.sh                ← ACR, image build/push, ACA Environment + App deployment

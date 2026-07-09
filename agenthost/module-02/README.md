@@ -42,10 +42,10 @@ Provision the agent scaffolding, then configure the local environment before run
 azd provision
 ```
 
-The agent app under `src/agent-framework-agent-basic-responses/` reads two variables from a local `.env` when running outside Foundry. Populate them from the **module-01** deployment outputs:
+The agent app under `src/maf-agent/` reads two variables from a local `.env` when running outside Foundry. Populate them from the **module-01** deployment outputs:
 
 ```bash
-cd src/agent-framework-agent-basic-responses
+cd src/maf-agent
 cp .env.example .env
 # FOUNDRY_PROJECT_ENDPOINT       = module-01 output `foundryProjectEndpoint`
 # AZURE_AI_MODEL_DEPLOYMENT_NAME = module-01 output `modelDeploymentName` (gpt-5.4-mini)
@@ -105,10 +105,10 @@ curl -X POST "https://apim-agenthost-<suffix>.azure-api.net/foundry/deployments/
 | File | Description |
 |---|---|
 | `azure.yaml` | Foundry agent manifest used by `azd ai agent init` |
-| `src/agent-framework-agent-basic-responses/main.py` | Agent Framework `FoundryChatClient` served with `ResponsesHostServer` |
-| `src/agent-framework-agent-basic-responses/requirements.txt` | Python dependencies for the hosted agent |
-| `src/agent-framework-agent-basic-responses/.env.example` | Local env template (`FOUNDRY_PROJECT_ENDPOINT`, `AZURE_AI_MODEL_DEPLOYMENT_NAME`) |
-| `src/agent-framework-agent-basic-responses/Dockerfile` | Container build for the hosted agent runtime |
+| `src/maf-agent/main.py` | Agent Framework `FoundryChatClient` served with `ResponsesHostServer` |
+| `src/maf-agent/requirements.txt` | Python dependencies for the hosted agent |
+| `src/maf-agent/.env.example` | Local env template (`FOUNDRY_PROJECT_ENDPOINT`, `AZURE_AI_MODEL_DEPLOYMENT_NAME`) |
+| `src/maf-agent/Dockerfile` | Container build for the hosted agent runtime |
 | `agent-definition.json` | Hosted agent runtime settings aligned with the module-01 Foundry resource and APIM backend |
 
 ## Next Step
