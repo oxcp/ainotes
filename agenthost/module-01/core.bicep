@@ -36,6 +36,7 @@ param modelVersion string
 // inference when the account has disableLocalAuth = true (keys disabled).
 // Includes the data action Microsoft.CognitiveServices/accounts/OpenAI/responses/*.
 var openAiUserRoleId = '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
+
 // Azure AI User (formerly "Azure AI User", now "Foundry User") — grants
 // Microsoft.CognitiveServices/* data actions so the UAMI can call the Foundry
 // Responses API via the https://ai.azure.com audience.
@@ -347,7 +348,11 @@ resource foundryGatewayApi 'Microsoft.ApiManagement/service/apis@2023-05-01-prev
       'https'
     ]
     subscriptionRequired: false
-    serviceUrl: '${foundryAccount.properties.endpoint}openai/v1'
+    // No direct backend-id on the API resource; the named `foundry-backend`
+    // is selected in the API policy via <set-backend-service backend-id=... />.
+    // serviceUrl (fallback when no backend is set) reuses the backend URL so
+    // the endpoint is defined in one place.
+    serviceUrl: foundryBackend.properties.url
   }
 }
 
@@ -389,9 +394,6 @@ resource foundryGatewayPolicy 'Microsoft.ApiManagement/service/apis/policies@202
     format: 'rawxml'
     value: gatewayPolicyXml
   }
-  dependsOn: [
-    foundryBackend
-  ]
 }
 
 // ── Defender for AI ──────────────────────────────────────────────────────────
