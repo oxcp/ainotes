@@ -2,7 +2,25 @@
 
 ## Overview
 
-Provision the shared Azure infrastructure used by all three agent hosting solutions: Resource Group, Azure Managed Redis, Azure Blob Storage, Azure API Management, Azure Key Vault, Azure Container Registry, Entra ID App Registration, User-Assigned Managed Identity, and a Microsoft Foundry (AIServices) account. The Foundry account ships with a project, a `gpt-5.4-mini` model deployment, Defender for AI, two RAI content-safety policies, and the APIM AI gateway that fronts its inference endpoint.
+Provision the shared Azure infrastructure used by all three agent hosting solutions:
+
+- Resource Group
+- Azure Managed Redis
+- Azure Blob Storage
+- Azure API Management
+- Azure Key Vault
+- Azure Container Registry
+- Entra ID App Registration
+- User-Assigned Managed Identity
+- Microsoft Foundry (AIServices) account
+
+The Foundry account ships with:
+
+- A project
+- A `gpt-5.4-mini` model deployment
+- Defender for AI
+- Two RAI content-safety policies
+- The APIM AI gateway that fronts its inference endpoint
 
 ## Learning Objectives
 
