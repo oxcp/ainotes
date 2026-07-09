@@ -48,8 +48,8 @@ agenthost/
 │   ├── setup.sh                 ← Azure CLI bash script (RG, Redis, Blob, APIM, Entra ID, UAMI, Foundry stack)
 │   ├── main.bicep               ← Subscription-scoped Bicep entry point
 │   ├── core.bicep               ← Resource group Bicep (Redis, Storage, APIM, UAMI, Foundry account + project + model + Defender + RAI + AI gateway)
-│   ├── apim-policy.xml          ← APIM: validate-jwt, rate-limit, retry, Azure OpenAI backend
 │   ├── apim-api-policy.bicep    ← APIM LLM API + policy deployment
+│   ├── apim-policy.xml          ← APIM: validate-jwt, rate-limit, retry, Azure OpenAI backend
 │   └── foundry-apim-policy.xml  ← Reference APIM policy for the Foundry AI gateway
 ├── module-02/
 │   ├── README.md                ← Foundry hosted-agent azd deployment steps

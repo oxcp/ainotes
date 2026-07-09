@@ -20,7 +20,6 @@ Provision the shared Azure infrastructure used by all three agent hosting soluti
 
 - Azure subscription with **Contributor** access
 - Azure CLI installed and authenticated (`az login`)
-- Azure OpenAI resource deployed (GPT-4o model)
 
 ---
 
@@ -29,7 +28,6 @@ Provision the shared Azure infrastructure used by all three agent hosting soluti
 ```bash
 export RESOURCE_GROUP="rg-agenthost-workshop"
 export LOCATION="eastus2"
-export AOAI_ENDPOINT="https://<your-aoai-resource>.openai.azure.com/"
 ```
 
 ---
@@ -42,8 +40,7 @@ az deployment sub create \
   --template-file main.bicep \
   --parameters \
       resourceGroupName="$RESOURCE_GROUP" \
-      location="$LOCATION" \
-      aoaiEndpoint="$AOAI_ENDPOINT"
+      location="$LOCATION"
 ```
 
 Or run the automated script (provisions the core resources **and** the full Foundry stack via `az` / `az rest`):
