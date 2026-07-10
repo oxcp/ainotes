@@ -64,6 +64,7 @@ az deployment sub create \
       resourceGroupName="$RESOURCE_GROUP" \
       location="$LOCATION" \
       deploymentSN="$SN"
+
 ```
 
 Or run the automated script (provisions the core resources **and** the full Foundry stack via `az` / `az rest`):
@@ -109,7 +110,6 @@ curl -s -X POST \
     "input":"Hello through the APIM AI gateway"
   }' \
 | jq -r '.output'
-``
 
 ```
 
@@ -117,7 +117,7 @@ Retrieve the key outputs after deployment:
 
 ```bash
 az deployment sub show \
-  --name main \
+  --name main-$SN \
   --query "properties.outputs.{endpoint:foundryProjectEndpoint.value, model:modelDeploymentName.value, gateway:apimFoundryGatewayUrl.value, backend:apimFoundryBackendName.value}"
 ```
 
