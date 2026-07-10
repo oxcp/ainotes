@@ -3,24 +3,60 @@
 import os
 
 from agent_framework import Agent
-from agent_framework.foundry import FoundryChatClient
 from agent_framework_foundry_hosting import ResponsesHostServer
-from azure.identity import DefaultAzureCredential
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
 
 
-def main():
-    client = FoundryChatClient(
-        project_endpoint=os.environ["FOUNDRY_PROJECT_ENDPOINT"],
-        model=os.environ["AZURE_AI_MODEL_DEPLOYMENT_NAME"],
-        credential=DefaultAzureCredential(),
+def build_client():
+    """Build the chat client for the agent.
+
+    Two model-routing modes are supported (set MODEL_ROUTING):
+      - "gateway" (default): call the model THROUGH the module-01 APIM AI gateway.
+      - "direct": call the Foundry project endpoint directly.
+    """
+    routing = os.environ.get("MODEL_ROUTING", "gateway").strip().lower()
+    model = os.environ["AZURE_AI_MODEL_DEPLOYMENT_NAME"]
+
+    if routing == "direct":
+        # Direct to the Foundry project. The running identity needs the
+        # "Azure AI User" role on the Foundry account (granted in module-01).
+        from agent_framework.foundry import FoundryChatClient
+        from azure.identity import DefaultAzureCredential
+
+        return FoundryChatClient(
+            project_endpoint=os.environ["FOUNDRY_PROJECT_ENDPOINT"],
+            model=model,
+            credential=DefaultAzureCredential(),
+        )
+
+    if routing == "gateway":
+        # Through the module-01 APIM AI gateway (OpenAI Responses API). The
+        # gateway validates the caller's Entra token (aud = APIM_AUDIENCE) and
+        # forwards to Foundry with its own user-assigned managed identity.
+        from agent_framework.openai import OpenAIChatClient
+        from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+
+        audience = os.environ.get("APIM_AUDIENCE", "api://agenthost")
+        token_provider = get_bearer_token_provider(
+            DefaultAzureCredential(), f"{audience}/.default"
+        )
+        return OpenAIChatClient(
+            model=model,
+            base_url=os.environ["APIM_GATEWAY_URL"],  # e.g. https://apim-agenthost-<SN>.azure-api.net/foundry
+            api_key=token_provider,
+        )
+
+    raise ValueError(
+        f"Unsupported MODEL_ROUTING={routing!r}; use 'gateway' or 'direct'."
     )
 
+
+def main():
     agent = Agent(
-        client=client,
+        client=build_client(),
         name="maf-agent",
         instructions="You are a friendly assistant. Keep your answers brief.",
         # History will be managed by the hosting infrastructure, thus there

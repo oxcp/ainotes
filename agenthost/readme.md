@@ -45,7 +45,7 @@ agenthost/
 │   └── README.md                ← Introduction: agent overview, state pattern, 3 solutions
 ├── module-01/
 │   ├── README.md                ← Core infra setup steps
-│   ├── setup.sh                 ← Azure CLI bash script (RG, Redis, Blob, APIM, Entra ID, UAMI, Foundry stack)
+│   ├── setup.sh                 ← One-step wrapper: runs the main.bicep deployment (az deployment sub create)
 │   ├── main.bicep               ← Subscription-scoped Bicep entry point
 │   └── core.bicep               ← Resource group Bicep (Redis, Storage, APIM, UAMI, Foundry account + project + model + Defender + AI gateway)
 ├── module-02/

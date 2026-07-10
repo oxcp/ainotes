@@ -1,10 +1,22 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
 
+# NOTE: module-01 already provisioned the Foundry account, the `maf-agent-prj`
+# project, the `gpt-5.4-mini` deployment, and the APIM AI gateway. This file only
+# deploys the hosted agent against that existing project. The `ai-project` block
+# below re-declares the SAME project/model so `azd` reconciles to module-01's
+# resources (idempotent) rather than creating new ones — keep the model name and
+# version identical to module-01.
+#
+# The agent supports TWO model-routing modes, selected by the MODEL_ROUTING env
+# var (see src/maf-agent/main.py):
+#   - "gateway" (default): route model calls THROUGH the module-01 APIM AI gateway.
+#   - "direct": call the Foundry project endpoint directly.
+
 requiredVersions:
   extensions:
     azure.ai.agents: '>=1.0.0-beta.4'
 
-name: maf-agent-basic-resp
+name: maf-agent
 
 services:
   ai-project:
@@ -19,7 +31,7 @@ services:
           name: GlobalStandard
           capacity: 50
 
-  agent-framework-agent-basic-responses:
+  maf-agent:
     host: azure.ai.agent
     metadata:
       tags:
@@ -36,14 +48,25 @@ services:
     uses:
       - ai-project
     kind: hosted
-    name: agent-framework-agent-basic-responses
+    name: maf-agent
     description: A basic Agent Framework agent hosted by Foundry.
     protocols:
       - protocol: responses
         version: 2.0.0
     environmentVariables:
+      # Model-routing mode: "gateway" (via module-01 APIM) or "direct" (to project).
+      - name: MODEL_ROUTING
+        value: ${MODEL_ROUTING}
       - name: AZURE_AI_MODEL_DEPLOYMENT_NAME
         value: ${AZURE_AI_MODEL_DEPLOYMENT_NAME}
+      # gateway mode: route model calls through the module-01 APIM AI gateway.
+      - name: APIM_GATEWAY_URL
+        value: ${APIM_GATEWAY_URL}
+      - name: APIM_AUDIENCE
+        value: ${APIM_AUDIENCE}
+      # direct mode: call the Foundry project endpoint directly.
+      - name: FOUNDRY_PROJECT_ENDPOINT
+        value: ${FOUNDRY_PROJECT_ENDPOINT}
     container:
       resources:
         cpu: '0.5'

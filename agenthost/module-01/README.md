@@ -53,6 +53,22 @@ export LOCATION="eastus2"
 
 ## Step 2 — Deploy Infrastructure via Bicep
 
+Deploy everything with a **single command** using the wrapper script (recommended). It just calls `az deployment sub create` on `main.bicep`, generates the deployment suffix for you, and prints the outputs:
+
+```bash
+chmod +x setup.sh
+./setup.sh
+```
+
+Optional overrides (export before running, or pass extra `key=value` Bicep parameters as arguments):
+
+```bash
+RESOURCE_GROUP="rg-agenthost-workshop" LOCATION="eastus2" ./setup.sh
+./setup.sh projectName=my-proj modelDeploymentName=gpt-5.4-mini
+```
+
+Or run the equivalent Bicep deployment manually:
+
 ```bash
 export SN=$(openssl rand -hex 3); echo $SN
 
@@ -65,13 +81,6 @@ az deployment sub create \
       location="$LOCATION" \
       deploymentSN="$SN"
 
-```
-
-Or run the automated script (provisions the core resources **and** the full Foundry stack via `az` / `az rest`):
-
-```bash
-chmod +x setup.sh
-./setup.sh
 ```
 
 > **RBAC note:** the Foundry account sets `disableLocalAuth: true`, so APIM must call it with an Entra ID token from the user-assigned managed identity. The deployment therefore grants the UAMI the **Cognitive Services OpenAI User** role on the Foundry account. Creating that role assignment requires the deployer to have **Owner** or **User Access Administrator** on the resource group (Contributor alone cannot create role assignments).
@@ -127,7 +136,7 @@ az deployment sub show \
 
 | File | Description |
 |---|---|
-| `setup.sh` | Automated bash script for full infrastructure setup (core resources + Foundry stack via `az` / `az rest`) |
+| `setup.sh` | One-step wrapper that runs the `main.bicep` subscription deployment (`az deployment sub create`) and prints the outputs |
 | `main.bicep` | Bicep subscription-scoped entry point (creates Resource Group, calls core.bicep) |
 | `core.bicep` | Bicep IaC template for all shared Azure resources (Redis, Storage, APIM Basic v2, Key Vault, ACR, UAMI) **and** the Foundry stack (account, project, `gpt-5.4-mini`, Defender for AI, APIM AI gateway) |
 
