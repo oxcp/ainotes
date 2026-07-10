@@ -54,7 +54,7 @@ export LOCATION="eastus2"
 ## Step 2 — Deploy Infrastructure via Bicep
 
 ```bash
-SN=$(openssl rand -hex 3); echo $SN
+export SN=$(openssl rand -hex 3); echo $SN
 
 az deployment sub create \
   --name "main-$SN" \
@@ -98,10 +98,19 @@ To make this APIM instance appear in **Microsoft Foundry portal → Operate → 
 Call the model through the gateway (the gateway URL is the `apimFoundryGatewayUrl` output). The caller sends its own Entra ID token; APIM validates it and forwards to Foundry with its managed identity:
 
 ```bash
-curl -X POST "https://apim-agenthost-<suffix>.azure-api.net/foundry/responses" \
-  -H "Authorization: Bearer <caller Entra ID token, aud=api://agenthost>" \
+export ACCESSTOKEN=$(az account get-access-token --query accessToken -o tsv | tr -d '\r\n')
+
+curl -s -X POST \
+  "https://apim-agenthost-${SN}.azure-api.net/foundry/responses" \
+  -H "Authorization: Bearer $ACCESSTOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"model":"gpt-5.4-mini","input":"Hello through the APIM AI gateway"}'
+  -d '{
+    "model":"gpt-5.4-mini",
+    "input":"Hello through the APIM AI gateway"
+  }' \
+| jq -r '.output'
+``
+
 ```
 
 Retrieve the key outputs after deployment:

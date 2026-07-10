@@ -52,9 +52,7 @@ var gatewayPolicyTemplate = '''
     <base />
     <validate-jwt header-name="Authorization" failed-validation-httpcode="401" failed-validation-error-message="Unauthorized: invalid or missing token">
       <openid-config url="__LOGIN_ENDPOINT____TENANT_ID__/v2.0/.well-known/openid-configuration" />
-      <audiences>
-        <audience>__APIM_AUDIENCE__</audience>
-      </audiences>
+
       <issuers>
         <issuer>https://sts.windows.net/__TENANT_ID__/</issuer>
         <issuer>__LOGIN_ENDPOINT____TENANT_ID__/v2.0</issuer>
@@ -385,8 +383,7 @@ resource foundryGatewayGetOp 'Microsoft.ApiManagement/service/apis/operations@20
 
 var gatewayPolicyWithClientId = replace(gatewayPolicyTemplate, '__CLIENT_ID__', identity.properties.clientId)
 var gatewayPolicyWithTenant = replace(gatewayPolicyWithClientId, '__TENANT_ID__', tenantId)
-var gatewayPolicyWithLoginEndpoint = replace(gatewayPolicyWithTenant, '__LOGIN_ENDPOINT__', entraLoginEndpoint)
-var gatewayPolicyXml = replace(gatewayPolicyWithLoginEndpoint, '__APIM_AUDIENCE__', apimAudience)
+var gatewayPolicyXml = replace(gatewayPolicyWithTenant, '__LOGIN_ENDPOINT__', entraLoginEndpoint)
 
 resource foundryGatewayPolicy 'Microsoft.ApiManagement/service/apis/policies@2023-05-01-preview' = {
   parent: foundryGatewayApi
