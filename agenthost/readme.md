@@ -50,8 +50,8 @@ agenthost/
 │   └── core.bicep               ← Resource group Bicep (Redis, Storage, APIM, UAMI, Foundry account + project + model + Defender + AI gateway)
 ├── module-02/
 │   ├── README.md                ← Foundry hosted-agent azd deployment steps
-│   ├── azure.yaml               ← Hosted-agent manifest used by azd init
-│   └── src/maf-agent/           ← Agent Framework app (main.py, requirements.txt, Dockerfile)
+│   ├── azure.yaml               ← Hosted-agent manifest used by azd init (references agent-src)
+│   └── agent-src/               ← Agent Framework app source + config (main.py, requirements.txt, Dockerfile, .env.example)
 ├── module-03/
 │   ├── README.md                ← ACA Sandbox deployment steps + comparison table
 │   ├── deploy.sh                ← ACR, image build/push, ACA Environment + App deployment

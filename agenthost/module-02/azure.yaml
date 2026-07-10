@@ -8,7 +8,7 @@
 # version identical to module-01.
 #
 # The agent supports TWO model-routing modes, selected by the MODEL_ROUTING env
-# var (see src/maf-agent/main.py):
+# var (see agent-src/main.py):
 #   - "gateway" (default): route model calls THROUGH the module-01 APIM AI gateway.
 #   - "direct": call the Foundry project endpoint directly.
 
@@ -40,7 +40,7 @@ services:
         - Azure AI AgentServer
         - Responses Protocol
         - Streaming
-    project: src/maf-agent
+    project: agent-src
     language: python
     codeConfiguration:
       runtime: python_3_13
@@ -56,17 +56,16 @@ services:
     environmentVariables:
       # Model-routing mode: "gateway" (via module-01 APIM) or "direct" (to project).
       - name: MODEL_ROUTING
-        value: ${MODEL_ROUTING}
-      - name: AZURE_AI_MODEL_DEPLOYMENT_NAME
-        value: ${AZURE_AI_MODEL_DEPLOYMENT_NAME}
+        value: "direct" # allowed values: "gateway" or "direct"
+      - name: AI_MODEL_DEPLOYMENT_NAME
+        value: "gpt-5.4-mini"
       # gateway mode: route model calls through the module-01 APIM AI gateway.
       - name: APIM_GATEWAY_URL
-        value: ${APIM_GATEWAY_URL}
+        value: "https://apim-agenthost-<SN>.azure-api.net/foundry"
       - name: APIM_AUDIENCE
-        value: ${APIM_AUDIENCE}
+        value: "api://agenthost"
       # direct mode: call the Foundry project endpoint directly.
-      - name: FOUNDRY_PROJECT_ENDPOINT
-        value: ${FOUNDRY_PROJECT_ENDPOINT}
+
     container:
       resources:
         cpu: '0.5'

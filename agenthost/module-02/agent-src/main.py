@@ -3,12 +3,14 @@
 import os
 
 from agent_framework import Agent
+from agent_framework.foundry import FoundryChatClient
 from agent_framework_foundry_hosting import ResponsesHostServer
-from dotenv import load_dotenv
+from azure.identity import DefaultAzureCredential
+# from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
-
+# Load environment variables from the .env file next to this script,
+# regardless of the current working directory.
+# load_dotenv()
 
 def build_client():
     """Build the chat client for the agent.
@@ -18,7 +20,8 @@ def build_client():
       - "direct": call the Foundry project endpoint directly.
     """
     routing = os.environ.get("MODEL_ROUTING", "gateway").strip().lower()
-    model = os.environ["AZURE_AI_MODEL_DEPLOYMENT_NAME"]
+    model = os.environ.get("AI_MODEL_DEPLOYMENT_NAME")
+    print(f"Using model: {model} with routing: {routing}")
 
     if routing == "direct":
         # Direct to the Foundry project. The running identity needs the

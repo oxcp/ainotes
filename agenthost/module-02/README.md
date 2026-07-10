@@ -16,7 +16,7 @@ https://github.com/microsoft-foundry/foundry-samples/tree/main/samples/python/ho
 
 ## Two model-routing modes
 
-The agent's model client is selected at startup by `MODEL_ROUTING` (see [src/maf-agent/main.py](src/maf-agent/main.py)):
+The agent's model client is selected at startup by `MODEL_ROUTING` (see [agent-src/main.py](agent-src/main.py)):
 
 | Aspect | `direct` | `gateway` (default) |
 |---|---|---|
@@ -53,9 +53,10 @@ export PROJECT_ID=$(az deployment sub show \
 echo "$PROJECT_ID"
 ```
 
-Then scaffold the agent bound to that project:
+Then scaffold the agent bound to that project. Create the azd working directory **inside `agenthost/`** (a sibling of `module-02/`) so the relative paths below resolve correctly:
 
 ```bash
+cd agenthost            # repo path that contains module-02/
 mkdir maf-agent
 cd maf-agent
 azd auth login
@@ -63,7 +64,7 @@ azd ext install microsoft.foundry
 azd ai agent init -m ../module-02/azure.yaml --project-id "$PROJECT_ID"
 ```
 
-`--project-id` binds `azd` to module-01's existing project (init extracts the subscription and location from the ARM ID), so **no new resource group, Foundry account, or project is created**. Keep the agent name aligned with the sample.
+`azd ai agent init` reads `../module-02/azure.yaml`, whose `project: agent-src` points at the agent source under `module-02/agent-src/`. `--project-id` binds `azd` to module-01's existing project (init extracts the subscription and location from the ARM ID), so **no new resource group, Foundry account, or project is created**. Keep the agent name aligned with the sample.
 
 > **Important:** module-02 **does not run `azd provision`** (see Step 2), so `azd` never creates or reconciles the model deployment — it deploys the agent against module-01's existing `gpt-5.4-mini`. Just make sure `AZURE_AI_MODEL_DEPLOYMENT_NAME` resolves to `gpt-5.4-mini`.
 
@@ -80,10 +81,10 @@ azd env get-values
 
 > **Why no provision?** Once `AZURE_AI_PROJECT_ENDPOINT` is set, the Foundry azd extension uses the existing project as-is, and `azd deploy` performs a **direct code deploy** (the agent service block has `codeConfiguration:`) straight into it — no infrastructure is provisioned by this module.
 
-The agent app under `src/maf-agent/` supports both model-routing modes; pick one with `MODEL_ROUTING` and fill in the matching variables from the **module-01** deployment outputs:
+The agent app under `agent-src/` (i.e. `module-02/agent-src/`) supports both model-routing modes; pick one with `MODEL_ROUTING` and fill in the matching variables from the **module-01** deployment outputs:
 
 ```bash
-cd src/maf-agent
+cd ../module-02/agent-src   # the agent source + config directory
 cp .env.example .env
 # MODEL_ROUTING                 = "gateway" (default) or "direct"
 #
@@ -141,11 +142,11 @@ In `gateway` mode the agent's model calls flow through the module-01 APIM AI gat
 
 | File | Description |
 |---|---|
-| `azure.yaml` | Foundry agent manifest used by `azd ai agent init` |
-| `src/maf-agent/main.py` | Agent, served with `ResponsesHostServer`; `build_client()` selects `FoundryChatClient` (direct) or `OpenAIChatClient` → APIM gateway based on `MODEL_ROUTING` |
-| `src/maf-agent/requirements.txt` | Python dependencies for the hosted agent (both `agent-framework-foundry` and `agent-framework-openai`) |
-| `src/maf-agent/.env.example` | Local env template (`MODEL_ROUTING`, gateway + direct vars, `AZURE_AI_MODEL_DEPLOYMENT_NAME`) |
-| `src/maf-agent/Dockerfile` | Container build for the hosted agent runtime |
+| `azure.yaml` | Foundry agent manifest used by `azd ai agent init` (references `agent-src`) |
+| `agent-src/main.py` | Agent, served with `ResponsesHostServer`; `build_client()` selects `FoundryChatClient` (direct) or `OpenAIChatClient` → APIM gateway based on `MODEL_ROUTING` |
+| `agent-src/requirements.txt` | Python dependencies for the hosted agent (both `agent-framework-foundry` and `agent-framework-openai`) |
+| `agent-src/.env.example` | Local env template (`MODEL_ROUTING`, gateway + direct vars, `AZURE_AI_MODEL_DEPLOYMENT_NAME`) |
+| `agent-src/Dockerfile` | Container build for the hosted agent runtime |
 
 ## Next Step
 
