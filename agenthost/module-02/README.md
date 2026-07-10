@@ -60,6 +60,8 @@ Provision the agent scaffolding, then configure the local environment before run
 azd provision
 ```
 
+> **What `azd provision` does here:** module-01 already created the Foundry account, the `maf-agent-prj` project, and the `gpt-5.4-mini` deployment, so this is an **idempotent reconcile — it does not recreate them**. Its real job in this module is to **bind the hosted agent to the existing project** (and to confirm the `ai-project` declaration matches module-01, provided the model name/version are identical). If you skip it, you must instead point the `azd` environment at module-01's project manually before `azd deploy`.
+
 The agent app under `src/maf-agent/` supports both model-routing modes; pick one with `MODEL_ROUTING` and fill in the matching variables from the **module-01** deployment outputs:
 
 ```bash
