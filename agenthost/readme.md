@@ -27,9 +27,9 @@
 
 | Module | Topic | Duration | Files |
 |---|---|---|---|
-| [module-00](./module-00/README.md) | Introduction | 5 min | README |
+| [module-00](./module-00/README.md) | Introduction | 10 min | README |
 | [module-01](./module-01/README.md) | Core Infrastructure Setup | 30 min | README · setup.sh · main.bicep · core.bicep |
-| [module-02](./module-02/README.md) | Solution A: Foundry Hosted Agent | 20 min | README · azure.yaml · src/ (main.py, requirements.txt, Dockerfile) · agent-definition.json |
+| [module-02](./module-02/README.md) | Solution A: Foundry Hosted Agent | 30 min | README · azure.yaml · src/ (main.py, requirements.txt, Dockerfile) · agent-definition.json |
 | [module-03](./module-03/README.md) | Solution B: ACA Sandbox | 30 min | README · deploy.sh · aca.bicep · Dockerfile · container-app.yaml · lifecycle-hook.sh |
 | [module-04](./module-04/README.md) | Solution C: AKS + E2B | 30 min | README · deploy.sh · aks.bicep · e2b-manager.yaml · agent-deployment.yaml · keda-scaledobject.yaml · Dockerfile |
 | [module-05](./module-05/README.md) | Wrap-up and Q&A | 5 min | README |

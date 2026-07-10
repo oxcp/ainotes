@@ -117,22 +117,7 @@ Each deployment creates a new hosted-agent version in Foundry. If the sample req
 azd ai agent invoke "Hi"
 ```
 
-## Step 5 — Call the model through the APIM AI gateway (external caller)
-
-The hosted agent already calls the model **through** this gateway (Step 2). The same gateway is also the external front door for any other caller. It is provisioned by **module-01** (backend `foundry-backend`, API `foundry-ai-gateway` at path `/foundry`, Responses API, with caller `validate-jwt` + managed-identity forwarding). Call it with your own Entra ID token:
-
-```bash
-az deployment sub show \
-  --name "main-$SN" \
-  --query "properties.outputs.{gateway:apimFoundryGatewayUrl.value, backend:apimFoundryBackendName.value}"
-
-export ACCESSTOKEN=$(az account get-access-token --resource api://agenthost --query accessToken -o tsv | tr -d '\r\n')
-
-curl -X POST "https://apim-agenthost-<SN>.azure-api.net/foundry/responses" \
-  -H "Authorization: Bearer $ACCESSTOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"model":"gpt-5.4-mini","input":"Hello through the APIM AI gateway"}'
-```
+In `gateway` mode the agent's model calls flow through the module-01 APIM AI gateway. Validating the gateway directly (an external `curl` with your own Entra token) is covered in **module-01 Step 3** — no need to repeat it here.
 
 ## Files in This Module
 

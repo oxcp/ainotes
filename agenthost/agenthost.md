@@ -301,9 +301,9 @@ flowchart TD
 
 ---
 
-## 7. Workshop Flow (120 minutes)
+## 7. Workshop Flow (135 minutes)
 
-### Module 0 — Introduction (5 min)
+### Module 0 — Introduction (10 min)
 
 Problem framing and architecture overview. [See Module 0](./module-00/README.md)
 
@@ -315,7 +315,7 @@ Deploy foundational Azure services: Resource Group, Managed Redis, Blob Storage,
 
 ---
 
-### Module 2 — Solution A: Foundry Host Agent (20 min)
+### Module 2 — Solution A: Foundry Host Agent (30 min)
 
 Host AI agents using Azure AI Foundry with integrated state management and scale-to-zero. [See Module 2](./module-02/README.md)
 

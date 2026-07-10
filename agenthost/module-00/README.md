@@ -1,4 +1,4 @@
-# Module 0 — Introduction (5 min)
+# Module 0 — Introduction (10 min)
 
 ## Overview
 
