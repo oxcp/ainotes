@@ -65,17 +65,20 @@ azd ai agent init -m ../module-02/azure.yaml --project-id "$PROJECT_ID"
 
 `--project-id` binds `azd` to module-01's existing project (init extracts the subscription and location from the ARM ID), so **no new resource group, Foundry account, or project is created**. Keep the agent name aligned with the sample.
 
-> **Important:** the model in `azure.yaml` (`ai-project.deployments[]`) must match module-01 **exactly** — name `gpt-5.4-mini`, version `2026-03-17`. If they differ, `azd provision` will create a *second* deployment in the project instead of reusing module-01's.
+> **Important:** module-02 **does not run `azd provision`** (see Step 2), so `azd` never creates or reconciles the model deployment — it deploys the agent against module-01's existing `gpt-5.4-mini`. Just make sure `AZURE_AI_MODEL_DEPLOYMENT_NAME` resolves to `gpt-5.4-mini`.
 
-## Step 2 — Provision and run locally
+## Step 2 — Bind the azd environment (skip provision) and run locally
 
-Provision the agent scaffolding, then configure the local environment before running.
+module-01 already provisioned the Foundry account, project, and `gpt-5.4-mini` deployment, so **do not run `azd provision` in this module**. `azd provision`'s job is to create/reconcile the `ai-project` infrastructure; against a module-01-owned project it creates a *new* account/project/model. Instead, point the azd environment at the existing project so `azd deploy` (Step 3) targets it directly:
 
 ```bash
-azd provision
+azd env set AZURE_AI_PROJECT_ENDPOINT "$(az deployment sub show --name main-$SN --query 'properties.outputs.foundryProjectEndpoint.value' -o tsv)"
+azd env set AZURE_AI_PROJECT_ID       "$PROJECT_ID"
+azd env set AZURE_AI_MODEL_DEPLOYMENT_NAME "gpt-5.4-mini"
+azd env get-values
 ```
 
-> **What `azd provision` does here:** because Step 1 bound `azd` to module-01's existing project with `--project-id`, provision is an **idempotent reconcile — it does not create a new resource group, Foundry account, or project**. It only binds the hosted agent to that project and reconciles the `gpt-5.4-mini` deployment (a no-op since the name/version match module-01). **Without `--project-id`, `azd provision` would instead create a brand-new account, project, and model under its own resource group** — the behavior to avoid.
+> **Why no provision?** Once `AZURE_AI_PROJECT_ENDPOINT` is set, the Foundry azd extension uses the existing project as-is, and `azd deploy` performs a **direct code deploy** (the agent service block has `codeConfiguration:`) straight into it — no infrastructure is provisioned by this module.
 
 The agent app under `src/maf-agent/` supports both model-routing modes; pick one with `MODEL_ROUTING` and fill in the matching variables from the **module-01** deployment outputs:
 
