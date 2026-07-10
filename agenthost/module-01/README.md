@@ -28,7 +28,7 @@ The Foundry account ships with:
 - Deploy shared Azure infrastructure using Bicep IaC
 - Configure APIM with a `validate-jwt` policy and Azure OpenAI backend
 - Register an Entra ID application and create a User-Assigned Managed Identity
-- Create a Foundry resource named `foundry-agenthost-<deploymentSuffix>` with the project `maf-agent-prj`
+- Create a Foundry resource named `foundry-agenthost-<deploymentSN>` with the project `maf-agent-prj`
 - Deploy `gpt-5.4-mini` (capacity 50) and enable Defender for AI
 - Apply the `Microsoft.Default` and `Microsoft.DefaultV2` RAI policies
 - Expose Foundry inference through APIM as an AI gateway (backend + RBAC + API/policy)
@@ -54,7 +54,7 @@ export LOCATION="eastus2"
 ## Step 2 — Deploy Infrastructure via Bicep
 
 ```bash
-SN=$(openssl rand -hex 3)
+SN=$(openssl rand -hex 3); echo $SN
 
 az deployment sub create \
   --name "main-$SN" \
@@ -63,7 +63,7 @@ az deployment sub create \
   --parameters \
       resourceGroupName="$RESOURCE_GROUP" \
       location="$LOCATION" \
-      deploymentSuffix="$SN"
+      deploymentSN="$SN"
 ```
 
 Or run the automated script (provisions the core resources **and** the full Foundry stack via `az` / `az rest`):
@@ -81,8 +81,8 @@ chmod +x setup.sh
 
 `core.bicep` provisions the Foundry stack and wires the module-01 API Management instance as its AI gateway:
 
-1. **Foundry account** `foundry-agenthost-<deploymentSuffix>` (kind `AIServices`, `disableLocalAuth: true`) with the project `maf-agent-prj`, the `gpt-5.4-mini` deployment (GlobalStandard, capacity 50), and Defender for AI.
-2. **APIM** `apim-agenthost-<deploymentSuffix>` is created on the **Basic v2** tier so it is eligible for Foundry's native AI Gateway feature.
+1. **Foundry account** `foundry-agenthost-<deploymentSN>` (kind `AIServices`, `disableLocalAuth: true`) with the project `maf-agent-prj`, the `gpt-5.4-mini` deployment (GlobalStandard, capacity 50), and Defender for AI.
+2. **APIM** `apim-agenthost-<deploymentSN>` is created on the **Basic v2** tier so it is eligible for Foundry's native AI Gateway feature.
 3. **Backend** `foundry-backend` → the Foundry Responses endpoint (`${foundryAccount.properties.endpoint}openai/v1`).
 4. **RBAC** — the module-01 UAMI is granted **Cognitive Services OpenAI User** and **Azure AI User** on the Foundry account.
 5. **API** `foundry-ai-gateway` (path `/foundry`) with `responses` (`POST /responses`) and `get-response` (`GET /responses/{response-id}`) operations, plus an API-scope policy that validates the caller's Entra ID token (`validate-jwt`) and then forwards to the backend with a managed-identity token via `authentication-managed-identity` (resource `https://ai.azure.com`).
@@ -92,7 +92,7 @@ To make this APIM instance appear in **Microsoft Foundry portal → Operate → 
 1. Open **AI Gateway**.
 2. Select **Add AI Gateway**.
 3. Choose **Use existing**.
-4. Select the deployed `apim-agenthost-<deploymentSuffix>` instance.
+4. Select the deployed `apim-agenthost-<deploymentSN>` instance.
 5. Open the gateway entry and select **Add project to gateway** for `maf-agent-prj`.
 
 Call the model through the gateway (the gateway URL is the `apimFoundryGatewayUrl` output). The caller sends its own Entra ID token; APIM validates it and forwards to Foundry with its managed identity:

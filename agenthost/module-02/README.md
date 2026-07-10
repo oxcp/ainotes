@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Foundry infrastructure — the `foundry-agenthost-<deploymentSuffix>` account, the `maf-agent-prj` project, the `gpt-5.4-mini` deployment, Defender for AI, the RAI policies, and the APIM AI gateway — is provisioned by **module-01**. This module deploys the hosted agent itself with `azd`, following the official Microsoft Foundry hosted-agent sample:
+The Foundry infrastructure — the `foundry-agenthost-<deploymentSN>` account, the `maf-agent-prj` project, the `gpt-5.4-mini` deployment, Defender for AI, the RAI policies, and the APIM AI gateway — is provisioned by **module-01**. This module deploys the hosted agent itself with `azd`, following the official Microsoft Foundry hosted-agent sample:
 
 https://github.com/microsoft-foundry/foundry-samples/tree/main/samples/python/hosted-agents/agent-framework/responses/01-basic
 
@@ -14,8 +14,8 @@ https://github.com/microsoft-foundry/foundry-samples/tree/main/samples/python/ho
 
 ## Prerequisites
 
-- Module 1 already deployed (Foundry account `foundry-agenthost-<deploymentSuffix>`, project `maf-agent-prj`, model `gpt-5.4-mini`)
-- The module-01 resource group still contains the `deploymentSuffix` tag
+- Module 1 already deployed (Foundry account `foundry-agenthost-<deploymentSN>`, project `maf-agent-prj`, model `gpt-5.4-mini`)
+- The module-01 resource group still contains the `deploymentSN` tag
 - Azure CLI, Azure Developer CLI, and Docker Desktop installed
 - The Microsoft Foundry extension for azd installed: `azd ext install microsoft.foundry`
 - The hosted-agent sample available as the source-of-truth for the application code and `azure.yaml`

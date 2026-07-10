@@ -74,10 +74,6 @@ var gatewayPolicyTemplate = '''
   </on-error>
 </policies>
 '''
-var gatewayPolicyWithClientId = replace(gatewayPolicyTemplate, '__CLIENT_ID__', identity.properties.clientId)
-var gatewayPolicyWithTenant = replace(gatewayPolicyWithClientId, '__TENANT_ID__', tenantId)
-var gatewayPolicyWithLoginEndpoint = replace(gatewayPolicyWithTenant, '__LOGIN_ENDPOINT__', entraLoginEndpoint)
-var gatewayPolicyXml = replace(gatewayPolicyWithLoginEndpoint, '__APIM_AUDIENCE__', apimAudience)
 
 // ── User-Assigned Managed Identity ──────────────────────────────────────────
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
@@ -327,7 +323,7 @@ resource foundryBackend 'Microsoft.ApiManagement/service/backends@2023-05-01-pre
   name: 'foundry-backend'
   properties: {
     description: 'Foundry AIServices Responses API (openai/v1) backend'
-    url: '${foundryAccount.properties.endpoint}openai/v1'
+    url: '${foundryAccount.properties.endpoint}api/projects/${foundryProject.name}/openai/v1'
     protocol: 'http'
     tls: {
       validateCertificateChain: true
@@ -386,6 +382,11 @@ resource foundryGatewayGetOp 'Microsoft.ApiManagement/service/apis/operations@20
     ]
   }
 }
+
+var gatewayPolicyWithClientId = replace(gatewayPolicyTemplate, '__CLIENT_ID__', identity.properties.clientId)
+var gatewayPolicyWithTenant = replace(gatewayPolicyWithClientId, '__TENANT_ID__', tenantId)
+var gatewayPolicyWithLoginEndpoint = replace(gatewayPolicyWithTenant, '__LOGIN_ENDPOINT__', entraLoginEndpoint)
+var gatewayPolicyXml = replace(gatewayPolicyWithLoginEndpoint, '__APIM_AUDIENCE__', apimAudience)
 
 resource foundryGatewayPolicy 'Microsoft.ApiManagement/service/apis/policies@2023-05-01-preview' = {
   parent: foundryGatewayApi

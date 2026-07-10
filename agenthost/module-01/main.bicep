@@ -64,23 +64,23 @@ param modelDeploymentName string = 'gpt-5.4-mini'
 param modelVersion string = '2026-03-17'
 
 @description('random deployment suffix from input parameters')
-//param deploymentSuffix string = utcNow('HHmmssfff')
-param deploymentSuffix string
+//param deploymentSN string = utcNow('HHmmssfff')
+param deploymentSN string
 
-var redisNameWithSuffix = '${redisName}-${deploymentSuffix}'
-var storageAccountNameWithSuffix = '${storageAccountName}${deploymentSuffix}'
-var apimNameWithSuffix = '${apimName}-${deploymentSuffix}'
-var identityNameWithSuffix = '${identityName}-${deploymentSuffix}'
-var keyVaultNameWithSuffix = '${keyVaultName}-${deploymentSuffix}'
-var acrNameWithSuffix = '${acrName}${deploymentSuffix}'
-var foundryResourceNameWithSuffix = '${foundryResourceName}-${deploymentSuffix}'
+var redisNameWithSN = '${redisName}-${deploymentSN}'
+var storageAccountNameWithSN = '${storageAccountName}${deploymentSN}'
+var apimNameWithSN = '${apimName}-${deploymentSN}'
+var identityNameWithSN = '${identityName}-${deploymentSN}'
+var keyVaultNameWithSN = '${keyVaultName}-${deploymentSN}'
+var acrNameWithSN = '${acrName}${deploymentSN}'
+var foundryResourceNameWithSN = '${foundryResourceName}-${deploymentSN}'
 
 // ── Resource Group ──────────────────────────────────────────────────────────
 resource rg 'Microsoft.Resources/resourceGroups@2023-07-01' = {
   name: resourceGroupName
   location: location
   tags: {
-    deploymentSuffix: deploymentSuffix
+    deploymentSN: deploymentSN
   }
 }
 
@@ -90,17 +90,17 @@ module coreResources 'core.bicep' = {
   scope: rg
   params: {
     location: location
-    redisName: redisNameWithSuffix
-    storageAccountName: storageAccountNameWithSuffix
-    apimName: apimNameWithSuffix
+    redisName: redisNameWithSN
+    storageAccountName: storageAccountNameWithSN
+    apimName: apimNameWithSN
     apimPublisherEmail: apimPublisherEmail
     apimPublisherName: apimPublisherName
-    identityName: identityNameWithSuffix
-    keyVaultName: keyVaultNameWithSuffix
-    acrName: acrNameWithSuffix
+    identityName: identityNameWithSN
+    keyVaultName: keyVaultNameWithSN
+    acrName: acrNameWithSN
     tenantId: tenantId
     apimAudience: apimAudience
-    foundryResourceName: foundryResourceNameWithSuffix
+    foundryResourceName: foundryResourceNameWithSN
     projectName: projectName
     azdEnvName: azdEnvName
     modelDeploymentName: modelDeploymentName

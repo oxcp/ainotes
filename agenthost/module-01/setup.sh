@@ -9,27 +9,27 @@ set -euo pipefail
 RESOURCE_GROUP="${RESOURCE_GROUP:-rg-agenthost-workshop}"
 LOCATION="${LOCATION:-eastus2}"
 # Generate a 9-digit UTC suffix (HHmmssfff) to match main.bicep's utcNow('HHmmssfff')
-if [[ -z "${DEPLOYMENT_SUFFIX:-}" ]]; then
+if [[ -z "${DEPLOYMENT_SN:-}" ]]; then
   if date -u +%H%M%S%3N >/dev/null 2>&1; then
-    DEPLOYMENT_SUFFIX="$(date -u +%H%M%S%3N)"
+    DEPLOYMENT_SN="$(date -u +%H%M%S%3N)"
   elif command -v gdate >/dev/null 2>&1; then
-    DEPLOYMENT_SUFFIX="$(gdate -u +%H%M%S%3N)"
+    DEPLOYMENT_SN="$(gdate -u +%H%M%S%3N)"
   else
-    echo "DEPLOYMENT_SUFFIX not set and GNU date is required. On macOS: brew install coreutils and use gdate (or export DEPLOYMENT_SUFFIX manually)." >&2
+    echo "DEPLOYMENT_SN not set and GNU date is required. On macOS: brew install coreutils and use gdate (or export DEPLOYMENT_SN manually)." >&2
     exit 1
   fi
 fi
-REDIS_NAME="${REDIS_NAME:-redis-agenthost-${DEPLOYMENT_SUFFIX}}"
-STORAGE_ACCOUNT="${STORAGE_ACCOUNT:-stcagenthost${DEPLOYMENT_SUFFIX}}"
-APIM_NAME="${APIM_NAME:-apim-agenthost-${DEPLOYMENT_SUFFIX}}"
+REDIS_NAME="${REDIS_NAME:-redis-agenthost-${DEPLOYMENT_SN}}"
+STORAGE_ACCOUNT="${STORAGE_ACCOUNT:-stcagenthost${DEPLOYMENT_SN}}"
+APIM_NAME="${APIM_NAME:-apim-agenthost-${DEPLOYMENT_SN}}"
 APIM_PUBLISHER_EMAIL="${APIM_PUBLISHER_EMAIL:-admin@example.com}"
 APIM_PUBLISHER_NAME="${APIM_PUBLISHER_NAME:-Agent Hosting Workshop}"
-IDENTITY_NAME="${IDENTITY_NAME:-id-agenthost-${DEPLOYMENT_SUFFIX}}"
+IDENTITY_NAME="${IDENTITY_NAME:-id-agenthost-${DEPLOYMENT_SN}}"
 ENTRA_APP_NAME="${ENTRA_APP_NAME:-app-agenthost}"
-KV_NAME="${KV_NAME:-kv-agenthost-${DEPLOYMENT_SUFFIX}}"
-ACR_NAME="${ACR_NAME:-acragenthost${DEPLOYMENT_SUFFIX}}"
+KV_NAME="${KV_NAME:-kv-agenthost-${DEPLOYMENT_SN}}"
+ACR_NAME="${ACR_NAME:-acragenthost${DEPLOYMENT_SN}}"
 AOAI_ENDPOINT="${AOAI_ENDPOINT:-https://kacai-3055-resource.services.ai.azure.com/openai/v1}"
-FOUNDRY_NAME="${FOUNDRY_NAME:-foundry-agenthost-${DEPLOYMENT_SUFFIX}}"
+FOUNDRY_NAME="${FOUNDRY_NAME:-foundry-agenthost-${DEPLOYMENT_SN}}"
 PROJECT_NAME="${PROJECT_NAME:-maf-agent-prj}"
 AZD_ENV_NAME="${AZD_ENV_NAME:-maf-agent-dev}"
 MODEL_DEPLOYMENT_NAME="${MODEL_DEPLOYMENT_NAME:-gpt-5.4-mini}"
@@ -42,7 +42,7 @@ echo "==> [1/8] Creating Resource Group: $RESOURCE_GROUP in $LOCATION"
 az group create \
   --name "$RESOURCE_GROUP" \
   --location "$LOCATION" \
-  --tags deploymentSuffix="$DEPLOYMENT_SUFFIX" \
+  --tags deploymentSN="$DEPLOYMENT_SN" \
   --output none
 
 echo "==> [2/8] Creating Azure Managed Redis (Balanced_B0): $REDIS_NAME"
