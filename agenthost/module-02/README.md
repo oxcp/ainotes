@@ -41,6 +41,7 @@ Both clients speak the **Responses** protocol, so the hosted agent (served by `R
 
 ## Step 1 — Bind the hosted agent to the module-01 Foundry project
 
+### Set Foundry project environment varialbes
 module-01 already created the Foundry account, the `maf-agent-prj` project, and the `gpt-5.4-mini` deployment. To make `azd` **reuse** them instead of provisioning a brand-new account/project, initialize the agent with the existing project's **ARM resource ID** (`--project-id`).
 
 First grab the project resource ID and project endpoint from the Foundry portal. In the Foundry portal, go to "Operate -> Admin -> enter your project", you will see your project resource id and endpoint. Copy and use them to set environment variables as below:
@@ -54,44 +55,15 @@ echo "$PROJECT_ID"
 echo "$PROJECT_ENDPOINT"
 
 ```
+### Set MODEL_ROUTING mode (direct/gateway)
+Next, set the model-routing mode (`MODEL_ROUTING`) in `azure.yaml`. 
 
-Then scaffold the agent bound to that project. Create the azd working directory anywehre you want and switch to your working directory, and then run below commands:
-
-First, replace the `<SN>` placeholder in `azure.yaml` with your deployment suffix:
-
-**Option 1: bash (Linux/Mac)**
-
-```bash
-SN="your-deployment-suffix"  # e.g., "abc123" from module-01 deployment
-sed -i "s/<SN>/$SN/g" <your module-02 folder path>/azure.yaml
-```
-
-**Option 2: PowerShell (Windows)**
-
-```powershell
-$SN = "your-deployment-suffix"  # e.g., "abc123" from module-01 deployment
-(Get-Content <your module-02 folder path>/azure.yaml) -replace '<SN>', $SN | Set-Content <your module-02 folder path>/azure.yaml
-```
-
-**Option 3: Manual edit**
-
-Open `<your module-02 folder path>/azure.yaml` in a text editor and find the line:
-
-```yaml
-      - name: APIM_GATEWAY_URL
-        value: "https://apim-agenthost-<SN>.azure-api.net/foundry"
-```
-
-Replace `<SN>` with your deployment suffix. For example, if `SN = "abc123"`, change it to:
-
-```yaml
-      - name: APIM_GATEWAY_URL
-        value: "https://apim-agenthost-abc123.azure-api.net/foundry"
-```
-
-Next, set the model-routing mode (`MODEL_ROUTING`) in `azure.yaml`. Choose one:
+You can choose one:
 - `"direct"` — the agent calls the Foundry project endpoint directly (lower latency, simpler)
 - `"gateway"` — the agent calls through the module-01 APIM AI gateway (centralized governance)
+
+"gateway" mode is by default used by MODEL_ROUTING.
+
 
 Open `<your module-02 folder path>/azure.yaml` and find the line:
 
@@ -114,7 +86,30 @@ Or for gateway mode:
         value: "gateway"
 ```
 
-Then initialize the agent:
+### Update the AI Gateway URL (Optional if you use "direct" mode for MODEL_ROUTING) 
+If you choose to use "gateway" mode for MODEL_ROUTING, you must update the APIM_GATEWAY_URL to proper value.
+
+Open `<your module-02 folder path>/azure.yaml` in a text editor and find the line:
+
+```yaml
+      - name: APIM_GATEWAY_URL
+        value: "https://apim-agenthost-<SN>.azure-api.net/foundry"
+```
+
+Replace `<SN>` with your deployment suffix. For example, if `SN = "abc123"`, change it to:
+
+```yaml
+      - name: APIM_GATEWAY_URL
+        value: "https://apim-agenthost-abc123.azure-api.net/foundry"
+```
+Or use command below to simply replace the `<SN>` placeholder in `azure.yaml` with your $SN:
+
+```bash
+sed -i "s/<SN>/$SN/g" <your module-02 folder path>/azure.yaml
+```
+
+### Initialize the agent bound to Foundry project
+Create the azd working directory anywehre you want and switch to your working directory, and then run below commands:
 
 ```bash
 azd auth login --tenant-id 16b3c013-d300-468d-ac64-7eda0820b6d3
