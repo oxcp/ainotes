@@ -49,7 +49,7 @@ def build_client():
         )
         return OpenAIChatClient(
             model=model,
-            base_url=os.environ["APIM_GATEWAY_URL"],  # e.g. https://apim-agenthost-<SN>.azure-api.net/foundry
+            base_url=f"{os.environ['APIM_GATEWAY_URL']}/openai/v1",
             api_key=token_provider,
         )
 
