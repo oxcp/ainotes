@@ -43,7 +43,7 @@ Both clients speak the **Responses** protocol, so the hosted agent (served by `R
 
 module-01 already created the Foundry account, the `maf-agent-prj` project, and the `gpt-5.4-mini` deployment. To make `azd` **reuse** them instead of provisioning a brand-new account/project, initialize the agent with the existing project's **ARM resource ID** (`--project-id`).
 
-First grab the project resource ID from the Foundry portal. In the Foundry portal, go to "Operate -> Admin -> enter your project -> Endpoint", you will see your project resource id. Copy and use it to set the "PROJECT_ID" as below:
+First grab the project resource ID and project endpoint from the Foundry portal. In the Foundry portal, go to "Operate -> Admin -> enter your project", you will see your project resource id and endpoint. Copy and use them to set environment variables as below:
 
 ![Get Project Endpoint in Foundry](get_prj_endpoint_in_foundry.png)
 
