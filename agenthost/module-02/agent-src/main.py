@@ -44,13 +44,25 @@ def build_client():
         from agent_framework.openai import OpenAIChatClient
         from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
-        token_provider = get_bearer_token_provider(
-            DefaultAzureCredential(), "https://management.azure.com/.default"
-        )
+        # token_provider = get_bearer_token_provider(
+        #     DefaultAzureCredential(), "https://management.azure.com/.default"
+        # )
+
+        # return OpenAIChatClient(
+        #     model=model,
+        #     base_url=f"{os.environ['APIM_GATEWAY_URL']}/openai/v1",
+        #     api_key=token_provider,
+        # )
+        credential = DefaultAzureCredential()
+
+        access_token = credential.get_token(
+            "https://ai.azure.com/.default"
+        ).token
+
         return OpenAIChatClient(
             model=model,
             base_url=f"{os.environ['APIM_GATEWAY_URL']}/openai/v1",
-            api_key=token_provider,
+            api_key=access_token,
         )
 
     raise ValueError(
