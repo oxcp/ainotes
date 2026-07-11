@@ -71,9 +71,29 @@ echo "$PROJECT_ID"
 echo "$PROJECT_ENDPOINT"
 
 ```
+
+### Initialize the agent bound to Foundry project
+
+Create the azd working directory anywhere you want and switch to it:
+
+```bash
+mkdir workshop #<your_working_dir>
+cd workshop #<your_working_dir>
+azd auth login
+# Or use: azd auth login --tenant-id <your_tenant_id>, if you have multiple tenants
+
+azd ai agent init -m <your module-02 folder path>/azure.yaml --project-id "$PROJECT_ID"
+```
+After init success, you can see result as below:
+![azd_ai_agent_init](azd_ai_agent_init.png)
+
+`azd ai agent init` reads `azure.yaml` in module-02, whose `project: agent-src` points at the agent source under `module-02/agent-src/`. `--project-id` binds `azd` to module-01's existing project, so **no new resource group, Foundry account, or project provisioning is created**.
+
+> **Important:** module-02 **does not run `azd provision`**, so `azd` never creates or reconciles the model deployment — it deploys the agent against module-01's existing `gpt-5.4-mini`. So in `azure.yaml` environmentVariables maps, make sure `AI_MODEL_DEPLOYMENT_NAME` resolves to `gpt-5.4-mini`.
+
 ### Update `azure.yaml` with deployment suffix and routing mode
 
-Open `<your module-02 folder path>/azure.yaml` in a text editor.
+Open `azure.yaml` in your working dir, for example "workshop", and make below updates:
 
 **Set the MODEL_ROUTING mode** (optional; default is `"direct"`):
 
@@ -117,25 +137,6 @@ Or use bash to replace automatically:
 sed -i "s/<SN>/$SN/g" <your module-02 folder path>/azure.yaml
 ```
 > **Auth prerequisite (gateway mode only):** the gateway's `validate-jwt` policy requires a caller token (The caller must present a HTTP header like "Authorization: Bearer eyJ0eXAiOiJ..." ) to grant the caller access. The gateway then re-authenticates to Foundry with its own user-assigned managed identity. In `direct` mode this token is not needed.
-
-### Initialize the agent bound to Foundry project
-
-Create the azd working directory anywhere you want and switch to it:
-
-```bash
-mkdir workshop #<your_working_dir>
-cd workshop #<your_working_dir>
-azd auth login
-# Or use: azd auth login --tenant-id <your_tenant_id>, if you have multiple tenants
-
-azd ai agent init -m <your module-02 folder path>/azure.yaml --project-id "$PROJECT_ID"
-```
-After init success, you can see result as below:
-![azd_ai_agent_init](azd_ai_agent_init.png)
-
-`azd ai agent init` reads `azure.yaml` in module-02, whose `project: agent-src` points at the agent source under `module-02/agent-src/`. `--project-id` binds `azd` to module-01's existing project, so **no new resource group, Foundry account, or project provisioning is created**.
-
-> **Important:** module-02 **does not run `azd provision`**, so `azd` never creates or reconciles the model deployment — it deploys the agent against module-01's existing `gpt-5.4-mini`. So in `azure.yaml` environmentVariables maps, make sure `AI_MODEL_DEPLOYMENT_NAME` resolves to `gpt-5.4-mini`.
 
 ## Step 2 — Bind the azd environment (skip provision) and run locally
 
