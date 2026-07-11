@@ -1,4 +1,4 @@
-# Module 2 — Solution A: Foundry Hosted Agent (azd)
+# Module 2 — Solution A: Foundry Hosted Agent (30 min)
 
 ## Overview
 
@@ -8,22 +8,22 @@ https://github.com/microsoft-foundry/foundry-samples/tree/main/samples/python/ho
 
 ## Learning Objectives
 
-- Use `azd` to initialize, provision, run locally, deploy, and invoke the hosted agent
-- Target the `maf-agent-prj` project and `gpt-5.4-mini` deployment created in module-01
+- Use `azd` to initialize, run locally, deploy, and invoke the hosted agent
+- Our hosted agent uses the `maf-agent-prj` project and `gpt-5.4-mini` deployment created in module-01
 - Support **two model-routing modes** and switch between them with a single env var (`MODEL_ROUTING`):
   - `direct` — the agent calls the Foundry project endpoint directly
   - `gateway` — the agent calls the model through the module-01 APIM AI gateway
 
 ## Two model-routing modes
 
-The agent's model client is selected at startup by `MODEL_ROUTING` (see [agent-src/main.py](agent-src/main.py)). The **default mode is `direct`** — the agent calls the Foundry project endpoint directly (simpler, lower latency).
+The agent's model client is selected at startup by `MODEL_ROUTING` (see [agent-src/main.py](agent-src/main.py)). In this workshop, the **default mode is `direct`** — the agent calls the Foundry project endpoint directly (simpler for concept understanding).
 
 | Aspect | `direct` (default) | `gateway` |
 |---|---|---|
 | Client | `FoundryChatClient` → project endpoint | `OpenAIChatClient` → `<gateway>/responses` |
 | Network path | Agent → Foundry | Agent → APIM → Foundry |
-| Auth to model | Agent identity holds **Azure AI User** on the Foundry account (module-01 RBAC) | Agent presents an Entra token with `aud = api://agenthost`; the **gateway's** UAMI holds the Foundry RBAC |
-| Required env | `FOUNDRY_PROJECT_ENDPOINT` | `APIM_GATEWAY_URL`, `APIM_AUDIENCE` |
+| Auth to model | Agent identity holds **Azure AI User** on the Foundry account (module-01 RBAC) | Agent presents an Entra ID token; the **gateway's** UAMI holds the Foundry RBAC |
+| Required env | `FOUNDRY_PROJECT_ENDPOINT` | `APIM_GATEWAY_URL` |
 | Pros | Fewer hops → lower latency; nothing extra to stand up; simplest RBAC | Central governance: rate-limiting, quotas, logging, caching, key rotation, per-caller JWT validation; hides the Foundry endpoint; one front door for many callers |
 | Cons | No central throttling/observability; every caller needs direct Foundry RBAC; endpoint exposed to each client | Extra hop → added latency + APIM cost; requires the `api://agenthost` Entra app to exist and callers to be granted; more moving parts to operate |
 | Best for | Simple, low-scale, single-consumer agents | Shared/enterprise gateways, many consumers, policy enforcement |
@@ -37,7 +37,6 @@ Both clients speak the **Responses** protocol, so the hosted agent (served by `R
 - Azure CLI, Azure Developer CLI, and Docker Desktop installed
 - The Microsoft Foundry extension for azd installed: `azd ext install microsoft.foundry`
 - You have the "Foundry User" role in your subscription
-- The hosted-agent sample available as the source-of-truth for the application code and `azure.yaml`
 
 ## Step 1 — Bind the hosted agent to the module-01 Foundry project
 
@@ -112,34 +111,35 @@ Replace `<SN>` with your deployment suffix. For example, if `SN = "abc123"`, cha
         value: "https://apim-agenthost-abc123.azure-api.net/foundry"
 ```
 
-Or use bash/PowerShell to replace automatically:
+Or use bash to replace automatically:
 
 ```bash
 sed -i "s/<SN>/$SN/g" <your module-02 folder path>/azure.yaml
 ```
+> **Auth prerequisite (gateway mode only):** the gateway's `validate-jwt` policy requires a caller token (The caller must present a HTTP header like "Authorization: Bearer eyJ0eXAiOiJ..." ) to grant the caller access. The gateway then re-authenticates to Foundry with its own user-assigned managed identity. In `direct` mode this token is not needed.
 
 ### Initialize the agent bound to Foundry project
 
 Create the azd working directory anywhere you want and switch to it:
 
 ```bash
-mkdir maf-agent
-cd maf-agent
+mkdir workshop #<your_working_dir>
+cd workshop #<your_working_dir>
 azd auth login
-# Or use: azd auth login --tenant-id <your_tenant_id> if you have multiple tenants
+# Or use: azd auth login --tenant-id <your_tenant_id>, if you have multiple tenants
 
 azd ai agent init -m <your module-02 folder path>/azure.yaml --project-id "$PROJECT_ID"
 ```
 After init success, you can see result as below:
 ![azd_ai_agent_init](azd_ai_agent_init.png)
 
-`azd ai agent init` reads `azure.yaml` in module-02, whose `project: agent-src` points at the agent source under `module-02/agent-src/`. `--project-id` binds `azd` to module-01's existing project, so **no new resource group, Foundry account, or project is created**.
+`azd ai agent init` reads `azure.yaml` in module-02, whose `project: agent-src` points at the agent source under `module-02/agent-src/`. `--project-id` binds `azd` to module-01's existing project, so **no new resource group, Foundry account, or project provisioning is created**.
 
 > **Important:** module-02 **does not run `azd provision`**, so `azd` never creates or reconciles the model deployment — it deploys the agent against module-01's existing `gpt-5.4-mini`. So in `azure.yaml` environmentVariables maps, make sure `AI_MODEL_DEPLOYMENT_NAME` resolves to `gpt-5.4-mini`.
 
 ## Step 2 — Bind the azd environment (skip provision) and run locally
 
-module-01 already provisioned the Foundry account, project, and `gpt-5.4-mini` deployment, so **do not run `azd provision` in this module**. `azd provision`'s job is to create/reconcile the `ai-project` infrastructure; against a module-01-owned project it creates a *new* account/project/model. Instead, point the azd environment at the existing project so `azd deploy` (Step 3) targets it directly:
+Point the azd environment at the existing project so `azd deploy` (Step 3) targets it directly:
 
 ```bash
 azd env set AZURE_TENANT_ID <your_tenant_id>
@@ -153,10 +153,6 @@ azd env set AI_MODEL_DEPLOYMENT_NAME "gpt-5.4-mini"
 azd env get-values
 
 ```
-
-> **Why no azd provision?** Once `--project-id` is set with `azd ai agent init` command, the Foundry azd extension uses the existing project as-is, and `azd deploy` performs a **direct code deploy** straight into it — no infrastructure is provisioned by this module.
-
-> **Auth prerequisite (gateway mode only):** the gateway's `validate-jwt` policy requires a caller token (The caller must present a HTTP header like "Authorization: Bearer eyJ0eXAiOiJ..." ) to grant the caller access. The gateway then re-authenticates to Foundry with its own user-assigned managed identity. In `direct` mode this token is not needed.
 
 ## Step 3 - Run the agent locally
 
@@ -186,18 +182,20 @@ If success, you should see:
 
 ![azd_deployed_CLI](azd_deployed_CLI.png)
 
-Go to the Foundry portal, in your Foundry project, go to the Agents portal, you should see your agent is successfully deployed, and the Type is "hosted":
+Go to the Foundry portal, in your Foundry project, go to the Agents tab, you should see your agent is successfully deployed, and the Type is "hosted":
 
 ![azd_deployed_portal](azd_deployed_portal.png)
 
 Each deployment creates a new hosted-agent version in Foundry. 
+
 ## Step 5 — Invoke the deployed agent
 
 ```bash
 azd ai agent invoke "Hi"
 ```
 
-In `gateway` mode the agent's model calls flow through the module-01 APIM AI gateway. Validating the gateway directly (an external `curl` with your own Entra token) is covered in **module-01 Step 3** — no need to repeat it here.
+Try the agent in Playground it should work:
+![azd_deployed_playground](azd_deployed_playground.png)
 
 ## Files in This Module
 
