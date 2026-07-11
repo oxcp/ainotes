@@ -321,7 +321,7 @@ resource foundryBackend 'Microsoft.ApiManagement/service/backends@2023-05-01-pre
   name: 'foundry-backend'
   properties: {
     description: 'Foundry AIServices Responses API (openai/v1) backend'
-    url: '${foundryAccount.properties.endpoint}api/projects/${foundryProject.name}'
+    url: '${foundryAccount.properties.endpoint}api/projects/${foundryProject.name}/openai/v1'
     protocol: 'http'
     tls: {
       validateCertificateChain: true
@@ -358,7 +358,7 @@ resource foundryGatewayOp 'Microsoft.ApiManagement/service/apis/operations@2023-
   properties: {
     displayName: 'Create Response'
     method: 'POST'
-    urlTemplate: '/openai/v1/responses'
+    urlTemplate: '/responses'
   }
 }
 
