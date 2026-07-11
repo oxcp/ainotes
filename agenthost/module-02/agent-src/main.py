@@ -37,14 +37,15 @@ def build_client():
 
     if routing == "gateway":
         # Through the module-01 APIM AI gateway (OpenAI Responses API). The
-        # gateway validates the caller's Entra token (aud = APIM_AUDIENCE) and
-        # forwards to Foundry with its own user-assigned managed identity.
+        # gateway validates the caller's Entra token and forwards to Foundry with its own
+        # user-assigned managed identity.
+        # In this workshop, the AI Gateway validate-jwt just checks if it is a valid token 
+        # issued from Entra ID, and does not enforce the audience.
         from agent_framework.openai import OpenAIChatClient
         from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
-        audience = os.environ.get("APIM_AUDIENCE", "api://agenthost")
         token_provider = get_bearer_token_provider(
-            DefaultAzureCredential(), f"{audience}/.default"
+            DefaultAzureCredential(), "https://management.azure.com/.default"
         )
         return OpenAIChatClient(
             model=model,
