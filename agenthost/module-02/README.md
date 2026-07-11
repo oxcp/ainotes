@@ -174,7 +174,7 @@ The local host listens on `http://localhost:8088`. In a second terminal, invoke 
 ```bash
 azd ai agent invoke --local "Hi"
 ```
-![azd_ai_agent_invoke](../pic/azd_ai_agent_invoke.png)
+![azd_ai_agent_invoke_local](../pic/azd_ai_agent_invoke_local.png)
 
 If success, you should see the response.
 
@@ -200,6 +200,9 @@ Each deployment creates a new hosted-agent version in Foundry.
 ```bash
 azd ai agent invoke "Hi"
 ```
+If success, this time you should see the response from **remote agent**.
+![azd_ai_agent_invoke_remote](../pic/azd_ai_agent_invoke_remote.png)
+
 
 Try the agent in Playground it should work:
 ![azd_deployed_playground](../pic/azd_deployed_playground.png)
