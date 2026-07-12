@@ -1,9 +1,9 @@
-// sandbox.bicep — Module 3: Azure Container Apps Sandboxes Deployment (Solution A)
+// sandbox.bicep — Module 3: Azure Container Apps Sandboxes Deployment (workshop path)
 // 
 // Deploys REAL Azure Container Apps Sandboxes (Microsoft.App/SandboxGroups).
-// This is fundamentally different from aca.bicep (which deploys standard ACA apps).
+// This is fundamentally different from standard ACA container apps.
 //
-// Key differences from standard ACA (aca.bicep):
+// Key differences from standard ACA:
 //   - Resource type: Microsoft.App/SandboxGroups (instead of containerApps)
 //   - Compute model: Isolated, ephemeral VMs with gVisor OS-level isolation
 //   - State: Snapshots with suspend/resume (full memory + disk preservation)

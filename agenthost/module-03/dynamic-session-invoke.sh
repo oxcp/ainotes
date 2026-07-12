@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# dynamic-session-invoke.sh — Minimal invocation example for Solution B (Dynamic Sessions)
+# dynamic-session-invoke.sh — Minimal invocation example for the optional Dynamic Sessions track
 #
 # Calls a custom-container Dynamic Session endpoint using session identifier routing.
 # Default target endpoint: /health

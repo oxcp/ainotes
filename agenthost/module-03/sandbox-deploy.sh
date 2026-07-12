@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# sandbox-deploy.sh — Module 3: Azure Container Apps Sandboxes Deployment (Solution A)
+# sandbox-deploy.sh — Module 3: Azure Container Apps Sandboxes Deployment (workshop path)
 #
 # Deploys REAL Azure Container Apps Sandboxes (Microsoft.App/SandboxGroups).
 # This script:
@@ -30,7 +30,7 @@ IMAGE_TAG="${IMAGE_TAG:-latest}"
 SANDBOX_COUNT="${SANDBOX_COUNT:-1}"
 AUTO_SUSPEND_MINS="${AUTO_SUSPEND_MINS:-30}"
 
-echo "==> Module 3: Azure Container Apps Sandboxes Deployment (Solution A)"
+echo "==> Module 3: Azure Container Apps Sandboxes Deployment (workshop path)"
 echo "Resource Group: $RESOURCE_GROUP"
 echo "Sandbox Count: $SANDBOX_COUNT"
 echo "Auto-suspend timeout: ${AUTO_SUSPEND_MINS} minutes"
