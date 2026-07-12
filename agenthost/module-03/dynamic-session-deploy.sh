@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# dynamic-session-deploy.sh — Module 3: ACA Dynamic Sessions Deployment (optional advanced track)
+# dynamic-session-deploy.sh — Module 3: ACA Dynamic Sessions Deployment (optional learning track)
 #
 # Deploys Azure Container Apps Dynamic Sessions (Session Pool) using custom container.
 # This script:
@@ -38,7 +38,7 @@ NETWORK_STATUS="${NETWORK_STATUS:-EgressDisabled}"
 # Ensure preview extension support is present.
 az extension add --name containerapp --upgrade --allow-preview true -y >/dev/null
 
-echo "==> Module 3: ACA Dynamic Sessions Deployment (optional advanced track)"
+echo "==> Module 3: ACA Dynamic Sessions Deployment (optional learning track)"
 echo "Resource Group: $RESOURCE_GROUP"
 
 # 1) Retrieve deployment SN.

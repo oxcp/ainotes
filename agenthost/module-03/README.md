@@ -8,7 +8,7 @@ isolation (gVisor), lifecycle control (create/suspend/resume/delete), and
 snapshot-based state continuity.
 
 > Primary workshop path = **ACA Sandboxes**.
-> An optional advanced track (**ACA Dynamic Sessions**) is included at the end of
+> An optional learning track (**ACA Dynamic Sessions**) is included at the end of
 > this module for learners who want to explore an alternative execution model.
 
 ---
@@ -59,12 +59,12 @@ cd agenthost/module-03
 
 ```bash
 az resource list -g rg-agenthost-workshop \
-  --query "[?contains(type, ''SandboxGroups'')].[name,type]" -o table
+  --query "[?contains(type, 'SandboxGroups')].[name,type]" -o table
 ```
 
 ---
 
-## Optional Advanced Track — ACA Dynamic Sessions
+## Optional Learning Track — ACA Dynamic Sessions
 
 > This section is **optional**. It is provided for learners who finish the main
 > Sandbox path early and want to compare a different Azure Container Apps
@@ -106,7 +106,7 @@ cd agenthost/module-03
 # Custom endpoint and JSON body
 ENDPOINT_PATH=/api/projects/demo/openai/v1/responses \
 METHOD=POST \
-BODY=''{"messages":[{"role":"user","content":"hello"}]}'' \
+BODY='{"messages":[{"role":"user","content":"hello"}]}' \
 ./dynamic-session-invoke.sh user-42
 ```
 

@@ -7,7 +7,7 @@
   - **Solution A**: Azure AI Foundry Host Agent (ToB managed) — fastest on-ramp, native state & auth.
   - **Solution B**: ACA container runtime options (Module-03):
     - **Workshop path**: ACA Sandboxes — gVisor isolation, suspend/resume.
-    - **Optional advanced track**: ACA Dynamic Sessions — session pool based, low-latency ephemeral execution.
+    - **Optional learning track**: ACA Dynamic Sessions — session pool based, low-latency ephemeral execution.
   - **Solution C**: AKS + E2B (ToB high-security) — maximum control, Kata Container micro-VMs, custom networking.
 - **Implemented Features**: state persistence, fast-satrt, scale-to-zero, isolation, Entra ID auth, and AI Gateway integration.
 - **Workshop Schedule**: 120-minute hands-on covering core infra setup, above solutions, and wrap-up with tips on cost optimisation and production hardening checklist.
@@ -83,10 +83,10 @@ agenthost/
 
 - **Module-03 Solutions**: 
   - **Workshop path (ACA Sandboxes)**: Use `sandbox-deploy.sh` for OS-level isolation and suspend/resume.
-  - **Optional advanced track (Dynamic Sessions)**: Use `dynamic-session-deploy.sh` for low-latency ephemeral session pools — not required to complete the workshop.
+  - **Optional learning track (Dynamic Sessions)**: Use `dynamic-session-deploy.sh` for low-latency ephemeral session pools — not required to complete the workshop.
   - See [Module 3 README](./module-03/README.md) for detailed comparison and decision guide.
 
-- **Correction Note**: Earlier versions confused ACA workload profiles with true Azure Container Apps Sandboxes (Microsoft.App/SandboxGroups). The workshop path is ACA Sandboxes; Dynamic Sessions is an optional exploration track.
+- **Correction Note**: Earlier versions confused ACA workload profiles with true Azure Container Apps Sandboxes (Microsoft.App/SandboxGroups). The workshop path is ACA Sandboxes; Dynamic Sessions is an optional learning track.
 
 - **KEDA ScaledObject** (module-04) provides both HTTP-based and Redis list-based scaling triggers with a 30-minute cooldown, scaling `agent-host` to zero on idle.
 
