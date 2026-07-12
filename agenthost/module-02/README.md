@@ -218,7 +218,6 @@ If you are using APIM as the AI gateway ("gateway" mode set in the `azure.yaml`)
 | `azure.yaml` | Foundry agent manifest used by `azd ai agent init` (references `agent-src`) |
 | `agent-src/main.py` | Agent, served with `ResponsesHostServer`; `build_client()` selects `FoundryChatClient` (direct) or `OpenAIChatClient` → APIM gateway based on `MODEL_ROUTING` |
 | `agent-src/requirements.txt` | Python dependencies for the hosted agent (both `agent-framework-foundry` and `agent-framework-openai`) |
-| `agent-src/.env.example` | Local env template (`MODEL_ROUTING`, gateway + direct vars, `AZURE_AI_MODEL_DEPLOYMENT_NAME`) |
 | `agent-src/Dockerfile` | Container build for the hosted agent runtime |
 
 ## Next Step

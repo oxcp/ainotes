@@ -1,140 +1,150 @@
-# Module 3 — Solution B: ACA Sandbox (30 min)
+# Module 3 — Container Compute Options for Agent Runtime
 
 ## Overview
 
-Deploy the agent as a containerised workload on **Azure Container Apps (ACA) Sandbox** — an OS-level gVisor-isolated container environment for long-running stateful agents. This solution supports true scale-to-zero with AMR-first state persistence.
+Module-03 now provides two container-runtime choices:
 
-> **Note:** ACA Sandbox is currently in **Public Preview**. Verify feature availability and SLA before using in production. See [ACA Sandbox overview](https://learn.microsoft.com/en-us/azure/container-apps/sandboxes-overview).
+| Solution | Runtime | Primary Use Case | Isolation | State Model |
+|---|---|---|---|---|
+| **A: ACA Sandboxes** | Azure Container Apps Sandboxes | Untrusted code execution, strong isolation, suspend/resume | gVisor OS-level | Stateful via snapshots |
+| **B: ACA Dynamic Sessions** | Azure Container Apps Session Pools | Fast ephemeral execution, prewarmed pools, high concurrency | Session-level isolated containers | Ephemeral session state |
 
-## Learning Objectives
-
-- Create an ACA Environment with the Sandbox feature enabled
-- Build and push the agent container image to Azure Container Registry (ACR)
-- Configure ACA app with Sandbox isolation and a scale-to-zero lifecycle hook
-- Test end-to-end flow and verify state restore from Blob after idle eviction
+This mapping is intentional:
+- **Solution A = Sandbox**
+- **Solution B = Dynamic Session**
 
 ---
 
 ## Prerequisites
 
-- Module 1 infrastructure deployed (Redis, Blob Storage, APIM, UAMI)
-- Docker CLI installed and running
-- Azure Container Registry (ACR) available (created by `deploy.sh`)
+1. Module-01 is deployed and `deploymentSN` tag exists on the resource group.
+2. Docker is installed and running.
+3. Azure CLI is installed.
+4. Container Apps extension is installed/upgraded with preview support:
+
+```bash
+az extension add --name containerapp --upgrade --allow-preview true -y
+```
+
+Additional requirement for Solution A (Sandbox):
+- Role assignment: `Container Apps SandboxGroup Data Owner`
 
 ---
 
-## Step 1 — Set Environment Variables
+## Solution A — ACA Sandboxes
+
+### Files
+
+- `sandbox.bicep`
+- `sandbox-deploy.sh`
+- `deploy.sh` (compatibility wrapper, routes to `sandbox-deploy.sh`)
+
+### What It Deploys
+
+- `Microsoft.App/SandboxGroups` (preview)
+- SandboxGroup identity/registry binding
+- Optional references to module-01 storage/redis for state workflows
+
+### Deploy
 
 ```bash
-export RESOURCE_GROUP="rg-agenthost-workshop"
-export LOCATION="eastus"
-export ACR_NAME="acragenthost"
-export ACA_ENV_NAME="aca-env-agenthost"
-export ACA_APP_NAME="agent-host"
-export REDIS_NAME="redis-agenthost"
-export STORAGE_ACCOUNT="stcagenthost"
-export IDENTITY_NAME="id-agenthost"
-export APIM_ENDPOINT="https://apim-agenthost.azure-api.net"
+cd agenthost/module-03
+./sandbox-deploy.sh
 ```
 
----
-
-## Step 2 — Build and Push Container Image
+Or use compatibility command:
 
 ```bash
-# Build the agent container image
-docker build -t agent-host:latest .
-
-# Log in to ACR and push
-az acr login --name "$ACR_NAME"
-docker tag agent-host:latest "${ACR_NAME}.azurecr.io/agent-host:latest"
-docker push "${ACR_NAME}.azurecr.io/agent-host:latest"
-```
-
----
-
-## Step 3 — Deploy ACA Environment and App via Bicep
-
-```bash
-az deployment group create \
-  --resource-group "$RESOURCE_GROUP" \
-  --template-file aca.bicep \
-  --parameters \
-      location="$LOCATION" \
-      acrName="$ACR_NAME" \
-      acaEnvName="$ACA_ENV_NAME" \
-      acaAppName="$ACA_APP_NAME" \
-      redisName="$REDIS_NAME" \
-      storageAccountName="$STORAGE_ACCOUNT" \
-      identityName="$IDENTITY_NAME" \
-      apimEndpoint="$APIM_ENDPOINT"
-```
-
-Or run the automated script:
-
-```bash
-chmod +x deploy.sh
 ./deploy.sh
 ```
 
+### Characteristics
+
+- Strong isolation for risky workloads
+- Lifecycle control (create/suspend/resume/delete)
+- Snapshot-based state continuity
+- Best when safety and resumability matter more than simple API pooling
+
 ---
 
-## Step 4 — Test End-to-End
+## Solution B — ACA Dynamic Sessions
+
+### Files
+
+- `dynamic-session-deploy.sh`
+- `dynamic-session-invoke.sh` (minimal invocation example)
+
+### What It Deploys
+
+- ACA environment for session pool hosting (if missing)
+- Custom container session pool via `az containerapp sessionpool create`
+- Management endpoint for per-session invocation (`identifier` based routing)
+
+### Deploy
 
 ```bash
-# Get the ACA app FQDN
-ACA_FQDN=$(az containerapp show \
-  --resource-group "$RESOURCE_GROUP" \
-  --name "$ACA_APP_NAME" \
-  --query properties.configuration.ingress.fqdn \
-  --output tsv)
+cd agenthost/module-03
+./dynamic-session-deploy.sh
+```
 
-# Send a test request
-curl -X POST "https://$ACA_FQDN/chat" \
-  -H "Content-Type: application/json" \
-  -H "x-agent-id: agent-test-001" \
-  -d '{"message": "Hello from ACA Sandbox!"}'
+### Minimal Invoke Example
+
+```bash
+cd agenthost/module-03
+
+# Default: calls /health with identifier=test-session
+./dynamic-session-invoke.sh
+
+# Custom identifier
+./dynamic-session-invoke.sh user-42
+
+# Custom endpoint and JSON body
+ENDPOINT_PATH=/api/projects/demo/openai/v1/responses \
+METHOD=POST \
+BODY='{"messages":[{"role":"user","content":"hello"}]}' \
+./dynamic-session-invoke.sh user-42
+```
+
+### Characteristics
+
+- Prewarmed pool for low-latency allocation
+- Built for short-lived/ephemeral session execution
+- Horizontal burst for concurrent execution tasks
+- Best for rapid, repeated isolated tasks (agent tool execution loops, code runners)
+
+---
+
+## Quick Choice Guide
+
+Use **Solution A (Sandbox)** when you need:
+- Full lifecycle control with suspend/resume
+- Stronger boundary for untrusted workloads
+- State snapshots between runs
+
+Use **Solution B (Dynamic Sessions)** when you need:
+- Fast per-request/per-session execution
+- High concurrency with pool-based allocation
+- Ephemeral and disposable session behavior
+
+---
+
+## Common Validation Commands
+
+### Validate Solution A artifacts
+
+```bash
+az resource list -g rg-agenthost-workshop --query "[?contains(type, 'SandboxGroups')].[name,type]" -o table
+```
+
+### Validate Solution B artifacts
+
+```bash
+az containerapp sessionpool list -g rg-agenthost-workshop -o table
 ```
 
 ---
 
-## Step 5 — Verify State Restore After Scale-to-Zero
+## Notes
 
-```bash
-# List state snapshots in Blob (written by lifecycle-hook.sh on scale-to-zero)
-az storage blob list \
-  --account-name "$STORAGE_ACCOUNT" \
-  --container-name "agent-state" \
-  --auth-mode login \
-  --output table
-```
-
----
-
-## Files in This Module
-
-| File | Description |
-|---|---|
-| `deploy.sh` | Automated bash script: ACR, ACA Environment, ACA App deployment |
-| `aca.bicep` | Bicep IaC template for ACR, ACA Environment, and ACA App with Sandbox |
-| `Dockerfile` | Container image for the agent runtime |
-| `container-app.yaml` | ACA containerapp YAML manifest (alternative to Bicep) |
-| `lifecycle-hook.sh` | Scale-to-zero hook: flushes AMR state to Azure Blob on container shutdown |
-
----
-
-## ACA Sandbox vs ACA Dynamic Sessions
-
-| Aspect | ACA Sandbox | ACA Dynamic Sessions |
-|---|---|---|
-| Isolation | OS-level gVisor (syscall interception) | Per-session container sandbox |
-| Session lifetime | Long-running (persistent agent) | Short-lived / one-time execution |
-| State | Persistent across requests | Evicted aggressively |
-| Best for | Long-running stateful AI agents | Code interpreter, ephemeral tasks |
-| Status | Public Preview | GA |
-
----
-
-## Next Step
-
-Proceed to [Module 4 — Solution C: AKS + E2B](../module-04/README.md).
+- `aca.bicep` remains in repo as legacy standard ACA reference, but it is not part of the current Solution A/B mapping.
+- If you want, this legacy file can be removed in a follow-up cleanup PR.
