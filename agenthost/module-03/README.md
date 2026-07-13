@@ -1,4 +1,4 @@
-# Module 3 — Solution B: Container-based Agent Runtime (ACA Sandboxes)
+# Module 3 — Solution B: Container-based Agent Runtime (ACA Sandboxes， 30 min)
 
 ## Overview
 
@@ -70,9 +70,25 @@ az resource list -g rg-agenthost-workshop \
 > Sandbox path early and want to compare a different Azure Container Apps
 > execution model. It is **not required** to complete the workshop.
 
+> [!IMPORTANT]
+> **Dynamic Sessions is NOT an ideal host for running an agent.**
+> It is purpose-built to provide **temporary, strongly-isolated execution
+> environments** — for example, safely running AI-generated or otherwise
+> untrusted code. Each session is **ephemeral**: it is allocated on demand,
+> runs a short-lived task, and is **destroyed after use with no state
+> retained**. A long-running agent typically needs a stable, addressable,
+> stateful runtime, which is exactly what the **Sandbox** workshop path
+> provides. Treat Dynamic Sessions as a **tool the agent calls** to execute
+> code safely — not as the place where the agent itself lives.
+>
+> See the official comparison:
+> [Sandboxes vs. Dynamic Sessions](https://learn.microsoft.com/en-us/azure/container-apps/sandboxes-overview#sandboxes-vs-dynamic-sessions).
+
 Dynamic Sessions use prewarmed **session pools** for fast, ephemeral, high-concurrency
-execution — a good fit for short-lived, disposable task runs (e.g. tool execution
-loops, code runners).
+execution — a good fit for short-lived, disposable task runs (e.g. running AI-generated
+code, tool execution calls, code interpreters). In an agent architecture, the agent
+runs elsewhere (e.g. on the Sandbox path) and **offloads risky code execution** to a
+Dynamic Session, then discards the session when done.
 
 ### Files
 
@@ -118,9 +134,16 @@ az containerapp sessionpool list -g rg-agenthost-workshop -o table
 
 ### When to Explore This
 
-- You want fast per-request/per-session execution
-- You need high concurrency with pool-based allocation
-- You want ephemeral, disposable session behavior instead of long-lived sandboxes
+Explore Dynamic Sessions to understand the **secure code-execution** model that an
+agent can call as a tool — not as a way to host the agent itself:
+
+- You want to safely run AI-generated or untrusted code in a throwaway environment
+- You need strong isolation for a single short task, then automatic teardown
+- You want fast per-request/per-session allocation from a prewarmed pool
+- You explicitly do **not** need to preserve state between runs
+
+> If you need a persistent, addressable, stateful place to run the agent, use the
+> **Sandbox** workshop path instead.
 
 ---
 
@@ -130,9 +153,11 @@ az containerapp sessionpool list -g rg-agenthost-workshop -o table
 |---|---|---|
 | Runtime | `Microsoft.App/SandboxGroups` | Session Pools |
 | Isolation | gVisor OS-level | Session-level isolated containers |
-| State | Stateful via snapshots | Ephemeral session state |
-| Lifecycle | create/suspend/resume/delete | pool-managed, cooldown-based |
-| Best for | Isolation + resumability | Fast ephemeral, high concurrency |
+| State | Stateful via snapshots | Ephemeral — destroyed after use, no state retained |
+| Lifecycle | create/suspend/resume/delete | pool-managed, cooldown-based auto-teardown |
+| Primary purpose | Hosting an isolated, resumable agent runtime | Temporary secure execution of untrusted / AI-generated code |
+| Ideal for hosting an agent? | Yes | No — use it as a tool the agent calls |
+| Best for | Isolation + resumability | Fast ephemeral, disposable code execution |
 
 ---
 
