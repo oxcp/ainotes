@@ -1,5 +1,7 @@
 # Agent Hosting on Azure Workshop Design
 
+[⬆ Back to Workshop Home](./readme.md)
+
 ## 1. Target Scenarios
 
 ### 1.1 ToB — Enterprise / Business
@@ -137,7 +139,7 @@ agent instance
 Azure API Management (LLM route)
      │  validate-jwt + rate-limit policy
      ▼
-Azure OpenAI / external LLM
+AI models / external LLM
 ```
 
 - **ToB**: Entra ID App Registration with RBAC roles; Conditional Access policies; Managed Identity per agent.
@@ -164,7 +166,7 @@ flowchart TD
     apim["Azure API Management\n(AI Gateway)"]
     foundry["Azure AI Foundry\nHost Agent"]
     state["Azure Managed Redis\n+ Azure Blob Storage"]
-    aoai["Azure OpenAI\n(GPT-4o)"]
+    aoai["AI models"]
     entra["Azure Entra ID\n(Managed Identity)"]
 
     user -->|"HTTPS + access token"| apim
@@ -181,7 +183,7 @@ flowchart TD
 2. Client sends request to APIM; `validate-jwt` policy authenticates and routes to Foundry Host Agent endpoint.
 3. Foundry Host Agent loads agent instance state from AMR first, then Blob if AMR has no state.
 4. agent processes the request; calls LLM via APIM using its Managed Identity credential.
-5. APIM enforces per-agent token quota; routes to Azure OpenAI.
+5. APIM enforces per-agent token quota; routes to AI models.
 6. Response streams back to user.
 7. If idle > 30 min, Host Agent evicts instance; state flushed from AMR and checkpointed to Blob.
 
@@ -198,7 +200,7 @@ flowchart TD
     kata["Kata Container\n(Micro-VM isolation)"]
     redis["Azure Managed Redis\n(hot state)"]
     blob["Azure Blob\n(cold snapshot, CSI mount)"]
-    aoai["Azure OpenAI\n(private endpoint)"]
+    aoai["AI models\n(private endpoint)"]
     entra["Azure Entra ID\n(Workload Identity)"]
     keda["KEDA\n(scale-to-zero)"]
 
@@ -222,7 +224,7 @@ flowchart TD
 4. If warm: resume container (< 1 s); load Redis state.
 5. If cold (KEDA scaled to zero): Sandbox Manager starts new Kata Container, restores Blob snapshot to Redis, then Redis → container memory.
 6. agent processes request; issues LLM call to APIM private endpoint using Workload Identity credential.
-7. APIM validates token, enforces quota, routes to Azure OpenAI private endpoint.
+7. APIM validates token, enforces quota, routes to AI models via a private endpoint.
 8. KEDA monitors queue depth; scales Kata Containers to zero after 30 min idle; pre-termination hook checkpoints state to Blob.
 
 ---
@@ -240,7 +242,7 @@ flowchart TD
     aca["ACA Sandbox\n(gVisor-isolated container per agent)"]
     redis["Azure Managed Redis\n(hot state)"]
     blob["Azure Blob Storage\n(cold snapshot)"]
-    aoai["Azure OpenAI"]
+    aoai["AI models"]
     entra["Azure Entra ID\n(Workload Identity / UAMI)"]
 
     user -->|"HTTPS + token"| apim
@@ -261,42 +263,6 @@ flowchart TD
 4. agent container loads state from AMR first; if not found, restores from Blob.
 5. agent processes the request; calls LLM via APIM using its UAMI credential.
 6. Idle detection: after 30 min, ACA scales the container to zero; lifecycle hook flushes state from AMR to Blob.
-7. Next request restores from AMR (< 500 ms) or Blob (< 3 s).
-
----
-
-### Solution C (Alternative) — ACA Dynamic Sessions *(for short-lived tasks)*
-
-> ACA Dynamic Sessions is retained here for comparison. It is best suited for **one-time or short-lived code execution** (e.g. sandboxed code interpreter, ephemeral computation). If your scenario requires long-running, persistent agent state, prefer **ACA Sandbox** above.
-
-```mermaid
-flowchart TD
-    user["👤 Consumer User\n(Entra External ID)"]
-    apim["Azure API Management\n(AI Gateway)"]
-    aca["ACA Dynamic Sessions\n(per-session container sandbox)"]
-    redis["Azure Managed Redis\n(hot state)"]
-    blob["Azure Blob Storage\n(cold snapshot)"]
-    aoai["Azure OpenAI"]
-    entra["Azure Entra ID\n(Workload Identity / UAMI)"]
-
-    user -->|"HTTPS + token"| apim
-    apim -->|"route to session"| aca
-    aca <-->|"read/write context"| redis
-    aca -->|"scale-to-zero flush"| blob
-    blob -->|"cold restore"| aca
-    aca -->|"UAMI token"| entra
-    entra -->|"access token"| aca
-    aca -->|"LLM call via APIM"| apim
-    apim --> aoai
-```
-
-**Workflow:**
-1. User authenticates; client presents token to APIM.
-2. APIM validates token; forwards to ACA Sessions manager with `session-id` header.
-3. Session manager looks up existing session (warm) or creates new container sandbox.
-4. agent container starts (< 2 s); loads state from AMR first; else restores from Blob.
-5. Agent calls LLM via APIM using its UAMI credential.
-6. Idle detection: after 30 min, ACA evicts session; lifecycle hook flushes state from AMR to Blob.
 7. Next request restores from AMR (< 500 ms) or Blob (< 3 s).
 
 ---

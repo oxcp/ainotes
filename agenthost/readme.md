@@ -20,8 +20,7 @@
 
 - Azure subscription with Contributor access
 - Azure CLI installed (`az login` completed)
-- Docker Desktop (for local image building & testing)
-- VS Code + Azure Container Apps extension
+- Others (see detail in each individual module)
 
 ---
 
@@ -81,15 +80,11 @@ agenthost/
 
 - **Bicep IaC** — module-01 uses a subscription-scoped `main.bicep` that delegates to `core.bicep` (resource group scope); modules 02–04 each have self-contained deployment Bicep files targeting their respective Azure resources.
 
-- **Module-04 Solutions**: 
-  - **Workshop path (ACA Sandboxes)**: Use `sandbox-deploy.sh` for OS-level isolation and suspend/resume.
-  - **Optional learning track (Dynamic Sessions)**: Use `dynamic-session-deploy.sh` for low-latency ephemeral session pools — not required to complete the workshop.
-  - See [Module 4 README](./module-04/README.md) for detailed comparison and decision guide.
-
-- **Correction Note**: Earlier versions confused ACA workload profiles with true Azure Container Apps Sandboxes (Microsoft.App/SandboxGroups). The workshop path is ACA Sandboxes; Dynamic Sessions is an optional learning track.
-
 - **KEDA ScaledObject** (module-03) provides both HTTP-based and Redis list-based scaling triggers with a 30-minute cooldown, scaling `agent-host` to zero on idle.
 
 - **Kata Container RuntimeClass** is defined in `agent-deployment.yaml` and applied to the agent workload node pool (tainted `kata=true:NoSchedule`).
 
-- **APIM XML policies** in modules 01 and 02 apply `validate-jwt`, `rate-limit-by-key`, retry with exponential back-off, and response caching.
+- **Module-04 Solutions**: 
+  - **Workshop path (ACA Sandboxes)**: Use `sandbox-deploy.sh` for OS-level isolation and suspend/resume.
+  - **Optional learning track (Dynamic Sessions)**: Use `dynamic-session-deploy.sh` for low-latency ephemeral session pools — not required to complete the workshop.
+  - See [Module 4 README](./module-04/README.md) for detailed comparison and decision guide.
