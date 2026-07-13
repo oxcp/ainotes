@@ -64,7 +64,8 @@ az resource list -g rg-agenthost-workshop \
 
 ---
 
-## Optional Learning Track — ACA Dynamic Sessions
+<details>
+<summary><strong>Optional Learning Track — ACA Dynamic Sessions</strong> (click to expand)</summary>
 
 > This section is **optional**. It is provided for learners who finish the main
 > Sandbox path early and want to compare a different Azure Container Apps
@@ -144,6 +145,8 @@ agent can call as a tool — not as a way to host the agent itself:
 
 > If you need a persistent, addressable, stateful place to run the agent, use the
 > **Sandbox** workshop path instead.
+
+</details>
 
 ---
 
