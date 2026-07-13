@@ -1,5 +1,7 @@
 # Module 2 — Solution A: Foundry Hosted Agent (30 min)
 
+[⬆ Back to Workshop Home](../readme.md)
+
 ## Overview
 
 The Foundry infrastructure — the `foundry-agenthost-<deploymentSN>` account, the `maf-agent-prj` project, the `gpt-5.4-mini` deployment, Defender for AI, the RAI policies, and the APIM AI gateway — is provisioned by **module-01**. This module deploys the hosted agent itself with `azd`, updated base on the official Microsoft Foundry hosted-agent sample:
@@ -149,8 +151,8 @@ sed -i "s/<SN>/$SN/g" <your module-02 folder path>/azure.yaml
 Point the azd environment at the existing project so `azd deploy` (Step 3) targets it directly:
 
 ```bash
-azd env set AZURE_TENANT_ID <your_tenant_id>
-azd env set AZURE_SUBSCRIPTION_ID <your_azure_subscription_id>
+azd env set AZURE_TENANT_ID $(az account show --query tenantId -o tsv)
+azd env set AZURE_SUBSCRIPTION_ID $(az account show --query id -o tsv)
 azd env set AZURE_LOCATION $LOCATION
 azd env set AZURE_RESOURCE_GROUP $RESOURCE_GROUP
 azd env set AZURE_AI_PROJECT_ID  "$PROJECT_ID"
@@ -222,4 +224,8 @@ If you are using APIM as the AI gateway ("gateway" mode set in the `azure.yaml`)
 
 ## Next Step
 
-Proceed to [Module 3 — Solution B: ACA Sandbox](../module-03/README.md).
+Proceed to [Module 3 — Solution B: AKS + E2B](../module-03/README.md).
+
+---
+
+[⬆ Back to Workshop Home](../readme.md)

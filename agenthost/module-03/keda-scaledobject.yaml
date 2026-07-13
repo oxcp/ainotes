@@ -1,4 +1,4 @@
-# keda-scaledobject.yaml — Module 4: KEDA ScaledObject for the agent on AKS
+# keda-scaledobject.yaml — Module 3: KEDA ScaledObject for the agent on AKS
 # Scales the agent-host deployment to zero after 30 min of inactivity
 # (no messages in the request queue). Scales up on incoming queue messages.
 #

@@ -1,4 +1,4 @@
-# agent-deployment.yaml — Module 4: agent workload on AKS
+# agent-deployment.yaml — Module 3: agent workload on AKS
 # Deploys the agent as a Kubernetes Deployment with Kata Container runtime class.
 # Replace <ACR_NAME>, <IMAGE_TAG>, and <NAMESPACE> before applying,
 # or use deploy.sh which performs sed substitution automatically.

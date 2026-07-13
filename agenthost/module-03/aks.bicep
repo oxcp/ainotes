@@ -1,4 +1,4 @@
-// aks.bicep — Module 4: AKS cluster with Kata Container runtime node pool
+// aks.bicep — Module 3: AKS cluster with Kata Container runtime node pool
 // Provisions an AKS cluster with:
 //   - System node pool (standard VMs)
 //   - Kata Container node pool for Micro-VM isolation

@@ -1,5 +1,7 @@
 # Module 0 — Introduction (10 min)
 
+[⬆ Back to Workshop Home](../readme.md)
+
 ## Overview
 
 This module introduces the agent hosting framework and explains why hosting it on Azure is a compelling choice for both enterprise (ToB) and consumer (ToC) scenarios.
@@ -49,3 +51,7 @@ Scale-to-zero  →  Flush AMR state to Azure Blob (cool tier)
 ## Next Step
 
 Proceed to [Module 1 — Core Infrastructure Setup](../module-01/README.md) to provision the shared Azure resources used across all three solutions.
+
+---
+
+[⬆ Back to Workshop Home](../readme.md)

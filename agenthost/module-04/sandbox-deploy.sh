@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# sandbox-deploy.sh — Module 3: Azure Container Apps Sandboxes Deployment (workshop path)
+# sandbox-deploy.sh — Module 4: Azure Container Apps Sandboxes Deployment (workshop path)
 #
 # Deploys REAL Azure Container Apps Sandboxes (Microsoft.App/SandboxGroups).
 # This script:
@@ -30,14 +30,14 @@ IMAGE_TAG="${IMAGE_TAG:-latest}"
 SANDBOX_COUNT="${SANDBOX_COUNT:-1}"
 AUTO_SUSPEND_MINS="${AUTO_SUSPEND_MINS:-30}"
 
-echo "==> Module 3: Azure Container Apps Sandboxes Deployment (workshop path)"
+echo "==> Module 4: Azure Container Apps Sandboxes Deployment (workshop path)"
 echo "Resource Group: $RESOURCE_GROUP"
 echo "Sandbox Count: $SANDBOX_COUNT"
 echo "Auto-suspend timeout: ${AUTO_SUSPEND_MINS} minutes"
 
 # ── Retrieve deployment suffix from module-01 ────────────────────────────────
 echo "==> [1/8] Retrieving deployment suffix (SN) from module-01 resource group"
-SN=$(az group show --resource-group "$RESOURCE_GROUP" --query "tags.deploymentSN" --output tsv 2>/dev/null || echo "")
+SN=$(az group show --resource-group "$RESOURCE_GROUP" --query "tags.deploymentSN" --output tsv | tr -d '\r\n' 2>/dev/null || echo "")
 if [ -z "$SN" ]; then
   echo "ERROR: Could not find deploymentSN tag in resource group. Ensure module-01 is deployed."
   exit 1
@@ -62,14 +62,16 @@ if [ -z "$CURRENT_USER" ]; then
   echo "WARNING: Could not determine current user. RBAC check skipped."
   echo "  Ensure your account has 'Container Apps SandboxGroup Data Owner' role assigned."
 else
+  RESOURCE_GROUP_SCOPE="/subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RESOURCE_GROUP"
   ROLE_ASSIGNED=$(az role assignment list \
-    --scope "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RESOURCE_GROUP" \
+    --scope "$RESOURCE_GROUP_SCOPE" \
     --assignee "$CURRENT_USER" \
     --query "[?roleDefinitionName=='Container Apps SandboxGroup Data Owner'] | length(@)" \
     --output tsv 2>/dev/null || echo "0")
   if [ "$ROLE_ASSIGNED" -eq 0 ]; then
-    echo "WARNING: RBAC role 'Container Apps SandboxGroup Data Owner' not found."
-    echo "  Assign it with: az role assignment create --assignee <user-id> --role 'Container Apps SandboxGroup Data Owner' --scope <resource-group-scope>"
+    echo "WARNING: RBAC role 'Container Apps SandboxGroup Data Owner' not found for current user."
+    echo "  Assign it 'Container Apps SandboxGroup Data Owner' role in scope: $RESOURCE_GROUP_SCOPE"
+    az role assignment create --assignee "$CURRENT_USER" --role 'Container Apps SandboxGroup Data Owner' --scope "$RESOURCE_GROUP_SCOPE"
   else
     echo "✓ RBAC role assigned"
   fi
@@ -84,17 +86,17 @@ echo "✓ Image pushed: ${ACR_NAME}.azurecr.io/agent-host:${IMAGE_TAG}"
 
 # ── Retrieve UAMI details ────────────────────────────────────────────────────
 echo "==> [4/8] Retrieving User-Assigned Managed Identity details"
-UAMI=$(az identity show --resource-group "$RESOURCE_GROUP" --name "$IDENTITY_NAME" --query id --output tsv)
-UAMI_CLIENT_ID=$(az identity show --resource-group "$RESOURCE_GROUP" --name "$IDENTITY_NAME" --query clientId --output tsv)
+UAMI=$(az identity show --resource-group "$RESOURCE_GROUP" --name "$IDENTITY_NAME" --query id --output tsv | tr -d '\r\n')
+UAMI_CLIENT_ID=$(az identity show --resource-group "$RESOURCE_GROUP" --name "$IDENTITY_NAME" --query clientId --output tsv | tr -d '\r\n')
 echo "  Identity ID: $UAMI"
 echo "  Client ID: $UAMI_CLIENT_ID"
 
 # ── Grant UAMI AcrPull role on ACR ──────────────────────────────────────────
 echo "==> [5/8] Granting UAMI AcrPull role on ACR"
-ACR_RESOURCE_ID=$(az acr show --name "$ACR_NAME" --resource-group "$RESOURCE_GROUP" --query id --output tsv)
+ACR_RESOURCE_ID=$(az acr show --name "$ACR_NAME" --resource-group "$RESOURCE_GROUP" --query id --output tsv | tr -d '\r\n')
 az role assignment create \
   --role "AcrPull" \
-  --assignee-object-id "$(az identity show --ids "$UAMI" --query principalId -o tsv)" \
+  --assignee-object-id "$(az identity show --ids "$UAMI" --query principalId -o tsv  | tr -d '\r\n')" \
   --scope "$ACR_RESOURCE_ID" 2>/dev/null || echo "  (Role may already be assigned)"
 echo "✓ AcrPull role granted"
 

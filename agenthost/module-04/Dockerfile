@@ -1,15 +1,17 @@
-# Dockerfile — Module 4: Agent Container Image (AKS / Kata Container)
-# Multi-stage build — same base image used for both ACA Sandbox (Module 3) and AKS (Module 4).
+# Dockerfile — Module 4: Agent Container Image
+# Multi-stage build for a lean production image.
 
 # ── Stage 1: Build ─────────────────────────────────────────────────────────────
 FROM python:3.12-slim AS builder
 
 WORKDIR /app
 
+# Install build dependencies
 COPY requirements.txt ./
 RUN pip install --no-cache-dir --upgrade pip \
  && pip install --no-cache-dir --target /app/deps -r requirements.txt
 
+# Copy application source
 COPY src/ ./src/
 
 # ── Stage 2: Runtime ───────────────────────────────────────────────────────────
@@ -20,11 +22,11 @@ RUN groupadd -r agent && useradd -r -g agent agent
 
 WORKDIR /app
 
+# Copy installed dependencies and application code
 COPY --from=builder /app/deps /app/deps
 COPY --from=builder /app/src /app/src
 
-# Lifecycle hook: flush state to Blob on SIGTERM (pre-termination hook)
-# lifecycle-hook.sh is shared with module-03; copy it into this build context before building.
+# Lifecycle hook script (executed on SIGTERM for scale-to-zero state flush)
 COPY lifecycle-hook.sh /app/lifecycle-hook.sh
 RUN chmod +x /app/lifecycle-hook.sh
 
@@ -35,9 +37,11 @@ ENV AGENT_STATE_BACKEND="redis"
 ENV AGENT_REDIS_TTL_SECONDS="3600"
 ENV AGENT_BLOB_CONTAINER="agent-state"
 
+# Health check endpoint
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')" || exit 1
 
+# Signal handler: run lifecycle hook on SIGTERM before container stops
 STOPSIGNAL SIGTERM
 
 USER agent

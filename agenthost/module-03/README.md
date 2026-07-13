@@ -1,170 +1,168 @@
-# Module 3 — Solution B: Container-based Agent Runtime (ACA Sandboxes， 30 min)
+# Module 3 — Solution B: AKS + E2B (30 min)
+
+[⬆ Back to Workshop Home](../readme.md)
 
 ## Overview
 
-This module deploys the agent runtime onto **Azure Container Apps Sandboxes** — the
-workshop's adopted container-based hosting approach. It provides strong OS-level
-isolation (gVisor), lifecycle control (create/suspend/resume/delete), and
-snapshot-based state continuity.
+Deploy agents on **Azure Kubernetes Service (AKS)** with a self-built **E2B Sandbox Manager** and **Kata Container** Micro-VM isolation. This solution provides maximum control and the strongest isolation for high-security ToB scenarios.
 
-> Primary workshop path = **ACA Sandboxes**.
-> An optional learning track (**ACA Dynamic Sessions**) is included at the end of
-> this module for learners who want to explore an alternative execution model.
+## Learning Objectives
+
+- Walk through an AKS cluster with KEDA and Kata Container runtime node pool
+- Deploy the E2B Sandbox Manager and agent workload to AKS
+- Observe KEDA scaling to zero and cold state restore from Blob
+- Configure Kata Container resource limits and test multi-agent scaling
 
 ---
 
 ## Prerequisites
 
-1. Module-01 is deployed and the `deploymentSN` tag exists on the resource group.
-2. Docker is installed and running.
-3. Azure CLI is installed.
-4. Container Apps extension is installed/upgraded with preview support:
-
-```bash
-az extension add --name containerapp --upgrade --allow-preview true -y
-```
-
-5. Role assignment: `Container Apps SandboxGroup Data Owner`
+- Module 1 infrastructure deployed (Redis, Blob Storage, APIM, UAMI)
+- `kubectl` and `helm` installed
+- Docker CLI installed
 
 ---
 
-## Workshop Path — ACA Sandboxes
-
-### Files
-
-- `sandbox.bicep`
-- `sandbox-deploy.sh`
-
-### What It Deploys
-
-- `Microsoft.App/SandboxGroups` (preview)
-- SandboxGroup identity/registry binding
-- Optional references to module-01 storage/redis for state workflows
-
-### Deploy
+## Step 1 — Set Environment Variables
 
 ```bash
-cd agenthost/module-03
-./sandbox-deploy.sh
-```
-
-### Characteristics
-
-- Strong isolation for risky/untrusted workloads
-- Lifecycle control (create/suspend/resume/delete)
-- Snapshot-based state continuity
-- Best when safety and resumability matter more than simple API pooling
-
-### Validate
-
-```bash
-az resource list -g rg-agenthost-workshop \
-  --query "[?contains(type, 'SandboxGroups')].[name,type]" -o table
+export RESOURCE_GROUP="rg-agenthost-workshop"
+export LOCATION="eastus"
+export AKS_NAME="aks-agenthost"
+export ACR_NAME="acragenthost"
+export IDENTITY_NAME="id-agenthost"
+export REDIS_NAME="redis-agenthost"
+export STORAGE_ACCOUNT="stcagenthost"
+export APIM_ENDPOINT="https://apim-agenthost.azure-api.net"
+export NAMESPACE="agent"
 ```
 
 ---
 
-<details>
-<summary><strong>Optional Learning Track — ACA Dynamic Sessions</strong> (click to expand)</summary>
-
-> This section is **optional**. It is provided for learners who finish the main
-> Sandbox path early and want to compare a different Azure Container Apps
-> execution model. It is **not required** to complete the workshop.
-
-> [!IMPORTANT]
-> **Dynamic Sessions is NOT an ideal host for running an agent.**
-> It is purpose-built to provide **temporary, strongly-isolated execution
-> environments** — for example, safely running AI-generated or otherwise
-> untrusted code. Each session is **ephemeral**: it is allocated on demand,
-> runs a short-lived task, and is **destroyed after use with no state
-> retained**. A long-running agent typically needs a stable, addressable,
-> stateful runtime, which is exactly what the **Sandbox** workshop path
-> provides. Treat Dynamic Sessions as a **tool the agent calls** to execute
-> code safely — not as the place where the agent itself lives.
->
-> See the official comparison:
-> [Sandboxes vs. Dynamic Sessions](https://learn.microsoft.com/en-us/azure/container-apps/sandboxes-overview#sandboxes-vs-dynamic-sessions).
-
-Dynamic Sessions use prewarmed **session pools** for fast, ephemeral, high-concurrency
-execution — a good fit for short-lived, disposable task runs (e.g. running AI-generated
-code, tool execution calls, code interpreters). In an agent architecture, the agent
-runs elsewhere (e.g. on the Sandbox path) and **offloads risky code execution** to a
-Dynamic Session, then discards the session when done.
-
-### Files
-
-- `dynamic-session-deploy.sh`
-- `dynamic-session-invoke.sh` (minimal invocation example)
-
-### What It Deploys
-
-- ACA environment for session pool hosting (if missing)
-- Custom container session pool via `az containerapp sessionpool create`
-- Management endpoint for per-session invocation (`identifier` based routing)
-
-### Deploy
+## Step 2 — Deploy AKS Cluster via Bicep
 
 ```bash
-cd agenthost/module-03
-./dynamic-session-deploy.sh
+az deployment group create \
+  --resource-group "$RESOURCE_GROUP" \
+  --template-file aks.bicep \
+  --parameters \
+      location="$LOCATION" \
+      aksName="$AKS_NAME" \
+      acrName="$ACR_NAME" \
+      identityName="$IDENTITY_NAME"
 ```
 
-### Minimal Invoke Example
+Or run the automated script:
 
 ```bash
-cd agenthost/module-03
-
-# Default: calls /health with identifier=test-session
-./dynamic-session-invoke.sh
-
-# Custom identifier
-./dynamic-session-invoke.sh user-42
-
-# Custom endpoint and JSON body
-ENDPOINT_PATH=/api/projects/demo/openai/v1/responses \
-METHOD=POST \
-BODY='{"messages":[{"role":"user","content":"hello"}]}' \
-./dynamic-session-invoke.sh user-42
+chmod +x deploy.sh
+./deploy.sh
 ```
-
-### Validate
-
-```bash
-az containerapp sessionpool list -g rg-agenthost-workshop -o table
-```
-
-### When to Explore This
-
-Explore Dynamic Sessions to understand the **secure code-execution** model that an
-agent can call as a tool — not as a way to host the agent itself:
-
-- You want to safely run AI-generated or untrusted code in a throwaway environment
-- You need strong isolation for a single short task, then automatic teardown
-- You want fast per-request/per-session allocation from a prewarmed pool
-- You explicitly do **not** need to preserve state between runs
-
-> If you need a persistent, addressable, stateful place to run the agent, use the
-> **Sandbox** workshop path instead.
-
-</details>
 
 ---
 
-## Sandbox vs Dynamic Sessions (Reference)
+## Step 3 — Configure kubectl
 
-| Aspect | ACA Sandboxes (workshop path) | ACA Dynamic Sessions (optional) |
-|---|---|---|
-| Runtime | `Microsoft.App/SandboxGroups` | Session Pools |
-| Isolation | gVisor OS-level | Session-level isolated containers |
-| State | Stateful via snapshots | Ephemeral — destroyed after use, no state retained |
-| Lifecycle | create/suspend/resume/delete | pool-managed, cooldown-based auto-teardown |
-| Primary purpose | Hosting an isolated, resumable agent runtime | Temporary secure execution of untrusted / AI-generated code |
-| Ideal for hosting an agent? | Yes | No — use it as a tool the agent calls |
-| Best for | Isolation + resumability | Fast ephemeral, disposable code execution |
+```bash
+az aks get-credentials \
+  --resource-group "$RESOURCE_GROUP" \
+  --name "$AKS_NAME" \
+  --overwrite-existing
+```
 
 ---
 
-## Notes
+## Step 4 — Install KEDA
 
-- `container-app.yaml` is a legacy standard ACA YAML manifest and is not used by the current scripts.
-- `lifecycle-hook.sh` is packaged into the image by module-03 Dockerfile, and is explicitly invoked in module-04 via Kubernetes preStop hook.
+```bash
+helm repo add kedacore https://kedacore.github.io/charts
+helm repo update
+helm install keda kedacore/keda \
+  --namespace keda \
+  --create-namespace \
+  --wait
+```
+
+---
+
+## Step 5 — Deploy Agent Workloads to AKS
+
+```bash
+# Create namespace
+kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
+
+# Create Redis secret
+REDIS_KEY=$(az redis list-keys \
+  --resource-group "$RESOURCE_GROUP" \
+  --name "$REDIS_NAME" \
+  --query primaryKey --output tsv)
+REDIS_HOST=$(az redis show \
+  --resource-group "$RESOURCE_GROUP" \
+  --name "$REDIS_NAME" \
+  --query hostName --output tsv)
+
+kubectl create secret generic agent-redis \
+  --namespace "$NAMESPACE" \
+  --from-literal=connection-string="${REDIS_HOST}:6380,******" \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+# Deploy E2B Sandbox Manager
+IDENTITY_CLIENT_ID=$(az identity show \
+  --resource-group "$RESOURCE_GROUP" \
+  --name "$IDENTITY_NAME" \
+  --query clientId --output tsv)
+sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|${IMAGE_TAG}|g; s|<NAMESPACE>|${NAMESPACE}|g; s|<IDENTITY_CLIENT_ID>|${IDENTITY_CLIENT_ID}|g" \
+  e2b-manager.yaml | kubectl apply -f -
+
+# Deploy agent workload
+sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|${IMAGE_TAG}|g; s|<NAMESPACE>|${NAMESPACE}|g" \
+  agent-deployment.yaml | kubectl apply -f -
+
+# Apply KEDA ScaledObject
+sed "s|<NAMESPACE>|${NAMESPACE}|g" \
+  keda-scaledobject.yaml | kubectl apply -f -
+```
+
+---
+
+## Step 6 — Verify KEDA Scale-to-Zero
+
+```bash
+# Watch pod scaling
+kubectl get pods -n "$NAMESPACE" -w
+
+# After 30 min idle, pods scale to 0
+# Trigger a request to observe cold start and state restore
+```
+
+---
+
+## Files in This Module
+
+| File | Description |
+|---|---|
+| `deploy.sh` | Automated bash script: AKS, ACR, KEDA, and workload deployment |
+| `aks.bicep` | Bicep IaC template for AKS cluster with Kata Container node pool |
+| `e2b-manager.yaml` | Kubernetes Deployment for E2B Sandbox Manager |
+| `agent-deployment.yaml` | Kubernetes Deployment for agent workload |
+| `keda-scaledobject.yaml` | KEDA ScaledObject for scale-to-zero based on request queue depth |
+| `Dockerfile` | Container image for the agent (same as Module 4) |
+
+---
+
+## Architecture Notes
+
+- **Kata Containers** provide Micro-VM isolation (hardware virtualisation) for each agent instance — stronger than gVisor but with higher overhead.
+- **KEDA** scales the E2B Sandbox Manager to zero after 30 min idle; a pre-termination hook checkpoints state to Blob.
+- **Azure Workload Identity** (AAD Pod Identity successor) authenticates pods to Azure services without secrets.
+- **APIM** is deployed in VNet-injection mode for private connectivity to the AKS cluster.
+
+---
+
+## Next Step
+
+Proceed to [Module 4 — Solution C: ACA Sandboxes](../module-04/README.md).
+
+---
+
+[⬆ Back to Workshop Home](../readme.md)

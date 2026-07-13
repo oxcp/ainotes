@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# lifecycle-hook.sh — Module 3: Scale-to-zero state flush hook
+# lifecycle-hook.sh — Module 4: Scale-to-zero state flush hook
 # Executed inside the container on SIGTERM (scale-to-zero or rolling update).
 # Flushes the agent's hot state from Azure Managed Redis to Azure Blob Storage
 # so it can be restored on the next request.

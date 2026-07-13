@@ -1,4 +1,4 @@
-// sandbox.bicep — Module 3: Azure Container Apps Sandboxes Deployment (workshop path)
+// sandbox.bicep — Module 4: Azure Container Apps Sandboxes Deployment (workshop path)
 // 
 // Deploys REAL Azure Container Apps Sandboxes (Microsoft.App/SandboxGroups).
 // This is fundamentally different from standard ACA container apps.
@@ -69,9 +69,9 @@ resource existingUami 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-
 }
 
 // ── Optional Redis reference ─────────────────────────────────────────────────
-resource existingRedis 'Microsoft.Cache/redis@2023-08-01' existing = if (hasRedisName) {
-  name: redisName
-}
+//resource existingRedis 'Microsoft.Cache/redis@2023-08-01' existing = if (hasRedisName) {
+//  name: redisName
+//}
 
 // ── Optional Storage Account reference ───────────────────────────────────────
 resource existingStorage 'Microsoft.Storage/storageAccounts@2023-01-01' existing = if (hasStorageName) {
@@ -81,7 +81,7 @@ resource existingStorage 'Microsoft.Storage/storageAccounts@2023-01-01' existing
 // ── SandboxGroup: Top-level container for sandbox instances ──────────────────
 // This is the ARM resource (Microsoft.App/SandboxGroups).
 // Individual sandboxes are created/managed via CLI/SDK using the ADC data plane.
-resource sandboxGroup 'Microsoft.App/SandboxGroups@2024-08-02-preview' = {
+resource sandboxGroup 'Microsoft.App/SandboxGroups@2026-02-01-preview' = {
   name: sandboxGroupName
   location: location
   identity: {
@@ -99,10 +99,10 @@ resource sandboxGroup 'Microsoft.App/SandboxGroups@2024-08-02-preview' = {
     
     // Environment for all sandboxes in this group
     environmentName: 'production'
-    environmentDescription: 'Sandbox environment for Microsoft Agent Framework hosted agent'
+    environmentDescription: 'Sandbox environment for agenthost'
   }
   tags: {
-    module: 'module-03'
+    module: 'module-04'
     solution: 'sandboxes'
     deploymentSN: deploymentSN
   }
@@ -116,6 +116,6 @@ output acrLoginServer string = acrLoginServer
 output imageRef string = imageRef
 output uamiId string = identityId
 output uamiClientId string = identityClientId
-output redisEndpoint string = hasRedisName ? existingRedis.properties.hostName : 'N/A (Redis not configured)'
+//output redisEndpoint string = hasRedisName ? existingRedis.properties.hostName : 'N/A (Redis not configured)'
 output storageAccountName string = hasStorageName ? existingStorage.name : 'N/A (Storage not configured)'
 output deploymentSN string = deploymentSN

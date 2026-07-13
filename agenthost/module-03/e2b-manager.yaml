@@ -1,4 +1,4 @@
-# e2b-manager.yaml — Module 4: E2B Sandbox Manager deployment
+# e2b-manager.yaml — Module 3: E2B Sandbox Manager deployment
 # Manages the lifecycle of Kata Container sandboxes for agents.
 # Replace <ACR_NAME>, <IMAGE_TAG>, and <NAMESPACE> before applying,
 # or use deploy.sh which performs sed substitution automatically.

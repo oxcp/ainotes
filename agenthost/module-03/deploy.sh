@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# deploy.sh — Module 4: Solution C — AKS + E2B
+# deploy.sh — Module 3: Solution B — AKS + E2B
 # Provisions AKS cluster with Kata Container node pool, installs KEDA,
 # deploys E2B Sandbox Manager and agent workload.
 # Usage: ./deploy.sh
@@ -114,7 +114,7 @@ kubectl rollout status deployment/e2b-sandbox-manager \
   --timeout=3m
 
 echo ""
-echo "==> Solution C (AKS + E2B) deployed successfully."
+echo "==> Solution B (AKS + E2B) deployed successfully."
 echo ""
 echo "    AKS Cluster : $AKS_NAME"
 echo "    Namespace   : $NAMESPACE"

@@ -1,5 +1,7 @@
 # Module 1 — Core Infrastructure Setup (30 min)
 
+[⬆ Back to Workshop Home](../readme.md)
+
 ## Overview
 
 Provision the shared Azure infrastructure used by all three agent hosting solutions:
@@ -158,3 +160,7 @@ az deployment sub show \
 ## Next Step
 
 Proceed to [Module 2 — Solution A: Foundry Hosted Agent](../module-02/README.md) to deploy the hosted agent with `azd` against the Foundry project provisioned here.
+
+---
+
+[⬆ Back to Workshop Home](../readme.md)

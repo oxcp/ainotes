@@ -1,4 +1,4 @@
-# container-app.yaml — Module 3: ACA Container App manifest (YAML alternative)
+# container-app.yaml — Module 4: ACA Container App manifest (YAML alternative)
 # Deploy with: az containerapp create --resource-group <rg> --environment <env> --yaml container-app.yaml
 
 name: agent-host
