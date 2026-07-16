@@ -1,10 +1,16 @@
-# agent-deployment.yaml — Module 3: agent workload on AKS
-# Deploys the agent as a Kubernetes Deployment with Kata Container runtime class.
-# Replace <ACR_NAME>, <IMAGE_TAG>, and <NAMESPACE> before applying,
-# or use deploy.sh which performs sed substitution automatically.
+# agent-sandbox.yaml — Module 3 (Solution B): agent runtime on Kubernetes via
+# kubernetes-sigs/agent-sandbox (https://github.com/kubernetes-sigs/agent-sandbox).
+#
+# The agent-sandbox *controller* is installed separately (Helm — see deploy.sh);
+# this manifest declares the per-agent runtime as a `Sandbox` custom resource,
+# plus the Workload Identity service account, Kata RuntimeClass, a Service, and a
+# NetworkPolicy.
+#
+# Replace <ACR_NAME>, <IMAGE_TAG>, <NAMESPACE>, and <IDENTITY_CLIENT_ID> before
+# applying, or use deploy.sh which performs the sed substitution automatically.
 
 ---
-# RuntimeClass for Kata Containers (Micro-VM isolation)
+# RuntimeClass for Kata Containers (Micro-VM isolation) — used by the Sandbox pod
 apiVersion: node.k8s.io/v1
 kind: RuntimeClass
 metadata:
@@ -20,8 +26,22 @@ scheduling:
       effect: NoSchedule
 
 ---
-apiVersion: apps/v1
-kind: Deployment
+# ServiceAccount federated with the Module 1 UAMI (Azure AD Workload Identity)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: agent-sa
+  namespace: <NAMESPACE>
+  annotations:
+    azure.workload.identity/client-id: "<IDENTITY_CLIENT_ID>"
+  labels:
+    azure.workload.identity/use: "true"
+
+---
+# Sandbox — a stateful, singleton, isolated agent runtime managed by the
+# agent-sandbox controller. Stable identity + lifecycle (pause/resume/hibernate).
+apiVersion: agents.x-k8s.io/v1beta1
+kind: Sandbox
 metadata:
   name: agent-host
   namespace: <NAMESPACE>
@@ -29,27 +49,22 @@ metadata:
     app: agent-host
     component: agent-runtime
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: agent-host
-  template:
+  podTemplate:
     metadata:
       labels:
         app: agent-host
         component: agent-runtime
-      annotations:
         azure.workload.identity/use: "true"
     spec:
       serviceAccountName: agent-sa
-      # Use Kata Container runtime for Micro-VM isolation
+      # Kata Container runtime for Micro-VM isolation
       runtimeClassName: kata-containers
       tolerations:
         - key: kata
           operator: Equal
           value: "true"
           effect: NoSchedule
-      # Pre-termination hook: checkpoint state to Blob before pod termination
+      # Pre-termination hook: checkpoint state to Blob before the pod stops
       terminationGracePeriodSeconds: 60
       containers:
         - name: agent-host
@@ -128,7 +143,7 @@ spec:
   type: ClusterIP
 
 ---
-# NetworkPolicy: restrict ingress to E2B Manager and APIM VNet gateway only
+# NetworkPolicy: restrict the sandbox pod's traffic
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -142,17 +157,14 @@ spec:
     - Ingress
     - Egress
   ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              app: e2b-sandbox-manager
-      ports:
+    # Allow in-cluster callers to reach the agent HTTP port
+    - ports:
         - protocol: TCP
           port: 8080
   egress:
-    # Allow outbound to Redis (6380) and HTTPS (443) only
+    # Allow outbound to Azure Managed Redis (10000) and HTTPS (443) only
     - ports:
         - protocol: TCP
-          port: 6380
+          port: 10000
         - protocol: TCP
           port: 443

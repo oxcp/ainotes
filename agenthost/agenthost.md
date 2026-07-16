@@ -40,7 +40,7 @@
 | Technique | Isolation | Cold-start | Cost efficiency | Azure fit | Suitable for | Advantage | Weakness |
 |---|---|---|---|---|---|---|---|
 | **AI Foundry Host Agent** | Managed (per-agent) | Fast (< 1 s) | Best (pay-per-exec) | Azure AI Foundry | ToB managed | Native agent lifecycle, built-in state & auth | Limited customisation |
-| **Micro-VM** | Strongest (hypervisor) | Slow (2–10 s) | Low (always-on VM) | AKS + Kata / E2B | ToB high-security | True kernel isolation | Cost, operational overhead |
+| **Micro-VM** | Strongest (hypervisor) | Slow (2–10 s) | Low (always-on VM) | AKS + Kata / agent-sandbox | ToB high-security | True kernel isolation | Cost, operational overhead |
 | **Container** | Strong (namespace) | Fast (< 2 s) | Good with scale-to-zero | ACA, AKS | ToB / ToC | Mature ecosystem, OCI | Shared kernel |
 | **Process** | Weak (OS process) | Fastest (< 0.5 s) | Best | App Service, Functions | ToC low-risk | Minimal overhead | Noisy-neighbour risk |
 | **Session** | Medium (sandbox) | Fast (< 1 s) | Good | ACA Dynamic Sessions | ToC interactive / short-lived jobs | Managed, serverless; ideal for one-time code execution | Limited customisation; not suited for long-running agents |
@@ -56,7 +56,7 @@
 | **Azure AI Foundry Host Agent** | Managed agent runtime | Managed (per-agent) | ✅ Native | ✅ Built-in | ✅ Native | ✅ Native | ToB managed, fastest on-ramp |
 | **ACA Sandbox** *(Public Preview)* | Container sandbox (OS-level gVisor isolation) | Strong (per-container) | ✅ Native | ✅ via Blob/Redis | ✅ Workload Identity | ✅ | ToC / ToB long-running agents; isolation without dedicated VMs |
 | **ACA Dynamic Sessions** | Container sandbox | Strong (per-session) | ✅ Native | ✅ via Blob/Redis | ✅ Workload Identity | ✅ | ToC short-lived / one-time code execution; not ideal for persistent long-running agents |
-| **AKS + self-built E2B** | Micro-VM or Container | Strongest | ✅ Custom | ✅ Custom | ✅ Workload Identity for Pods | ✅ | ToB high-security, full control |
+| **AKS + agent-sandbox** | Micro-VM or Container | Strongest | ✅ Custom | ✅ Custom | ✅ Workload Identity for Pods | ✅ | ToB high-security, full control |
 | **Azure Container Apps** | Container | Strong | ✅ Native | ✅ via Blob/Redis | ✅ Workload Identity | ✅ | ToB / ToC general |
 | **Azure Functions** | Process / Serverless | Medium | ✅ Native | Limited | ✅ | ✅ | ToC stateless tasks |
 | **Azure App Service** | Process / Container | Weak–Medium | ❌ (min 1 instance) | ✅ | ✅ | ✅ | Simple ToC web apps |
@@ -71,7 +71,7 @@ Three complementary solutions are recommended, each optimised for a distinct ope
 | # | Solution | Scenario | Key reason |
 |---|---|---|---|
 | **A** | Azure AI Foundry Host Agent | ToB managed | Fully managed; native agent lifecycle, state, auth; fastest time-to-value |
-| **B** | AKS + self-built E2B | ToB high-security | Maximum control; Micro-VM isolation via Kata Containers; custom networking and compliance |
+| **B** | AKS + agent-sandbox | ToB high-security | Maximum control; Micro-VM isolation via Kata Containers; `Sandbox` CRD lifecycle; custom networking and compliance |
 | **C** | ACA Sandbox *(Public Preview)* | ToC / ToB long-running agents | OS-level container isolation via gVisor; long-running agent support; strong isolation without dedicated VMs; true scale-to-zero |
 
 > **Why ACA Sandbox instead of ACA Dynamic Sessions for Solution C?**  
@@ -87,15 +87,15 @@ Three complementary solutions are recommended, each optimised for a distinct ope
 
 The table below maps each technical requirement to the implementation approach for all three selected solutions.
 
-| # | Requirement | Foundry Host Agent (A) | AKS + E2B (B) | ACA Sandbox — *Public Preview* (C) |
+| # | Requirement | Foundry Host Agent (A) | AKS + agent-sandbox (B) | ACA Sandbox — *Public Preview* (C) |
 |---|---|---|---|---|
 | 1 | **State & context persistence** | Built-in agent state store (Cosmos/Blob) | Redis on AKS + Azure Blob via CSI driver | Azure Managed Redis (context cache) + Azure Blob (snapshot) |
-| 2 | **Fast start / scale-to-zero** | Native agent idle eviction + warm resume | KEDA-driven scale-to-zero; state checkpoint before pod termination; pre-warmed pool | ACA Sandbox container pool; idle timeout = 30 min; state flushed from AMR to Blob on scale-to-zero |
+| 2 | **Fast start / scale-to-zero** | Native agent idle eviction + warm resume | agent-sandbox lifecycle: pause / resume / hibernate; state checkpoint before pod termination; optional SandboxWarmPool | ACA Sandbox container pool; idle timeout = 30 min; state flushed from AMR to Blob on scale-to-zero |
 | 3 | **Isolation** | Per-agent managed sandbox | Kata Container Micro-VM per agent; NetworkPolicy + Namespace isolation | Per-container OS-level isolation via gVisor (syscall interception); no dedicated VM required |
 | 4 | **Entra ID authentication** | Native AAD integration; user-assigned Managed Identity | AAD Workload Identity for Pods; ingress auth via Entra ID App Registration | ACA Workload Identity (UAMI) + Entra ID token validation at ingress |
 | 5 | **AI Gateway (APIM)** | APIM policy routes all LLM calls; token quota per agent | APIM deployed in VNet; each AKS pod calls APIM internal endpoint | APIM gateway policy; JWT validation; rate-limiting per container |
 | 6 | **Agent-to-Gateway auth** | Managed Identity credential → APIM subscription key + OAuth | Pod Workload Identity → Entra token → APIM OAuth 2.0 token validation | UAMI credential; APIM validates Entra ID token via validate-jwt policy |
-| 7 | **Cost saving** | Scale-to-zero after 30 min idle; pay per agent execution | KEDA zero-scale; Spot Node Pool for worker nodes; Redis Basic SKU for dev | True serverless; container destroyed after idle; Redis TTL auto-evicts stale state |
+| 7 | **Cost saving** | Scale-to-zero after 30 min idle; pay per agent execution | agent-sandbox hibernation; Spot Node Pool for worker nodes; Redis Basic SKU for dev | True serverless; container destroyed after idle; Redis TTL auto-evicts stale state |
 
 ---
 
@@ -189,43 +189,41 @@ flowchart TD
 
 ---
 
-### Solution B — AKS + Self-built E2B (ToB High-Security)
+### Solution B — AKS + agent-sandbox (ToB High-Security)
 
 ```mermaid
 flowchart TD
     user["👤 Enterprise User\n(Entra ID + MFA)"]
     apim["Azure API Management\n(AI Gateway, VNet-injected)"]
     ingress["AKS Ingress\n(NGINX + OAuth2-Proxy)"]
-    e2b["E2B Sandbox Manager\n(Kata Container per agent)"]
-    kata["Kata Container\n(Micro-VM isolation)"]
+    ctrl["agent-sandbox controller\n(Sandbox CRD)"]
+    kata["Sandbox pod\n(Kata Container, Micro-VM isolation)"]
     redis["Azure Managed Redis\n(hot state)"]
     blob["Azure Blob\n(cold snapshot, CSI mount)"]
     aoai["AI models\n(private endpoint)"]
     entra["Azure Entra ID\n(Workload Identity)"]
-    keda["KEDA\n(scale-to-zero)"]
 
     user -->|"HTTPS + Entra token"| apim
     apim -->|"VNet → AKS ingress"| ingress
-    ingress -->|"token validation"| e2b
-    e2b -->|"spawn / resume"| kata
+    ingress -->|"token validation"| kata
+    ctrl -->|"reconcile / pause / resume"| kata
     kata <-->|"state R/W"| redis
     kata -->|"checkpoint"| blob
     blob -->|"restore"| kata
     kata -->|"Workload Identity token"| entra
     kata -->|"LLM call"| apim
     apim --> aoai
-    keda -->|"scale pods to zero"| e2b
 ```
 
 **Workflow:**
 1. User authenticates via Entra ID (MFA enforced); token forwarded to APIM.
 2. APIM (VNet-injected) routes to AKS ingress; OAuth2-Proxy validates token.
-3. E2B Sandbox Manager checks for existing Kata Container for this `agent-id`.
-4. If warm: resume container (< 1 s); load Redis state.
-5. If cold (KEDA scaled to zero): Sandbox Manager starts new Kata Container, restores Blob snapshot to Redis, then Redis → container memory.
+3. The `agent-sandbox` controller reconciles the `Sandbox` CR for this agent — a stateful, singleton pod with stable identity.
+4. If warm/running: the request reaches the existing Sandbox pod (< 1 s); state loaded from Redis.
+5. If hibernated: the controller resumes the Sandbox, restores the Blob snapshot to Redis, then Redis → container memory.
 6. agent processes request; issues LLM call to APIM private endpoint using Workload Identity credential.
 7. APIM validates token, enforces quota, routes to AI models via a private endpoint.
-8. KEDA monitors queue depth; scales Kata Containers to zero after 30 min idle; pre-termination hook checkpoints state to Blob.
+8. On idle, the Sandbox is paused/hibernated (scale-to-zero); the pre-termination hook checkpoints state to Blob first. Optional `SandboxWarmPool` keeps pre-warmed sandboxes for fast allocation.
 
 ---
 
@@ -287,9 +285,9 @@ Host AI agents using Azure AI Foundry with integrated state management and scale
 
 ---
 
-### Module 3 — Solution B: AKS + E2B (30 min)
+### Module 3 — Solution B: AKS + agent-sandbox (30 min)
 
-Run agents on AKS with Kata Containers and KEDA-driven scale-to-zero orchestration. [See Module 3](./module-03/README.md)
+Run agents on AKS with Kata Containers and the `agent-sandbox` controller (`Sandbox` CRD lifecycle, pause/resume/hibernate). [See Module 3](./module-03/README.md)
 
 ---
 

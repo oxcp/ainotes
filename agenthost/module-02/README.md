@@ -36,7 +36,7 @@ Both clients speak the **Responses** protocol, so the hosted agent (served by `R
 
 - Module 1 already deployed (Foundry account `foundry-agenthost-<deploymentSN>`, project `maf-agent-prj`, model `gpt-5.4-mini`)
 - The module-01 resource group still contains the `deploymentSN` tag
-- Azure CLI, Azure Developer CLI, and Docker Desktop installed
+- Azure CLI, Azure Developer CLI installed
 - The Microsoft Foundry extension for azd installed: `azd ext install microsoft.foundry`
 - You have the "Foundry User" role in your subscription
 
@@ -224,7 +224,7 @@ If you are using APIM as the AI gateway ("gateway" mode set in the `azure.yaml`)
 
 ## Next Step
 
-Proceed to [Module 3 — Solution B: AKS + E2B](../module-03/README.md).
+Proceed to [Module 3 — Solution B: AKS + agent-sandbox](../module-03/README.md).
 
 ---
 

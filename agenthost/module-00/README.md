@@ -28,8 +28,8 @@ A hosted agent is a stateful AI agent runtime. Each agent instance:
 | Solution | Azure Resource | Best for |
 |---|---|---|
 | **A** | Azure AI Foundry Host Agent | ToB managed — fastest on-ramp |
-| **B** | ACA Sandbox *(Public Preview)* | ToC / ToB long-running agents |
-| **C** | AKS + Self-built E2B | ToB high-security |
+| **B** | AKS + agent-sandbox | ToB high-security |
+| **C** | ACA Sandbox *(Public Preview)* | ToC / ToB long-running agents |
 
 ## State Persistence Pattern
 

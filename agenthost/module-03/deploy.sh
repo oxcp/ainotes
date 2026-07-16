@@ -1,122 +1,122 @@
 #!/usr/bin/env bash
-# deploy.sh — Module 3: Solution B — AKS + E2B
-# Provisions AKS cluster with Kata Container node pool, installs KEDA,
-# deploys E2B Sandbox Manager and agent workload.
+# deploy.sh — Module 3 (Solution B): AKS + agent-sandbox, reusing Module 1 resources
+#
+# Retrieves the deployment suffix (SN) from the Module 1 resource group tag,
+# reuses the ACR / UAMI / Redis / Storage / APIM that Module 1 already created,
+# provisions AKS (aks.bicep), installs the kubernetes-sigs/agent-sandbox
+# controller (Helm), then deploys the agent as a Sandbox custom resource.
+#
+# agent-sandbox: https://github.com/kubernetes-sigs/agent-sandbox
+#   (replaces the earlier self-built E2B Sandbox Manager, which does not run on Azure.)
+#
 # Usage: ./deploy.sh
-# Prerequisites: Module 1 infrastructure must be deployed first.
+# Env overrides: RESOURCE_GROUP, LOCATION, NAMESPACE, SERVICE_ACCOUNT, IMAGE_TAG,
+#                AGENT_SANDBOX_VERSION
+# Prerequisites: Module 1 deployed; Docker, kubectl, helm, git, az installed.
 
 set -euo pipefail
 
 RESOURCE_GROUP="${RESOURCE_GROUP:-rg-agenthost-workshop}"
-LOCATION="${LOCATION:-eastus}"
-AKS_NAME="${AKS_NAME:-aks-agenthost}"
-ACR_NAME="${ACR_NAME:-acragenthost}"
-IDENTITY_NAME="${IDENTITY_NAME:-id-agenthost}"
-REDIS_NAME="${REDIS_NAME:-redis-agenthost}"
-STORAGE_ACCOUNT="${STORAGE_ACCOUNT:-stcagenthost}"
-APIM_ENDPOINT="${APIM_ENDPOINT:-}"
 NAMESPACE="${NAMESPACE:-agent}"
+SERVICE_ACCOUNT="${SERVICE_ACCOUNT:-agent-sa}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
+# Pick a released version from https://github.com/kubernetes-sigs/agent-sandbox/releases
+AGENT_SANDBOX_VERSION="${AGENT_SANDBOX_VERSION:-v0.1.0}"
 
-echo "==> [1/8] Creating Azure Container Registry (if not exists): $ACR_NAME"
-az acr create \
-  --resource-group "$RESOURCE_GROUP" \
-  --name "$ACR_NAME" \
-  --location "$LOCATION" \
-  --sku Basic \
-  --admin-enabled false \
-  --output none 2>/dev/null || echo "    ACR already exists."
+echo "==> [1/9] Retrieving deployment suffix (SN) from Module 1 resource group"
+SN=$(az group show --resource-group "$RESOURCE_GROUP" --query "tags.deploymentSN" --output tsv 2>/dev/null | tr -d "\r\n" || echo "")
+if [ -z "$SN" ]; then
+  echo "ERROR: deploymentSN tag not found on $RESOURCE_GROUP. Deploy Module 1 first."
+  exit 1
+fi
+echo "    SN=$SN"
 
-echo "==> [2/8] Building and pushing the agent image to ACR"
+# ── Module 1 resource names (reused, never recreated) ─────────────────────────
+ACR_NAME="acragenthost${SN}"
+IDENTITY_NAME="id-agenthost-${SN}"
+REDIS_NAME="redis-agenthost-${SN}"
+STORAGE_ACCOUNT="stcagenthost${SN}"
+APIM_NAME="apim-agenthost-${SN}"
+AKS_NAME="aks-agenthost-${SN}"
+LOCATION="${LOCATION:-$(az group show -g "$RESOURCE_GROUP" --query location -o tsv | tr -d "\r\n")}"
+echo "    ACR=$ACR_NAME  UAMI=$IDENTITY_NAME  Redis=$REDIS_NAME  Storage=$STORAGE_ACCOUNT  APIM=$APIM_NAME"
+
+echo "==> [2/9] Building and pushing the agent image to the EXISTING ACR"
 az acr login --name "$ACR_NAME"
 docker build -t "${ACR_NAME}.azurecr.io/agent-host:${IMAGE_TAG}" .
 docker push "${ACR_NAME}.azurecr.io/agent-host:${IMAGE_TAG}"
 
-echo "==> [3/8] Deploying AKS cluster via Bicep"
-IDENTITY_ID=$(az identity show \
-  --resource-group "$RESOURCE_GROUP" \
-  --name "$IDENTITY_NAME" \
-  --query id \
-  --output tsv)
-
-IDENTITY_CLIENT_ID=$(az identity show \
-  --resource-group "$RESOURCE_GROUP" \
-  --name "$IDENTITY_NAME" \
-  --query clientId \
-  --output tsv)
-
+echo "==> [3/9] Deploying AKS (reusing ACR/UAMI/Storage) via Bicep"
 az deployment group create \
   --resource-group "$RESOURCE_GROUP" \
   --template-file aks.bicep \
   --parameters \
       location="$LOCATION" \
-      aksName="$AKS_NAME" \
+      deploymentSN="$SN" \
       acrName="$ACR_NAME" \
-      identityId="$IDENTITY_ID" \
+      identityName="$IDENTITY_NAME" \
+      storageAccountName="$STORAGE_ACCOUNT" \
+      namespace="$NAMESPACE" \
+      serviceAccountName="$SERVICE_ACCOUNT" \
   --output none
 
-echo "==> [4/8] Getting AKS credentials"
-az aks get-credentials \
-  --resource-group "$RESOURCE_GROUP" \
-  --name "$AKS_NAME" \
-  --overwrite-existing
+IDENTITY_CLIENT_ID=$(az identity show -g "$RESOURCE_GROUP" -n "$IDENTITY_NAME" --query clientId -o tsv | tr -d "\r\n")
 
-echo "==> [5/8] Installing KEDA via Helm"
-helm repo add kedacore https://kedacore.github.io/charts --force-update
-helm repo update
-helm upgrade --install keda kedacore/keda \
-  --namespace keda \
+echo "==> [4/9] Getting AKS credentials"
+az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$AKS_NAME" --overwrite-existing
+
+echo "==> [5/9] Installing the agent-sandbox controller via Helm ($AGENT_SANDBOX_VERSION)"
+# The Helm chart lives inside the repo (./helm). Clone it, then install the
+# controller with extensions (SandboxTemplate / SandboxClaim / SandboxWarmPool).
+WORKDIR="$(mktemp -d)"
+git clone --depth 1 --branch "$AGENT_SANDBOX_VERSION" \
+  https://github.com/kubernetes-sigs/agent-sandbox.git "$WORKDIR/agent-sandbox"
+helm upgrade --install agent-sandbox "$WORKDIR/agent-sandbox/helm/" \
+  --namespace agent-sandbox-system \
   --create-namespace \
-  --wait \
-  --timeout 5m
+  --set image.tag="$AGENT_SANDBOX_VERSION" \
+  --set controller.extensions=true \
+  --wait --timeout 5m
+rm -rf "$WORKDIR"
 
-echo "==> [6/8] Creating Kubernetes namespace and secrets"
+echo "==> [6/9] Creating namespace"
 kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
 
-REDIS_KEY=$(az redis list-keys \
-  --resource-group "$RESOURCE_GROUP" \
-  --name "$REDIS_NAME" \
-  --query primaryKey \
-  --output tsv)
-
-REDIS_HOST=$(az redis show \
-  --resource-group "$RESOURCE_GROUP" \
-  --name "$REDIS_NAME" \
-  --query hostName \
-  --output tsv)
+echo "==> [7/9] Creating runtime secrets from Module 1 Redis / Storage / APIM"
+# Azure Managed Redis (redisEnterprise): SSL on port 10000
+REDIS_HOST=$(az redisenterprise show -g "$RESOURCE_GROUP" -n "$REDIS_NAME" --query hostName -o tsv | tr -d "\r\n")
+REDIS_KEY=$(az redisenterprise database list-keys -g "$RESOURCE_GROUP" --cluster-name "$REDIS_NAME" --query primaryKey -o tsv | tr -d "\r\n")
+APIM_GATEWAY_URL="https://${APIM_NAME}.azure-api.net/foundry"
 
 kubectl create secret generic agent-redis \
   --namespace "$NAMESPACE" \
-  --from-literal=connection-string="${REDIS_HOST}:6380,${REDIS_KEY},ssl=True,abortConnect=False" \
+  --from-literal=connection-string="${REDIS_HOST}:10000,password=${REDIS_KEY},ssl=True,abortConnect=False" \
+  --from-literal=redis-host="$REDIS_HOST" \
+  --from-literal=redis-password="$REDIS_KEY" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 kubectl create secret generic agent-config \
   --namespace "$NAMESPACE" \
   --from-literal=storage-account="$STORAGE_ACCOUNT" \
   --from-literal=blob-container="agent-state" \
-  --from-literal=apim-endpoint="$APIM_ENDPOINT" \
+  --from-literal=apim-endpoint="$APIM_GATEWAY_URL" \
   --dry-run=client -o yaml | kubectl apply -f -
 
-echo "==> [7/8] Deploying E2B Sandbox Manager and agent workload"
-# Replace placeholders in manifests
+echo "==> [8/9] Deploying the agent as a Sandbox custom resource"
 sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|${IMAGE_TAG}|g; s|<NAMESPACE>|${NAMESPACE}|g; s|<IDENTITY_CLIENT_ID>|${IDENTITY_CLIENT_ID}|g" \
-  e2b-manager.yaml | kubectl apply -f -
+  agent-sandbox.yaml | kubectl apply -f -
 
-sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|${IMAGE_TAG}|g; s|<NAMESPACE>|${NAMESPACE}|g" \
-  agent-deployment.yaml | kubectl apply -f -
-
-sed "s|<NAMESPACE>|${NAMESPACE}|g" \
-  keda-scaledobject.yaml | kubectl apply -f -
-
-echo "==> [8/8] Waiting for E2B Manager to be ready"
-kubectl rollout status deployment/e2b-sandbox-manager \
-  --namespace "$NAMESPACE" \
-  --timeout=3m
+echo "==> [9/9] Waiting for the Sandbox pod to become ready"
+kubectl wait --for=condition=Ready pod -l app=agent-host --namespace "$NAMESPACE" --timeout=3m || true
 
 echo ""
-echo "==> Solution B (AKS + E2B) deployed successfully."
+echo "==> Solution B (AKS + agent-sandbox) deployed, reusing Module 1 resources."
+echo "    SN            : $SN"
+echo "    AKS           : $AKS_NAME"
+echo "    Namespace     : $NAMESPACE"
+echo "    agent-sandbox : $AGENT_SANDBOX_VERSION (ns agent-sandbox-system)"
+echo "    ACR           : ${ACR_NAME}.azurecr.io"
+echo "    Redis         : ${REDIS_HOST}:10000 (SSL)"
+echo "    APIM          : $APIM_GATEWAY_URL"
 echo ""
-echo "    AKS Cluster : $AKS_NAME"
-echo "    Namespace   : $NAMESPACE"
-echo ""
-kubectl get pods -n "$NAMESPACE"
+kubectl get sandbox,pods -n "$NAMESPACE"

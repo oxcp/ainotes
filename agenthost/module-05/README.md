@@ -10,15 +10,15 @@ Recap the three solutions, provide decision guidance, and share cost optimisatio
 
 ## Solution Comparison Recap
 
-| Dimension | Solution A — Foundry Host Agent | Solution B — AKS + E2B | Solution C — ACA Sandbox |
+| Dimension | Solution A — Foundry Host Agent | Solution B — AKS + agent-sandbox | Solution C — ACA Sandbox |
 |---|---|---|---|
 | **Isolation** | Managed (per-agent) | Micro-VM (Kata Containers) | OS-level gVisor |
-| **Scale-to-zero** | ✅ Native | ✅ KEDA | ✅ Native |
+| **Scale-to-zero** | ✅ Native | ✅ agent-sandbox hibernate | ✅ Native |
 | **State persistence** | ✅ Built-in | AMR + Blob (CSI) | AMR + Blob |
 | **Entra ID auth** | ✅ Native | AAD Workload Identity | UAMI Workload Identity |
 | **APIM integration** | ✅ Native | ✅ VNet-injected | ✅ |
 | **Operational complexity** | Low | High | Medium |
-| **Cost** | Pay-per-exec | KEDA zero-scale + Spot | Serverless |
+| **Cost** | Pay-per-exec | agent-sandbox hibernate + Spot | Serverless |
 | **Best for** | ToB managed fast on-ramp | ToB high-security | ToC / ToB long-running agents |
 | **Status** | GA | GA | Public Preview |
 
@@ -37,7 +37,7 @@ Recap the three solutions, provide decision guidance, and share cost optimisatio
 │    → Solution C (ACA Sandbox)                                   │
 │                                                                 │
 │  Maximum control, Micro-VM isolation, private networking?       │
-│    → Solution B (AKS + E2B)                                     │
+│    → Solution B (AKS + agent-sandbox)                             │
 │                                                                 │
 │  One-time / short-lived code execution (e.g. code interpreter)? │
 │    → ACA Dynamic Sessions (not covered in depth, see note)      │
@@ -59,7 +59,7 @@ Recap the three solutions, provide decision guidance, and share cost optimisatio
 | Redis TTL tuning | Auto-evict stale agent state; reduce memory cost | A · B · C |
 | AKS Spot Node Pool | Up to 90% discount for interruptible workloads | B |
 | Azure OpenAI PTU (reserved throughput) | Predictable cost for high-volume ToB | A · B · C |
-| KEDA cooldown tuning | Balance cold-start latency vs compute savings | B |
+| agent-sandbox WarmPool tuning | Balance cold-start latency vs compute savings | B |
 
 ---
 
@@ -83,7 +83,7 @@ Recap the three solutions, provide decision guidance, and share cost optimisatio
 - Review the [Agent Hosting on Azure Workshop](../agenthost.md) design document
 - Explore the [Azure AI Foundry documentation](https://learn.microsoft.com/en-us/azure/ai-studio/)
 - Review [ACA Sandbox overview](https://learn.microsoft.com/en-us/azure/container-apps/sandboxes-overview) for production readiness
-- Consider [KEDA HTTP Add-on](https://github.com/kedacore/http-add-on) for HTTP-driven scaling in Module 3
+- Explore [agent-sandbox](https://github.com/kubernetes-sigs/agent-sandbox) `SandboxWarmPool` for pre-warmed sandboxes in Module 3
 
 ---
 

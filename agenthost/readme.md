@@ -5,7 +5,7 @@
 - **Target Scenarios**: ToB Enterprise vs. ToC Consumer scenarios with distinct priorities for isolation, scale, auth, and cost.
 - **Solutions (see [Workshop Design](./agenthost.md) for detail)**:
   - **Solution A**: Azure AI Foundry Host Agent (ToB managed) — fastest on-ramp, native state & auth.
-  - **Solution B**: AKS + E2B (ToB high-security) — maximum control, Kata Container micro-VMs, custom networking.
+  - **Solution B**: AKS + agent-sandbox (ToB high-security) — maximum control, Kata Container micro-VMs, custom networking.
   - **Solution C**: ACA container runtime options (Module-04):
     - **Workshop path**: ACA Sandboxes — gVisor isolation, suspend/resume.
     - **Optional learning track**: ACA Dynamic Sessions — session pool based, low-latency ephemeral execution.
@@ -31,7 +31,7 @@
 | [module-00](./module-00/README.md) | Introduction | 10 min | README |
 | [module-01](./module-01/README.md) | Core Infrastructure Setup | 30 min | README · setup.sh · main.bicep · core.bicep |
 | [module-02](./module-02/README.md) | Solution A: Foundry Hosted Agent | 30 min | README · azure.yaml · src/ (main.py, requirements.txt, Dockerfile) · agent-definition.json |
-| [module-03](./module-03/README.md) | Solution B: AKS + E2B | 30 min | README · deploy.sh · aks.bicep · e2b-manager.yaml · agent-deployment.yaml · keda-scaledobject.yaml · Dockerfile |
+| [module-03](./module-03/README.md) | Solution B: AKS + agent-sandbox | 30 min | README · deploy.sh · aks.bicep · agent-sandbox.yaml · Dockerfile |
 | [module-04](./module-04/README.md) | Solution C: ACA Sandboxes (workshop path) + Dynamic Sessions (optional) | 30 min | README · sandbox.bicep · sandbox-deploy.sh · dynamic-session-deploy.sh · dynamic-session-invoke.sh · Dockerfile |
 | [module-05](./module-05/README.md) | Wrap-up and Q&A | 5 min | README |
 
@@ -54,14 +54,12 @@ agenthost/
 │   ├── azure.yaml               ← Hosted-agent manifest used by azd init (references agent-src)
 │   └── agent-src/               ← Agent Framework app source + config (main.py, requirements.txt, Dockerfile, .env.example)
 ├── module-03/
-│   ├── README.md                ← AKS + E2B deployment steps + architecture notes
-│   ├── deploy.sh                ← AKS, KEDA Helm install, K8s secrets, workload deployment
-│   ├── aks.bicep                ← AKS with Kata Container node pool + Workload Identity
-│   ├── e2b-manager.yaml         ← K8s Deployment/Service/RBAC for E2B Sandbox Manager
-│   ├── agent-deployment.yaml    ← K8s Deployment with Kata RuntimeClass + NetworkPolicy
-│   ├── keda-scaledobject.yaml   ← KEDA HTTP + Redis ScaledObject (30 min idle → 0 replicas)
+│   ├── README.md                ← AKS + agent-sandbox deployment steps + architecture notes
+│   ├── deploy.sh                ← AKS, agent-sandbox Helm install, K8s secrets, Sandbox deploy
+│   ├── aks.bicep                ← AKS with Kata Container node pool + Workload Identity (reuses Module 1)
+│   ├── agent-sandbox.yaml       ← Workload Identity SA + Kata RuntimeClass + Sandbox CR + Service + NetworkPolicy
 │   ├── Dockerfile               ← Multi-stage Python image (same pattern as module-04)
-│   └── lifecycle-hook.sh        ← Copy of lifecycle hook for module-03 build context
+│   └── lifecycle-hook.sh        ← SIGTERM pre-stop hook: flush Redis state to Blob
 ├── module-04/
 │   ├── README.md                ← Workshop path: ACA Sandboxes; optional track: Dynamic Sessions
 │   ├── sandbox.bicep            ← Workshop path: SandboxGroup (real Sandboxes, gVisor, suspend/resume)
@@ -80,9 +78,9 @@ agenthost/
 
 - **Bicep IaC** — module-01 uses a subscription-scoped `main.bicep` that delegates to `core.bicep` (resource group scope); modules 02–04 each have self-contained deployment Bicep files targeting their respective Azure resources.
 
-- **KEDA ScaledObject** (module-03) provides both HTTP-based and Redis list-based scaling triggers with a 30-minute cooldown, scaling `agent-host` to zero on idle.
+- **agent-sandbox** (module-03) provides the `Sandbox` CRD + controller (kubernetes-sigs) for isolated, stateful, singleton agent pods with stable identity and lifecycle (pause / resume / hibernate) — the scale-to-zero mechanism, replacing the earlier E2B Manager + KEDA.
 
-- **Kata Container RuntimeClass** is defined in `agent-deployment.yaml` and applied to the agent workload node pool (tainted `kata=true:NoSchedule`).
+- **Kata Container RuntimeClass** is defined in `agent-sandbox.yaml` and applied to the Sandbox pod on the tainted `kata=true:NoSchedule` node pool.
 
 - **Module-04 Solutions**: 
   - **Workshop path (ACA Sandboxes)**: Use `sandbox-deploy.sh` for OS-level isolation and suspend/resume.
