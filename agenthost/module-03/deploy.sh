@@ -20,6 +20,8 @@ RESOURCE_GROUP="${RESOURCE_GROUP:-rg-agenthost-workshop}"
 NAMESPACE="${NAMESPACE:-agent}"
 SERVICE_ACCOUNT="${SERVICE_ACCOUNT:-agent-sa}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
+# LLM model deployment name the agent calls through the APIM gateway
+LLM_MODEL="${LLM_MODEL:-gpt-5.4-mini}"
 # Pick a released version from https://github.com/kubernetes-sigs/agent-sandbox/releases
 AGENT_SANDBOX_VERSION="${AGENT_SANDBOX_VERSION:-v0.1.0}"
 
@@ -42,8 +44,9 @@ LOCATION="${LOCATION:-$(az group show -g "$RESOURCE_GROUP" --query location -o t
 echo "    ACR=$ACR_NAME  UAMI=$IDENTITY_NAME  Redis=$REDIS_NAME  Storage=$STORAGE_ACCOUNT  APIM=$APIM_NAME"
 
 echo "==> [2/9] Building and pushing the agent image to the EXISTING ACR"
+# Build context is ./agent-src (contains the app, Dockerfile, and lifecycle hook).
 az acr login --name "$ACR_NAME"
-docker build -t "${ACR_NAME}.azurecr.io/agent-host:${IMAGE_TAG}" .
+docker build -t "${ACR_NAME}.azurecr.io/agent-host:${IMAGE_TAG}" agent-src/
 docker push "${ACR_NAME}.azurecr.io/agent-host:${IMAGE_TAG}"
 
 echo "==> [3/9] Deploying AKS (reusing ACR/UAMI/Storage) via Bicep"
@@ -100,6 +103,7 @@ kubectl create secret generic agent-config \
   --from-literal=storage-account="$STORAGE_ACCOUNT" \
   --from-literal=blob-container="agent-state" \
   --from-literal=apim-endpoint="$APIM_GATEWAY_URL" \
+  --from-literal=llm-model="$LLM_MODEL" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 echo "==> [8/9] Deploying the agent as a Sandbox custom resource"

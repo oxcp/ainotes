@@ -103,6 +103,17 @@ spec:
                 secretKeyRef:
                   name: agent-config
                   key: apim-endpoint
+            - name: LLM_MODEL
+              valueFrom:
+                secretKeyRef:
+                  name: agent-config
+                  key: llm-model
+            # LLM_API_KEY intentionally unset: the app uses Workload Identity
+            # (DefaultAzureCredential) to obtain a Bearer token for the agent.
+            # The gateway validate-jwt checks the issuer only (not the audience),
+            # so the Foundry data-plane scope works.
+            - name: LLM_TOKEN_SCOPE
+              value: "https://ai.azure.com/.default"
             - name: AGENT_REDIS_TTL_SECONDS
               value: "3600"
           resources:

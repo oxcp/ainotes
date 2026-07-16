@@ -35,7 +35,7 @@ param namespace string = 'agent'
 param serviceAccountName string = 'agent-sa'
 
 @description('Kubernetes version')
-param kubernetesVersion string = '1.30'
+param kubernetesVersion string = '1.35'
 
 @description('System node pool VM size')
 param systemNodeVmSize string = 'Standard_D2s_v5'

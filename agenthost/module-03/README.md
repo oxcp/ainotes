@@ -6,7 +6,7 @@
 
 Deploy agents on **Azure Kubernetes Service (AKS)** using **[agent-sandbox](https://github.com/kubernetes-sigs/agent-sandbox)** (kubernetes-sigs) for isolated, stateful agent runtimes with **Kata Container** Micro-VM isolation. This is the highest-control, strongest-isolation option for high-security ToB scenarios.
 
-> **Why agent-sandbox (not E2B)?** The earlier self-built *E2B Sandbox Manager* does not run on Azure. `agent-sandbox` is a CNCF/Kubernetes-SIG project that provides a `Sandbox` CRD + controller for managing isolated, stateful, singleton agent pods with a **stable identity**, **persistent storage**, and **lifecycle management** (create / pause / resume / hibernate). Its built-in hibernation replaces the KEDA scale-to-zero used previously.
+> **Why agent-sandbox (not E2B)?** `agent-sandbox` is a CNCF/Kubernetes-SIG project that provides a `Sandbox` CRD + controller for managing isolated, stateful, singleton agent pods with a **stable identity**, **persistent storage**, and **lifecycle management** (create / pause / resume / hibernate). Its built-in hibernation replaces the KEDA scale-to-zero.
 
 This module **reuses the resources Module 1 already created** (it does not recreate them) and provisions the AKS cluster **into the same Module 1 resource group**:
 
@@ -83,9 +83,15 @@ NAMESPACE="agent"
 
 ```bash
 az acr login --name "$ACR_NAME"
-docker build -t "${ACR_NAME}.azurecr.io/agent-host:latest" .
+# Build context is ./agent-src (app + Dockerfile + lifecycle hook)
+docker build -t "${ACR_NAME}.azurecr.io/agent-host:latest" agent-src/
 docker push "${ACR_NAME}.azurecr.io/agent-host:latest"
 ```
+
+> The agent application lives in [`agent-src/`](./agent-src/README.md) — a simple
+> reflection-loop agent that demonstrates LLM endpoint config, `Authorization: Bearer`
+> auth (static key or Workload Identity), Redis state persistence, and hibernate/resume
+> recovery. See its README for local-run and API details.
 
 ### Step 3 — Deploy AKS (reusing Module 1 resources)
 
@@ -180,11 +186,10 @@ Refer to the [agent-sandbox docs](https://agent-sandbox.sigs.k8s.io/docs/) for p
 
 | File | Description |
 |---|---|
-| `deploy.sh` | End-to-end deploy: reads SN, reuses Module 1 ACR/UAMI/Redis/Storage/APIM, provisions AKS, installs agent-sandbox, deploys the Sandbox |
+| `deploy.sh` | End-to-end deploy: reads SN, reuses Module 1 ACR/UAMI/Redis/Storage/APIM, builds the `agent-src/` image, provisions AKS, installs agent-sandbox, deploys the Sandbox |
 | `aks.bicep` | AKS cluster + Kata node pool; references existing ACR/UAMI/Storage; AcrPull, Storage RBAC, UAMI federated credential |
 | `agent-sandbox.yaml` | Workload Identity ServiceAccount + Kata RuntimeClass + `Sandbox` CR + Service + NetworkPolicy |
-| `Dockerfile` | Agent container image (shared pattern with Module 4) |
-| `lifecycle-hook.sh` | SIGTERM pre-stop hook: flush Redis state to Blob |
+| `agent-src/` | POC agent source: `app/main.py` (ReflectionAgent HTTP server), `Dockerfile`, `requirements.txt`, `lifecycle-hook.sh`, and a usage `README.md`. This is the image built and deployed as the Sandbox. |
 
 ---
 

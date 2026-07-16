@@ -1,0 +1,11 @@
+# agent-src — Python dependencies
+
+# Microsoft Agent Framework — OpenAIChatClient routes to Foundry via the APIM
+# AI gateway. Pulls in the agent_framework core (Agent, ChatMessage, Role).
+agent-framework-openai
+
+# Azure Workload Identity (Bearer token without static secrets)
+azure-identity==1.19.0
+
+# Async Redis client (redis.asyncio)
+redis==5.2.1
