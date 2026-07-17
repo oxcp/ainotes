@@ -24,7 +24,8 @@ def build_client():
     print(f"Using model: {model} with routing: {routing}")
 
     if routing == "direct":
-        # Direct to the Foundry project. The running identity needs the
+        # Direct to the Foundry project endpoint. If you have registered APIM as the project AI gateway, you can call the Foundry project endpoint directly with a valid Entra token. The Foundry project endpoint will validate the token and forward to the APIM AI gateway and then enter the model deployment. 
+        # The running identity needs the
         # "Azure AI User" role on the Foundry account (granted in module-01).
         from agent_framework.foundry import FoundryChatClient
         from azure.identity import DefaultAzureCredential
@@ -44,15 +45,6 @@ def build_client():
         from agent_framework.openai import OpenAIChatClient
         from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
-        # token_provider = get_bearer_token_provider(
-        #     DefaultAzureCredential(), "https://management.azure.com/.default"
-        # )
-
-        # return OpenAIChatClient(
-        #     model=model,
-        #     base_url=f"{os.environ['APIM_GATEWAY_URL']}/openai/v1",
-        #     api_key=token_provider,
-        # )
         credential = DefaultAzureCredential()
 
         access_token = credential.get_token(
@@ -64,6 +56,19 @@ def build_client():
             base_url=f"{os.environ['APIM_GATEWAY_URL']}/openai/v1",
             api_key=access_token,
         )
+        # from agent_framework.azure import AzureOpenAIChatClient
+        # from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+
+        # token_provider = get_bearer_token_provider(
+        #     DefaultAzureCredential(), "https://ai.azure.com/.default"
+        # )
+        # return AzureOpenAIChatClient(
+        #     deployment_name=model,
+        #     base_url=f"{os.environ['APIM_GATEWAY_URL']}/openai/v1",
+        #     azure_ad_token_provider=token_provider,   # ← callable 在这里才有效
+        #     # 注意：Azure 变体按 azure_endpoint + api-version 构造 URL，
+        #     # 指向 APIM 网关路径时要相应调整，不如方案 A 直接。
+        # )        
 
     raise ValueError(
         f"Unsupported MODEL_ROUTING={routing!r}; use 'gateway' or 'direct'."

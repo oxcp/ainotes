@@ -20,8 +20,12 @@ RESOURCE_GROUP="${RESOURCE_GROUP:-rg-agenthost-workshop}"
 NAMESPACE="${NAMESPACE:-agent}"
 SERVICE_ACCOUNT="${SERVICE_ACCOUNT:-agent-sa}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
-# LLM model deployment name the agent calls through the APIM gateway
+# LLM model deployment name. In foundry mode the persistent agent uses this model;
+# inference routes through APIM via the Module 1 Foundry AI Gateway connection.
 LLM_MODEL="${LLM_MODEL:-gpt-5.4-mini}"
+# Foundry project (Module 1) — the persistent agent is created here, so it shows
+# up in the Foundry catalog. Endpoint format matches Module 1's output.
+FOUNDRY_PROJECT_NAME="${FOUNDRY_PROJECT_NAME:-maf-agent-prj}"
 # Pick a released version from https://github.com/kubernetes-sigs/agent-sandbox/releases
 AGENT_SANDBOX_VERSION="${AGENT_SANDBOX_VERSION:-v0.1.0}"
 
@@ -40,7 +44,15 @@ REDIS_NAME="redis-agenthost-${SN}"
 STORAGE_ACCOUNT="stcagenthost${SN}"
 APIM_NAME="apim-agenthost-${SN}"
 AKS_NAME="aks-agenthost-${SN}"
+# Foundry account/project from Module 1. The project endpoint (same format as the
+# Module 1 output) is where the persistent agent is created -> Foundry catalog.
+FOUNDRY_ACCOUNT="foundry-agenthost-${SN}"
+FOUNDRY_PROJECT_ENDPOINT="${FOUNDRY_PROJECT_ENDPOINT:-https://${FOUNDRY_ACCOUNT}.services.ai.azure.com/api/projects/${FOUNDRY_PROJECT_NAME}}"
 LOCATION="${LOCATION:-$(az group show -g "$RESOURCE_GROUP" --query location -o tsv | tr -d "\r\n")}"
+# Region for the AKS cluster + its node resource group. The AKS resource is still
+# created INTO the Module 1 resource group ($RESOURCE_GROUP); only its region
+# differs. Override with AKS_LOCATION=<region>.
+AKS_LOCATION="${AKS_LOCATION:-malaysiawest}"
 echo "    ACR=$ACR_NAME  UAMI=$IDENTITY_NAME  Redis=$REDIS_NAME  Storage=$STORAGE_ACCOUNT  APIM=$APIM_NAME"
 
 echo "==> [2/9] Building and pushing the agent image to the EXISTING ACR"
@@ -54,7 +66,7 @@ az deployment group create \
   --resource-group "$RESOURCE_GROUP" \
   --template-file aks.bicep \
   --parameters \
-      location="$LOCATION" \
+      location="$AKS_LOCATION" \
       deploymentSN="$SN" \
       acrName="$ACR_NAME" \
       identityName="$IDENTITY_NAME" \
@@ -104,6 +116,7 @@ kubectl create secret generic agent-config \
   --from-literal=blob-container="agent-state" \
   --from-literal=apim-endpoint="$APIM_GATEWAY_URL" \
   --from-literal=llm-model="$LLM_MODEL" \
+  --from-literal=foundry-project-endpoint="$FOUNDRY_PROJECT_ENDPOINT" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 echo "==> [8/9] Deploying the agent as a Sandbox custom resource"

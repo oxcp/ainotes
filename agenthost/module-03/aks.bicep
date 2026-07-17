@@ -13,8 +13,8 @@
 
 targetScope = 'resourceGroup'
 
-@description('Azure region (should match Module 1)')
-param location string
+@description('Azure region for the AKS cluster + its node resource group. Defaults to westus2; may differ from the Module 1 region. The AKS resource is still created INTO the Module 1 resource group.')
+param location string = 'malaysiawest'
 
 @description('Deployment suffix from Module 1 (resource-group tag deploymentSN)')
 param deploymentSN string
@@ -34,14 +34,14 @@ param namespace string = 'agent'
 @description('Kubernetes service account federated with the Module 1 UAMI')
 param serviceAccountName string = 'agent-sa'
 
-@description('Kubernetes version')
-param kubernetesVersion string = '1.35'
+@description('Kubernetes version. Leave EMPTY to use the AKS-recommended default (safest). Pinning a minor that is not GA in the target region makes control-plane provisioning fail — the node resource group is created but stays empty.')
+param kubernetesVersion string = ''
 
 @description('System node pool VM size')
-param systemNodeVmSize string = 'Standard_D2s_v5'
+param systemNodeVmSize string = 'Standard_D4as_v5'
 
 @description('Kata node pool VM size (nested-virtualisation capable SKU)')
-param kataNodeVmSize string = 'Standard_D4s_v5'
+param kataNodeVmSize string = 'Standard_D4as_v5'
 
 var aksName = 'aks-agenthost-${deploymentSN}'
 var acrPullRoleId = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
@@ -71,7 +71,10 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
     deploymentSN: deploymentSN
   }
   properties: {
-    kubernetesVersion: kubernetesVersion
+    kubernetesVersion: empty(kubernetesVersion) ? null : kubernetesVersion
+    // Explicit node resource group so the VMSS / VNet / NSG / Load Balancer are
+    // easy to find. (AKS puts ALL node infra here, NOT in this deployment's RG.)
+    nodeResourceGroup: 'rg-${aksName}-nodes'
     dnsPrefix: aksName
     enableRBAC: true
     oidcIssuerProfile: {
@@ -91,17 +94,19 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
         vmSize: systemNodeVmSize
         osType: 'Linux'
         mode: 'System'
+        type: 'VirtualMachineScaleSets'
         enableAutoScaling: true
         nodeTaints: []
       }
       {
         name: 'kata'
-        count: 0
+        count: 1
         minCount: 0
         maxCount: 10
         vmSize: kataNodeVmSize
         osType: 'Linux'
         mode: 'User'
+        type: 'VirtualMachineScaleSets'
         enableAutoScaling: true
         nodeTaints: [
           'kata=true:NoSchedule'
@@ -153,6 +158,7 @@ resource federatedCredential 'Microsoft.ManagedIdentity/userAssignedIdentities/f
 
 output aksName string = aks.name
 output aksFqdn string = aks.properties.fqdn
+output aksNodeResourceGroup string = aks.properties.nodeResourceGroup
 output aksOidcIssuerUrl string = aks.properties.oidcIssuerProfile.issuerURL
 output identityClientId string = identity.properties.clientId
 output acrLoginServer string = acr.properties.loginServer

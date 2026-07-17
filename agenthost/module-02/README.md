@@ -213,6 +213,66 @@ If you are using APIM as the AI gateway ("gateway" mode set in the `azure.yaml`)
 ![azd_deployed_playground_aigw](../pic/azd_deployed_playground_aigw.png)
 
 
+## (Optional) Route `direct` mode through APIM by registering it as the project's AI Gateway
+
+`gateway` mode calls APIM explicitly. You can **also** make **`direct` mode** go through
+APIM — without changing any code — by registering APIM as the Foundry **project's AI
+Gateway**. Foundry then transparently forwards the project's model inference (including
+agent runs) to APIM. The two modes stay independent:
+
+| | Who authenticates the **caller** | What APIM sees inbound |
+|---|---|---|
+| `gateway` | **APIM** (`validate-jwt` on the `foundry-ai-gateway` API) | the **end-caller** Entra token |
+| `direct` + AI Gateway | **Foundry project RBAC** (`Azure AI User`) | the **Foundry project managed identity** token |
+
+### Step A — Register APIM as the project's AI Gateway (creates a NEW API)
+
+In the Foundry portal: **Operate → Admin → AI Gateway → Add AI Gateway → Use existing →
+Add project to gateway**. This **auto-creates a new API in APIM** (separate from the
+`foundry-ai-gateway` API that `gateway` mode uses). From now on, `direct`-mode model
+calls are routed through APIM.
+
+### Step B — Harden the new API (add `validate-jwt`)
+
+By default the auto-created API only has a rate-limit (flow-limit) policy — **no token
+validation**. Because the APIM URL is publicly reachable, add a `validate-jwt` that
+locks the API to **only your Foundry project managed identity** (the identity Foundry
+uses to forward to APIM). This is defense-in-depth on top of the project RBAC that
+already authenticates the end caller.
+
+1. **APIM portal → APIs →** the **new** auto-created API (NOT `foundry-ai-gateway` / path `/foundry`).
+2. **Inbound processing → `</>` (code view)**.
+3. Insert the `<validate-jwt>` element from
+   [ai-gateway-inbound-policy.xml](ai-gateway-inbound-policy.xml) into the existing
+   `<inbound>`, **right after `<base />` and before the auto-generated rate-limit** —
+   **do not replace the whole policy** (keep the rate-limit APIM added).
+4. Fill the placeholders and apply.
+
+Get the placeholder values:
+
+```bash
+export RESOURCE_GROUP="rg-agenthost-workshop"
+export SN=$(az group show -g "$RESOURCE_GROUP" --query "tags.deploymentSN" -o tsv)
+
+# __TENANT_ID__
+az account show --query tenantId -o tsv
+
+# Foundry project managed identity objectId (principalId) → use for the `oid` claim
+az cognitiveservices account show -g "$RESOURCE_GROUP" -n "foundry-agenthost-$SN" \
+  --query "identity.principalId" -o tsv
+# To get the application (client) id for the `appid` claim, resolve the SP:
+#   az ad sp show --id <principalId> --query appId -o tsv
+```
+
+> **Phased rollout (avoid a surprise 401):** first apply with only `openid-config` +
+> `issuers` + `audiences` (comment out `required-claims`) and confirm `direct` mode
+> still works; then turn on APIM **Trace**, send one `direct`-mode request, read the
+> inbound JWT's real `oid`/`appid`, fill `required-claims`, and re-apply to lock it down.
+
+> ⚠️ Do **not** add this project-MI lock to the `gateway`-mode API (`foundry-ai-gateway`,
+> path `/foundry`) — that API validates the **end-caller** token, so locking it to the
+> project MI would break `gateway` mode.
+
 ## Files in This Module
 
 | File | Description |
@@ -221,6 +281,7 @@ If you are using APIM as the AI gateway ("gateway" mode set in the `azure.yaml`)
 | `agent-src/main.py` | Agent, served with `ResponsesHostServer`; `build_client()` selects `FoundryChatClient` (direct) or `OpenAIChatClient` → APIM gateway based on `MODEL_ROUTING` |
 | `agent-src/requirements.txt` | Python dependencies for the hosted agent (both `agent-framework-foundry` and `agent-framework-openai`) |
 | `agent-src/Dockerfile` | Container build for the hosted agent runtime |
+| `ai-gateway-inbound-policy.xml` | `validate-jwt` fragment to paste into the auto-created AI-Gateway API (locks it to the Foundry project managed identity — see the optional section above) |
 
 ## Next Step
 

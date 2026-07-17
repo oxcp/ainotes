@@ -8,15 +8,31 @@
 | 特性 | 实现 |
 |---|---|
 | **简单推理循环** | 查询 → 调用 LLM → 保存状态 → 返回结果（`ReflectionAgent`） |
-| **Microsoft Agent Framework** | `agent_framework.Agent` + `OpenAIChatClient` 路由 Foundry（经 APIM 网关） |
-| **LLM Endpoint 配置** | `AGENT_APIM_ENDPOINT`（自动追加 `/openai/v1`）或 `LLM_BASE_URL` 完整覆盖 |
-| **HTTP Authorization** | 请求头 `Authorization: Bearer <token>`（SDK `azure_ad_token`/provider） |
-| **Bearer Token 来源** | 静态密钥 `LLM_API_KEY`，或留空 → 使用 **Workload Identity** 自动获取 AAD token |
+| **Foundry catalog 可见** | `foundry` 模式用 **Foundry Agent Service** 创建**持久 agent**，出现在 Foundry catalog / playground |
+| **模型经 APIM** | 持久 agent 的模型推理经 **Module 1 的 Foundry AI Gateway 连接**（指向 APIM）路由 |
+| **Microsoft Agent Framework** | `agent_framework.Agent` + `AzureAIAgentClient`（foundry）或 `OpenAIChatClient`（gateway） |
 | **交互 Portal** | 根路径 `/` 提供网页聊天 UI（单页，无外部依赖） |
 | **状态持久化** | Azure Managed Redis（SSL 端口 10000），`agent:state:<id>`，TTL 可配 |
 | **休眠 / 恢复** | Pod 重启（agent-sandbox pause/resume）后从 Redis 自动恢复状态 |
 | **冷态快照** | preStop `lifecycle-hook.sh` 将状态 flush 到 Blob Storage |
 | **K8s 探针** | `/health`（liveness）、`/ready`（readiness） |
+
+## 两种模式（AGENT_MODE）
+
+| 模式 | Foundry catalog 可见 | 模型经 APIM | 实现 |
+|---|---|---|---|
+| **`foundry`**（默认，✅ 同时满足两点） | ✅ 持久 agent 在 catalog | ✅ 经项目的 Foundry AI Gateway 连接（→ APIM） | `AzureAIAgentClient` + `create_agent` |
+| `gateway` | ❌ | ✅ app 直连 APIM | `OpenAIChatClient(base_url=APIM/openai/v1)` |
+
+> **要同时满足「catalog 可见」+「模型经 APIM」→ 用 `foundry` 模式。**
+> - **catalog 可见**：app 用 `FOUNDRY_PROJECT_ENDPOINT` + `DefaultAzureCredential` 在 Module 1 项目里
+>   `create_agent`（按 `FOUNDRY_AGENT_NAME` 复用），agent 出现在 Foundry catalog，可在 playground 试用。
+> - **模型经 APIM**：**不是** app 直连 APIM，而是 Module 1 已在项目上注册的
+>   **Foundry AI Gateway 连接**（`foundry-apim-gateway`，category `ApiManagement`，target=APIM）。
+>   项目内的模型推理（含 agent 运行）由 Foundry 自动路由到 APIM。
+> - **前提**：① UAMI 有项目的 **Azure AI User** 角色（Module 1 已授予）；
+>   ② 首次需在门户 **Operate → Admin → AI Gateway → Add AI Gateway → Use existing → Add project to gateway**
+>   把项目挂到网关（Module 1 README 步骤 5）。
 
 ## 目录结构
 

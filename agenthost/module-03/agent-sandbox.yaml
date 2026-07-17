@@ -98,6 +98,18 @@ spec:
                 secretKeyRef:
                   name: agent-config
                   key: blob-container
+            # ── Mode: foundry (persistent agent, visible in Foundry catalog) ──
+            # Model calls route through APIM via the Module 1 Foundry AI Gateway
+            # connection (registered on the project) — no direct APIM call here.
+            - name: AGENT_MODE
+              value: "foundry"
+            - name: FOUNDRY_PROJECT_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: agent-config
+                  key: foundry-project-endpoint
+            - name: FOUNDRY_AGENT_NAME
+              value: "agenthost-reflection-agent"
             - name: AGENT_APIM_ENDPOINT
               valueFrom:
                 secretKeyRef:
@@ -109,9 +121,8 @@ spec:
                   name: agent-config
                   key: llm-model
             # LLM_API_KEY intentionally unset: the app uses Workload Identity
-            # (DefaultAzureCredential) to obtain a Bearer token for the agent.
-            # The gateway validate-jwt checks the issuer only (not the audience),
-            # so the Foundry data-plane scope works.
+            # (DefaultAzureCredential). The UAMI has the "Azure AI User" role on
+            # the Foundry account (Module 1) to create/run agents.
             - name: LLM_TOKEN_SCOPE
               value: "https://ai.azure.com/.default"
             - name: AGENT_REDIS_TTL_SECONDS

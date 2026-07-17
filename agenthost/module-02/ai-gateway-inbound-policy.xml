@@ -1,0 +1,69 @@
+<!--
+  ai-gateway-inbound-policy.xml
+  =============================
+  A `validate-jwt` inbound policy fragment for the APIM API that Foundry
+  AUTO-CREATES when you register APIM as the project's AI Gateway (used by the
+  `direct` routing mode). It locks that gateway down so only your Foundry
+  PROJECT managed identity (the identity Foundry uses to forward inference to
+  APIM) can call it — defense-in-depth on top of the project RBAC that already
+  authenticates the end caller.
+
+  WHY: in `direct` mode the end caller is authenticated by Foundry project RBAC
+  (Azure AI User), NOT by APIM. The token APIM sees on this hop is the Foundry
+  PROJECT managed identity (audience https://ai.azure.com). This policy makes
+  APIM independently verify that inbound identity, so the (publicly reachable)
+  gateway URL cannot be abused by other callers — it would otherwise only have
+  the auto-generated rate-limit.
+
+  ⚠️ PLACEMENT — DO NOT REPLACE THE WHOLE POLICY:
+    Insert ONLY the <validate-jwt> element below into the AI-Gateway API's
+    existing <inbound> block, right AFTER <base /> and BEFORE the auto-generated
+    rate-limit / rate-limit-by-key. Keep every other policy the AI Gateway added.
+
+    <inbound>
+      <base />
+      <!-- paste <validate-jwt> here -->
+      <rate-limit ... />        <!-- keep the auto-generated one -->
+    </inbound>
+
+  ⚠️ DO NOT put this on the gateway-mode API (`foundry-ai-gateway`, path /foundry).
+    That one validates the END-CALLER token; locking it to the project MI would
+    break `gateway` mode.
+
+  PLACEHOLDERS (fill before applying):
+    __TENANT_ID__               your Entra tenant id  (az account show --query tenantId -o tsv)
+    __PROJECT_MI_CLIENT_ID__    Foundry project MI application (client) id   — use the appid claim
+    __PROJECT_MI_OBJECT_ID__    Foundry project MI object id (principalId)   — use the oid claim
+                                (pick ONE of appid / oid; keep that <claim>, delete the other)
+
+  PHASED ROLLOUT (recommended to avoid a surprise 401):
+    1) First apply with ONLY <openid-config> + <issuers> + <audiences> (comment
+       out <required-claims>). Confirm `direct` mode still works end-to-end.
+    2) Turn on APIM Trace, send one `direct`-mode request, read the inbound JWT's
+       real oid / appid.
+    3) Fill <required-claims> with that value and re-apply to lock it down.
+-->
+<validate-jwt header-name="Authorization"
+              failed-validation-httpcode="401"
+              failed-validation-error-message="Unauthorized: invalid or missing token">
+  <openid-config url="https://login.microsoftonline.com/__TENANT_ID__/v2.0/.well-known/openid-configuration" />
+  <issuers>
+    <issuer>https://sts.windows.net/__TENANT_ID__/</issuer>
+    <issuer>https://login.microsoftonline.com/__TENANT_ID__/v2.0</issuer>
+  </issuers>
+  <audiences>
+    <!-- Matches the Foundry AI Gateway connection audience registered in module-01 -->
+    <audience>https://ai.azure.com</audience>
+  </audiences>
+  <required-claims>
+    <!-- Lock to ONLY the Foundry project managed identity. Keep appid OR oid. -->
+    <claim name="appid" match="any">
+      <value>__PROJECT_MI_CLIENT_ID__</value>
+    </claim>
+    <!--
+    <claim name="oid" match="any">
+      <value>__PROJECT_MI_OBJECT_ID__</value>
+    </claim>
+    -->
+  </required-claims>
+</validate-jwt>

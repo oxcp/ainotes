@@ -196,7 +196,7 @@ Refer to the [agent-sandbox docs](https://agent-sandbox.sigs.k8s.io/docs/) for p
 ## Architecture Notes
 
 - **Reuse, not recreate**: `aks.bicep` references the Module 1 ACR / UAMI / Storage as `existing`; only the AKS cluster and role/federation wiring are new.
-- **agent-sandbox**: the `Sandbox` CRD (`agents.x-k8s.io/v1beta1`) + controller manage the agent as an isolated, stateful, singleton pod with stable identity and lifecycle — replacing the self-built E2B Manager (which does not run on Azure).
+- **agent-sandbox**: the `Sandbox` CRD (`agents.x-k8s.io/v1beta1`) + controller manage the agent as an isolated, stateful, singleton pod with stable identity and lifecycle.
 - **Workload Identity**: the Module 1 UAMI (`id-agenthost-<SN>`) gets a federated credential trusting the AKS OIDC issuer for `system:serviceaccount:agent:agent-sa` — pods obtain Azure AD tokens with no secrets.
 - **Azure Managed Redis**: Module 1 provisions `redisEnterprise` (not classic Redis); it uses **SSL port 10000**. Manifests are set accordingly.
 - **AI Gateway**: model calls route through APIM at `https://apim-agenthost-<SN>.azure-api.net/foundry` (the Foundry Responses gateway from Module 1).
