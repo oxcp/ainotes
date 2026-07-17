@@ -36,18 +36,20 @@ if [[ -z "${DEPLOYMENT_SN:-}" ]]; then
 fi
 
 DEPLOYMENT_NAME="main-${DEPLOYMENT_SN}"
+BICEP_PATH="./main.bicep"
 
 echo "==> Deploying main.bicep (single-step Bicep provisioning)"
 echo "    Resource Group  : $RESOURCE_GROUP"
 echo "    Location        : $LOCATION"
 echo "    Deployment SN   : $DEPLOYMENT_SN"
 echo "    Deployment name : $DEPLOYMENT_NAME"
+echo "    Bicep path      : $BICEP_PATH"
 echo ""
 
 az deployment sub create \
   --name "$DEPLOYMENT_NAME" \
   --location "$LOCATION" \
-  --template-file "${SCRIPT_DIR}/main.bicep" \
+  --template-file "$BICEP_PATH" \
   --parameters \
       resourceGroupName="$RESOURCE_GROUP" \
       location="$LOCATION" \

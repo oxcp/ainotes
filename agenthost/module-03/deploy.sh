@@ -52,7 +52,7 @@ LOCATION="${LOCATION:-$(az group show -g "$RESOURCE_GROUP" --query location -o t
 # Region for the AKS cluster + its node resource group. The AKS resource is still
 # created INTO the Module 1 resource group ($RESOURCE_GROUP); only its region
 # differs. Override with AKS_LOCATION=<region>.
-AKS_LOCATION="${AKS_LOCATION:-malaysiawest}"
+AKS_LOCATION="${AKS_LOCATION:-eastus2}"
 echo "    ACR=$ACR_NAME  UAMI=$IDENTITY_NAME  Redis=$REDIS_NAME  Storage=$STORAGE_ACCOUNT  APIM=$APIM_NAME"
 
 echo "==> [2/9] Building and pushing the agent image to the EXISTING ACR"
@@ -98,14 +98,14 @@ echo "==> [6/9] Creating namespace"
 kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
 
 echo "==> [7/9] Creating runtime secrets from Module 1 Redis / Storage / APIM"
-# Azure Managed Redis (redisEnterprise): SSL on port 10000
-REDIS_HOST=$(az redisenterprise show -g "$RESOURCE_GROUP" -n "$REDIS_NAME" --query hostName -o tsv | tr -d "\r\n")
-REDIS_KEY=$(az redisenterprise database list-keys -g "$RESOURCE_GROUP" --cluster-name "$REDIS_NAME" --query primaryKey -o tsv | tr -d "\r\n")
+# Azure Cache for Redis: SSL on port 6380
+REDIS_HOST=$(az redis show -g "$RESOURCE_GROUP" -n "$REDIS_NAME" --query hostName -o tsv | tr -d "\r\n")
+REDIS_KEY=$(az redis list-keys -g "$RESOURCE_GROUP" -n "$REDIS_NAME" --query primaryKey -o tsv | tr -d "\r\n")
 APIM_GATEWAY_URL="https://${APIM_NAME}.azure-api.net/foundry"
 
 kubectl create secret generic agent-redis \
   --namespace "$NAMESPACE" \
-  --from-literal=connection-string="${REDIS_HOST}:10000,password=${REDIS_KEY},ssl=True,abortConnect=False" \
+  --from-literal=connection-string="${REDIS_HOST}:6380,password=${REDIS_KEY},ssl=True" \
   --from-literal=redis-host="$REDIS_HOST" \
   --from-literal=redis-password="$REDIS_KEY" \
   --dry-run=client -o yaml | kubectl apply -f -
@@ -133,7 +133,7 @@ echo "    AKS           : $AKS_NAME"
 echo "    Namespace     : $NAMESPACE"
 echo "    agent-sandbox : $AGENT_SANDBOX_VERSION (ns agent-sandbox-system)"
 echo "    ACR           : ${ACR_NAME}.azurecr.io"
-echo "    Redis         : ${REDIS_HOST}:10000 (SSL)"
+echo "    Redis         : ${REDIS_HOST}:6380 (SSL)"
 echo "    APIM          : $APIM_GATEWAY_URL"
 echo ""
 kubectl get sandbox,pods -n "$NAMESPACE"

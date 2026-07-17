@@ -1,5 +1,5 @@
 // main.bicep — Module 1: Core Infrastructure
-// Deploys a Resource Group, Azure Managed Redis, Blob Storage, APIM,
+// Deploys a Resource Group, Azure Cache for Redis, Blob Storage, APIM,
 // Azure Key Vault, Azure Container Registry, a Foundry (AIServices) account
 // with project, model deployment, Defender for AI, RAI policies, and the APIM
 // AI gateway, Entra ID app registration (via deployment script), and UAMI.
@@ -13,7 +13,7 @@ param resourceGroupName string = 'rg-agenthost-workshop'
 @description('Azure region for all resources')
 param location string = 'eastus2'
 
-@description('Azure Managed Redis cache name')
+@description('Azure Cache for Redis cache name')
 param redisName string = 'redis-agenthost'
 
 @description('Blob Storage account name (3-24 chars, lowercase alphanumeric)')

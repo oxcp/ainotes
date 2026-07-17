@@ -79,27 +79,25 @@ resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' 
   location: location
 }
 
-// ── Azure Managed Redis (Balanced B0) ───────────────────────────────────────
-resource redis 'Microsoft.Cache/redisEnterprise@2025-07-01' = {
+// ── Azure Cache for Redis (Standard C0) ────────────────────────────────────
+// Temporary: replacing Azure Managed Redis Enterprise with standard Azure Cache
+resource redis 'Microsoft.Cache/redis@2024-03-01' = {
   name: redisName
   location: location
-  sku: {
-    name: 'Balanced_B0'
-  }
   properties: {
+    sku: {
+      name: 'Standard'
+      family: 'C'
+      capacity: 0
+    }
+    enableNonSslPort: false
+    minimumTlsVersion: '1.2'
     publicNetworkAccess: 'Enabled'
   }
 }
 
-resource redisDefaultDb 'Microsoft.Cache/redisEnterprise/databases@2025-07-01' = {
-  parent: redis
-  name: 'default'
-  properties: {
-    clientProtocol: 'Encrypted'
-    clusteringPolicy: 'OSSCluster'
-    evictionPolicy: 'AllKeysLRU'
-  }
-}
+// Note: Standard Redis has no database concept like Enterprise does.
+// Connection: ${redisHostName}:6380 with Entra ID or access key auth
 
 // ── Azure Blob Storage (Cool tier, versioning enabled) ───────────────────────
 resource storage 'Microsoft.Storage/storageAccounts@2023-01-01' = {
@@ -409,6 +407,7 @@ resource foundryDefender 'Microsoft.CognitiveServices/accounts/defenderForAISett
 
 // ── Outputs ──────────────────────────────────────────────────────────────────
 output redisHostName string = redis.properties.hostName
+output redisPort int = 6380
 output storageAccountName string = storage.name
 output apimServiceUrl string = 'https://${apim.properties.gatewayUrl}'
 output identityClientId string = identity.properties.clientId
@@ -431,7 +430,6 @@ output foundryApimGatewayConnectionName string = foundryApimGatewayConnection.na
 // reported once the deployment completes (e.g. via `az deployment ... show`).
 output deploymentStatus object = {
   redis: redis.properties.provisioningState
-  redisDefaultDb: redisDefaultDb.properties.provisioningState
   storage: storage.properties.provisioningState
   apim: apim.properties.provisioningState
   keyVault: keyVault.properties.provisioningState
