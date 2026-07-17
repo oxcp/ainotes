@@ -113,7 +113,7 @@ Call the model through the gateway (the gateway URL is the `apimFoundryGatewayUr
 export ACCESSTOKEN=$(az account get-access-token --query accessToken -o tsv | tr -d '\r\n')
 
 curl -s -X POST \
-  "https://apim-agenthost-${SN}.azure-api.net/foundry/responses" \
+  "https://apim-agenthost-${SN}.azure-api.net/foundry/openai/v1/responses" \
   -H "Authorization: Bearer $ACCESSTOKEN" \
   -H "Content-Type: application/json" \
   -d '{
