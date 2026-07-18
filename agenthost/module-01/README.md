@@ -188,8 +188,9 @@ To make this APIM instance appear in **Microsoft Foundry portal → Operate → 
 1. Open **AI Gateway**.
 2. Select **Add AI Gateway**.
 3. Choose **Use existing**.
-4. Select the deployed `apim-agenthost-<deploymentSN>` instance.
-5. Open the gateway entry and select **Add project to gateway** for `maf-agent-prj`.
+4. Select the deployed foundry account `foundry-agenthost-<deploymentSN>` and the APIM `apim-agenthost-<deploymentSN>` instance, click "Add".
+5. Open the gateway entry and check the foundry project is automatically added to the gateway.
+![module-01-AIGW-added](../pic/module-01-AIGW-added.png)
 
 Call the model through the gateway (the gateway URL is the `apimFoundryGatewayUrl` output). The caller sends its own Entra ID token; APIM validates it and forwards to Foundry with its managed identity:
 
@@ -206,6 +207,27 @@ curl -s -X POST \
   }' \
 | jq -r '.output'
 
+```
+You should see output like below:
+```
+[
+  {
+    "type": "message",
+    "id": "msg_094f276e62fae6ff006a5afcf4c690819685e624b6211a6c2d",
+    "response_id": "resp_094f276e62fae6ff006a5afcf47f2081968f90d4187a8cb827",
+    "phase": "final_answer",
+    "role": "assistant",
+    "content": [
+      {
+        "type": "output_text",
+        "text": "Hello! I’m here and ready to help through the APIM AI gateway. What can I do for you today?",
+        "annotations": [],
+        "logprobs": []
+      }
+    ],
+    "status": "completed"
+  }
+]
 ```
 
 Retrieve the key outputs after deployment:
