@@ -37,10 +37,6 @@ param keyVaultName string = 'kv-agenthost'
 @description('Azure Container Registry name (5-50 chars, lowercase alphanumeric)')
 param acrName string = 'acragenthost'
 
-//@description('Azure OpenAI endpoint URL')
-//param aoaiEndpoint string = 'https://kacai-3055-resource.services.ai.azure.com/openai/v1'
-//param aoaiEndpoint string = 'https://kacai-3055-resource.services.ai.azure.com/api/projects/kacai-3055'
-
 @description('Entra ID tenant ID used by the APIM AI gateway validate-jwt policy')
 param tenantId string = subscription().tenantId
 

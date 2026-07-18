@@ -62,12 +62,7 @@ chmod +x setup.sh
 ./setup.sh
 ```
 
-Optional overrides (export before running, or pass extra `key=value` Bicep parameters as arguments):
-
-```bash
-RESOURCE_GROUP="rg-agenthost-workshop" LOCATION="eastus2" ./setup.sh
-./setup.sh projectName=my-proj modelDeploymentName=gpt-5.4-mini
-```
+> Before run the `setup.sh`, optionally you can override parameters in `main.bicep` as you need.
 
 Or run the equivalent Bicep deployment manually:
 
@@ -84,8 +79,97 @@ az deployment sub create \
       deploymentSN="$SN"
 
 ```
+> The bicep deployment or running `setup.sh` may take minutes to complete. After the successful deployment, you will see output including deployment info like below:
+```
+==> Deployment 'main-35153d' complete. Outputs:
+{
+  "acrLoginServer": {
+    "type": "String",
+    "value": "acragenthost35153d.azurecr.io"
+  },
+  "acrName": {
+    "type": "String",
+    "value": "acragenthost35153d"
+  },
+  "apimFoundryBackendName": {
+    "type": "String",
+    "value": "foundry-backend"
+  },
+  "apimFoundryGatewayUrl": {
+    "type": "String",
+    "value": "https://https://apim-agenthost-35153d.azure-api.net/foundry"
+  },
+  "apimServiceUrl": {
+    "type": "String",
+    "value": "https://https://apim-agenthost-35153d.azure-api.net"
+  },
+  "deploymentStatus": {
+    "type": "Object",
+    "value": {
+      "acr": "Succeeded",
+      "apim": "Succeeded",
+      "foundryAccount": "Succeeded",
+      "foundryModel": "Succeeded",
+      "foundryProject": "Succeeded",
+      "keyVault": "Succeeded",
+      "redis": "Succeeded",
+      "storage": "Succeeded"
+    }
+  },
+  "foundryApimGatewayConnectionName": {
+    "type": "String",
+    "value": "foundry-apim-gateway"
+  },
+  "foundryProjectEndpoint": {
+    "type": "String",
+    "value": "https://foundry-agenthost-35153d.services.ai.azure.com/api/projects/maf-agent-prj"
+  },
+  "foundryProjectId": {
+    "type": "String",
+    "value": "/subscriptions/c14f0d46-cae2-4c8e-b9ff-b73f094caa96/resourceGroups/rg-agenthost-workshop/providers/Microsoft.CognitiveServices/accounts/foundry-agenthost-35153d/projects/maf-agent-prj"
+  },
+  "foundryProjectName": {
+    "type": "String",
+    "value": "maf-agent-prj"
+  },
+  "foundryResourceName": {
+    "type": "String",
+    "value": "foundry-agenthost-35153d"
+  },
+  "identityClientId": {
+    "type": "String",
+    "value": "b7d427cc-960f-4060-9717-e0e7d5d4695e"
+  },
+  "keyVaultName": {
+    "type": "String",
+    "value": "kv-agenthost-35153d"
+  },
+  "keyVaultUri": {
+    "type": "String",
+    "value": "https://kv-agenthost-35153d.vault.azure.net/"
+  },
+  "modelDeploymentName": {
+    "type": "String",
+    "value": "gpt-5.4-mini"
+  },
+  "redisHostName": {
+    "type": "String",
+    "value": "redis-agenthost-35153d.redis.cache.windows.net"
+  },
+  "resourceGroupName": {
+    "type": "String",
+    "value": "rg-agenthost-workshop"
+  },
+  "storageAccountName": {
+    "type": "String",
+    "value": "stcagenthost35153d"
+  }
+}
 
-> **RBAC note:** the Foundry account sets `disableLocalAuth: true`, so APIM must call it with an Entra ID token from the user-assigned managed identity. The deployment therefore grants the UAMI the **Cognitive Services OpenAI User** role on the Foundry account. Creating that role assignment requires the deployer to have **Owner** or **User Access Administrator** on the resource group (Contributor alone cannot create role assignments).
+Next: proceed to module-02 to deploy the hosted agent with azd.
+```
+
+> **RBAC note:** the Foundry account sets `disableLocalAuth: true`, so APIM must call it with an Entra ID token from the user-assigned managed identity. The deployment therefore automatically grants the UAMI the **Cognitive Services OpenAI User** role on the Foundry account. Creating that role assignment requires the deployer to have **Owner** or **User Access Administrator** on the resource group (Contributor alone cannot create role assignments).
 
 ---
 
