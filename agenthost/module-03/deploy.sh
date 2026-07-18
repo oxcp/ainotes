@@ -11,7 +11,7 @@
 #
 # Usage: ./deploy.sh
 # Env overrides: RESOURCE_GROUP, LOCATION, NAMESPACE, SERVICE_ACCOUNT, IMAGE_TAG,
-#                AGENT_SANDBOX_VERSION
+#                KATA_NODEPOOL_NAME, KATA_NODE_VM_SIZE, AGENT_SANDBOX_VERSION
 # Prerequisites: Module 1 deployed; Docker, kubectl, az installed.
 
 set -euo pipefail
@@ -20,6 +20,8 @@ RESOURCE_GROUP="${RESOURCE_GROUP:-rg-agenthost-workshop}"
 NAMESPACE="${NAMESPACE:-agent}"
 SERVICE_ACCOUNT="${SERVICE_ACCOUNT:-agent-sa}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
+KATA_NODEPOOL_NAME="${KATA_NODEPOOL_NAME:-kata}"
+KATA_NODE_VM_SIZE="${KATA_NODE_VM_SIZE:-Standard_D4s_v3}"
 # LLM model deployment name. In foundry mode the persistent agent uses this model;
 # inference routes through APIM via the Module 1 Foundry AI Gateway connection.
 LLM_MODEL="${LLM_MODEL:-gpt-5.4-mini}"
@@ -63,7 +65,7 @@ az acr login --name "$ACR_NAME"
 docker build -t "${ACR_NAME}.azurecr.io/agent-host:${IMAGE_TAG}" agent-src/
 docker push "${ACR_NAME}.azurecr.io/agent-host:${IMAGE_TAG}"
 
-echo "==> [3/9] Deploying AKS (reusing ACR/UAMI/Storage) via Bicep"
+echo "==> [3/9] Deploying baseline AKS (reusing ACR/UAMI/Storage) via Bicep"
 az deployment group create \
   --resource-group "$RESOURCE_GROUP" \
   --template-file aks.bicep \
@@ -79,8 +81,29 @@ az deployment group create \
 
 IDENTITY_CLIENT_ID=$(az identity show -g "$RESOURCE_GROUP" -n "$IDENTITY_NAME" --query clientId -o tsv | tr -d "\r\n")
 
-echo "==> [4/9] Getting AKS credentials"
+echo "==> [4/9] Enabling AKS Pod Sandboxing on an Azure Linux node pool"
+if az aks nodepool show --resource-group "$RESOURCE_GROUP" --cluster-name "$AKS_NAME" --name "$KATA_NODEPOOL_NAME" --output none 2>/dev/null; then
+  echo "    Node pool $KATA_NODEPOOL_NAME already exists; reusing it"
+else
+  az aks nodepool add \
+    --resource-group "$RESOURCE_GROUP" \
+    --cluster-name "$AKS_NAME" \
+    --name "$KATA_NODEPOOL_NAME" \
+    --mode User \
+    --node-vm-size "$KATA_NODE_VM_SIZE" \
+    --node-count 1 \
+    --enable-cluster-autoscaler \
+    --min-count 0 \
+    --max-count 10 \
+    --os-sku AzureLinux \
+    --workload-runtime KataVmIsolation \
+    --node-taints "kata=true:NoSchedule" \
+    --labels "kata-containers=true" \
+    --output none
+fi
+az aks update --resource-group "$RESOURCE_GROUP" --name "$AKS_NAME" --output none
 az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$AKS_NAME" --overwrite-existing
+kubectl get runtimeclass kata-vm-isolation >/dev/null
 
 echo "==> [5/9] Installing the agent-sandbox controller from release manifest ($AGENT_SANDBOX_VERSION)"
 # Install core + extensions in one collision-free manifest, as recommended by
@@ -126,8 +149,10 @@ kubectl create secret generic agent-config \
   --dry-run=client -o yaml | kubectl apply -f -
 
 echo "==> [8/9] Deploying the agent as a Sandbox custom resource"
+cp agent-sandbox.yaml.example agent-sandbox.yaml
 sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|${IMAGE_TAG}|g; s|<NAMESPACE>|${NAMESPACE}|g; s|<IDENTITY_CLIENT_ID>|${IDENTITY_CLIENT_ID}|g" \
-  agent-sandbox.yaml | kubectl apply -f -
+  agent-sandbox.yaml > agent-sandbox.yaml.tmp && mv agent-sandbox.yaml.tmp agent-sandbox.yaml
+kubectl apply -f agent-sandbox.yaml
 
 echo "==> [9/9] Waiting for the Sandbox pod to become ready"
 kubectl wait --for=condition=Ready pod -l app=agent-host --namespace "$NAMESPACE" --timeout=3m || true
@@ -137,6 +162,7 @@ echo "==> Solution B (AKS + agent-sandbox) deployed, reusing Module 1 resources.
 echo "    SN            : $SN"
 echo "    AKS           : $AKS_NAME"
 echo "    Namespace     : $NAMESPACE"
+echo "    Kata pool     : $KATA_NODEPOOL_NAME ($KATA_NODE_VM_SIZE, AzureLinux, KataVmIsolation)"
 echo "    agent-sandbox : $AGENT_SANDBOX_VERSION (ns agent-sandbox-system)"
 echo "    ACR           : ${ACR_NAME}.azurecr.io"
 echo "    Redis         : ${REDIS_HOST}:6380 (SSL)"

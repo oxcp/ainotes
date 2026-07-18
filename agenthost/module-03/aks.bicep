@@ -7,9 +7,13 @@
 //   - Azure Blob Storage        : stcagenthost<SN>      (cold state, container agent-state)
 //   (Redis / APIM are consumed at runtime via Kubernetes secrets created by deploy.sh.)
 //
-// Creates: AKS (OIDC + Workload Identity), a Kata node pool, AcrPull for kubelet,
+// Creates: a baseline AKS cluster (OIDC + Workload Identity), AcrPull for kubelet,
 // Storage Blob Data Contributor for the UAMI, and a federated identity credential
 // on the UAMI trusting the AKS OIDC issuer for system:serviceaccount:<ns>:<sa>.
+//
+// The AKS Pod Sandboxing node pool is added by deploy.sh using `az aks nodepool add`
+// with `--os-sku AzureLinux --workload-runtime KataVmIsolation`, because the ARM/Bicep
+// schema lags behind the CLI surface for that runtime value.
 
 targetScope = 'resourceGroup'
 
@@ -40,8 +44,8 @@ param kubernetesVersion string = ''
 @description('System node pool VM size')
 param systemNodeVmSize string = 'Standard_D4as_v5'
 
-@description('Kata node pool VM size (nested-virtualisation capable SKU)')
-param kataNodeVmSize string = 'Standard_D4as_v5'
+@description('System node pool OS SKU. Azure Linux is recommended to align with the Pod Sandboxing host OS.')
+param systemNodeOsSku string = 'AzureLinux'
 
 var aksName = 'aks-agenthost-${deploymentSN}'
 var acrPullRoleId = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
@@ -93,27 +97,11 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
         maxCount: 3
         vmSize: systemNodeVmSize
         osType: 'Linux'
+        osSKU: systemNodeOsSku
         mode: 'System'
         type: 'VirtualMachineScaleSets'
         enableAutoScaling: true
         nodeTaints: []
-      }
-      {
-        name: 'kata'
-        count: 1
-        minCount: 0
-        maxCount: 10
-        vmSize: kataNodeVmSize
-        osType: 'Linux'
-        mode: 'User'
-        type: 'VirtualMachineScaleSets'
-        enableAutoScaling: true
-        nodeTaints: [
-          'kata=true:NoSchedule'
-        ]
-        nodeLabels: {
-          'kata-containers': 'true'
-        }
       }
     ]
     networkProfile: {

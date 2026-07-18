@@ -12,7 +12,7 @@
 | **模型经 APIM** | 持久 agent 的模型推理经 **Module 1 的 Foundry AI Gateway 连接**（指向 APIM）路由 |
 | **Microsoft Agent Framework** | `agent_framework.Agent` + `AzureAIAgentClient`（foundry）或 `OpenAIChatClient`（gateway） |
 | **交互 Portal** | 根路径 `/` 提供网页聊天 UI（单页，无外部依赖） |
-| **状态持久化** | Azure Managed Redis（SSL 端口 10000），`agent:state:<id>`，TTL 可配 |
+| **状态持久化** | Azure Cache for Redis（SSL 端口 6380），`agent:state:<id>`，TTL 可配 |
 | **休眠 / 恢复** | Pod 重启（agent-sandbox pause/resume）后从 Redis 自动恢复状态 |
 | **冷态快照** | preStop `lifecycle-hook.sh` 将状态 flush 到 Blob Storage |
 | **K8s 探针** | `/health`（liveness）、`/ready`（readiness） |
@@ -44,7 +44,7 @@ agent-src/
 ├── requirements.txt     # agent-framework-openai + redis + azure-identity
 ├── lifecycle-hook.sh    # preStop 钩子：Redis 状态 → Blob
 ├── .dockerignore
-├── .env.example         # 本地运行配置模板
+├── .env                 # 本地运行配置模板
 └── README.md            # 本文档
 ```
 
@@ -193,7 +193,7 @@ Content-Type: application/json
 |---|---|---|
 | `AGENT_ID` | `agent-poc-001` | 唯一 agent 标识（Pod 名注入） |
 | `AGENT_STATE_BACKEND` | `memory` | `memory` 或 `redis` |
-| `AGENT_REDIS_CONNECTION` | `localhost:6379` | Redis 连接串（AKS 用 `:10000,...,ssl=True`） |
+| `AGENT_REDIS_CONNECTION` | `localhost:6379` | Redis 连接串（AKS 用 `:6380,...,ssl=True`） |
 | `AGENT_REDIS_TTL_SECONDS` | `3600` | 状态在 Redis 的 TTL |
 | `AGENT_APIM_ENDPOINT` | （空） | APIM 网关 base URL；应用追加 `/openai/v1` 作为 client base_url |
 | `LLM_BASE_URL` | （空） | 完整 client base_url；设置则覆盖 `AGENT_APIM_ENDPOINT` |
@@ -211,7 +211,7 @@ Content-Type: application/json
 
 | 症状 | 解决 |
 |---|---|
-| `[Redis] Connection failed` | 检查 `AGENT_REDIS_CONNECTION`；AKS 用端口 10000 + `ssl=True` |
+| `[Redis] Connection failed` | 检查 `AGENT_REDIS_CONNECTION`；AKS 用端口 6380 + `ssl=True` |
 | `[LLM] HTTP 401` | Token 过期或 scope 错误；检查 UAMI 的 Cognitive Services 角色 |
 | 重启后 `reflection_count: 0` | 确认 `AGENT_STATE_BACKEND=redis` 且 Redis 可达 |
 | `[LLM] Simulated ...` | 未提供 token 且 Workload Identity 不可用（本地正常，模拟响应） |

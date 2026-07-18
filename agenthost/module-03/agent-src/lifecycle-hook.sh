@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # lifecycle-hook.sh — preStop hook for the agent-sandbox Sandbox pod.
 # Runs on SIGTERM (hibernate / delete / rolling update). Flushes the agent's
-# hot state from Azure Managed Redis to Azure Blob Storage so it can be
+# hot state from Azure Cache for Redis to Azure Blob Storage so it can be
 # restored on the next resume.
 #
 # Wired via agent-sandbox.yaml:
@@ -9,7 +9,7 @@
 #
 # Environment (injected by agent-sandbox.yaml):
 #   AGENT_ID                — unique agent identifier
-#   AGENT_REDIS_CONNECTION  — "<host>:10000,password=<key>,ssl=True,abortConnect=False"
+#   AGENT_REDIS_CONNECTION  — "<host>:6380,password=<key>,ssl=True"
 #   AGENT_STORAGE_ACCOUNT   — Azure Blob Storage account name
 #   AGENT_BLOB_CONTAINER    — Blob container (e.g. "agent-state")
 #   AZURE_CLIENT_ID         — UAMI client ID (Workload Identity, injected automatically)
@@ -43,7 +43,7 @@ state_file = f"/tmp/agent-state-{agent_id}.json"
 
 # Parse "<host>:<port>,password=..,ssl=True"
 parts = conn.split(",")
-host, port = (parts[0].split(":") + ["10000"])[:2]
+host, port = (parts[0].split(":") + ["6380"])[:2]
 opts = {}
 for p in parts[1:]:
     if "=" in p:

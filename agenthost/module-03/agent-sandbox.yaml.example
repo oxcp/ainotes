@@ -1,0 +1,176 @@
+# agent-sandbox.yaml — Module 3 (Solution B): agent runtime on Kubernetes via
+# kubernetes-sigs/agent-sandbox (https://github.com/kubernetes-sigs/agent-sandbox).
+#
+# The agent-sandbox *controller* is installed separately (release manifest — see deploy.sh);
+# this manifest declares the per-agent runtime as a `Sandbox` custom resource,
+# plus the Workload Identity service account, a Service, and a NetworkPolicy.
+#
+# Replace <ACR_NAME>, <IMAGE_TAG>, <NAMESPACE>, and <IDENTITY_CLIENT_ID> before
+# applying, or use deploy.sh which performs the sed substitution automatically.
+
+# ServiceAccount federated with the Module 1 UAMI (Azure AD Workload Identity)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: agent-sa
+  namespace: <NAMESPACE>
+  annotations:
+    azure.workload.identity/client-id: "<IDENTITY_CLIENT_ID>"
+  labels:
+    azure.workload.identity/use: "true"
+
+---
+# Sandbox — a stateful, singleton, isolated agent runtime managed by the
+# agent-sandbox controller. Stable identity + lifecycle (pause/resume/hibernate).
+apiVersion: agents.x-k8s.io/v1beta1
+kind: Sandbox
+metadata:
+  name: agent-host
+  namespace: <NAMESPACE>
+  labels:
+    app: agent-host
+    component: agent-runtime
+spec:
+  podTemplate:
+    metadata:
+      labels:
+        app: agent-host
+        component: agent-runtime
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: agent-sa
+      # AKS Pod Sandboxing runtime provided by the Azure Linux Kata node pool.
+      runtimeClassName: kata-vm-isolation
+      nodeSelector:
+        kata-containers: "true"
+      tolerations:
+        - key: kata
+          operator: Equal
+          value: "true"
+          effect: NoSchedule
+      # Pre-termination hook: checkpoint state to Blob before the pod stops
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: agent-host
+          image: <ACR_NAME>.azurecr.io/agent-host:<IMAGE_TAG>
+          ports:
+            - containerPort: 8080
+              name: http
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/app/lifecycle-hook.sh"]
+          env:
+            - name: AGENT_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: AGENT_STATE_BACKEND
+              value: "redis"
+            - name: AGENT_REDIS_CONNECTION
+              valueFrom:
+                secretKeyRef:
+                  name: agent-redis
+                  key: connection-string
+            - name: AGENT_STORAGE_ACCOUNT
+              valueFrom:
+                secretKeyRef:
+                  name: agent-config
+                  key: storage-account
+            - name: AGENT_BLOB_CONTAINER
+              valueFrom:
+                secretKeyRef:
+                  name: agent-config
+                  key: blob-container
+            # ── Mode: foundry (persistent agent, visible in Foundry catalog) ──
+            # Model calls route through APIM via the Module 1 Foundry AI Gateway
+            # connection (registered on the project) — no direct APIM call here.
+            - name: AGENT_MODE
+              value: "foundry"
+            - name: FOUNDRY_PROJECT_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: agent-config
+                  key: foundry-project-endpoint
+            - name: FOUNDRY_AGENT_NAME
+              value: "agenthost-reflection-agent"
+            - name: AGENT_APIM_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: agent-config
+                  key: apim-endpoint
+            - name: LLM_MODEL
+              valueFrom:
+                secretKeyRef:
+                  name: agent-config
+                  key: llm-model
+            # LLM_API_KEY intentionally unset: the app uses Workload Identity
+            # (DefaultAzureCredential). The UAMI has the "Azure AI User" role on
+            # the Foundry account (Module 1) to create/run agents.
+            - name: LLM_TOKEN_SCOPE
+              value: "https://ai.azure.com/.default"
+            - name: AGENT_REDIS_TTL_SECONDS
+              value: "3600"
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "2000m"
+              memory: "2Gi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent-host
+  namespace: <NAMESPACE>
+  labels:
+    app: agent-host
+spec:
+  selector:
+    app: agent-host
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: ClusterIP
+
+---
+# NetworkPolicy: restrict the sandbox pod's traffic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: agent-host-netpol
+  namespace: <NAMESPACE>
+spec:
+  podSelector:
+    matchLabels:
+      app: agent-host
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow in-cluster callers to reach the agent HTTP port
+    - ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    # Allow outbound to Azure Cache for Redis (6380) and HTTPS (443) only
+    - ports:
+        - protocol: TCP
+          port: 6380
+        - protocol: TCP
+          port: 443
