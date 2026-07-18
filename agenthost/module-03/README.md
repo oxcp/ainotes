@@ -6,7 +6,7 @@
 
 Deploy agents on **Azure Kubernetes Service (AKS)** using **official AKS Pod Sandboxing** on an **Azure Linux** Kata node pool, with **[agent-sandbox](https://github.com/kubernetes-sigs/agent-sandbox)** (kubernetes-sigs) managing the agent lifecycle as `Sandbox` custom resources. This is the highest-control, strongest-isolation option for high-security ToB scenarios.
 
-> **Why agent-sandbox (not E2B)?** `agent-sandbox` is a CNCF/Kubernetes-SIG project that provides a `Sandbox` CRD + controller for managing isolated, stateful, singleton agent pods with a **stable identity**, **persistent storage**, and **lifecycle management** (create / pause / resume / hibernate). Its built-in hibernation replaces the KEDA scale-to-zero.
+> **Why agent-sandbox?** `agent-sandbox` is a CNCF/Kubernetes-SIG project that provides a `Sandbox` CRD + controller for managing isolated, stateful, singleton agent pods with a **stable identity**, **persistent storage**, and **lifecycle management** (create / pause / resume / hibernate). Its built-in hibernation replaces the KEDA scale-to-zero.
 
 This module **reuses the resources Module 1 already created** (it does not recreate them) and provisions the AKS cluster **into the same Module 1 resource group**:
 

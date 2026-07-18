@@ -3,37 +3,19 @@
 #
 # The agent-sandbox *controller* is installed separately (release manifest — see deploy.sh);
 # this manifest declares the per-agent runtime as a `Sandbox` custom resource,
-# plus the Workload Identity service account, Kata RuntimeClass, a Service, and a
-# NetworkPolicy.
+# plus the Workload Identity service account, a Service, and a NetworkPolicy.
 #
-# Replace <ACR_NAME>, <IMAGE_TAG>, <NAMESPACE>, and <IDENTITY_CLIENT_ID> before
+# Replace acragenthost35153d, latest, agent, and b7d427cc-960f-4060-9717-e0e7d5d4695e before
 # applying, or use deploy.sh which performs the sed substitution automatically.
 
----
-# RuntimeClass for Kata Containers (Micro-VM isolation) — used by the Sandbox pod
-apiVersion: node.k8s.io/v1
-kind: RuntimeClass
-metadata:
-  name: kata-containers
-handler: kata
-scheduling:
-  nodeSelector:
-    kata-containers: "true"
-  tolerations:
-    - key: kata
-      operator: Equal
-      value: "true"
-      effect: NoSchedule
-
----
 # ServiceAccount federated with the Module 1 UAMI (Azure AD Workload Identity)
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: agent-sa
-  namespace: <NAMESPACE>
+  namespace: agent
   annotations:
-    azure.workload.identity/client-id: "<IDENTITY_CLIENT_ID>"
+    azure.workload.identity/client-id: "b7d427cc-960f-4060-9717-e0e7d5d4695e"
   labels:
     azure.workload.identity/use: "true"
 
@@ -44,7 +26,7 @@ apiVersion: agents.x-k8s.io/v1beta1
 kind: Sandbox
 metadata:
   name: agent-host
-  namespace: <NAMESPACE>
+  namespace: agent
   labels:
     app: agent-host
     component: agent-runtime
@@ -57,8 +39,10 @@ spec:
         azure.workload.identity/use: "true"
     spec:
       serviceAccountName: agent-sa
-      # Kata Container runtime for Micro-VM isolation
-      runtimeClassName: kata-containers
+      # AKS Pod Sandboxing runtime provided by the Azure Linux Kata node pool.
+      runtimeClassName: kata-vm-isolation
+      nodeSelector:
+        kata-containers: "true"
       tolerations:
         - key: kata
           operator: Equal
@@ -68,7 +52,7 @@ spec:
       terminationGracePeriodSeconds: 60
       containers:
         - name: agent-host
-          image: <ACR_NAME>.azurecr.io/agent-host:<IMAGE_TAG>
+          image: acragenthost35153d.azurecr.io/agent-host:latest
           ports:
             - containerPort: 8080
               name: http
@@ -152,7 +136,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: agent-host
-  namespace: <NAMESPACE>
+  namespace: agent
   labels:
     app: agent-host
 spec:
@@ -170,7 +154,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: agent-host-netpol
-  namespace: <NAMESPACE>
+  namespace: agent
 spec:
   podSelector:
     matchLabels:
@@ -184,9 +168,9 @@ spec:
         - protocol: TCP
           port: 8080
   egress:
-    # Allow outbound to Azure Managed Redis (10000) and HTTPS (443) only
+    # Allow outbound to Azure Cache for Redis (6380) and HTTPS (443) only
     - ports:
         - protocol: TCP
-          port: 10000
+          port: 6380
         - protocol: TCP
           port: 443
