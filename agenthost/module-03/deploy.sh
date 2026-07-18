@@ -4,7 +4,7 @@
 # Retrieves the deployment suffix (SN) from the Module 1 resource group tag,
 # reuses the ACR / UAMI / Redis / Storage / APIM that Module 1 already created,
 # provisions AKS (aks.bicep), installs the kubernetes-sigs/agent-sandbox
-# controller (Helm), then deploys the agent as a Sandbox custom resource.
+# controller (release manifest), then deploys the agent as a Sandbox custom resource.
 #
 # agent-sandbox: https://github.com/kubernetes-sigs/agent-sandbox
 #   (replaces the earlier self-built E2B Sandbox Manager, which does not run on Azure.)
@@ -12,7 +12,7 @@
 # Usage: ./deploy.sh
 # Env overrides: RESOURCE_GROUP, LOCATION, NAMESPACE, SERVICE_ACCOUNT, IMAGE_TAG,
 #                AGENT_SANDBOX_VERSION
-# Prerequisites: Module 1 deployed; Docker, kubectl, helm, git, az installed.
+# Prerequisites: Module 1 deployed; Docker, kubectl, az installed.
 
 set -euo pipefail
 
@@ -27,7 +27,7 @@ LLM_MODEL="${LLM_MODEL:-gpt-5.4-mini}"
 # up in the Foundry catalog. Endpoint format matches Module 1's output.
 FOUNDRY_PROJECT_NAME="${FOUNDRY_PROJECT_NAME:-maf-agent-prj}"
 # Pick a released version from https://github.com/kubernetes-sigs/agent-sandbox/releases
-AGENT_SANDBOX_VERSION="${AGENT_SANDBOX_VERSION:-v0.1.0}"
+AGENT_SANDBOX_VERSION="${AGENT_SANDBOX_VERSION:-v0.5.2}"
 
 echo "==> [1/9] Retrieving deployment suffix (SN) from Module 1 resource group"
 SN=$(az group show --resource-group "$RESOURCE_GROUP" --query "tags.deploymentSN" --output tsv 2>/dev/null | tr -d "\r\n" || echo "")
@@ -36,6 +36,8 @@ if [ -z "$SN" ]; then
   exit 1
 fi
 echo "    SN=$SN"
+
+sed -i "s|<SN>|${SN}|g" agent-src/.env
 
 # ── Module 1 resource names (reused, never recreated) ─────────────────────────
 ACR_NAME="acragenthost${SN}"
@@ -52,7 +54,7 @@ LOCATION="${LOCATION:-$(az group show -g "$RESOURCE_GROUP" --query location -o t
 # Region for the AKS cluster + its node resource group. The AKS resource is still
 # created INTO the Module 1 resource group ($RESOURCE_GROUP); only its region
 # differs. Override with AKS_LOCATION=<region>.
-AKS_LOCATION="${AKS_LOCATION:-eastus2}"
+AKS_LOCATION="${AKS_LOCATION:-$LOCATION}"
 echo "    ACR=$ACR_NAME  UAMI=$IDENTITY_NAME  Redis=$REDIS_NAME  Storage=$STORAGE_ACCOUNT  APIM=$APIM_NAME"
 
 echo "==> [2/9] Building and pushing the agent image to the EXISTING ACR"
@@ -80,19 +82,23 @@ IDENTITY_CLIENT_ID=$(az identity show -g "$RESOURCE_GROUP" -n "$IDENTITY_NAME" -
 echo "==> [4/9] Getting AKS credentials"
 az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$AKS_NAME" --overwrite-existing
 
-echo "==> [5/9] Installing the agent-sandbox controller via Helm ($AGENT_SANDBOX_VERSION)"
-# The Helm chart lives inside the repo (./helm). Clone it, then install the
-# controller with extensions (SandboxTemplate / SandboxClaim / SandboxWarmPool).
-WORKDIR="$(mktemp -d)"
-git clone --depth 1 --branch "$AGENT_SANDBOX_VERSION" \
-  https://github.com/kubernetes-sigs/agent-sandbox.git "$WORKDIR/agent-sandbox"
-helm upgrade --install agent-sandbox "$WORKDIR/agent-sandbox/helm/" \
-  --namespace agent-sandbox-system \
-  --create-namespace \
-  --set image.tag="$AGENT_SANDBOX_VERSION" \
-  --set controller.extensions=true \
-  --wait --timeout 5m
-rm -rf "$WORKDIR"
+echo "==> [5/9] Installing the agent-sandbox controller from release manifest ($AGENT_SANDBOX_VERSION)"
+# Install core + extensions in one collision-free manifest, as recommended by
+# the upstream project README/docs.
+AGENT_SANDBOX_MANIFEST_URL="https://github.com/kubernetes-sigs/agent-sandbox/releases/download/${AGENT_SANDBOX_VERSION}/sandbox-with-extensions.yaml"
+if command -v curl >/dev/null 2>&1; then
+  if ! curl --fail --silent --show-error --location --head "$AGENT_SANDBOX_MANIFEST_URL" >/dev/null; then
+    echo "ERROR: Cannot find release manifest for AGENT_SANDBOX_VERSION=${AGENT_SANDBOX_VERSION}"
+    echo "       URL: $AGENT_SANDBOX_MANIFEST_URL"
+    echo "       Check available tags: https://github.com/kubernetes-sigs/agent-sandbox/releases"
+    exit 1
+  fi
+else
+  echo "WARN: curl not found; skipping release manifest pre-check"
+fi
+kubectl apply -f \
+  "$AGENT_SANDBOX_MANIFEST_URL"
+kubectl wait --for=condition=Established crd/sandboxes.agents.x-k8s.io --timeout=2m
 
 echo "==> [6/9] Creating namespace"
 kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -

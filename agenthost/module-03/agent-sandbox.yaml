@@ -1,7 +1,7 @@
 # agent-sandbox.yaml — Module 3 (Solution B): agent runtime on Kubernetes via
 # kubernetes-sigs/agent-sandbox (https://github.com/kubernetes-sigs/agent-sandbox).
 #
-# The agent-sandbox *controller* is installed separately (Helm — see deploy.sh);
+# The agent-sandbox *controller* is installed separately (release manifest — see deploy.sh);
 # this manifest declares the per-agent runtime as a `Sandbox` custom resource,
 # plus the Workload Identity service account, Kata RuntimeClass, a Service, and a
 # NetworkPolicy.

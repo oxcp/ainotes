@@ -23,7 +23,7 @@ This module **reuses the resources Module 1 already created** (it does not recre
 ## Learning Objectives
 
 - Provision AKS with OIDC issuer + Workload Identity, reusing the Module 1 UAMI
-- Install the `agent-sandbox` controller (Helm) and run the agent as a `Sandbox` CR
+- Install the `agent-sandbox` controller (release manifest) and run the agent as a `Sandbox` CR
 - Wire the agent to Module 1 Redis / Blob / APIM
 - Observe agent-sandbox lifecycle (pause / resume / hibernate) as the scale-to-zero mechanism
 
@@ -32,7 +32,7 @@ This module **reuses the resources Module 1 already created** (it does not recre
 ## Prerequisites
 
 - **Module 1 deployed** (Redis, Blob, APIM, ACR, UAMI) — `deploymentSN` tag present on the RG
-- `az`, `kubectl`, `helm`, `git`, and Docker installed and logged in (`az login`)
+- `az`, `kubectl`, and Docker installed and logged in (`az login`)
 
 ---
 
@@ -49,7 +49,7 @@ cd agenthost/module-03
 2. Build and push the agent image to the **existing** ACR `acragenthost<SN>`
 3. Deploy `aks.bicep` — creates AKS `aks-agenthost-<SN>`, federates the Module 1 UAMI, grants AcrPull (kubelet) + Storage Blob Data Contributor (UAMI)
 4. Fetch AKS credentials
-5. Install the **agent-sandbox controller** via Helm (with extensions)
+5. Install the **agent-sandbox controller** from release manifest (core + extensions)
 6. Create the `agent` namespace
 7. Create runtime secrets from Module 1 Redis (`:10000` SSL) / Storage / APIM gateway URL
 8. Deploy the agent as a `Sandbox` custom resource
@@ -58,7 +58,7 @@ cd agenthost/module-03
 Environment overrides: `RESOURCE_GROUP`, `LOCATION`, `NAMESPACE`, `SERVICE_ACCOUNT`, `IMAGE_TAG`, `AGENT_SANDBOX_VERSION`.
 
 > Set `AGENT_SANDBOX_VERSION` to a released tag from
-> https://github.com/kubernetes-sigs/agent-sandbox/releases (the chart requires `image.tag`).
+> https://github.com/kubernetes-sigs/agent-sandbox/releases (used in the release manifest URL).
 
 ---
 
@@ -77,6 +77,8 @@ STORAGE_ACCOUNT="stcagenthost${SN}"
 APIM_NAME="apim-agenthost-${SN}"
 AKS_NAME="aks-agenthost-${SN}"
 NAMESPACE="agent"
+
+sed -i "s|<SN>|${SN}|g" agent-src/.env
 ```
 
 ### Step 2 — Build and push the image to the existing ACR
@@ -109,19 +111,14 @@ az deployment group create \
 az aks get-credentials -g "$RESOURCE_GROUP" -n "$AKS_NAME" --overwrite-existing
 ```
 
-### Step 4 — Install the agent-sandbox controller (Helm)
+### Step 4 — Install the agent-sandbox controller (release manifest)
 
 ```bash
-# See helm/README.md: https://github.com/kubernetes-sigs/agent-sandbox/blob/main/helm/README.md
-VERSION="v0.1.0"   # pick a real release tag
-git clone --depth 1 --branch "$VERSION" https://github.com/kubernetes-sigs/agent-sandbox.git
+VERSION="v0.5.2"   # pick a real release tag
+kubectl apply -f \
+  "https://github.com/kubernetes-sigs/agent-sandbox/releases/download/${VERSION}/sandbox-with-extensions.yaml"
 
-helm upgrade --install agent-sandbox ./agent-sandbox/helm/ \
-  --namespace agent-sandbox-system \
-  --create-namespace \
-  --set image.tag="$VERSION" \
-  --set controller.extensions=true \
-  --wait
+kubectl wait --for=condition=Established crd/sandboxes.agents.x-k8s.io --timeout=2m
 ```
 
 ### Step 5 — Create secrets from Module 1 Redis / Storage / APIM
