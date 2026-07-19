@@ -79,14 +79,14 @@ APIM_NAME="apim-agenthost-${SN}"
 AKS_NAME="aks-agenthost-${SN}"
 NAMESPACE="agent"
 SERVICE_ACCOUNT="agent-sa"
-
-cp agent-src/.env.example agent-src/.env
-sed -i "s|<SN>|${SN}|g" agent-src/.env
 ```
 
 ### Step 2 — Build and push the image to the existing ACR
 
 ```bash
+cp agent-src/app/.env.example agent-src/app/.env
+sed -i "s|<SN>|${SN}|g" agent-src/app/.env
+
 az acr login --name "$ACR_NAME"
 # Build context is ./agent-src (app + Dockerfile + lifecycle hook)
 docker build -t "${ACR_NAME}.azurecr.io/agent-host:latest" agent-src/
@@ -139,7 +139,6 @@ az aks nodepool add \
   --labels "kata-containers=true"
 
 az aks update -g "$RESOURCE_GROUP" -n "$AKS_NAME"
-az aks get-credentials -g "$RESOURCE_GROUP" -n "$AKS_NAME" --overwrite-existing
 kubectl get runtimeclass kata-vm-isolation
 ```
 
@@ -200,6 +199,20 @@ kubectl wait --for=condition=Ready pod -l app=agent-host -n "$NAMESPACE" --timeo
 # Controller
 kubectl get pods -n agent-sandbox-system
 ```
+You should see output like:
+```
+agenthost/module-03$ kubectl get sandbox,pods -n "$NAMESPACE"
+NAME                                 READY   REASON              AGE
+sandbox.agents.x-k8s.io/agent-host   True    DependenciesReady   2m12s
+
+NAME             READY   STATUS    RESTARTS   AGE
+pod/agent-host   1/1     Running   0          2m12s
+
+agenthost/module-03$ kubectl get pods -n agent-sandbox-system
+NAME                                        READY   STATUS    RESTARTS   AGE
+agent-sandbox-controller-76885c8b6c-bk84h   1/1     Running   0          117m
+```
+
 
 ### Verify Pod Sandboxing Kernel Isolation
 
@@ -216,7 +229,7 @@ kubectl exec -it -n "$NAMESPACE" "$AGENT_POD" -- uname -r
 # 6.6.96.mshv1
 
 # Optional comparison: run a normal pod without kata-vm-isolation.
-kubectl apply -f - <<'EOF'
+cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: Pod
 metadata:

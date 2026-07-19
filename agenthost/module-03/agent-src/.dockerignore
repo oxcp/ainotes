@@ -1,5 +1,4 @@
 # Build-context excludes for agent-src image
-.env
 .env.*
 !.env.example
 __pycache__/

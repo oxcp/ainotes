@@ -52,6 +52,32 @@ from typing import Optional, Dict, Any
 from datetime import datetime, timezone
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
+
+def _load_dotenv_from_app_dir() -> None:
+    """Load KEY=VALUE pairs from app/.env without overriding existing env vars."""
+    env_path = os.path.join(os.path.dirname(__file__), ".env")
+    if not os.path.exists(env_path):
+        return
+
+    with open(env_path, "r", encoding="utf-8") as f:
+        for raw_line in f:
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if line.startswith("export "):
+                line = line[len("export "):].strip()
+            if "=" not in line:
+                continue
+
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            if key:
+                os.environ.setdefault(key, value)
+
+
+_load_dotenv_from_app_dir()
+
 # ── Configuration ──────────────────────────────────────────────────────────
 AGENT_ID = os.environ.get("AGENT_ID", "agent-poc-001")
 STATE_BACKEND = os.environ.get("AGENT_STATE_BACKEND", "memory")  # 'redis' or 'memory'

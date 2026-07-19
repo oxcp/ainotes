@@ -146,7 +146,7 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 8080
-  type: ClusterIP
+  type: LoadBalancer
 
 ---
 # NetworkPolicy: restrict the sandbox pod's traffic

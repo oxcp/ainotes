@@ -39,9 +39,6 @@ if [ -z "$SN" ]; then
 fi
 echo "    SN=$SN"
 
-cp agent-src/.env.example agent-src/.env
-sed -i "s|<SN>|${SN}|g" agent-src/.env
-
 # ── Module 1 resource names (reused, never recreated) ─────────────────────────
 ACR_NAME="acragenthost${SN}"
 IDENTITY_NAME="id-agenthost-${SN}"
@@ -61,6 +58,8 @@ AKS_LOCATION="$LOCATION"
 echo "    ACR=$ACR_NAME  UAMI=$IDENTITY_NAME  Redis=$REDIS_NAME  Storage=$STORAGE_ACCOUNT  APIM=$APIM_NAME"
 
 echo "==> [2/9] Building and pushing the agent image to the EXISTING ACR"
+cp agent-src/app/.env.example agent-src/app/.env
+sed -i "s|<SN>|${SN}|g" agent-src/app/.env
 # Build context is ./agent-src (contains the app, Dockerfile, and lifecycle hook).
 az acr login --name "$ACR_NAME"
 docker build -t "${ACR_NAME}.azurecr.io/agent-host:${IMAGE_TAG}" agent-src/
@@ -109,18 +108,8 @@ echo "==> [5/9] Installing the agent-sandbox controller from release manifest ($
 # Install core + extensions in one collision-free manifest, as recommended by
 # the upstream project README/docs.
 AGENT_SANDBOX_MANIFEST_URL="https://github.com/kubernetes-sigs/agent-sandbox/releases/download/${AGENT_SANDBOX_VERSION}/sandbox-with-extensions.yaml"
-if command -v curl >/dev/null 2>&1; then
-  if ! curl --fail --silent --show-error --location --head "$AGENT_SANDBOX_MANIFEST_URL" >/dev/null; then
-    echo "ERROR: Cannot find release manifest for AGENT_SANDBOX_VERSION=${AGENT_SANDBOX_VERSION}"
-    echo "       URL: $AGENT_SANDBOX_MANIFEST_URL"
-    echo "       Check available tags: https://github.com/kubernetes-sigs/agent-sandbox/releases"
-    exit 1
-  fi
-else
-  echo "WARN: curl not found; skipping release manifest pre-check"
-fi
-kubectl apply -f \
-  "$AGENT_SANDBOX_MANIFEST_URL"
+echo "Installing Kubernetes Agent-Sandbox. Release manifest URL: $AGENT_SANDBOX_MANIFEST_URL"
+kubectl apply -f "$AGENT_SANDBOX_MANIFEST_URL"
 kubectl wait --for=condition=Established crd/sandboxes.agents.x-k8s.io --timeout=2m
 
 echo "==> [6/9] Creating namespace"
