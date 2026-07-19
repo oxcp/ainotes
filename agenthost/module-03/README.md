@@ -78,7 +78,9 @@ STORAGE_ACCOUNT="stcagenthost${SN}"
 APIM_NAME="apim-agenthost-${SN}"
 AKS_NAME="aks-agenthost-${SN}"
 NAMESPACE="agent"
+SERVICE_ACCOUNT="agent-sa"
 
+cp agent-src/.env.example agent-src/.env
 sed -i "s|<SN>|${SN}|g" agent-src/.env
 ```
 
@@ -105,9 +107,12 @@ az deployment group create \
   --parameters \
       location="$(az group show -g "$RESOURCE_GROUP" --query location -o tsv)" \
       deploymentSN="$SN" \
+      aksName="$AKS_NAME" \
       acrName="$ACR_NAME" \
       identityName="$IDENTITY_NAME" \
-      storageAccountName="$STORAGE_ACCOUNT"
+      storageAccountName="$STORAGE_ACCOUNT" \
+      namespace="$NAMESPACE" \
+      serviceAccountName="$SERVICE_ACCOUNT"
 
 az aks get-credentials -g "$RESOURCE_GROUP" -n "$AKS_NAME" --overwrite-existing
 ```
@@ -228,7 +233,7 @@ EOF
 kubectl wait --for=condition=Ready pod/normal-pod -n "$NAMESPACE" --timeout=2m
 kubectl exec -it -n "$NAMESPACE" normal-pod -- uname -r
 
-# Example expected shape for a normal Azure Linux node kernel:
+# Example expected shape for a normal (non-sandbox) node kernel:
 # 6.6.100.mshv1-1.azl3
 
 kubectl delete pod normal-pod -n "$NAMESPACE"

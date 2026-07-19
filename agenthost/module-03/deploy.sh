@@ -39,6 +39,7 @@ if [ -z "$SN" ]; then
 fi
 echo "    SN=$SN"
 
+cp agent-src/.env.example agent-src/.env
 sed -i "s|<SN>|${SN}|g" agent-src/.env
 
 # ── Module 1 resource names (reused, never recreated) ─────────────────────────
@@ -56,7 +57,7 @@ LOCATION="${LOCATION:-$(az group show -g "$RESOURCE_GROUP" --query location -o t
 # Region for the AKS cluster + its node resource group. The AKS resource is still
 # created INTO the Module 1 resource group ($RESOURCE_GROUP); only its region
 # differs. Override with AKS_LOCATION=<region>.
-AKS_LOCATION="${AKS_LOCATION:-$LOCATION}"
+AKS_LOCATION="$LOCATION"
 echo "    ACR=$ACR_NAME  UAMI=$IDENTITY_NAME  Redis=$REDIS_NAME  Storage=$STORAGE_ACCOUNT  APIM=$APIM_NAME"
 
 echo "==> [2/9] Building and pushing the agent image to the EXISTING ACR"
@@ -72,14 +73,13 @@ az deployment group create \
   --parameters \
       location="$AKS_LOCATION" \
       deploymentSN="$SN" \
+      aksName="$AKS_NAME" \
       acrName="$ACR_NAME" \
       identityName="$IDENTITY_NAME" \
       storageAccountName="$STORAGE_ACCOUNT" \
       namespace="$NAMESPACE" \
       serviceAccountName="$SERVICE_ACCOUNT" \
   --output none
-
-IDENTITY_CLIENT_ID=$(az identity show -g "$RESOURCE_GROUP" -n "$IDENTITY_NAME" --query clientId -o tsv | tr -d "\r\n")
 
 echo "==> [4/9] Enabling AKS Pod Sandboxing on an Azure Linux node pool"
 if az aks nodepool show --resource-group "$RESOURCE_GROUP" --cluster-name "$AKS_NAME" --name "$KATA_NODEPOOL_NAME" --output none 2>/dev/null; then
@@ -149,6 +149,8 @@ kubectl create secret generic agent-config \
   --dry-run=client -o yaml | kubectl apply -f -
 
 echo "==> [8/9] Deploying the agent as a Sandbox custom resource"
+# replace the placeholders in the example manifest with the actual values for this deployment
+IDENTITY_CLIENT_ID=$(az identity show -g "$RESOURCE_GROUP" -n "$IDENTITY_NAME" --query clientId -o tsv | tr -d "\r\n")
 cp agent-sandbox.yaml.example agent-sandbox.yaml
 sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|${IMAGE_TAG}|g; s|<NAMESPACE>|${NAMESPACE}|g; s|<IDENTITY_CLIENT_ID>|${IDENTITY_CLIENT_ID}|g" \
   agent-sandbox.yaml > agent-sandbox.yaml.tmp && mv agent-sandbox.yaml.tmp agent-sandbox.yaml

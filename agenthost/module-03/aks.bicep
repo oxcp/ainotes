@@ -32,6 +32,9 @@ param identityName string
 @description('Existing Storage account name from Module 1 (e.g. stcagenthost<SN>)')
 param storageAccountName string
 
+@description('AKS cluster name passed by deploy.sh (e.g. aks-agenthost-<SN>)')
+param aksName string
+
 @description('Kubernetes namespace the agent workload runs in')
 param namespace string = 'agent'
 
@@ -44,10 +47,9 @@ param kubernetesVersion string = ''
 @description('System node pool VM size')
 param systemNodeVmSize string = 'Standard_D4as_v5'
 
-@description('System node pool OS SKU. Azure Linux is recommended to align with the Pod Sandboxing host OS.')
-param systemNodeOsSku string = 'AzureLinux'
+@description('System node pool OS SKU. Only the sandbox (kata) node pool needs Azure Linux; the system pool can remain Ubuntu.')
+param systemNodeOsSku string = 'Ubuntu'
 
-var aksName = 'aks-agenthost-${deploymentSN}'
 var acrPullRoleId = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
 var storageBlobDataContributorRoleId = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
 
