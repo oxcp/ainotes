@@ -224,7 +224,8 @@ NAME                 TYPE           CLUSTER-IP   EXTERNAL-IP      PORT(S)       
 service/agent-host   LoadBalancer   10.0.63.89   48.204.162.105   80:31606/TCP   33s
 ```
 Open your browser and input URL `http://<EXTERNAL-IP>`, you will see the chat window. Try several questions to see if the agent works:
-**Tip: Make sure you have the `http://` as the protocol prefix, otherwise your browser may try https by default which is not implemented in the agent/workshop.**
+
+> ***Tip: Make sure you have the `'http://'` in the URL, otherwise the browser may use https by default which however is not implemented in the agent/workshop yet.***
 
 ![module-03-agent-chat-portal](../pic/module-03-agent-chat-portal.png)
 
@@ -255,6 +256,13 @@ Containers:
     Container ID:   containerd://a8619d5c5b9eef8906c84d864e9eb6a037882b14b6e7b7a4f2b23010826d5ec3
     Image:          ......
 ```
+In Microsoft Foundry portal, switch to the Classic mode:
+![module-03-agent-in-foundry-portal-switch-to-classic](../pic/module-03-agent-in-foundry-portal-switch-to-classic.png)
+
+and then in the "Agent" list you will see your agent (We registered our agent into the Foundry portal for visibility and management, for example your can try it in the Playground.):
+![module-03-agent-in-foundry-portal-01](../pic/module-03-agent-in-foundry-portal-01.png)
+
+> **Note that we actually run our agent in AKS with Sandboxing. Unlike the Hosted Agent in solution A, in solution B we host our agent in AKS).**
 
 ### Verify Pod Sandboxing Kernel Isolation
 
