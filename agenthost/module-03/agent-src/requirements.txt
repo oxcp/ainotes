@@ -1,15 +1,23 @@
 # agent-src — Python dependencies
 
-# Microsoft Agent Framework
-#  - azure-ai: Foundry Agent Service -> PERSISTENT catalog agent (visible)
-#  - openai:   Responses API via the APIM gateway (OpenAIResponsesClient)
-agent-framework-azure-ai
-agent-framework-openai
-# Foundry Agent Service SDK (create/list persistent catalog agents)
-azure-ai-projects
+# Microsoft Agent Framework — OpenAI client.
+#  OpenAIChatClient uses the model **Responses API** (the previous
+#  OpenAIResponsesClient alias was removed upstream). Pulls in the
+#  agent_framework core and openai>=2.25.0 transitively.
+agent-framework-openai>=1.10.0
+# Foundry project SDK (persistent agents live under the .agents operations;
+# recent versions expose create_version / list_versions).
+azure-ai-projects>=2.2.0
 
 # Azure Workload Identity (Bearer token without static secrets)
-azure-identity==1.19.0
+azure-identity>=1.19.0
 
 # Azure Blob Storage (async) — conversation state persistence/recovery
-azure-storage-blob==12.24.0
+azure-storage-blob>=12.24.0
+# Async HTTP transport required by the azure *.aio clients (Blob / Identity / Projects)
+aiohttp
+
+# OpenAI SDK + httpx — directly used to build the APIM-routed Responses client
+# with a per-request Entra token refresh (custom httpx auth flow).
+openai>=2.25.0
+httpx

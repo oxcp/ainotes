@@ -40,7 +40,7 @@ import asyncio
 import threading
 from typing import Optional, Dict, Any
 from datetime import datetime, timezone
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
 
 def _load_dotenv_from_app_dir() -> None:
@@ -81,7 +81,7 @@ FOUNDRY_AGENT_NAME = os.environ.get("FOUNDRY_AGENT_NAME", "agenthost-reflection-
 
 # Model inference: the Responses API routes through the Module 1 APIM gateway.
 APIM_ENDPOINT = os.environ.get("AGENT_APIM_ENDPOINT", "").rstrip("/")
-LLM_BASE_URL = f"{APIM_ENDPOINT}/openai/v1" if APIM_ENDPOINT else ""
+LLM_BASE_URL = f"{APIM_ENDPOINT}/openai/v1" if APIM_ENDPOINT else f"{FOUNDRY_PROJECT_ENDPOINT}/openai/v1"
 LLM_MODEL = os.environ.get("LLM_MODEL", "gpt-5.4-mini")
 # Workload Identity token scope. The Module 1 gateway validate-jwt checks the
 # issuer (tenant) only, so the Foundry data-plane scope works.
@@ -215,19 +215,27 @@ class FoundryResponsesClient:
         self.foundry_endpoint = foundry_endpoint
         self.foundry_agent_name = foundry_agent_name
         self._agent = None            # MAF agent (Responses API via APIM)
+        self._openai_client = None    # raw AsyncOpenAI (direct Responses fallback)
         self._credential = None       # async credential (catalog registration)
         self._project_client = None   # AIProjectClient (catalog registration)
         self._http_client = None      # httpx client (per-request token refresh)
         self._built = False
 
     async def _register_catalog_agent(self) -> None:
-        """Create/reuse the persistent agent in the Foundry catalog (visible)."""
+        """Create/reuse a persistent Prompt Agent so it is visible and manageable
+        in the Foundry agent catalog (azure-ai-projects >= 2.x).
+
+        Uses the current API: `agents.get(agent_name=...)` to reuse, otherwise
+        `agents.create_version(agent_name=..., definition=PromptAgentDefinition(...))`
+        to register the agent (creating its first version).
+        """
         if not self.foundry_endpoint:
             logger.warning("[Foundry] FOUNDRY_PROJECT_ENDPOINT unset; "
                            "skipping catalog registration")
             return
         try:
             from azure.ai.projects.aio import AIProjectClient
+            from azure.ai.projects.models import PromptAgentDefinition
             from azure.identity.aio import DefaultAzureCredential
         except ImportError as e:
             logger.warning(f"[Foundry] SDK not installed ({e}); skipping catalog")
@@ -237,73 +245,60 @@ class FoundryResponsesClient:
             self._project_client = AIProjectClient(
                 endpoint=self.foundry_endpoint, credential=self._credential
             )
+
+            # Reuse the agent if it already exists (by name).
             existing = None
-            async for a in self._project_client.agents.list_agents():
-                if getattr(a, "name", None) == self.foundry_agent_name:
-                    existing = a
-                    break
-            if existing is None:
-                created = await self._project_client.agents.create_agent(
-                    model=self.model,
-                    name=self.foundry_agent_name,
-                    instructions=self.instructions,
+            try:
+                existing = await self._project_client.agents.get(
+                    agent_name=self.foundry_agent_name
                 )
-                logger.info(f"[Foundry] Created catalog agent "
-                            f"'{self.foundry_agent_name}' (id={created.id})")
-            else:
+            except Exception as ge:
+                logger.debug(f"[Foundry] get() found no existing agent: {ge}")
+                existing = None
+
+            if existing is not None:
+                latest = getattr(getattr(existing, "versions", None), "latest", None)
                 logger.info(f"[Foundry] Reusing catalog agent "
-                            f"'{self.foundry_agent_name}' (id={existing.id})")
+                            f"'{self.foundry_agent_name}' "
+                            f"(id={getattr(existing, 'id', '?')}, "
+                            f"version={getattr(latest, 'version', '?')})")
+                return
+
+            # Create the first version, which registers it in the catalog.
+            created = await self._project_client.agents.create_version(
+                agent_name=self.foundry_agent_name,
+                definition=PromptAgentDefinition(
+                    model=self.model,
+                    instructions=self.instructions,
+                ),
+            )
+            logger.info(f"[Foundry] Created catalog agent "
+                        f"'{self.foundry_agent_name}' "
+                        f"(id={getattr(created, 'id', '?')}, "
+                        f"version={getattr(created, 'version', '?')})")
         except Exception as e:
-            logger.warning(f"[Foundry] Catalog registration failed: {e}")
+            logger.warning(f"[Foundry] Catalog registration failed: "
+                           f"{type(e).__name__}: {e}")
 
-    def _build_responses_agent(self):
-        """Build a MAF agent that calls the model Responses API through APIM.
+    def _build_openai_client(self):
+        """Build an AsyncOpenAI client pointed at the APIM `/openai/v1` gateway.
 
-        APIM exposes the OpenAI-compatible `/openai/v1` shape, so we use the
-        (non-Azure) OpenAIResponsesClient. Its api_key is a plain string and is
-        NOT refreshed, while Entra (Workload Identity) tokens expire (~1h). To
-        keep a long-running pod healthy we attach a custom httpx auth flow that
-        injects a freshly-provided Bearer token on every request.
+        A custom httpx auth flow injects a fresh Entra Bearer token on every
+        request (get_bearer_token_provider caches + auto-refreshes), so a
+        long-running pod never serves an expired token. Returns None if the
+        APIM base URL or the required SDKs are unavailable.
         """
         if not self.base_url:
             logger.warning("[AI] No APIM base_url; simulating responses")
             return None
         try:
-            from agent_framework import Agent
-            from agent_framework.openai import OpenAIResponsesClient
-        except ImportError as e:
-            logger.warning(f"[AI] agent_framework not installed ({e}); simulating")
-            return None
-        try:
+            import httpx
+            from openai import AsyncOpenAI
             from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+
             token_provider = get_bearer_token_provider(
                 DefaultAzureCredential(), self.token_scope
             )
-        except Exception as e:
-            logger.warning(f"[AI] Workload Identity unavailable: {e}")
-            return None
-        try:
-            client = self._make_responses_client(OpenAIResponsesClient, token_provider)
-            logger.info(f"[AI] Responses agent ready (base_url={self.base_url})")
-            return Agent(
-                client=client,
-                name=self.foundry_agent_name,
-                instructions=self.instructions,
-            )
-        except Exception as e:
-            logger.warning(f"[AI] Agent build failed: {e}")
-            return None
-
-    def _make_responses_client(self, responses_cls, token_provider):
-        """OpenAI-compatible Responses client with per-request Entra token refresh.
-
-        Preferred: wrap an AsyncOpenAI whose httpx auth injects a fresh Bearer
-        token each request (get_bearer_token_provider caches + auto-refreshes).
-        Fallback: pass a resolved token string as api_key (expires ~1h).
-        """
-        try:
-            import httpx
-            from openai import AsyncOpenAI
 
             class _EntraBearerAuth(httpx.Auth):
                 def __init__(self, provider):
@@ -314,42 +309,76 @@ class FoundryResponsesClient:
                     yield request
 
             self._http_client = httpx.AsyncClient(auth=_EntraBearerAuth(token_provider))
-            async_client = AsyncOpenAI(
+            return AsyncOpenAI(
                 base_url=self.base_url,
                 api_key="workload-identity",  # placeholder; overridden by auth flow
                 http_client=self._http_client,
             )
-            return responses_cls(model_id=self.model, async_client=async_client)
         except Exception as e:
-            logger.warning(f"[AI] async_client path unavailable ({e}); "
-                           "falling back to a resolved token string")
-            return responses_cls(
-                model_id=self.model, base_url=self.base_url, api_key=token_provider(),
-            )
+            logger.warning(f"[AI] OpenAI client build failed: {e}")
+            return None
 
-    async def _ensure_agent(self):
+    def _wrap_maf_agent(self, openai_client):
+        """Wrap the AsyncOpenAI client in a MAF agent, if available.
+
+        Uses `OpenAIChatClient`, which in current agent-framework-openai builds
+        talks to the model **Responses API** (the old OpenAIResponsesClient alias
+        was removed upstream). Returns None when the class or an accepted
+        constructor signature is unavailable; in that case reflect() falls back
+        to the OpenAI SDK Responses API directly.
+        """
+        if openai_client is None:
+            return None
+        try:
+            from agent_framework import Agent
+            from agent_framework.openai import OpenAIChatClient
+        except ImportError as e:
+            logger.info(f"[AI] MAF OpenAI client unavailable ({e}); "
+                        "using the OpenAI SDK Responses API directly")
+            return None
+        try:
+            try:
+                client = OpenAIChatClient(model=self.model, async_client=openai_client)
+            except TypeError:
+                client = OpenAIChatClient(model_id=self.model, async_client=openai_client)
+            logger.info("[AI] MAF agent ready (OpenAIChatClient / Responses API)")
+            return Agent(
+                client=client,
+                name=self.foundry_agent_name,
+                instructions=self.instructions,
+            )
+        except Exception as e:
+            logger.warning(f"[AI] MAF agent build failed ({e}); "
+                           "using the OpenAI SDK Responses API directly")
+            return None
+
+    async def _ensure_backend(self):
         if self._built:
-            return self._agent
+            return
         self._built = True
-        await self._register_catalog_agent()   # catalog visibility
-        self._agent = self._build_responses_agent()
-        return self._agent
+        await self._register_catalog_agent()          # catalog visibility
+        self._openai_client = self._build_openai_client()
+        self._agent = self._wrap_maf_agent(self._openai_client)
 
     async def reflect(self, prompt: str, conversation_history: list) -> str:
         """Answer a chat turn using recent history for context."""
-        agent = await self._ensure_agent()
-        if agent is None:
-            return f"[Simulated] You said: {prompt}"
+        await self._ensure_backend()
+        if self._agent is not None:
+            return await self._reflect_maf(prompt, conversation_history)
+        if self._openai_client is not None:
+            return await self._reflect_openai(prompt, conversation_history)
+        return f"[Simulated] You said: {prompt}"
+
+    async def _reflect_maf(self, prompt: str, conversation_history: list) -> str:
+        """Run the turn via the Microsoft Agent Framework agent.
+
+        Builds typed `Message` objects for recent context (current agent_framework
+        exposes `Message`, not the old `ChatMessage`/`Role`). Falls back to a plain
+        string transcript if `Message` is unavailable in this build.
+        """
         try:
-            from agent_framework import ChatMessage, Role
-
-            messages = []
-            for turn in conversation_history[-5:]:  # recent context
-                messages.append(ChatMessage(role=Role.USER, text=turn["query"]))
-                messages.append(ChatMessage(role=Role.ASSISTANT, text=turn["response"]))
-            messages.append(ChatMessage(role=Role.USER, text=prompt))
-
-            result = await agent.run(messages)
+            payload = self._build_maf_payload(prompt, conversation_history)
+            result = await self._agent.run(payload)
             answer = getattr(result, "text", None) or str(result)
             logger.info(f"[AI] Response: {answer[:100]}...")
             return answer
@@ -357,7 +386,52 @@ class FoundryResponsesClient:
             logger.error(f"[AI] Request failed: {e}")
             return f"[Error] {e}"
 
+    def _build_maf_payload(self, prompt: str, conversation_history: list):
+        """Return recent context as `Message` objects, or a string as a fallback."""
+        try:
+            from agent_framework import Message
+
+            messages = []
+            for turn in conversation_history[-5:]:  # recent context
+                messages.append(Message("user", [turn["query"]]))
+                messages.append(Message("assistant", [turn["response"]]))
+            messages.append(Message("user", [prompt]))
+            return messages
+        except Exception as e:
+            logger.debug(f"[AI] Message type unavailable ({e}); using string payload")
+            lines = []
+            for turn in conversation_history[-5:]:
+                lines.append(f"User: {turn['query']}")
+                lines.append(f"Assistant: {turn['response']}")
+            return ("\n".join(lines) + f"\nUser: {prompt}") if lines else prompt
+
+    async def _reflect_openai(self, prompt: str, conversation_history: list) -> str:
+        """Run the turn via the OpenAI SDK Responses API (through APIM)."""
+        try:
+            input_items = []
+            for turn in conversation_history[-5:]:  # recent context
+                input_items.append({"role": "user", "content": turn["query"]})
+                input_items.append({"role": "assistant", "content": turn["response"]})
+            input_items.append({"role": "user", "content": prompt})
+
+            resp = await self._openai_client.responses.create(
+                model=self.model,
+                input=input_items,
+                instructions=self.instructions,
+            )
+            answer = getattr(resp, "output_text", None) or str(resp)
+            logger.info(f"[AI] Response: {answer[:100]}...")
+            return answer
+        except Exception as e:
+            logger.error(f"[AI] Request failed: {e}")
+            return f"[Error] {e}"
+
     async def close(self):
+        try:
+            if self._openai_client is not None:
+                await self._openai_client.close()
+        except Exception:
+            pass
         try:
             if self._http_client is not None:
                 await self._http_client.aclose()
@@ -436,16 +510,24 @@ class AgentHTTPHandler(BaseHTTPRequestHandler):
     loop: Optional[asyncio.AbstractEventLoop] = None
 
     def _send_json(self, status: int, obj: Dict[str, Any]):
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json")
-        self.end_headers()
-        self.wfile.write(json.dumps(obj, indent=2).encode())
+        try:
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps(obj, indent=2).encode())
+        except (BrokenPipeError, ConnectionResetError):
+            # Client disconnected before we finished writing; nothing to do.
+            logger.debug("[HTTP] client disconnected during JSON response")
 
     def _send_html(self, status: int, html: str):
-        self.send_response(status)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
-        self.end_headers()
-        self.wfile.write(html.encode("utf-8"))
+        try:
+            self.send_response(status)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(html.encode("utf-8"))
+        except (BrokenPipeError, ConnectionResetError):
+            # Client disconnected before we finished writing; nothing to do.
+            logger.debug("[HTTP] client disconnected during HTML response")
 
     def do_GET(self):
         if self.path == "/" or self.path == "/index.html":
@@ -501,7 +583,10 @@ async def main():
 
     await agent.initialize()
 
-    http_server = HTTPServer(("0.0.0.0", AGENT_PORT), AgentHTTPHandler)
+    # ThreadingHTTPServer: each request (including K8s /health and /ready probes)
+    # is handled in its own thread, so a slow /reflect call cannot block probes
+    # and cause the pod to be marked NotReady / removed from Service endpoints.
+    http_server = ThreadingHTTPServer(("0.0.0.0", AGENT_PORT), AgentHTTPHandler)
     threading.Thread(target=http_server.serve_forever, daemon=True).start()
     logger.info(f"HTTP server listening on 0.0.0.0:{AGENT_PORT} "
                 f"(portal / · /health /ready /state /reflect)")

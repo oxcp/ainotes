@@ -53,6 +53,7 @@ spec:
       containers:
         - name: agent-host
           image: <ACR_NAME>.azurecr.io/agent-host:<IMAGE_TAG>
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
               name: http
@@ -147,30 +148,3 @@ spec:
       port: 80
       targetPort: 8080
   type: LoadBalancer
-
----
-# NetworkPolicy: restrict the sandbox pod's traffic
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: agent-host-netpol
-  namespace: <NAMESPACE>
-spec:
-  podSelector:
-    matchLabels:
-      app: agent-host
-  policyTypes:
-    - Ingress
-    - Egress
-  ingress:
-    # Allow in-cluster callers to reach the agent HTTP port
-    - ports:
-        - protocol: TCP
-          port: 8080
-  egress:
-    # Allow outbound to Azure Cache for Redis (6380) and HTTPS (443) only
-    - ports:
-        - protocol: TCP
-          port: 6380
-        - protocol: TCP
-          port: 443

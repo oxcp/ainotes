@@ -59,7 +59,7 @@ var gatewayPolicyTemplate = '''
       </issuers>
     </validate-jwt>
     <set-backend-service backend-id="foundry-backend" />
-    <authentication-managed-identity resource="https://ai.azure.com" client-id="__CLIENT_ID__" />
+    <authentication-managed-identity resource="https://ai.azure.com" />
   </inbound>
   <backend>
     <base />
@@ -245,7 +245,7 @@ resource apim 'Microsoft.ApiManagement/service@2023-05-01-preview' = {
     capacity: 1
   }
   identity: {
-    type: 'UserAssigned'
+    type: 'SystemAssigned, UserAssigned'
     userAssignedIdentities: {
       '${identity.id}': {}
     }
@@ -260,10 +260,37 @@ resource apim 'Microsoft.ApiManagement/service@2023-05-01-preview' = {
   }
 }
 
-// ── RBAC — APIM managed identity → Foundry inference ─────────────────────────
+// ── RBAC — APIM system-assigned managed identity → Foundry inference ─────────
 // Required because foundryAccount.disableLocalAuth = true; APIM authenticates
-// to Foundry with Entra ID via its user-assigned managed identity.
+// to Foundry with Entra ID via its OWN system-assigned managed identity (the
+// gateway policy uses <authentication-managed-identity> with no client-id).
 resource foundryOpenAiRbac 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(foundryAccount.id, apim.id, openAiUserRoleId)
+  scope: foundryAccount
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', openAiUserRoleId)
+    principalId: apim.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Azure AI User (Foundry User) — broader Foundry data-plane access covering the
+// Responses API when APIM forwards with the https://ai.azure.com audience.
+resource foundryAiUserRbac 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(foundryAccount.id, apim.id, foundryUserRoleId)
+  scope: foundryAccount
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', foundryUserRoleId)
+    principalId: apim.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// ── RBAC — UAMI → Foundry inference ──────────────────────────────────────────
+// The same two roles are also granted to the user-assigned managed identity so
+// workloads that authenticate as the UAMI (e.g. AKS Workload Identity in
+// module-03) can call the Foundry Responses API directly.
+resource foundryOpenAiRbacUami 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(foundryAccount.id, identity.id, openAiUserRoleId)
   scope: foundryAccount
   properties: {
@@ -273,9 +300,7 @@ resource foundryOpenAiRbac 'Microsoft.Authorization/roleAssignments@2022-04-01' 
   }
 }
 
-// Azure AI User (Foundry User) — broader Foundry data-plane access covering the
-// Responses API when APIM forwards with the https://ai.azure.com audience.
-resource foundryAiUserRbac 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource foundryAiUserRbacUami 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(foundryAccount.id, identity.id, foundryUserRoleId)
   scope: foundryAccount
   properties: {
@@ -379,8 +404,7 @@ resource foundryGatewayGetOp 'Microsoft.ApiManagement/service/apis/operations@20
   }
 }
 
-var gatewayPolicyWithClientId = replace(gatewayPolicyTemplate, '__CLIENT_ID__', identity.properties.clientId)
-var gatewayPolicyWithTenant = replace(gatewayPolicyWithClientId, '__TENANT_ID__', tenantId)
+var gatewayPolicyWithTenant = replace(gatewayPolicyTemplate, '__TENANT_ID__', tenantId)
 var gatewayPolicyXml = replace(gatewayPolicyWithTenant, '__LOGIN_ENDPOINT__', entraLoginEndpoint)
 
 resource foundryGatewayPolicy 'Microsoft.ApiManagement/service/apis/policies@2023-05-01-preview' = {

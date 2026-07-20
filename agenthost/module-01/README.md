@@ -81,15 +81,15 @@ az deployment sub create \
 ```
 > The bicep deployment or running `setup.sh` may take minutes to complete. After the successful deployment, you will see output including deployment info like below:
 ```
-==> Deployment 'main-35153d' complete. Outputs:
+==> Deployment 'main-****' complete. Outputs:
 {
   "acrLoginServer": {
     "type": "String",
-    "value": "acragenthost35153d.azurecr.io"
+    "value": "acragenthost****.azurecr.io"
   },
   "acrName": {
     "type": "String",
-    "value": "acragenthost35153d"
+    "value": "acragenthost****"
   },
   "apimFoundryBackendName": {
     "type": "String",
@@ -97,11 +97,11 @@ az deployment sub create \
   },
   "apimFoundryGatewayUrl": {
     "type": "String",
-    "value": "https://https://apim-agenthost-35153d.azure-api.net/foundry"
+    "value": "https://apim-agenthost-****.azure-api.net/foundry"
   },
   "apimServiceUrl": {
     "type": "String",
-    "value": "https://https://apim-agenthost-35153d.azure-api.net"
+    "value": "https://apim-agenthost-****.azure-api.net"
   },
   "deploymentStatus": {
     "type": "Object",
@@ -122,11 +122,11 @@ az deployment sub create \
   },
   "foundryProjectEndpoint": {
     "type": "String",
-    "value": "https://foundry-agenthost-35153d.services.ai.azure.com/api/projects/maf-agent-prj"
+    "value": "https://foundry-agenthost-****.services.ai.azure.com/api/projects/maf-agent-prj"
   },
   "foundryProjectId": {
     "type": "String",
-    "value": "/subscriptions/c14f0d46-cae2-4c8e-b9ff-b73f094caa96/resourceGroups/rg-agenthost-workshop/providers/Microsoft.CognitiveServices/accounts/foundry-agenthost-35153d/projects/maf-agent-prj"
+    "value": "/subscriptions/********-****-****-****-************/resourceGroups/rg-agenthost-workshop/providers/Microsoft.CognitiveServices/accounts/foundry-agenthost-****/projects/maf-agent-prj"
   },
   "foundryProjectName": {
     "type": "String",
@@ -134,19 +134,19 @@ az deployment sub create \
   },
   "foundryResourceName": {
     "type": "String",
-    "value": "foundry-agenthost-35153d"
+    "value": "foundry-agenthost-****"
   },
   "identityClientId": {
     "type": "String",
-    "value": "b7d427cc-960f-4060-9717-e0e7d5d4695e"
+    "value": "********-****-****-****-************"
   },
   "keyVaultName": {
     "type": "String",
-    "value": "kv-agenthost-35153d"
+    "value": "kv-agenthost-****"
   },
   "keyVaultUri": {
     "type": "String",
-    "value": "https://kv-agenthost-35153d.vault.azure.net/"
+    "value": "https://kv-agenthost-****.vault.azure.net/"
   },
   "modelDeploymentName": {
     "type": "String",
@@ -154,7 +154,7 @@ az deployment sub create \
   },
   "redisHostName": {
     "type": "String",
-    "value": "redis-agenthost-35153d.redis.cache.windows.net"
+    "value": "redis-agenthost-****.redis.cache.windows.net"
   },
   "resourceGroupName": {
     "type": "String",
@@ -162,7 +162,7 @@ az deployment sub create \
   },
   "storageAccountName": {
     "type": "String",
-    "value": "stcagenthost35153d"
+    "value": "stcagenthost****"
   }
 }
 
