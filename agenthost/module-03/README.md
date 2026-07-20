@@ -226,7 +226,7 @@ AGENT_POD=$(kubectl get pod -n "$NAMESPACE" -l app=agent-host -o jsonpath='{.ite
 kubectl exec -it -n "$NAMESPACE" "$AGENT_POD" -- uname -r
 
 # Example expected shape:
-# 6.6.96.mshv1
+# 6.6.137.mshv1-1.azl3
 
 # Optional comparison: run a normal pod without kata-vm-isolation.
 cat <<EOF | kubectl apply -f -
@@ -247,7 +247,7 @@ kubectl wait --for=condition=Ready pod/normal-pod -n "$NAMESPACE" --timeout=2m
 kubectl exec -it -n "$NAMESPACE" normal-pod -- uname -r
 
 # Example expected shape for a normal (non-sandbox) node kernel:
-# 6.6.100.mshv1-1.azl3
+# 6.8.0-1059-azure
 
 kubectl delete pod normal-pod -n "$NAMESPACE"
 ```

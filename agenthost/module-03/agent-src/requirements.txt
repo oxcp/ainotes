@@ -1,15 +1,15 @@
 # agent-src — Python dependencies
 
 # Microsoft Agent Framework
-#  - azure-ai: Foundry Agent Service -> PERSISTENT agent (visible in the portal)
-#  - openai:   APIM gateway mode (OpenAIChatClient)
+#  - azure-ai: Foundry Agent Service -> PERSISTENT catalog agent (visible)
+#  - openai:   Responses API via the APIM gateway (OpenAIResponsesClient)
 agent-framework-azure-ai
 agent-framework-openai
-# Foundry Agent Service SDK (create/list persistent agents)
+# Foundry Agent Service SDK (create/list persistent catalog agents)
 azure-ai-projects
 
 # Azure Workload Identity (Bearer token without static secrets)
 azure-identity==1.19.0
 
-# Async Redis client (redis.asyncio)
-redis==5.2.1
+# Azure Blob Storage (async) — conversation state persistence/recovery
+azure-storage-blob==12.24.0

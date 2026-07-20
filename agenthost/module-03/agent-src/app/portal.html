@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Agent Portal</title>
+<style>
+  :root { --bg:#0f172a; --panel:#1e293b; --accent:#38bdf8; --user:#2563eb; --bot:#334155; --text:#e2e8f0; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,Segoe UI,Arial,sans-serif; background:var(--bg); color:var(--text); height:100vh; display:flex; flex-direction:column; }
+  header { padding:12px 20px; background:var(--panel); display:flex; align-items:center; gap:12px; border-bottom:1px solid #334155; }
+  header h1 { font-size:16px; margin:0; font-weight:600; }
+  header .meta { margin-left:auto; font-size:12px; color:#94a3b8; }
+  #chat { flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:12px; }
+  .msg { max-width:80%; padding:10px 14px; border-radius:12px; line-height:1.45; white-space:pre-wrap; word-wrap:break-word; }
+  .user { align-self:flex-end; background:var(--user); border-bottom-right-radius:2px; }
+  .bot  { align-self:flex-start; background:var(--bot); border-bottom-left-radius:2px; }
+  .role { font-size:11px; opacity:.7; margin-bottom:2px; }
+  footer { padding:14px 20px; background:var(--panel); border-top:1px solid #334155; display:flex; gap:10px; }
+  #q { flex:1; padding:12px 14px; border-radius:10px; border:1px solid #475569; background:#0b1220; color:var(--text); font-size:14px; }
+  #q:focus { outline:none; border-color:var(--accent); }
+  button { padding:0 20px; border:none; border-radius:10px; background:var(--accent); color:#0f172a; font-weight:600; cursor:pointer; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>&#129302; Agent Portal</h1>
+    <span class="meta" id="meta">connecting…</span>
+  </header>
+  <div id="chat"></div>
+  <footer>
+    <input id="q" placeholder="Ask the agent…" autocomplete="off" />
+    <button id="send">Send</button>
+  </footer>
+<script>
+  const chat = document.getElementById('chat');
+  const meta = document.getElementById('meta');
+  const q = document.getElementById('q');
+  const send = document.getElementById('send');
+
+  function add(role, text) {
+    const div = document.createElement('div');
+    div.className = 'msg ' + (role === 'user' ? 'user' : 'bot');
+    div.innerHTML = '<div class="role">' + (role === 'user' ? 'You' : 'Agent') + '</div>';
+    div.appendChild(document.createTextNode(text));
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  async function loadState() {
+    try {
+      const r = await fetch('/state');
+      const s = await r.json();
+      meta.textContent = (s.agent_id || 'agent') + ' · reflections: ' + (s.reflection_count || 0);
+      (s.history || []).forEach(h => { add('user', h.query); add('bot', h.response); });
+    } catch (e) { meta.textContent = 'state unavailable'; }
+  }
+
+  async function ask() {
+    const text = q.value.trim();
+    if (!text) return;
+    add('user', text);
+    q.value = '';
+    send.disabled = true; q.disabled = true;
+    try {
+      const r = await fetch('/reflect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: text })
+      });
+      const res = await r.json();
+      add('bot', res.response ?? JSON.stringify(res));
+      meta.textContent = (res.agent_id || 'agent') + ' · reflections: ' + (res.reflection_count || 0);
+    } catch (e) { add('bot', '[Error] ' + e); }
+    send.disabled = false; q.disabled = false; q.focus();
+  }
+
+  send.addEventListener('click', ask);
+  q.addEventListener('keydown', e => { if (e.key === 'Enter') ask(); });
+  loadState();
+</script>
+</body>
+</html>

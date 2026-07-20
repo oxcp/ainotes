@@ -29,13 +29,13 @@ RUN groupadd -r agent && useradd -r -g agent agent
 WORKDIR /app
 COPY --from=builder /app/deps /app/deps
 COPY app/ ./app/
+COPY app/.env ./app/.env
 COPY lifecycle-hook.sh /app/lifecycle-hook.sh
 RUN chmod +x /app/lifecycle-hook.sh
 
 ENV PYTHONPATH="/app/deps" \
     PYTHONUNBUFFERED="1" \
     AGENT_LOG_LEVEL="INFO" \
-    AGENT_STATE_BACKEND="redis" \
     AGENT_PORT="8080"
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \

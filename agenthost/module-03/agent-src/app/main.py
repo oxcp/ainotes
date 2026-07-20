@@ -1,44 +1,34 @@
 #!/usr/bin/env python3
 """
-POC Agent — Simple Reflection Loop with LLM Integration
-=======================================================
+POC Agent — Foundry catalog agent with Blob-persisted chat history
+==================================================================
 
-A lightweight, stateful agent designed to run inside a kubernetes-sigs
-`agent-sandbox` Sandbox pod on AKS (Module 3, Solution B).
+A small, clear agent for Module 3 (Solution B) that:
+  1. Serves the existing single-page HTML chat portal at `/`.
+  2. Talks to the backend model to answer chat messages.
+  3. Registers a PERSISTENT agent in the Foundry project so it is visible and
+     manageable in the Foundry agent catalog (via azure-ai-projects).
+  4. Persists conversation state to Azure Blob Storage.
+  5. Recovers previous conversation history from Blob on startup.
+  6. Runs inference through the Module 1 APIM gateway using the model
+     **Responses API** (Microsoft Agent Framework + Azure OpenAI SDK).
 
-It can run the agent in two modes (AGENT_MODE):
-  • foundry (default) — creates a **persistent agent in the Foundry project**
-    via the Foundry Agent Service; it appears in the Foundry portal's Agents list.
-  • gateway — calls the Foundry model through the Module 1 APIM AI gateway using
-    the Microsoft Agent Framework `OpenAIChatClient` (NOT visible in the portal).
-
-Either way it serves a small web **portal** at `/` for interactive chat.
-
-Features:
-  • Simple agentic loop: read query -> agent.run -> save state -> return result
-  • Foundry Agent Service persistent agent (portal-visible) OR APIM gateway
-  • Authorization: Bearer token / Azure Workload Identity (DefaultAzureCredential)
-  • Redis hot state + automatic recovery on pod restart (hibernate / resume)
-  • Web portal at / + Kubernetes probes: /health (liveness), /ready (readiness)
+Auth is Azure Workload Identity (DefaultAzureCredential) — no static secrets.
 
 Environment Variables (aligned with agent-sandbox.yaml):
-  AGENT_ID                — Unique agent identifier (default: agent-poc-001)
-  AGENT_STATE_BACKEND     — 'redis' or 'memory' (default: memory)
-  AGENT_REDIS_CONNECTION  — Redis connection string (host:port,password=..,ssl=True)
-  AGENT_REDIS_TTL_SECONDS — State TTL in Redis (default: 3600)
-  AGENT_MODE              — 'foundry' (portal-visible) or 'gateway' (default: foundry)
-  FOUNDRY_PROJECT_ENDPOINT— Foundry project endpoint (foundry mode), e.g.
-                            https://<account>.services.ai.azure.com/api/projects/<project>
-  FOUNDRY_AGENT_NAME      — Persistent agent name to create/reuse in the project
-  AGENT_APIM_ENDPOINT     — APIM gateway base URL (gateway mode); app appends /openai/v1
-  LLM_BASE_URL            — Full client base_url (gateway mode); overrides AGENT_APIM_ENDPOINT
-  LLM_API_KEY             — Static Bearer token (gateway mode; empty = Workload Identity)
-  LLM_TOKEN_SCOPE         — AAD scope for the Workload Identity token (gateway mode)
-                            (default: https://ai.azure.com/.default)
-  LLM_MODEL               — Model deployment name (default: gpt-5.4-mini)
-  AGENT_INSTRUCTIONS      — System instructions for the agent
-  AGENT_PORT              — HTTP port (default: 8080)
-  AGENT_LOG_LEVEL         — Log level (default: INFO)
+  AGENT_ID                 — Unique agent identifier (default: agent-poc-001)
+  AGENT_STORAGE_ACCOUNT    — Storage account for Blob state persistence
+  AGENT_BLOB_CONTAINER     — Blob container for state (default: agent-state)
+  FOUNDRY_PROJECT_ENDPOINT — Foundry project endpoint, e.g.
+                             https://<account>.services.ai.azure.com/api/projects/<project>
+  FOUNDRY_AGENT_NAME       — Persistent agent name to create/reuse in the catalog
+  AGENT_APIM_ENDPOINT      — APIM gateway base URL (Responses API routes here)
+  LLM_MODEL                — Model deployment name (default: gpt-5.4-mini)
+  LLM_TOKEN_SCOPE          — AAD scope for the Workload Identity token
+                             (default: https://ai.azure.com/.default)
+  AGENT_INSTRUCTIONS       — System instructions for the agent
+  AGENT_PORT               — HTTP port (default: 8080)
+  AGENT_LOG_LEVEL          — Log level (default: INFO)
 
 Run: python -m app.main   (module entrypoint)  |  python app/main.py
 """
@@ -80,31 +70,26 @@ _load_dotenv_from_app_dir()
 
 # ── Configuration ──────────────────────────────────────────────────────────
 AGENT_ID = os.environ.get("AGENT_ID", "agent-poc-001")
-STATE_BACKEND = os.environ.get("AGENT_STATE_BACKEND", "memory")  # 'redis' or 'memory'
-REDIS_CONNECTION = os.environ.get("AGENT_REDIS_CONNECTION", "localhost:6379")
-REDIS_TTL_SECONDS = int(os.environ.get("AGENT_REDIS_TTL_SECONDS", "3600"))
 
-# Agent Framework OpenAIChatClient base_url (calls the Foundry model through the
-# APIM gateway). Prefer explicit LLM_BASE_URL, else derive from the gateway base.
-_APIM_ENDPOINT = os.environ.get("AGENT_APIM_ENDPOINT", "").rstrip("/")
-LLM_BASE_URL = os.environ.get("LLM_BASE_URL") or (
-    f"{_APIM_ENDPOINT}/openai/v1" if _APIM_ENDPOINT else ""
-)
-LLM_API_KEY = os.environ.get("LLM_API_KEY", "")
-# Token scope for Workload Identity. The Module 1 gateway validate-jwt only checks
-# the issuer (tenant), not the audience, so the Foundry data-plane scope works.
-LLM_TOKEN_SCOPE = os.environ.get("LLM_TOKEN_SCOPE", "https://ai.azure.com/.default")
-LLM_MODEL = os.environ.get("LLM_MODEL", "gpt-5.4-mini")
-AGENT_INSTRUCTIONS = os.environ.get(
-    "AGENT_INSTRUCTIONS",
-    "You are a concise, helpful reflection agent. Keep answers brief.",
-)
+# Blob state persistence (Module 1 storage account + container).
+STORAGE_ACCOUNT = os.environ.get("AGENT_STORAGE_ACCOUNT", "")
+BLOB_CONTAINER = os.environ.get("AGENT_BLOB_CONTAINER", "agent-state")
 
-# Mode: 'foundry' creates a PERSISTENT agent in the Foundry project (visible in
-# the Foundry portal -> Agents); 'gateway' uses the APIM gateway (not portal-visible).
-AGENT_MODE = os.environ.get("AGENT_MODE", "foundry").strip().lower()
+# Foundry project (catalog visibility) — a persistent agent is created/reused here.
 FOUNDRY_PROJECT_ENDPOINT = os.environ.get("FOUNDRY_PROJECT_ENDPOINT", "").rstrip("/")
 FOUNDRY_AGENT_NAME = os.environ.get("FOUNDRY_AGENT_NAME", "agenthost-reflection-agent")
+
+# Model inference: the Responses API routes through the Module 1 APIM gateway.
+APIM_ENDPOINT = os.environ.get("AGENT_APIM_ENDPOINT", "").rstrip("/")
+LLM_BASE_URL = f"{APIM_ENDPOINT}/openai/v1" if APIM_ENDPOINT else ""
+LLM_MODEL = os.environ.get("LLM_MODEL", "gpt-5.4-mini")
+# Workload Identity token scope. The Module 1 gateway validate-jwt checks the
+# issuer (tenant) only, so the Foundry data-plane scope works.
+LLM_TOKEN_SCOPE = os.environ.get("LLM_TOKEN_SCOPE", "https://ai.azure.com/.default")
+AGENT_INSTRUCTIONS = os.environ.get(
+    "AGENT_INSTRUCTIONS",
+    "You are a concise, helpful assistant. Keep answers brief.",
+)
 
 AGENT_PORT = int(os.environ.get("AGENT_PORT", "8080"))
 LOG_LEVEL = os.environ.get("AGENT_LOG_LEVEL", "INFO")
@@ -121,273 +106,263 @@ def _utcnow() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-# ── State Store (Abstract) ─────────────────────────────────────────────────
-class StateStore:
-    """Base class for agent state persistence."""
+# ── State Store (Azure Blob) ───────────────────────────────────────────────
+class BlobStateStore:
+    """Persists agent conversation state as a JSON blob (survives restarts).
 
-    async def save_state(self, state: Dict[str, Any]) -> None:
-        raise NotImplementedError
+    Auth: DefaultAzureCredential (Azure Workload Identity in AKS). The Module 1
+    UAMI has \"Storage Blob Data Contributor\" on the storage account.
+    """
 
-    async def load_state(self) -> Dict[str, Any]:
-        raise NotImplementedError
-
-    async def close(self) -> None:
-        pass
+    def __init__(self, agent_id: str, storage_account: str, container: str):
+        self.agent_id = agent_id
+        self.storage_account = storage_account
+        self.container = container
+        self.blob_name = f"{agent_id}.json"
+        self._service = None
+        self._credential = None
 
     def _default_state(self) -> Dict[str, Any]:
         return {
-            "agent_id": AGENT_ID,
+            "agent_id": self.agent_id,
             "created_at": _utcnow(),
             "resumed_at": _utcnow(),
             "reflection_count": 0,
             "history": [],  # list of {query, response, timestamp}
         }
 
+    async def _blob_client(self):
+        """Lazily create the blob client. Returns None if Blob is unavailable."""
+        if not self.storage_account:
+            return None
+        if self._service is None:
+            try:
+                from azure.storage.blob.aio import BlobServiceClient
+                from azure.identity.aio import DefaultAzureCredential
 
-class InMemoryStateStore(StateStore):
-    """Simple in-memory state store (good for local dev; not persistent)."""
-
-    def __init__(self):
-        self.state: Dict[str, Any] = {}
+                self._credential = DefaultAzureCredential()
+                self._service = BlobServiceClient(
+                    account_url=f"https://{self.storage_account}.blob.core.windows.net",
+                    credential=self._credential,
+                )
+                container = self._service.get_container_client(self.container)
+                try:
+                    await container.create_container()
+                except Exception:
+                    pass  # already exists
+            except Exception as e:
+                logger.warning(f"[Blob] Unavailable ({e}); state not persisted")
+                self._service = None
+                return None
+        return self._service.get_blob_client(
+            container=self.container, blob=self.blob_name
+        )
 
     async def save_state(self, state: Dict[str, Any]) -> None:
-        self.state = state
-        logger.debug("[InMemory] State saved")
-
-    async def load_state(self) -> Dict[str, Any]:
-        return self.state or self._default_state()
-
-
-class RedisStateStore(StateStore):
-    """Redis-backed state store (survives pod restart / hibernate-resume)."""
-
-    def __init__(self, agent_id: str, connection_string: str, ttl_seconds: int):
-        self.agent_id = agent_id
-        self.connection_string = connection_string
-        self.ttl_seconds = ttl_seconds
-        self.redis = None
-        self.key = f"agent:state:{agent_id}"
-
-    async def _connect(self):
-        """Lazy Redis connection. Parses 'host:port,password=..,ssl=True'."""
-        if self.redis is not None:
+        blob = await self._blob_client()
+        if blob is None:
             return
         try:
-            import redis.asyncio as aioredis
-
-            parts = self.connection_string.split(",")
-            host, port_str = parts[0].split(":")
-            port = int(port_str)
-
-            options: Dict[str, Any] = {}
-            for part in parts[1:]:
-                if "=" in part:
-                    k, v = part.split("=", 1)
-                    k, v = k.strip(), v.strip()
-                    if v.lower() in ("true", "false"):
-                        options[k] = v.lower() == "true"
-                    else:
-                        options[k] = v
-
-            logger.info(f"[Redis] Connecting to {host}:{port} (ssl={options.get('ssl', False)})")
-            self.redis = aioredis.Redis(
-                host=host,
-                port=port,
-                password=options.get("password"),
-                ssl=options.get("ssl", False),
-                decode_responses=True,
-            )
-            await self.redis.ping()
-            logger.info("[Redis] Connection successful")
+            await blob.upload_blob(json.dumps(state), overwrite=True)
+            logger.info(f"[Blob] State saved for {self.agent_id} "
+                        f"({len(state.get('history', []))} turns)")
         except Exception as e:
-            logger.error(f"[Redis] Connection failed: {e}. Falling back to in-memory.")
-            self.redis = None
-
-    async def save_state(self, state: Dict[str, Any]) -> None:
-        await self._connect()
-        if self.redis:
-            try:
-                await self.redis.set(self.key, json.dumps(state), ex=self.ttl_seconds)
-                logger.info(f"[Redis] State saved for {self.agent_id} (ttl={self.ttl_seconds}s)")
-            except Exception as e:
-                logger.error(f"[Redis] Save failed: {e}")
-        else:
-            logger.warning("[Redis] Unavailable; state not persisted")
+            logger.error(f"[Blob] Save failed: {e}")
 
     async def load_state(self) -> Dict[str, Any]:
-        await self._connect()
-        if self.redis:
+        blob = await self._blob_client()
+        if blob is not None:
             try:
-                raw = await self.redis.get(self.key)
-                if raw:
-                    state = json.loads(raw)
-                    state["resumed_at"] = _utcnow()
-                    logger.info(
-                        f"[Redis] State loaded for {self.agent_id}: "
-                        f"{len(state.get('history', []))} messages, "
-                        f"reflection_count={state.get('reflection_count', 0)}"
-                    )
-                    return state
+                stream = await blob.download_blob()
+                raw = await stream.readall()
+                state = json.loads(raw)
+                state["resumed_at"] = _utcnow()
+                logger.info(f"[Blob] State recovered for {self.agent_id}: "
+                            f"{len(state.get('history', []))} turns")
+                return state
             except Exception as e:
-                logger.error(f"[Redis] Load failed: {e}")
+                logger.info(f"[Blob] No prior state ({e}); starting fresh")
         return self._default_state()
 
-    async def close(self):
-        if self.redis:
-            await self.redis.aclose()
+    async def close(self) -> None:
+        try:
+            if self._service is not None:
+                await self._service.close()
+            if self._credential is not None:
+                await self._credential.close()
+        except Exception:
+            pass
 
 
-# ── LLM Client (Microsoft Agent Framework) ─────────────────────────────────
-class LLMClient:
-    """Runs a Foundry model via the **Microsoft Agent Framework**.
+# ── AI Client (MAF + Azure OpenAI Responses API via APIM) ──────────────────
+class FoundryResponsesClient:
+    """Backend AI client.
 
-    Two modes (AGENT_MODE):
-      • foundry  — creates/reuses a PERSISTENT agent in the Foundry project via the
-        Foundry Agent Service (agent_framework.azure.AzureAIAgentClient). The agent
-        shows up in the Foundry portal's Agents list. Auth: DefaultAzureCredential
-        (Workload Identity in AKS; needs the "Azure AI User" role on the project).
-      • gateway  — calls the model through the Module 1 APIM gateway
-        (agent_framework.openai.OpenAIChatClient). NOT visible in the portal.
+    Responsibilities:
+      • Register a PERSISTENT agent in the Foundry project so it is visible and
+        manageable in the Foundry agent catalog (azure-ai-projects).
+      • Answer chat turns using the model **Responses API**, routed through the
+        Module 1 APIM gateway, built with the Microsoft Agent Framework on top of
+        the Azure OpenAI SDK. Auth: Workload Identity (DefaultAzureCredential).
     """
 
-    def __init__(self, mode: str, base_url: str, api_key: str, model: str,
-                 token_scope: str, instructions: str,
-                 foundry_endpoint: str, foundry_agent_name: str):
-        self.mode = mode
+    def __init__(self, base_url: str, model: str, token_scope: str,
+                 instructions: str, foundry_endpoint: str, foundry_agent_name: str):
         self.base_url = base_url
-        self.static_key = api_key
         self.model = model
         self.token_scope = token_scope
         self.instructions = instructions
         self.foundry_endpoint = foundry_endpoint
         self.foundry_agent_name = foundry_agent_name
-        self._agent = None            # lazy agent_framework.Agent
-        self._credential = None       # async credential (foundry mode)
-        self._project_client = None   # AIProjectClient (foundry mode)
+        self._agent = None            # MAF agent (Responses API via APIM)
+        self._credential = None       # async credential (catalog registration)
+        self._project_client = None   # AIProjectClient (catalog registration)
+        self._http_client = None      # httpx client (per-request token refresh)
         self._built = False
 
-    async def _ensure_agent(self):
-        """Lazily build the agent (foundry or gateway). None => simulate."""
-        if self._built:
-            return self._agent
-        self._built = True
-        if self.mode == "foundry":
-            self._agent = await self._build_foundry_agent()
-        else:
-            self._agent = self._build_gateway_agent()
-        return self._agent
-
-    async def _build_foundry_agent(self):
-        """Create/reuse a persistent Foundry agent (visible in the portal)."""
+    async def _register_catalog_agent(self) -> None:
+        """Create/reuse the persistent agent in the Foundry catalog (visible)."""
         if not self.foundry_endpoint:
-            logger.warning("[LLM] FOUNDRY_PROJECT_ENDPOINT not set; simulating")
-            return None
+            logger.warning("[Foundry] FOUNDRY_PROJECT_ENDPOINT unset; "
+                           "skipping catalog registration")
+            return
         try:
-            from agent_framework import Agent
-            from agent_framework.azure import AzureAIAgentClient
             from azure.ai.projects.aio import AIProjectClient
             from azure.identity.aio import DefaultAzureCredential
         except ImportError as e:
-            logger.warning(f"[LLM] Foundry SDKs not installed ({e}); simulating")
-            return None
+            logger.warning(f"[Foundry] SDK not installed ({e}); skipping catalog")
+            return
         try:
             self._credential = DefaultAzureCredential()
             self._project_client = AIProjectClient(
                 endpoint=self.foundry_endpoint, credential=self._credential
             )
-            # Reuse an existing agent by name, else create a new persistent one.
-            agent_meta = None
+            existing = None
             async for a in self._project_client.agents.list_agents():
                 if getattr(a, "name", None) == self.foundry_agent_name:
-                    agent_meta = a
+                    existing = a
                     break
-            if agent_meta is None:
-                agent_meta = await self._project_client.agents.create_agent(
+            if existing is None:
+                created = await self._project_client.agents.create_agent(
                     model=self.model,
                     name=self.foundry_agent_name,
                     instructions=self.instructions,
                 )
-                logger.info(f"[LLM] Created Foundry agent '{self.foundry_agent_name}' "
-                            f"(id={agent_meta.id}) — visible in the Foundry portal")
+                logger.info(f"[Foundry] Created catalog agent "
+                            f"'{self.foundry_agent_name}' (id={created.id})")
             else:
-                logger.info(f"[LLM] Reusing Foundry agent '{self.foundry_agent_name}' "
-                            f"(id={agent_meta.id})")
-            chat_client = AzureAIAgentClient(
-                project_client=self._project_client, agent_id=agent_meta.id
-            )
-            return Agent(client=chat_client, name=self.foundry_agent_name)
+                logger.info(f"[Foundry] Reusing catalog agent "
+                            f"'{self.foundry_agent_name}' (id={existing.id})")
         except Exception as e:
-            logger.warning(f"[LLM] Foundry agent setup failed: {e}; simulating")
-            return None
+            logger.warning(f"[Foundry] Catalog registration failed: {e}")
 
-    def _build_gateway_agent(self):
-        """Build an APIM-gateway-backed agent (not visible in the portal)."""
+    def _build_responses_agent(self):
+        """Build a MAF agent that calls the model Responses API through APIM.
+
+        APIM exposes the OpenAI-compatible `/openai/v1` shape, so we use the
+        (non-Azure) OpenAIResponsesClient. Its api_key is a plain string and is
+        NOT refreshed, while Entra (Workload Identity) tokens expire (~1h). To
+        keep a long-running pod healthy we attach a custom httpx auth flow that
+        injects a freshly-provided Bearer token on every request.
+        """
         if not self.base_url:
-            logger.warning("[LLM] no gateway base_url; simulating")
+            logger.warning("[AI] No APIM base_url; simulating responses")
             return None
         try:
             from agent_framework import Agent
-            from agent_framework.openai import OpenAIChatClient
-        except ImportError:
-            logger.warning("[LLM] agent_framework not installed; will simulate")
+            from agent_framework.openai import OpenAIResponsesClient
+        except ImportError as e:
+            logger.warning(f"[AI] agent_framework not installed ({e}); simulating")
             return None
-
-        # api_key: static token string, or a callable token provider (Workload
-        # Identity). Both are sent as Authorization: Bearer by the client.
-        if self.static_key:
-            api_key: Any = self.static_key
-        else:
-            try:
-                from azure.identity import DefaultAzureCredential, get_bearer_token_provider
-                api_key = get_bearer_token_provider(
-                    DefaultAzureCredential(), self.token_scope
-                )
-            except Exception as e:
-                logger.warning(f"[LLM] Workload Identity unavailable: {e}")
-                return None
         try:
-            client = OpenAIChatClient(
-                model=self.model, base_url=self.base_url, api_key=api_key,
+            from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+            token_provider = get_bearer_token_provider(
+                DefaultAzureCredential(), self.token_scope
             )
-            logger.info(f"[LLM] Gateway agent ready (base_url={self.base_url})")
+        except Exception as e:
+            logger.warning(f"[AI] Workload Identity unavailable: {e}")
+            return None
+        try:
+            client = self._make_responses_client(OpenAIResponsesClient, token_provider)
+            logger.info(f"[AI] Responses agent ready (base_url={self.base_url})")
             return Agent(
                 client=client,
-                name="reflection-agent",
+                name=self.foundry_agent_name,
                 instructions=self.instructions,
-                default_options={"store": False},
             )
         except Exception as e:
-            logger.warning(f"[LLM] Agent build failed: {e}")
+            logger.warning(f"[AI] Agent build failed: {e}")
             return None
 
+    def _make_responses_client(self, responses_cls, token_provider):
+        """OpenAI-compatible Responses client with per-request Entra token refresh.
+
+        Preferred: wrap an AsyncOpenAI whose httpx auth injects a fresh Bearer
+        token each request (get_bearer_token_provider caches + auto-refreshes).
+        Fallback: pass a resolved token string as api_key (expires ~1h).
+        """
+        try:
+            import httpx
+            from openai import AsyncOpenAI
+
+            class _EntraBearerAuth(httpx.Auth):
+                def __init__(self, provider):
+                    self._provider = provider
+
+                def auth_flow(self, request):
+                    request.headers["Authorization"] = f"Bearer {self._provider()}"
+                    yield request
+
+            self._http_client = httpx.AsyncClient(auth=_EntraBearerAuth(token_provider))
+            async_client = AsyncOpenAI(
+                base_url=self.base_url,
+                api_key="workload-identity",  # placeholder; overridden by auth flow
+                http_client=self._http_client,
+            )
+            return responses_cls(model_id=self.model, async_client=async_client)
+        except Exception as e:
+            logger.warning(f"[AI] async_client path unavailable ({e}); "
+                           "falling back to a resolved token string")
+            return responses_cls(
+                model_id=self.model, base_url=self.base_url, api_key=token_provider(),
+            )
+
+    async def _ensure_agent(self):
+        if self._built:
+            return self._agent
+        self._built = True
+        await self._register_catalog_agent()   # catalog visibility
+        self._agent = self._build_responses_agent()
+        return self._agent
+
     async def reflect(self, prompt: str, conversation_history: list) -> str:
-        """Run the agent with recent conversation context."""
+        """Answer a chat turn using recent history for context."""
         agent = await self._ensure_agent()
         if agent is None:
-            logger.warning("[LLM] No agent available; simulating response")
-            return f"[Simulated] Thinking about: {prompt}"
-
-        # Build the message list (recent turns + the new prompt).
-        from agent_framework import ChatMessage, Role
-
-        messages = []
-        for turn in conversation_history[-3:]:  # last 3 turns for context
-            messages.append(ChatMessage(role=Role.USER, text=turn["query"]))
-            messages.append(ChatMessage(role=Role.ASSISTANT, text=turn["response"]))
-        messages.append(ChatMessage(role=Role.USER, text=prompt))
-
+            return f"[Simulated] You said: {prompt}"
         try:
-            logger.info(f"[LLM] agent.run (mode={self.mode}, model={self.model})")
+            from agent_framework import ChatMessage, Role
+
+            messages = []
+            for turn in conversation_history[-5:]:  # recent context
+                messages.append(ChatMessage(role=Role.USER, text=turn["query"]))
+                messages.append(ChatMessage(role=Role.ASSISTANT, text=turn["response"]))
+            messages.append(ChatMessage(role=Role.USER, text=prompt))
+
             result = await agent.run(messages)
             answer = getattr(result, "text", None) or str(result)
-            logger.info(f"[LLM] Response: {answer[:100]}...")
+            logger.info(f"[AI] Response: {answer[:100]}...")
             return answer
         except Exception as e:
-            logger.error(f"[LLM] Request failed: {e}")
+            logger.error(f"[AI] Request failed: {e}")
             return f"[Error] {e}"
 
     async def close(self):
-        """Release the Foundry project client / credential (foundry mode)."""
+        try:
+            if self._http_client is not None:
+                await self._http_client.aclose()
+        except Exception:
+            pass
         try:
             if self._project_client is not None:
                 await self._project_client.close()
@@ -402,9 +377,9 @@ class LLMClient:
 
 # ── Agent (Main Logic) ─────────────────────────────────────────────────────
 class ReflectionAgent:
-    """Loads state -> calls LLM (Bearer auth) -> persists state -> returns result."""
+    """Loads state from Blob -> calls the AI client -> persists state to Blob."""
 
-    def __init__(self, state_store: StateStore, llm_client: LLMClient):
+    def __init__(self, state_store: "BlobStateStore", llm_client: "FoundryResponsesClient"):
         self.state_store = state_store
         self.llm_client = llm_client
         self.state: Dict[str, Any] = {}
@@ -440,90 +415,19 @@ class ReflectionAgent:
 
 
 # ── Web Portal (single-page chat UI) ───────────────────────────────────────
-PORTAL_HTML = """<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Agent Portal</title>
-<style>
-  :root { --bg:#0f172a; --panel:#1e293b; --accent:#38bdf8; --user:#2563eb; --bot:#334155; --text:#e2e8f0; }
-  * { box-sizing:border-box; }
-  body { margin:0; font-family:system-ui,Segoe UI,Arial,sans-serif; background:var(--bg); color:var(--text); height:100vh; display:flex; flex-direction:column; }
-  header { padding:12px 20px; background:var(--panel); display:flex; align-items:center; gap:12px; border-bottom:1px solid #334155; }
-  header h1 { font-size:16px; margin:0; font-weight:600; }
-  header .meta { margin-left:auto; font-size:12px; color:#94a3b8; }
-  #chat { flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:12px; }
-  .msg { max-width:80%; padding:10px 14px; border-radius:12px; line-height:1.45; white-space:pre-wrap; word-wrap:break-word; }
-  .user { align-self:flex-end; background:var(--user); border-bottom-right-radius:2px; }
-  .bot  { align-self:flex-start; background:var(--bot); border-bottom-left-radius:2px; }
-  .role { font-size:11px; opacity:.7; margin-bottom:2px; }
-  footer { padding:14px 20px; background:var(--panel); border-top:1px solid #334155; display:flex; gap:10px; }
-  #q { flex:1; padding:12px 14px; border-radius:10px; border:1px solid #475569; background:#0b1220; color:var(--text); font-size:14px; }
-  #q:focus { outline:none; border-color:var(--accent); }
-  button { padding:0 20px; border:none; border-radius:10px; background:var(--accent); color:#0f172a; font-weight:600; cursor:pointer; }
-  button:disabled { opacity:.5; cursor:not-allowed; }
-</style>
-</head>
-<body>
-  <header>
-    <h1>&#129302; Agent Portal</h1>
-    <span class="meta" id="meta">connecting…</span>
-  </header>
-  <div id="chat"></div>
-  <footer>
-    <input id="q" placeholder="Ask the agent…" autocomplete="off" />
-    <button id="send">Send</button>
-  </footer>
-<script>
-  const chat = document.getElementById('chat');
-  const meta = document.getElementById('meta');
-  const q = document.getElementById('q');
-  const send = document.getElementById('send');
+def _load_portal_html() -> str:
+    """Load the chat portal HTML from the sibling portal.html file."""
+    html_path = os.path.join(os.path.dirname(__file__), "portal.html")
+    try:
+        with open(html_path, "r", encoding="utf-8") as f:
+            return f.read()
+    except OSError as e:
+        logger.warning(f"[Portal] Could not read portal.html ({e}); serving fallback")
+        return "<!DOCTYPE html><html><body><h1>Agent Portal</h1>" \
+               "<p>portal.html not found.</p></body></html>"
 
-  function add(role, text) {
-    const div = document.createElement('div');
-    div.className = 'msg ' + (role === 'user' ? 'user' : 'bot');
-    div.innerHTML = '<div class="role">' + (role === 'user' ? 'You' : 'Agent') + '</div>';
-    div.appendChild(document.createTextNode(text));
-    chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
-  }
 
-  async function loadState() {
-    try {
-      const r = await fetch('/state');
-      const s = await r.json();
-      meta.textContent = (s.agent_id || 'agent') + ' · reflections: ' + (s.reflection_count || 0);
-      (s.history || []).forEach(h => { add('user', h.query); add('bot', h.response); });
-    } catch (e) { meta.textContent = 'state unavailable'; }
-  }
-
-  async function ask() {
-    const text = q.value.trim();
-    if (!text) return;
-    add('user', text);
-    q.value = '';
-    send.disabled = true; q.disabled = true;
-    try {
-      const r = await fetch('/reflect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: text })
-      });
-      const res = await r.json();
-      add('bot', res.response ?? JSON.stringify(res));
-      meta.textContent = (res.agent_id || 'agent') + ' · reflections: ' + (res.reflection_count || 0);
-    } catch (e) { add('bot', '[Error] ' + e); }
-    send.disabled = false; q.disabled = false; q.focus();
-  }
-
-  send.addEventListener('click', ask);
-  q.addEventListener('keydown', e => { if (e.key === 'Enter') ask(); });
-  loadState();
-</script>
-</body>
-</html>"""
+PORTAL_HTML = _load_portal_html()
 
 
 # ── HTTP Server (Kubernetes probes + API) ──────────────────────────────────
@@ -577,27 +481,20 @@ class AgentHTTPHandler(BaseHTTPRequestHandler):
 # ── Main ───────────────────────────────────────────────────────────────────
 async def main():
     logger.info("=" * 72)
-    logger.info(f"Agent ID       : {AGENT_ID}")
-    logger.info(f"State backend  : {STATE_BACKEND}")
-    logger.info(f"Agent mode     : {AGENT_MODE}")
-    if AGENT_MODE == "foundry":
-        logger.info(f"Foundry project: {FOUNDRY_PROJECT_ENDPOINT or '(unset)'}")
-        logger.info(f"Foundry agent  : {FOUNDRY_AGENT_NAME}")
-    else:
-        logger.info(f"LLM base_url    : {LLM_BASE_URL}")
-    logger.info(f"LLM model      : {LLM_MODEL}")
+    logger.info(f"Agent ID        : {AGENT_ID}")
+    logger.info(f"Blob storage    : {STORAGE_ACCOUNT or '(unset)'} / {BLOB_CONTAINER}")
+    logger.info(f"Foundry project : {FOUNDRY_PROJECT_ENDPOINT or '(unset)'}")
+    logger.info(f"Foundry agent   : {FOUNDRY_AGENT_NAME}")
+    logger.info(f"APIM base_url   : {LLM_BASE_URL or '(unset)'}")
+    logger.info(f"Model           : {LLM_MODEL}")
     logger.info("=" * 72)
 
-    state_store: StateStore = (
-        RedisStateStore(AGENT_ID, REDIS_CONNECTION, REDIS_TTL_SECONDS)
-        if STATE_BACKEND == "redis"
-        else InMemoryStateStore()
+    state_store = BlobStateStore(AGENT_ID, STORAGE_ACCOUNT, BLOB_CONTAINER)
+    ai_client = FoundryResponsesClient(
+        LLM_BASE_URL, LLM_MODEL, LLM_TOKEN_SCOPE, AGENT_INSTRUCTIONS,
+        FOUNDRY_PROJECT_ENDPOINT, FOUNDRY_AGENT_NAME,
     )
-    llm_client = LLMClient(
-        AGENT_MODE, LLM_BASE_URL, LLM_API_KEY, LLM_MODEL, LLM_TOKEN_SCOPE,
-        AGENT_INSTRUCTIONS, FOUNDRY_PROJECT_ENDPOINT, FOUNDRY_AGENT_NAME,
-    )
-    agent = ReflectionAgent(state_store, llm_client)
+    agent = ReflectionAgent(state_store, ai_client)
 
     AgentHTTPHandler.agent = agent
     AgentHTTPHandler.loop = asyncio.get_running_loop()
@@ -611,7 +508,7 @@ async def main():
 
     # Optional self-demo on startup (disabled by default in-cluster).
     if os.environ.get("AGENT_RUN_DEMO", "false").lower() == "true":
-        logger.info("[Demo] Running startup reflection cycles...")
+        logger.info("[Demo] Running startup chat cycles...")
         for q in ["What is the capital of France?", "Explain photosynthesis briefly."]:
             logger.info(json.dumps(await agent.reflect(q), indent=2))
             await asyncio.sleep(1)
@@ -623,7 +520,7 @@ async def main():
     except (KeyboardInterrupt, asyncio.CancelledError):
         logger.info("[Agent] Shutting down...")
     finally:
-        await llm_client.close()
+        await ai_client.close()
         await state_store.close()
         http_server.shutdown()
 
