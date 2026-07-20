@@ -212,7 +212,47 @@ agenthost/module-03$ kubectl get pods -n agent-sandbox-system
 NAME                                        READY   STATUS    RESTARTS   AGE
 agent-sandbox-controller-76885c8b6c-bk84h   1/1     Running   0          117m
 ```
+### Verify the Pod Sandboxing is working
 
+Run `kubectl get all -n $NAMESPACE`, you should see output like:
+```
+agenthost/module-03$ kubectl get all -n $NAMESPACE
+NAME             READY   STATUS    RESTARTS   AGE
+pod/agent-host   1/1     Running   0          34s
+
+NAME                 TYPE           CLUSTER-IP   EXTERNAL-IP      PORT(S)        AGE
+service/agent-host   LoadBalancer   10.0.63.89   48.204.162.105   80:31606/TCP   33s
+```
+Open your browser and input URL `http://<EXTERNAL-IP>`, you will see the chat window. Try several questions to see if the agent works:
+![module-03-agent-chat-portal](../pic/module-03-agent-chat-portal.png)
+
+Run `kubectl describe` you will see the pod is running in Sandbox with runtime class `kata-vm-isolation`:
+```
+agenthost/module-03$ kubectl describe pod/agent-host -n $NAMESPACE
+Name:                agent-host
+Namespace:           agent
+Priority:            0
+Runtime Class Name:  kata-vm-isolation
+Service Account:     agent-sa
+Node:                aks-kata-75222809-vmss00000a/10.224.0.19
+Start Time:          Tue, 21 Jul 2026 00:43:13 +0800
+Labels:              agents.x-k8s.io/sandbox-name-hash=03e7e68b
+                     app=agent-host
+                     azure.workload.identity/use=true
+                     component=agent-runtime
+                     topology.kubernetes.io/region=eastus2
+                     topology.kubernetes.io/zone=0
+Annotations:         agents.x-k8s.io/propagated-labels: app,azure.workload.identity/use,component
+Status:              Running
+IP:                  10.224.0.30
+IPs:
+  IP:           10.224.0.30
+Controlled By:  Sandbox/agent-host
+Containers:
+  agent-host:
+    Container ID:   containerd://a8619d5c5b9eef8906c84d864e9eb6a037882b14b6e7b7a4f2b23010826d5ec3
+    Image:          ......
+```
 
 ### Verify Pod Sandboxing Kernel Isolation
 

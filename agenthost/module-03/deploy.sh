@@ -92,7 +92,7 @@ else
     --node-vm-size "$KATA_NODE_VM_SIZE" \
     --node-count 1 \
     --enable-cluster-autoscaler \
-    --min-count 0 \
+    --min-count 1 \
     --max-count 10 \
     --os-sku AzureLinux \
     --workload-runtime KataVmIsolation \
