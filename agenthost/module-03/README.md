@@ -257,9 +257,11 @@ Containers:
     Image:          ......
 ```
 In Microsoft Foundry portal, switch to the Classic mode:
+
 ![module-03-agent-in-foundry-portal-switch-to-classic](../pic/module-03-agent-in-foundry-portal-switch-to-classic.png)
 
 and then in the "Agent" list you will see your agent (We registered our agent into the Foundry portal for visibility and management, for example your can try it in the Playground.):
+
 ![module-03-agent-in-foundry-portal-01](../pic/module-03-agent-in-foundry-portal-01.png)
 
 > **Note that we actually run our agent in AKS with Sandboxing. Unlike the Hosted Agent in solution A, in solution B we host our agent in AKS).**
