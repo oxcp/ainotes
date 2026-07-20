@@ -224,9 +224,11 @@ NAME                 TYPE           CLUSTER-IP   EXTERNAL-IP      PORT(S)       
 service/agent-host   LoadBalancer   10.0.63.89   48.204.162.105   80:31606/TCP   33s
 ```
 Open your browser and input URL `http://<EXTERNAL-IP>`, you will see the chat window. Try several questions to see if the agent works:
+**Tip: Make sure you have the `http://` as the protocol prefix, otherwise your browser may try https by default which is not implemented in the agent/workshop.**
+
 ![module-03-agent-chat-portal](../pic/module-03-agent-chat-portal.png)
 
-Run `kubectl describe` you will see the pod is running in Sandbox with runtime class `kata-vm-isolation`:
+Run `kubectl describe` you will see the pod is running in Sandbox with runtime class **`kata-vm-isolation`**:
 ```
 agenthost/module-03$ kubectl describe pod/agent-host -n $NAMESPACE
 Name:                agent-host
