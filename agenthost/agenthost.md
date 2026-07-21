@@ -323,13 +323,13 @@ Host AI agents using Azure AI Foundry with integrated state management and scale
 
 ---
 
-### Module 3 — Solution B: AKS + agent-sandbox (30 min)
+### Module 3 — Solution B: AKS + agent-sandbox (40 min)
 
 Run agents on AKS with Kata Containers and the `agent-sandbox` controller (`Sandbox` CRD lifecycle, pause/resume/hibernate). [See Module 3](./module-03/README.md)
 
 ---
 
-### Module 4 — Solution C: ACA Sandbox (30 min)
+### Module 4 — Solution C: ACA Sandbox (20 min)
 
 Deploy agents in Azure Container Apps with gVisor-based sandbox isolation and dynamic scaling. [See Module 4](./module-04/README.md)
 

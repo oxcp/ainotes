@@ -1,4 +1,4 @@
-# Module 4 — Solution C: Container-based Agent Runtime (ACA Sandboxes, 30 min)
+# Module 4 — Solution C: Container-based Agent Runtime (ACA Sandboxes, 20 min)
 
 [⬆ Back to Workshop Home](../readme.md)
 
@@ -16,6 +16,8 @@ OS-level isolation through gVisor, full lifecycle control
 ---
 
 ## Prerequisites
+
+> **Note:** Run all commands in this README from this module's root directory (`agenthost/module-04/`).
 
 1. Module-01 is deployed and the `deploymentSN` tag is present on the resource group.
 2. The agent container image built in Module-03 is available for reuse in this module.

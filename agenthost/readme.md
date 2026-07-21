@@ -31,8 +31,8 @@
 | [module-00](./module-00/README.md) | Introduction | 10 min | README |
 | [module-01](./module-01/README.md) | Core Infrastructure Setup | 30 min | README · setup.sh · main.bicep · core.bicep |
 | [module-02](./module-02/README.md) | Solution A: Foundry Hosted Agent | 30 min | README · azure.yaml · src/ (main.py, requirements.txt, Dockerfile) · agent-definition.json |
-| [module-03](./module-03/README.md) | Solution B: AKS + agent-sandbox | 30 min | README · deploy.sh · aks.bicep · agent-sandbox.yaml · Dockerfile |
-| [module-04](./module-04/README.md) | Solution C: ACA Sandboxes (workshop path) + Dynamic Sessions (optional) | 30 min | README · sandbox.bicep · sandbox-deploy.sh · dynamic-session-deploy.sh · dynamic-session-invoke.sh · Dockerfile |
+| [module-03](./module-03/README.md) | Solution B: AKS + agent-sandbox | 40 min | README · deploy.sh · aks.bicep · agent-sandbox.yaml · Dockerfile |
+| [module-04](./module-04/README.md) | Solution C: ACA Sandboxes (workshop path) + Dynamic Sessions (optional) | 20 min | README · sandbox.bicep · sandbox-deploy.sh · dynamic-session-deploy.sh · dynamic-session-invoke.sh · Dockerfile |
 | [module-05](./module-05/README.md) | Wrap-up and Q&A | 5 min | README |
 
 ---

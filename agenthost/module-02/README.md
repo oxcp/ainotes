@@ -34,6 +34,8 @@ Both clients speak the **Responses** protocol, so the hosted agent (served by `R
 
 ## Prerequisites
 
+> **Note:** Run all commands in this README from this module's root directory (`agenthost/module-02/`).
+
 - Module 1 already deployed (Foundry account `foundry-agenthost-<deploymentSN>`, project `maf-agent-prj`, model `gpt-5.4-mini`)
 - The module-01 resource group still contains the `deploymentSN` tag
 - Azure CLI, Azure Developer CLI installed

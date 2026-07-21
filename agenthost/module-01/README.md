@@ -38,6 +38,8 @@ The Foundry account ships with:
 
 ## Prerequisites
 
+> **Note:** Run all commands in this README from this module's root directory (`agenthost/module-01/`).
+
 - Azure subscription with **Contributor** access
 - Azure CLI installed and authenticated (`az login`)
 

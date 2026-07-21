@@ -1,4 +1,4 @@
-# Module 3 — Solution B: AKS + agent-sandbox (30 min)
+# Module 3 — Solution B: AKS + agent-sandbox (40 min)
 
 [⬆ Back to Workshop Home](../readme.md)
 
@@ -31,6 +31,8 @@ This module **reuses the resources Module 1 already created** (it does not recre
 ---
 
 ## Prerequisites
+
+> **Note:** Run all commands in this README from this module's root directory (`agenthost/module-03/`).
 
 - **Module 1 deployed** (Blob, APIM, ACR, UAMI) — `deploymentSN` tag present on the RG
 - `az`, `kubectl`, and Docker installed and logged in (`az login`)
