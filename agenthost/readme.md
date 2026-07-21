@@ -58,9 +58,7 @@ agenthost/
 │   ├── README.md                ← AKS + agent-sandbox deployment steps + architecture notes
 │   ├── deploy.sh                ← AKS, agent-sandbox Helm install, K8s secrets, Sandbox deploy
 │   ├── aks.bicep                ← AKS with Kata Container node pool + Workload Identity (reuses Module 1)
-│   ├── agent-sandbox.yaml       ← Workload Identity SA + Kata RuntimeClass + Sandbox CR + Service
 │   ├── agent-sandbox.yaml.example ← Template for agent-sandbox.yaml (copy and fill in placeholders)
-│   ├── agent-normal.yaml        ← Standard (non-sandbox) Deployment variant for comparison
 │   └── agent-src/               ← POC agent image source (build context for the shared agent image)
 │       ├── app/                 ← Agent application package (main.py, ...)
 │       ├── Dockerfile           ← Multi-stage Python image (build context = agent-src/)
