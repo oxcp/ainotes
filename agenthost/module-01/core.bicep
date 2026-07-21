@@ -4,7 +4,6 @@
 targetScope = 'resourceGroup'
 
 param location string
-param redisName string
 param storageAccountName string
 param apimName string
 param apimPublisherEmail string
@@ -41,6 +40,10 @@ var openAiUserRoleId = '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
 // Microsoft.CognitiveServices/* data actions so the UAMI can call the Foundry
 // Responses API via the https://ai.azure.com audience.
 var foundryUserRoleId = '53ca6127-db72-4b80-b1b0-d745d6d5456d'
+
+// Storage Blob Data Contributor — lets the UAMI read/write agent state blobs
+// (the container app / sandbox / pod persists conversation state as JSON blobs).
+var storageBlobDataContributorRoleId = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
 var gatewayApiPath = 'foundry'
 var entraLoginEndpoint = environment().authentication.loginEndpoint
 
@@ -78,26 +81,6 @@ resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' 
   name: identityName
   location: location
 }
-
-// ── Azure Cache for Redis (Standard C0) ────────────────────────────────────
-// Temporary: replacing Azure Managed Redis Enterprise with standard Azure Cache
-resource redis 'Microsoft.Cache/redis@2024-03-01' = {
-  name: redisName
-  location: location
-  properties: {
-    sku: {
-      name: 'Standard'
-      family: 'C'
-      capacity: 0
-    }
-    enableNonSslPort: false
-    minimumTlsVersion: '1.2'
-    publicNetworkAccess: 'Enabled'
-  }
-}
-
-// Note: Standard Redis has no database concept like Enterprise does.
-// Connection: ${redisHostName}:6380 with Entra ID or access key auth
 
 // ── Azure Blob Storage (Cool tier, versioning enabled) ───────────────────────
 resource storage 'Microsoft.Storage/storageAccounts@2023-01-01' = {
@@ -310,6 +293,18 @@ resource foundryAiUserRbacUami 'Microsoft.Authorization/roleAssignments@2022-04-
   }
 }
 
+// Storage Blob Data Contributor — the UAMI reads/writes agent state JSON blobs
+// in the storage account (Blob is the single source of truth for agent state).
+resource storageBlobRbacUami 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(storage.id, identity.id, storageBlobDataContributorRoleId)
+  scope: storage
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataContributorRoleId)
+    principalId: identity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
 // ── Register APIM as the Foundry project's AI Gateway ────────────────────────
 // Creates a Foundry connection of category 'ApiManagement' so the project's
 // model/inference traffic is governed through the APIM AI gateway. The Agents
@@ -430,8 +425,6 @@ resource foundryDefender 'Microsoft.CognitiveServices/accounts/defenderForAISett
 
 
 // ── Outputs ──────────────────────────────────────────────────────────────────
-output redisHostName string = redis.properties.hostName
-output redisPort int = 6380
 output storageAccountName string = storage.name
 output apimServiceUrl string = 'https://${apim.properties.gatewayUrl}'
 output identityClientId string = identity.properties.clientId
@@ -453,7 +446,6 @@ output foundryApimGatewayConnectionName string = foundryApimGatewayConnection.na
 // resource's final provisioning state as a single status object. It is
 // reported once the deployment completes (e.g. via `az deployment ... show`).
 output deploymentStatus object = {
-  redis: redis.properties.provisioningState
   storage: storage.properties.provisioningState
   apim: apim.properties.provisioningState
   keyVault: keyVault.properties.provisioningState

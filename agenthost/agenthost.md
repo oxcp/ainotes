@@ -54,10 +54,10 @@
 | Azure Resource | Technique | Isolation level | Scale-to-zero | State persistence | Entra ID integration | APIM integration | Best for |
 |---|---|---|---|---|---|---|---|
 | **Azure AI Foundry Host Agent** | Managed agent runtime | Managed (per-agent) | ✅ Native | ✅ Built-in | ✅ Native | ✅ Native | ToB managed, fastest on-ramp |
-| **ACA Sandbox** *(Public Preview)* | Container sandbox (OS-level gVisor isolation) | Strong (per-container) | ✅ Native | ✅ via Blob/Redis | ✅ Workload Identity | ✅ | ToC / ToB long-running agents; isolation without dedicated VMs |
-| **ACA Dynamic Sessions** | Container sandbox | Strong (per-session) | ✅ Native | ✅ via Blob/Redis | ✅ Workload Identity | ✅ | ToC short-lived / one-time code execution; not ideal for persistent long-running agents |
+| **ACA Sandbox** *(Public Preview)* | Container sandbox (OS-level gVisor isolation) | Strong (per-container) | ✅ Native | ✅ via Blob | ✅ Workload Identity | ✅ | ToC / ToB long-running agents; isolation without dedicated VMs |
+| **ACA Dynamic Sessions** | Container sandbox | Strong (per-session) | ✅ Native | ✅ via Blob | ✅ Workload Identity | ✅ | ToC short-lived / one-time code execution; not ideal for persistent long-running agents |
 | **AKS + agent-sandbox** | Micro-VM or Container | Strongest | ✅ Custom | ✅ Custom | ✅ Workload Identity for Pods | ✅ | ToB high-security, full control |
-| **Azure Container Apps** | Container | Strong | ✅ Native | ✅ via Blob/Redis | ✅ Workload Identity | ✅ | ToB / ToC general |
+| **Azure Container Apps** | Container | Strong | ✅ Native | ✅ via Blob | ✅ Workload Identity | ✅ | ToB / ToC general |
 | **Azure Functions** | Process / Serverless | Medium | ✅ Native | Limited | ✅ | ✅ | ToC stateless tasks |
 | **Azure App Service** | Process / Container | Weak–Medium | ❌ (min 1 instance) | ✅ | ✅ | ✅ | Simple ToC web apps |
 | **Virtual Machine** | VM | Strongest | ❌ | ✅ | ✅ | ✅ | Legacy / special hardware |
@@ -89,13 +89,13 @@ The table below maps each technical requirement to the implementation approach f
 
 | # | Requirement | Foundry Host Agent (A) | AKS + agent-sandbox (B) | ACA Sandbox — *Public Preview* (C) |
 |---|---|---|---|---|
-| 1 | **State & context persistence** | Built-in agent state store (Cosmos/Blob) | Redis on AKS + Azure Blob via CSI driver | Azure Managed Redis (context cache) + Azure Blob (snapshot) |
-| 2 | **Fast start / scale-to-zero** | Native agent idle eviction + warm resume | agent-sandbox lifecycle: pause / resume / hibernate; state checkpoint before pod termination; optional SandboxWarmPool | ACA Sandbox container pool; idle timeout = 30 min; state flushed from AMR to Blob on scale-to-zero |
+| 1 | **State & context persistence** | Built-in agent state store (Cosmos/Blob) | Azure Blob (per-agent JSON, saved on every change) | Azure Blob (per-agent JSON, saved on every change) |
+| 2 | **Fast start / scale-to-zero** | Native agent idle eviction + warm resume | agent-sandbox lifecycle: pause / resume / hibernate; state already durable in Blob; optional SandboxWarmPool | ACA Sandbox container pool; idle timeout = 30 min; state already durable in Blob |
 | 3 | **Isolation** | Per-agent managed sandbox | Kata Container Micro-VM per agent; NetworkPolicy + Namespace isolation | Per-container OS-level isolation via gVisor (syscall interception); no dedicated VM required |
 | 4 | **Entra ID authentication** | Native AAD integration; user-assigned Managed Identity | AAD Workload Identity for Pods; ingress auth via Entra ID App Registration | ACA Workload Identity (UAMI) + Entra ID token validation at ingress |
 | 5 | **AI Gateway (APIM)** | APIM policy routes all LLM calls; token quota per agent | APIM deployed in VNet; each AKS pod calls APIM internal endpoint | APIM gateway policy; JWT validation; rate-limiting per container |
 | 6 | **Agent-to-Gateway auth** | Managed Identity credential → APIM subscription key + OAuth | Pod Workload Identity → Entra token → APIM OAuth 2.0 token validation | UAMI credential; APIM validates Entra ID token via validate-jwt policy |
-| 7 | **Cost saving** | Scale-to-zero after 30 min idle; pay per agent execution | agent-sandbox hibernation; Spot Node Pool for worker nodes; Redis Basic SKU for dev | True serverless; container destroyed after idle; Redis TTL auto-evicts stale state |
+| 7 | **Cost saving** | Scale-to-zero after 30 min idle; pay per agent execution | agent-sandbox hibernation; Spot Node Pool for worker nodes; Blob Cool tier for state | True serverless; container destroyed after idle; Blob lifecycle rules expire stale state |
 
 ---
 
@@ -106,17 +106,18 @@ The table below maps each technical requirement to the implementation approach f
 ```
 Lifecycle event          Action
 ─────────────────────    ─────────────────────────────────────────────────────────
-New agent started  →  Load state from Azure Managed Redis (AMR) first;
-                         if not found, restore from Blob
-Active conversation   →  Persist state to AMR + Blob (dual-write)
-Scale-to-zero trigger →  Flush latest state from AMR to Azure Blob
-                         (versioned, immutable, cost-effective long-term)
-New request arrives   →  Restore from AMR first; fallback to Blob if AMR miss
+New agent started  →  Load state directly from Azure Blob (per-agent JSON)
+Active conversation   →  Persist state to Azure Blob on every change
+                         (after each chat turn: message sent + response received)
+Scale-to-zero trigger →  No flush needed — latest state is already durable in Blob
+New request arrives   →  Restore from Azure Blob
 ```
 
-> **Recommended storage per tier**
-> - **Hot** (active session): Azure Managed Redis (choose an HA tier for automatic failover) — sub-millisecond latency.
-> - **Cold** (archived / scale-to-zero): Azure Blob Storage (Cool tier), versioned containers.
+> **Single source of truth: Azure Blob Storage.** Each agent stores its state as
+> `<AGENT_ID>.json` in the `agent-state` container. There is no separate hot cache
+> (no Redis): the agent writes to Blob on every state change, so the latest state
+> is always durable and recoverable after a restart, hibernation, or scale-to-zero.
+> Use Blob **Cool tier** with **versioning** for cost-effective, recoverable state.
 
 ### 5.2 Fast-Start Optimisation
 
@@ -126,15 +127,22 @@ New request arrives   →  Restore from AMR first; fallback to Blob if AMR miss
 
 ### 5.3 Entra ID Auth Architecture
 
+> **Caller authentication at the AI Gateway is optional.** Validating the
+> end-user / client Entra ID token at APIM (the `validate-jwt` step marked
+> *optional* below) is recommended for ToB, but can be disabled for open ToC
+> demos or when another front door already authenticates the caller. The
+> **agent → APIM → LLM** hop still uses the agent's Managed Identity / Workload
+> Identity, which is always required.
+
 ```
 User / Client App
      │  access token (Entra ID)
      ▼
 Azure API Management (AI Gateway)
-     │  validate-jwt policy
+     │  validate-jwt policy  ← OPTIONAL (caller auth; enable for ToB)
      ▼
 agent instance
-     │  Managed Identity / Workload Identity credential
+     │  Managed Identity / Workload Identity credential  ← always required
      ▼
 Azure API Management (LLM route)
      │  validate-jwt + rate-limit policy
@@ -142,13 +150,13 @@ Azure API Management (LLM route)
 AI models / external LLM
 ```
 
-- **ToB**: Entra ID App Registration with RBAC roles; Conditional Access policies; Managed Identity per agent.
-- **ToC**: Entra External ID (B2C); anonymous-to-authenticated escalation supported.
+- **ToB**: Entra ID App Registration with RBAC roles; Conditional Access policies; Managed Identity per agent. Caller-side `validate-jwt` recommended.
+- **ToC**: Entra External ID (B2C); anonymous-to-authenticated escalation supported. Caller-side `validate-jwt` can be turned off for open access.
 
 ### 5.4 APIM AI Gateway Pattern
 
 Key APIM policies applied to the LLM backend:
-1. `validate-jwt` — verify Workload Identity token from the agent.
+1. `validate-jwt` — verify the agent's Managed Identity / Workload Identity token (agent → gateway hop; always on). Caller-side `validate-jwt` at ingress is **optional** (see 5.3).
 2. `rate-limit-by-key` — per agent instance token quota.
 3. `azure-openai-token-limit` — semantic token counting.
 4. `retry` — automatic retry on 429 / 5xx with exponential back-off.
@@ -165,7 +173,7 @@ flowchart TD
     user["👤 Enterprise User\n(Entra ID SSO)"]
     apim["Azure API Management\n(AI Gateway)"]
     foundry["Azure AI Foundry\nHost Agent"]
-    state["Azure Managed Redis\n+ Azure Blob Storage"]
+    state["Azure Blob Storage"]
     aoai["AI models"]
     entra["Azure Entra ID\n(Managed Identity)"]
 
@@ -180,12 +188,12 @@ flowchart TD
 
 **Workflow:**
 1. User authenticates via Entra ID SSO; receives an access token.
-2. Client sends request to APIM; `validate-jwt` policy authenticates and routes to Foundry Host Agent endpoint.
-3. Foundry Host Agent loads agent instance state from AMR first, then Blob if AMR has no state.
+2. Client sends request to APIM; an optional `validate-jwt` policy can authenticate the caller before routing to the Foundry Host Agent endpoint.
+3. Foundry Host Agent loads agent instance state from Azure Blob.
 4. agent processes the request; calls LLM via APIM using its Managed Identity credential.
 5. APIM enforces per-agent token quota; routes to AI models.
 6. Response streams back to user.
-7. If idle > 30 min, Host Agent evicts instance; state flushed from AMR and checkpointed to Blob.
+7. If idle > 30 min, Host Agent evicts instance; latest state is already durable in Blob.
 
 ---
 
@@ -198,8 +206,7 @@ flowchart TD
     ingress["AKS Ingress\n(NGINX + OAuth2-Proxy)"]
     ctrl["agent-sandbox controller\n(Sandbox CRD)"]
     kata["Sandbox pod\n(Kata Container, Micro-VM isolation)"]
-    redis["Azure Managed Redis\n(hot state)"]
-    blob["Azure Blob\n(cold snapshot, CSI mount)"]
+    blob["Azure Blob\n(agent state, per-agent JSON)"]
     aoai["AI models\n(private endpoint)"]
     entra["Azure Entra ID\n(Workload Identity)"]
 
@@ -207,9 +214,7 @@ flowchart TD
     apim -->|"VNet → AKS ingress"| ingress
     ingress -->|"token validation"| kata
     ctrl -->|"reconcile / pause / resume"| kata
-    kata <-->|"state R/W"| redis
-    kata -->|"checkpoint"| blob
-    blob -->|"restore"| kata
+    kata <-->|"state R/W"| blob
     kata -->|"Workload Identity token"| entra
     kata -->|"LLM call"| apim
     apim --> aoai
@@ -217,13 +222,13 @@ flowchart TD
 
 **Workflow:**
 1. User authenticates via Entra ID (MFA enforced); token forwarded to APIM.
-2. APIM (VNet-injected) routes to AKS ingress; OAuth2-Proxy validates token.
+2. APIM (VNet-injected) routes to AKS ingress; caller-token validation via OAuth2-Proxy / `validate-jwt` is optional (recommended for ToB).
 3. The `agent-sandbox` controller reconciles the `Sandbox` CR for this agent — a stateful, singleton pod with stable identity.
-4. If warm/running: the request reaches the existing Sandbox pod (< 1 s); state loaded from Redis.
-5. If hibernated: the controller resumes the Sandbox, restores the Blob snapshot to Redis, then Redis → container memory.
+4. If warm/running: the request reaches the existing Sandbox pod (< 1 s); state loaded from Blob.
+5. If hibernated: the controller resumes the Sandbox, which reloads its state directly from the Blob JSON.
 6. agent processes request; issues LLM call to APIM private endpoint using Workload Identity credential.
 7. APIM validates token, enforces quota, routes to AI models via a private endpoint.
-8. On idle, the Sandbox is paused/hibernated (scale-to-zero); the pre-termination hook checkpoints state to Blob first. Optional `SandboxWarmPool` keeps pre-warmed sandboxes for fast allocation.
+8. On idle, the Sandbox is paused/hibernated (scale-to-zero); no flush is needed because state was persisted to Blob on every change. Optional `SandboxWarmPool` keeps pre-warmed sandboxes for fast allocation.
 
 ---
 
@@ -238,16 +243,13 @@ flowchart TD
     user["👤 Consumer / Enterprise User\n(Entra External ID or AAD)"]
     apim["Azure API Management\n(AI Gateway)"]
     aca["ACA Sandbox\n(gVisor-isolated container per agent)"]
-    redis["Azure Managed Redis\n(hot state)"]
-    blob["Azure Blob Storage\n(cold snapshot)"]
+    blob["Azure Blob Storage\n(agent state, per-agent JSON)"]
     aoai["AI models"]
     entra["Azure Entra ID\n(Workload Identity / UAMI)"]
 
     user -->|"HTTPS + token"| apim
     apim -->|"route to agent container"| aca
-    aca <-->|"read/write context"| redis
-    aca -->|"scale-to-zero flush"| blob
-    blob -->|"cold restore"| aca
+    aca <-->|"read/write state"| blob
     aca -->|"UAMI token"| entra
     entra -->|"access token"| aca
     aca -->|"LLM call via APIM"| apim
@@ -256,12 +258,12 @@ flowchart TD
 
 **Workflow:**
 1. User authenticates; client presents token to APIM.
-2. APIM validates token; routes to the ACA Sandbox-enabled container environment with `agent-id` header.
+2. APIM optionally validates the caller token; routes to the ACA Sandbox-enabled container environment with `agent-id` header.
 3. ACA resolves the target agent container — resumes existing (warm) or starts a new gVisor-isolated container.
-4. agent container loads state from AMR first; if not found, restores from Blob.
+4. agent container loads state directly from Azure Blob.
 5. agent processes the request; calls LLM via APIM using its UAMI credential.
-6. Idle detection: after 30 min, ACA scales the container to zero; lifecycle hook flushes state from AMR to Blob.
-7. Next request restores from AMR (< 500 ms) or Blob (< 3 s).
+6. Idle detection: after 30 min, ACA scales the container to zero; no flush needed — state was persisted to Blob on every change.
+7. Next request restores state from Azure Blob.
 
 ---
 
@@ -275,7 +277,7 @@ Problem framing and architecture overview. [See Module 0](./module-00/README.md)
 
 ### Module 1 — Core Infrastructure Setup (30 min)
 
-Deploy foundational Azure services: Resource Group, Managed Redis, Blob Storage, APIM, Entra ID, and Key Vault. [See Module 1](./module-01/README.md)
+Deploy foundational Azure services: Resource Group, Blob Storage, APIM, Entra ID, and Key Vault. [See Module 1](./module-01/README.md)
 
 ---
 

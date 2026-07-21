@@ -1,5 +1,5 @@
 // main.bicep — Module 1: Core Infrastructure
-// Deploys a Resource Group, Azure Cache for Redis, Blob Storage, APIM,
+// Deploys a Resource Group, Blob Storage, APIM,
 // Azure Key Vault, Azure Container Registry, a Foundry (AIServices) account
 // with project, model deployment, Defender for AI, RAI policies, and the APIM
 // AI gateway, Entra ID app registration (via deployment script), and UAMI.
@@ -12,9 +12,6 @@ param resourceGroupName string = 'rg-agenthost-workshop'
 
 @description('Azure region for all resources')
 param location string = 'eastus2'
-
-@description('Azure Cache for Redis cache name')
-param redisName string = 'redis-agenthost'
 
 @description('Blob Storage account name (3-24 chars, lowercase alphanumeric)')
 param storageAccountName string = 'stcagenthost'
@@ -63,7 +60,6 @@ param modelVersion string = '2026-03-17'
 //param deploymentSN string = utcNow('HHmmssfff')
 param deploymentSN string
 
-var redisNameWithSN = '${redisName}-${deploymentSN}'
 var storageAccountNameWithSN = '${storageAccountName}${deploymentSN}'
 var apimNameWithSN = '${apimName}-${deploymentSN}'
 var identityNameWithSN = '${identityName}-${deploymentSN}'
@@ -86,7 +82,6 @@ module coreResources 'core.bicep' = {
   scope: rg
   params: {
     location: location
-    redisName: redisNameWithSN
     storageAccountName: storageAccountNameWithSN
     apimName: apimNameWithSN
     apimPublisherEmail: apimPublisherEmail
@@ -105,7 +100,6 @@ module coreResources 'core.bicep' = {
 }
 
 output resourceGroupName string = rg.name
-output redisHostName string = coreResources.outputs.redisHostName
 output storageAccountName string = coreResources.outputs.storageAccountName
 output apimServiceUrl string = coreResources.outputs.apimServiceUrl
 output identityClientId string = coreResources.outputs.identityClientId

@@ -14,7 +14,7 @@ Recap the three solutions, provide decision guidance, and share cost optimisatio
 |---|---|---|---|
 | **Isolation** | Managed (per-agent) | Micro-VM (Kata Containers) | OS-level gVisor |
 | **Scale-to-zero** | ✅ Native | ✅ agent-sandbox hibernate | ✅ Native |
-| **State persistence** | ✅ Built-in | AMR + Blob (CSI) | AMR + Blob |
+| **State persistence** | ✅ Built-in | Azure Blob (per-agent JSON) | Azure Blob (per-agent JSON) |
 | **Entra ID auth** | ✅ Native | AAD Workload Identity | UAMI Workload Identity |
 | **APIM integration** | ✅ Native | ✅ VNet-injected | ✅ |
 | **Operational complexity** | Low | High | Medium |
@@ -54,9 +54,8 @@ Recap the three solutions, provide decision guidance, and share cost optimisatio
 |---|---|---|
 | Scale-to-zero (30-min idle) | Eliminate compute cost during off-hours | A · B · C |
 | APIM Basic v2 SKU | Eligible for Foundry native AI Gateway; fixed baseline cost | A · B · C |
-| Azure Managed Redis Basic SKU | ~60% cheaper than Standard for dev/test | A · B · C |
 | Blob Cool tier for cold state | ~50% cheaper than Hot tier | A · B · C |
-| Redis TTL tuning | Auto-evict stale agent state; reduce memory cost | A · B · C |
+| Blob lifecycle management | Auto-tier / expire stale agent state; reduce storage cost | A · B · C |
 | AKS Spot Node Pool | Up to 90% discount for interruptible workloads | B |
 | Azure OpenAI PTU (reserved throughput) | Predictable cost for high-volume ToB | A · B · C |
 | agent-sandbox WarmPool tuning | Balance cold-start latency vs compute savings | B |
@@ -66,14 +65,12 @@ Recap the three solutions, provide decision guidance, and share cost optimisatio
 ## Production Hardening Checklist
 
 - [ ] Enable private networking (VNet injection) for APIM and AKS
-- [ ] Configure Azure Managed Redis with TLS 1.2 and at-rest encryption
 - [ ] Enable Blob Storage versioning and soft delete for state recovery
 - [ ] Apply Azure Policy for resource compliance (tags, SKU restrictions)
 - [ ] Set up Azure Monitor alerts for APIM 4xx/5xx error rates
 - [ ] Enable Defender for Containers on AKS
-- [ ] Rotate Redis keys via Azure Key Vault rotation policy
 - [ ] Configure Conditional Access policies in Entra ID for ToB scenarios
-- [ ] Test BCDR: simulate Redis failure and verify Blob restore path
+- [ ] Test BCDR: verify agent state restores from Blob after a pod/container restart
 - [ ] Review ACA Sandbox SLA and feature completeness before production (Public Preview)
 
 ---

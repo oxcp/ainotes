@@ -2,7 +2,7 @@
 # deploy.sh — Module 3 (Solution B): AKS + agent-sandbox, reusing Module 1 resources
 #
 # Retrieves the deployment suffix (SN) from the Module 1 resource group tag,
-# reuses the ACR / UAMI / Redis / Storage / APIM that Module 1 already created,
+# reuses the ACR / UAMI / Storage / APIM that Module 1 already created,
 # provisions AKS (aks.bicep), installs the kubernetes-sigs/agent-sandbox
 # controller (release manifest), then deploys the agent as a Sandbox custom resource.
 #
@@ -42,7 +42,6 @@ echo "    SN=$SN"
 # ── Module 1 resource names (reused, never recreated) ─────────────────────────
 ACR_NAME="acragenthost${SN}"
 IDENTITY_NAME="id-agenthost-${SN}"
-REDIS_NAME="redis-agenthost-${SN}"
 STORAGE_ACCOUNT="stcagenthost${SN}"
 APIM_NAME="apim-agenthost-${SN}"
 AKS_NAME="aks-agenthost-${SN}"
@@ -55,7 +54,7 @@ LOCATION="${LOCATION:-$(az group show -g "$RESOURCE_GROUP" --query location -o t
 # created INTO the Module 1 resource group ($RESOURCE_GROUP); only its region
 # differs. Override with AKS_LOCATION=<region>.
 AKS_LOCATION="$LOCATION"
-echo "    ACR=$ACR_NAME  UAMI=$IDENTITY_NAME  Redis=$REDIS_NAME  Storage=$STORAGE_ACCOUNT  APIM=$APIM_NAME"
+echo "    ACR=$ACR_NAME  UAMI=$IDENTITY_NAME  Storage=$STORAGE_ACCOUNT  APIM=$APIM_NAME"
 
 echo "==> [2/9] Building and pushing the agent image to the EXISTING ACR"
 cp agent-src/app/.env.example agent-src/app/.env
@@ -111,22 +110,13 @@ AGENT_SANDBOX_MANIFEST_URL="https://github.com/kubernetes-sigs/agent-sandbox/rel
 echo "Installing Kubernetes Agent-Sandbox. Release manifest URL: $AGENT_SANDBOX_MANIFEST_URL"
 kubectl apply -f "$AGENT_SANDBOX_MANIFEST_URL"
 kubectl wait --for=condition=Established crd/sandboxes.agents.x-k8s.io --timeout=2m
+kubectl wait --for=condition=Ready pod -l app=agent-sandbox-controller -n agent-sandbox-system --timeout=5m
 
 echo "==> [6/9] Creating namespace"
 kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
 
-echo "==> [7/9] Creating runtime secrets from Module 1 Redis / Storage / APIM"
-# Azure Cache for Redis: SSL on port 6380
-REDIS_HOST=$(az redis show -g "$RESOURCE_GROUP" -n "$REDIS_NAME" --query hostName -o tsv | tr -d "\r\n")
-REDIS_KEY=$(az redis list-keys -g "$RESOURCE_GROUP" -n "$REDIS_NAME" --query primaryKey -o tsv | tr -d "\r\n")
+echo "==> [7/9] Creating runtime secrets from Module 1 Storage / APIM"
 APIM_GATEWAY_URL="https://${APIM_NAME}.azure-api.net/foundry"
-
-kubectl create secret generic agent-redis \
-  --namespace "$NAMESPACE" \
-  --from-literal=connection-string="${REDIS_HOST}:6380,password=${REDIS_KEY},ssl=True" \
-  --from-literal=redis-host="$REDIS_HOST" \
-  --from-literal=redis-password="$REDIS_KEY" \
-  --dry-run=client -o yaml | kubectl apply -f -
 
 kubectl create secret generic agent-config \
   --namespace "$NAMESPACE" \
@@ -156,7 +146,6 @@ echo "    Namespace     : $NAMESPACE"
 echo "    Kata pool     : $KATA_NODEPOOL_NAME ($KATA_NODE_VM_SIZE, AzureLinux, KataVmIsolation)"
 echo "    agent-sandbox : $AGENT_SANDBOX_VERSION (ns agent-sandbox-system)"
 echo "    ACR           : ${ACR_NAME}.azurecr.io"
-echo "    Redis         : ${REDIS_HOST}:6380 (SSL)"
 echo "    APIM          : $APIM_GATEWAY_URL"
 echo ""
 kubectl get sandbox,pods -n "$NAMESPACE"

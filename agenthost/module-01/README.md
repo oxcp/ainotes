@@ -7,7 +7,6 @@
 Provision the shared Azure infrastructure used by all three agent hosting solutions:
 
 - Resource Group
-- Azure Managed Redis
 - Azure Blob Storage
 - Azure API Management
 - Azure Key Vault
@@ -112,7 +111,6 @@ az deployment sub create \
       "foundryModel": "Succeeded",
       "foundryProject": "Succeeded",
       "keyVault": "Succeeded",
-      "redis": "Succeeded",
       "storage": "Succeeded"
     }
   },
@@ -151,10 +149,6 @@ az deployment sub create \
   "modelDeploymentName": {
     "type": "String",
     "value": "gpt-5.4-mini"
-  },
-  "redisHostName": {
-    "type": "String",
-    "value": "redis-agenthost-****.redis.cache.windows.net"
   },
   "resourceGroupName": {
     "type": "String",
@@ -246,7 +240,7 @@ az deployment sub show \
 |---|---|
 | `setup.sh` | One-step wrapper that runs the `main.bicep` subscription deployment (`az deployment sub create`) and prints the outputs |
 | `main.bicep` | Bicep subscription-scoped entry point (creates Resource Group, calls core.bicep) |
-| `core.bicep` | Bicep IaC template for all shared Azure resources (Redis, Storage, APIM Basic v2, Key Vault, ACR, UAMI) **and** the Foundry stack (account, project, `gpt-5.4-mini`, Defender for AI, APIM AI gateway) |
+| `core.bicep` | Bicep IaC template for all shared Azure resources (Storage, APIM Basic v2, Key Vault, ACR, UAMI) **and** the Foundry stack (account, project, `gpt-5.4-mini`, Defender for AI, APIM AI gateway) |
 
 ---
 
@@ -254,7 +248,7 @@ az deployment sub show \
 
 | Output | Description |
 |---|---|
-| `redisHostName`, `storageAccountName`, `apimServiceUrl`, `identityClientId`, `keyVaultName`, `keyVaultUri`, `acrName`, `acrLoginServer` | Core shared-resource coordinates |
+| `storageAccountName`, `apimServiceUrl`, `identityClientId`, `keyVaultName`, `keyVaultUri`, `acrName`, `acrLoginServer` | Core shared-resource coordinates |
 | `foundryResourceName` | Foundry account name (`foundry-agenthost-<suffix>`) |
 | `foundryProjectName` / `foundryProjectId` / `foundryProjectEndpoint` | Foundry project identifiers (project endpoint consumed by module-02) |
 | `modelDeploymentName` | Deployed model name (`gpt-5.4-mini`) |

@@ -10,7 +10,7 @@ This module introduces the agent hosting framework and explains why hosting it o
 
 - Understand what a hosted agent is and its core architecture
 - Recognise the three Azure hosting solutions covered in this workshop
-- Identify the key Azure components: APIM, Entra ID, Redis, and Blob Storage
+- Identify the key Azure components: APIM, Entra ID, and Blob Storage
 
 ---
 
@@ -34,16 +34,15 @@ A hosted agent is a stateful AI agent runtime. Each agent instance:
 ## State Persistence Pattern
 
 ```
-New request    →  Load from Azure Managed Redis (AMR); fallback to Blob
-Active session →  Dual-write to AMR + Blob
-Scale-to-zero  →  Flush AMR state to Azure Blob (cool tier)
+New request    →  Load state from Azure Blob (per-agent JSON)
+Active session →  Save state to Azure Blob on every change
+Scale-to-zero  →  No flush needed — latest state already durable in Blob
 ```
 
 ## Key Components
 
 - **Azure API Management (APIM)** — AI Gateway for token validation, rate limiting, and LLM routing
-- **Azure Managed Redis (AMR)** — Hot state store (sub-millisecond latency)
-- **Azure Blob Storage** — Cold snapshot store (versioned, cost-effective)
+- **Azure Blob Storage** — Agent state store (per-agent JSON, versioned, cost-effective)
 - **Azure Entra ID** — Authentication via Managed Identity / Workload Identity
 
 ---

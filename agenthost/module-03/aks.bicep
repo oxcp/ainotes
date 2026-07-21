@@ -5,7 +5,7 @@
 //   - Azure Container Registry  : acragenthost<SN>      (image pull)
 //   - User-Assigned Managed Id  : id-agenthost-<SN>     (workload identity federation)
 //   - Azure Blob Storage        : stcagenthost<SN>      (cold state, container agent-state)
-//   (Redis / APIM are consumed at runtime via Kubernetes secrets created by deploy.sh.)
+//   (APIM is consumed at runtime via Kubernetes secrets created by deploy.sh.)
 //
 // Creates: a baseline AKS cluster (OIDC + Workload Identity), AcrPull for kubelet,
 // Storage Blob Data Contributor for the UAMI, and a federated identity credential

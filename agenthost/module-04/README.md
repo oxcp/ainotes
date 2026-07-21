@@ -4,29 +4,29 @@
 
 ## Overview
 
-This module deploys the agent runtime onto **Azure Container Apps Sandboxes** — the
-workshop's adopted container-based hosting approach. It provides strong OS-level
-isolation (gVisor), lifecycle control (create/suspend/resume/delete), and
-snapshot-based state continuity.
+This module deploys the agent runtime to **Azure Container Apps Sandboxes**, the
+container-based hosting model adopted for this workshop. Sandboxes deliver strong
+OS-level isolation through gVisor, full lifecycle control
+(create, suspend, resume, delete), and snapshot-based state continuity.
 
-> Primary workshop path = **ACA Sandboxes**.
-> An optional learning track (**ACA Dynamic Sessions**) is included at the end of
-> this module for learners who want to explore an alternative execution model.
+> **Primary workshop path:** ACA Sandboxes.
+> An optional learning track, **ACA Dynamic Sessions**, appears at the end of this
+> module for those who wish to explore an alternative execution model.
 
 ---
 
 ## Prerequisites
 
-1. Module-01 is deployed and the `deploymentSN` tag exists on the resource group.
-2. Docker is installed and running.
-3. Azure CLI is installed.
-4. Container Apps extension is installed/upgraded with preview support:
+1. Module-01 is deployed and the `deploymentSN` tag is present on the resource group.
+2. The agent container image built in Module-03 is available for reuse in this module.
+3. The Azure CLI is installed.
+4. The Container Apps extension is installed and upgraded with preview support enabled:
 
 ```bash
 az extension add --name containerapp --upgrade --allow-preview true -y
 ```
 
-5. Role assignment: `Container Apps SandboxGroup Data Owner`
+5. Your identity holds the `Container Apps SandboxGroup Data Owner` role assignment.
 
 ---
 
@@ -39,59 +39,103 @@ az extension add --name containerapp --upgrade --allow-preview true -y
 
 ### What It Deploys
 
-- `Microsoft.App/SandboxGroups` (preview)
-- SandboxGroup identity/registry binding
-- Optional references to module-01 storage/redis for state workflows
+- A `Microsoft.App/SandboxGroups` resource (preview)
+- SandboxGroup identity and registry bindings
+- The `AcrPull` role assignment for the Module-01 UAMI on the ACR (declared in `sandbox.bicep`)
+- Optional references to Module-01 storage for state workflows
 
-### Deploy
+### Deploy Steps
 
 ```bash
 cd agenthost/module-04
 ./sandbox-deploy.sh
 ```
 
+On completion, the script has provisioned:
+
+- An Azure Container Apps SandboxGroup
+- The `AcrPull` role assignment granting the UAMI pull access to the ACR (granted declaratively via `sandbox.bicep`)
+
+In the Azure portal, open your resource group to confirm the SandboxGroup was created. You may need to enable **Show hidden types** in the **Manage view** menu:
+
+![module-04-ACA-sandboxgroup-in-RG](../pic/module-04-ACA-sandboxgroup-in-RG.png)
+
+Sign in to `https://staging.sandboxes.azure.com/` with your Azure identity and open
+the ACA Sandbox portal:
+
+![module-04-Goto-ACA-sandbox-portal](../pic/module-04-Goto-ACA-sandbox-portal.png)
+
+Switch to your sandbox group:
+
+![module-04-ACA-sandbox-portal-switch-to-your-SG](../pic/module-04-ACA-sandbox-portal-switch-to-your-SG.png)
+
+Build a disk image from the container image produced in Module-03:
+
+![module-04-Create-DiskImages](../pic/module-04-Create-DiskImages.png)
+
+Once the build completes, the disk image appears in the list:
+
+![module-04-DiskImages](../pic/module-04-DiskImages.png)
+
+On the **Sandbox** tab, create a new sandbox from the disk image you just built.
+Assign the Module-01 UAMI, which was granted `AcrPull` permission to pull container
+images from the ACR:
+
+![module-04-Create-Sandbox](../pic/module-04-Create-Sandbox.png)
+
+The sandbox launches within seconds. Use the option at the top of the UI to expose a
+port:
+
+![module-04-Sandbox-running](../pic/module-04-Sandbox-running.png)
+
+Expose port 8080, which the container image publishes:
+
+![module-04-Sandbox-expose-port](../pic/module-04-Sandbox-expose-port.png)
+
+A hyperlink then appears at the top of the UI. Select it:
+
+![module-04-Sandbox-hyperlink](../pic/module-04-Sandbox-hyperlink.png)
+
+The agent chat UI opens in your browser. Submit a few questions to verify the agent is
+running correctly:
+
+![module-04-Sandbox-agent-chat-UI](../pic/module-04-Sandbox-agent-chat-UI.png)
+
+
 ### Characteristics
 
-- Strong isolation for risky/untrusted workloads
-- Lifecycle control (create/suspend/resume/delete)
+- Strong isolation for risky or untrusted workloads
+- Full lifecycle control (create, suspend, resume, delete)
 - Snapshot-based state continuity
-- Best when safety and resumability matter more than simple API pooling
-
-### Validate
-
-```bash
-az resource list -g rg-agenthost-workshop \
-  --query "[?contains(type, 'SandboxGroups')].[name,type]" -o table
-```
+- Preferred when safety and resumability outweigh the simplicity of API pooling
 
 ---
 
 <details>
 <summary><strong>Optional Learning Track — ACA Dynamic Sessions</strong> (click to expand)</summary>
 
-> This section is **optional**. It is provided for learners who finish the main
-> Sandbox path early and want to compare a different Azure Container Apps
-> execution model. It is **not required** to complete the workshop.
+> This section is **optional**. It is provided for learners who complete the main
+> Sandbox path early and want to compare a different Azure Container Apps execution
+> model. It is **not required** to complete the workshop.
 
 > [!IMPORTANT]
-> **Dynamic Sessions is NOT an ideal host for running an agent.**
-> It is purpose-built to provide **temporary, strongly-isolated execution
-> environments** — for example, safely running AI-generated or otherwise
-> untrusted code. Each session is **ephemeral**: it is allocated on demand,
-> runs a short-lived task, and is **destroyed after use with no state
-> retained**. A long-running agent typically needs a stable, addressable,
-> stateful runtime, which is exactly what the **Sandbox** workshop path
-> provides. Treat Dynamic Sessions as a **tool the agent calls** to execute
-> code safely — not as the place where the agent itself lives.
+> **Dynamic Sessions is not an ideal host for running an agent.**
+> It is purpose-built to provide **temporary, strongly isolated execution
+> environments** — for example, safely running AI-generated or otherwise untrusted
+> code. Each session is **ephemeral**: it is allocated on demand, runs a short-lived
+> task, and is **destroyed after use with no state retained**. A long-running agent
+> typically requires a stable, addressable, stateful runtime — precisely what the
+> **Sandbox** workshop path provides. Treat Dynamic Sessions as a **tool the agent
+> calls** to execute code safely, not as the place where the agent itself lives.
 >
 > See the official comparison:
 > [Sandboxes vs. Dynamic Sessions](https://learn.microsoft.com/en-us/azure/container-apps/sandboxes-overview#sandboxes-vs-dynamic-sessions).
 
 Dynamic Sessions use prewarmed **session pools** for fast, ephemeral, high-concurrency
-execution — a good fit for short-lived, disposable task runs (e.g. running AI-generated
-code, tool execution calls, code interpreters). In an agent architecture, the agent
-runs elsewhere (e.g. on the Sandbox path) and **offloads risky code execution** to a
-Dynamic Session, then discards the session when done.
+execution — a strong fit for short-lived, disposable task runs such as executing
+AI-generated code, tool calls, or code interpreters. In an agent architecture, the
+agent runs elsewhere (for example, on the Sandbox path) and **offloads risky code
+execution** to a Dynamic Session, discarding the session once the task completes.
 
 ### Files
 
@@ -141,8 +185,8 @@ Explore Dynamic Sessions to understand the **secure code-execution** model that 
 agent can call as a tool — not as a way to host the agent itself:
 
 - You want to safely run AI-generated or untrusted code in a throwaway environment
-- You need strong isolation for a single short task, then automatic teardown
-- You want fast per-request/per-session allocation from a prewarmed pool
+- You need strong isolation for a single short task, followed by automatic teardown
+- You want fast per-request or per-session allocation from a prewarmed pool
 - You explicitly do **not** need to preserve state between runs
 
 > If you need a persistent, addressable, stateful place to run the agent, use the
@@ -168,8 +212,9 @@ agent can call as a tool — not as a way to host the agent itself:
 
 ## Notes
 
-- `container-app.yaml` is a legacy standard ACA YAML manifest and is not used by the current scripts.
-- `lifecycle-hook.sh` is packaged into the image by module-04 Dockerfile, and is explicitly invoked in module-03 via Kubernetes preStop hook.
+- `container-app.yaml` is a legacy standard ACA manifest and is not used by the current scripts.
+- The Sandbox workshop path reuses the agent container image built in Module-03, which already contains its own `lifecycle-hook.sh` (invoked via a Kubernetes `preStop` hook in Module-03).
+- `Dockerfile` in this module is used only by the optional Dynamic Sessions track (`dynamic-session-deploy.sh`).
 
 ---
 

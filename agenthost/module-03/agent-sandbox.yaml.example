@@ -3,7 +3,7 @@
 #
 # The agent-sandbox *controller* is installed separately (release manifest — see deploy.sh);
 # this manifest declares the per-agent runtime as a `Sandbox` custom resource,
-# plus the Workload Identity service account, a Service, and a NetworkPolicy.
+# plus the Workload Identity service account and a Service.
 #
 # Replace <ACR_NAME>, <IMAGE_TAG>, <NAMESPACE>, and <IDENTITY_CLIENT_ID> before
 # applying, or use deploy.sh which performs the sed substitution automatically.
@@ -66,13 +66,6 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-            - name: AGENT_STATE_BACKEND
-              value: "redis"
-            - name: AGENT_REDIS_CONNECTION
-              valueFrom:
-                secretKeyRef:
-                  name: agent-redis
-                  key: connection-string
             - name: AGENT_STORAGE_ACCOUNT
               valueFrom:
                 secretKeyRef:
@@ -110,8 +103,6 @@ spec:
             # the Foundry account (Module 1) to create/run agents.
             - name: LLM_TOKEN_SCOPE
               value: "https://ai.azure.com/.default"
-            - name: AGENT_REDIS_TTL_SECONDS
-              value: "3600"
           resources:
             requests:
               cpu: "500m"

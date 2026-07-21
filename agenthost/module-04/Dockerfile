@@ -26,22 +26,15 @@ WORKDIR /app
 COPY --from=builder /app/deps /app/deps
 COPY --from=builder /app/src /app/src
 
-# Lifecycle hook script (executed on SIGTERM for scale-to-zero state flush)
-COPY lifecycle-hook.sh /app/lifecycle-hook.sh
-RUN chmod +x /app/lifecycle-hook.sh
-
 ENV PYTHONPATH="/app/deps"
 ENV PYTHONUNBUFFERED="1"
 ENV AGENT_LOG_LEVEL="INFO"
-ENV AGENT_STATE_BACKEND="redis"
-ENV AGENT_REDIS_TTL_SECONDS="3600"
 ENV AGENT_BLOB_CONTAINER="agent-state"
 
 # Health check endpoint
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')" || exit 1
 
-# Signal handler: run lifecycle hook on SIGTERM before container stops
 STOPSIGNAL SIGTERM
 
 USER agent

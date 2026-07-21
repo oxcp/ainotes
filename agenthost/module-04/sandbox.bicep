@@ -13,7 +13,7 @@
 //
 // This module creates:
 //   - SandboxGroup: Container for all sandbox instances
-//   - References module-01 resources: UAMI, ACR, optional Redis/Storage
+//   - References module-01 resources: UAMI, ACR, optional Storage
 //
 // Note: Individual sandbox creation/lifecycle is managed via CLI or SDK (sandbox-deploy.sh).
 //
@@ -44,8 +44,6 @@ param imageTag string = 'latest'
 param imageUri string = 'agent-host'
 
 // Optional parameters for state persistence
-@description('Redis name with SN suffix (e.g., "redis-agenthostabc123")')
-param redisName string = ''
 @description('Storage account name with SN suffix (e.g., "stcagenthostabc123")')
 param storageAccountName string = ''
 
@@ -54,8 +52,11 @@ var sandboxGroupName = 'sandbox-group-agenthost-${deploymentSN}'
 var acrLoginServer = '${acrName}.azurecr.io'
 var imageRef = '${acrLoginServer}/${imageUri}:${imageTag}'
 
+// Built-in role: AcrPull
+var acrPullRoleId = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
+
 // ── Variables for conditional environments ───────────────────────────────────
-var hasRedisName = !empty(redisName)
+
 var hasStorageName = !empty(storageAccountName)
 
 // ── ACR reference (for credential lookup) ────────────────────────────────────
@@ -68,14 +69,21 @@ resource existingUami 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-
   name: split(identityId, '/')[8] // Extract UAMI name from resource ID
 }
 
-// ── Optional Redis reference ─────────────────────────────────────────────────
-//resource existingRedis 'Microsoft.Cache/redis@2023-08-01' existing = if (hasRedisName) {
-//  name: redisName
-//}
 
 // ── Optional Storage Account reference ───────────────────────────────────────
 resource existingStorage 'Microsoft.Storage/storageAccounts@2023-01-01' existing = if (hasStorageName) {
   name: storageAccountName
+}
+
+// ── Grant UAMI AcrPull on ACR (image pull for sandbox disk images) ───────────
+resource acrPullRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(existingAcr.id, existingUami.id, acrPullRoleId)
+  scope: existingAcr
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', acrPullRoleId)
+    principalId: existingUami.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
 }
 
 // ── SandboxGroup: Top-level container for sandbox instances ──────────────────
@@ -116,6 +124,5 @@ output acrLoginServer string = acrLoginServer
 output imageRef string = imageRef
 output uamiId string = identityId
 output uamiClientId string = identityClientId
-//output redisEndpoint string = hasRedisName ? existingRedis.properties.hostName : 'N/A (Redis not configured)'
 output storageAccountName string = hasStorageName ? existingStorage.name : 'N/A (Storage not configured)'
 output deploymentSN string = deploymentSN

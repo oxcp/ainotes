@@ -19,7 +19,7 @@
 | **后端 AI 对话** | `ReflectionAgent` 调 `FoundryResponsesClient.reflect()` |
 | **Foundry catalog 可见** | 启动时用 `azure-ai-projects` 在 `FOUNDRY_PROJECT_ENDPOINT` 中创建或复用 `FOUNDRY_AGENT_NAME` |
 | **模型经 APIM** | `AGENT_APIM_ENDPOINT` + `/openai/v1`，使用 Responses API |
-| **Microsoft Agent Framework** | `agent_framework.Agent` + `OpenAIResponsesClient` |
+| **Microsoft Agent Framework** | `agent_framework.Agent` + `OpenAIChatClient`（Responses API 路径） |
 | **Azure OpenAI SDK** | `AsyncOpenAI` 作为底层客户端，通过 APIM 调用 OpenAI-compatible 接口 |
 | **Workload Identity** | `DefaultAzureCredential` + `get_bearer_token_provider(...)` |
 | **状态持久化** | Azure Blob Storage，按 `<AGENT_ID>.json` 保存 |

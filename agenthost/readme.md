@@ -48,7 +48,7 @@ agenthost/
 │   ├── README.md                ← Core infra setup steps
 │   ├── setup.sh                 ← One-step wrapper: runs the main.bicep deployment (az deployment sub create)
 │   ├── main.bicep               ← Subscription-scoped Bicep entry point
-│   └── core.bicep               ← Resource group Bicep (Redis, Storage, APIM, UAMI, Foundry account + project + model + Defender + AI gateway)
+│   └── core.bicep               ← Resource group Bicep (Storage, APIM, UAMI, Foundry account + project + model + Defender + AI gateway)
 ├── module-02/
 │   ├── README.md                ← Foundry hosted-agent azd deployment steps
 │   ├── azure.yaml               ← Hosted-agent manifest used by azd init (references agent-src)
@@ -57,9 +57,9 @@ agenthost/
 │   ├── README.md                ← AKS + agent-sandbox deployment steps + architecture notes
 │   ├── deploy.sh                ← AKS, agent-sandbox Helm install, K8s secrets, Sandbox deploy
 │   ├── aks.bicep                ← AKS with Kata Container node pool + Workload Identity (reuses Module 1)
-│   ├── agent-sandbox.yaml       ← Workload Identity SA + Kata RuntimeClass + Sandbox CR + Service + NetworkPolicy
+│   ├── agent-sandbox.yaml       ← Workload Identity SA + Kata RuntimeClass + Sandbox CR + Service
 │   ├── Dockerfile               ← Multi-stage Python image (same pattern as module-04)
-│   └── lifecycle-hook.sh        ← SIGTERM pre-stop hook: flush Redis state to Blob
+│   └── lifecycle-hook.sh        ← SIGTERM pre-stop hook: state already durable in Blob (no-op log)
 ├── module-04/
 │   ├── README.md                ← Workshop path: ACA Sandboxes; optional track: Dynamic Sessions
 │   ├── sandbox.bicep            ← Workshop path: SandboxGroup (real Sandboxes, gVisor, suspend/resume)

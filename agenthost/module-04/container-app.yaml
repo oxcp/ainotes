@@ -20,11 +20,6 @@ properties:
     registries:
       - server: acragenthost.azurecr.io
         identity: /subscriptions/<subscriptionId>/resourceGroups/rg-agenthost-workshop/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-agenthost
-    secrets:
-      - name: redis-conn
-        # Reference Key Vault secret for Redis connection string
-        keyVaultUrl: https://kv-agenthost.vault.azure.net/secrets/redis-connection-string
-        identity: /subscriptions/<subscriptionId>/resourceGroups/rg-agenthost-workshop/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-agenthost
   template:
     containers:
       - name: agent-host
@@ -33,10 +28,6 @@ properties:
           cpu: 1.0
           memory: 2Gi
         env:
-          - name: AGENT_STATE_BACKEND
-            value: redis
-          - name: AGENT_REDIS_CONNECTION
-            secretRef: redis-conn
           - name: AGENT_BLOB_CONTAINER
             value: agent-state
           - name: AGENT_STORAGE_ACCOUNT
