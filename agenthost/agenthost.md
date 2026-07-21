@@ -119,7 +119,7 @@ New request arrives   →  Restore from Azure Blob
 > is always durable and recoverable after a restart, hibernation, or scale-to-zero.
 > Use Blob **Cool tier** with **versioning** for cost-effective, recoverable state.
 
-### 5.2 Fast-Start Optimisation
+### 5.2 Fast-Start Optimisation (To Be Added)
 
 - **Pre-warmed instance pool**: keep a minimum of 1 standby instance per solution to absorb burst (configurable; set to 0 for pure cost-saving).
 - **Lightweight checkpoint format**: serialise only conversation history + tool state; avoid full process memory dumps.
@@ -163,10 +163,10 @@ LLM in Foundry project                         │ APIM UAMI → Foundry
 
 Key APIM policies applied to the LLM backend:
 1. `validate-jwt` — verify the **agent-generated Entra ID token** on the `Agent → APIM AI API` hop (Path 1). APIM then calls Foundry with its **UAMI**.
-2. `rate-limit-by-key` — per agent instance token quota.
+2. `rate-limit-by-key` — per agent instance token quota. (To Be Added)
 3. `azure-openai-token-limit` — semantic token counting.
-4. `retry` — automatic retry on 429 / 5xx with exponential back-off.
-5. `cache-lookup` / `cache-store` — response caching for identical prompts.
+4. `retry` — automatic retry on 429 / 5xx with exponential back-off. (To Be Added)
+5. `cache-lookup` / `cache-store` — response caching for identical prompts. (To Be Added)
 
 ---
 
