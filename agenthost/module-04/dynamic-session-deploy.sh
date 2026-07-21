@@ -4,7 +4,7 @@
 # Deploys Azure Container Apps Dynamic Sessions (Session Pool) using custom container.
 # This script:
 #   1. Retrieves deployment suffix (SN) from module-01
-#   2. Builds and pushes agent container image to ACR
+#   2. Reuses the Module-03 agent container image already in ACR
 #   3. Creates (or reuses) ACA environment for session pools
 #   4. Creates/updates a custom-container session pool
 #   5. Outputs pool management endpoint for invocation
@@ -59,11 +59,9 @@ echo "  ACR: $ACR_NAME"
 echo "  Session Env: $SESSION_ENV_NAME"
 echo "  Session Pool: $SESSION_POOL_NAME"
 
-# 2) Build/push image.
-echo "==> [2/5] Building and pushing image"
-az acr login --name "$ACR_NAME"
-docker build -t "$IMAGE" .
-docker push "$IMAGE"
+# 2) Reuse Module-03 image.
+echo "==> [2/5] Reusing Module-03 agent image in ACR"
+echo "  Image: $IMAGE"
 
 # 3) Create or reuse ACA environment.
 echo "==> [3/5] Ensuring ACA environment exists"

@@ -215,8 +215,7 @@ agent can call as a tool — not as a way to host the agent itself:
 ## Notes
 
 - `container-app.yaml` is a legacy standard ACA manifest and is not used by the current scripts.
-- The Sandbox workshop path reuses the agent container image built in Module-03, which already contains its own `lifecycle-hook.sh` (invoked via a Kubernetes `preStop` hook in Module-03).
-- `Dockerfile` in this module is used only by the optional Dynamic Sessions track (`dynamic-session-deploy.sh`).
+- Both the Sandbox workshop path and the optional Dynamic Sessions track reuse the agent container image built in Module-03 (which already contains its own `lifecycle-hook.sh`, invoked via a Kubernetes `preStop` hook in Module-03). This module no longer contains its own `Dockerfile`.
 
 ---
 

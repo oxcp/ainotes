@@ -32,7 +32,7 @@
 | [module-01](./module-01/README.md) | Core Infrastructure Setup | 30 min | README · setup.sh · main.bicep · core.bicep |
 | [module-02](./module-02/README.md) | Solution A: Foundry Hosted Agent | 30 min | README · azure.yaml · src/ (main.py, requirements.txt, Dockerfile) · agent-definition.json |
 | [module-03](./module-03/README.md) | Solution B: AKS + agent-sandbox | 40 min | README · deploy.sh · aks.bicep · agent-sandbox.yaml · Dockerfile |
-| [module-04](./module-04/README.md) | Solution C: ACA Sandboxes (workshop path) + Dynamic Sessions (optional) | 20 min | README · sandbox.bicep · sandbox-deploy.sh · dynamic-session-deploy.sh · dynamic-session-invoke.sh · Dockerfile |
+| [module-04](./module-04/README.md) | Solution C: ACA Sandboxes (workshop path) + Dynamic Sessions (optional) | 20 min | README · sandbox.bicep · sandbox-deploy.sh · dynamic-session-deploy.sh · dynamic-session-invoke.sh |
 | [module-05](./module-05/README.md) | Wrap-up and Q&A | 5 min | README |
 
 ---
@@ -52,21 +52,27 @@ agenthost/
 ├── module-02/
 │   ├── README.md                ← Foundry hosted-agent azd deployment steps
 │   ├── azure.yaml               ← Hosted-agent manifest used by azd init (references agent-src)
-│   └── agent-src/               ← Agent Framework app source + config (main.py, requirements.txt, Dockerfile, .env.example)
+│   ├── ai-gateway-inbound-policy.xml ← APIM inbound policy for the AI gateway (gateway mode)
+│   └── agent-src/               ← Agent Framework app source (main.py, requirements.txt, Dockerfile)
 ├── module-03/
 │   ├── README.md                ← AKS + agent-sandbox deployment steps + architecture notes
 │   ├── deploy.sh                ← AKS, agent-sandbox Helm install, K8s secrets, Sandbox deploy
 │   ├── aks.bicep                ← AKS with Kata Container node pool + Workload Identity (reuses Module 1)
 │   ├── agent-sandbox.yaml       ← Workload Identity SA + Kata RuntimeClass + Sandbox CR + Service
-│   ├── Dockerfile               ← Multi-stage Python image (same pattern as module-04)
-│   └── lifecycle-hook.sh        ← SIGTERM pre-stop hook: state already durable in Blob (no-op log)
+│   ├── agent-sandbox.yaml.example ← Template for agent-sandbox.yaml (copy and fill in placeholders)
+│   ├── agent-normal.yaml        ← Standard (non-sandbox) Deployment variant for comparison
+│   └── agent-src/               ← POC agent image source (build context for the shared agent image)
+│       ├── app/                 ← Agent application package (main.py, ...)
+│       ├── Dockerfile           ← Multi-stage Python image (build context = agent-src/)
+│       ├── requirements.txt     ← Python dependencies
+│       ├── lifecycle-hook.sh    ← SIGTERM pre-stop hook: state already durable in Blob (no-op log)
+│       └── README.md            ← agent-src usage notes
 ├── module-04/
 │   ├── README.md                ← Workshop path: ACA Sandboxes; optional track: Dynamic Sessions
-│   ├── sandbox.bicep            ← Workshop path: SandboxGroup (real Sandboxes, gVisor, suspend/resume)
-│   ├── sandbox-deploy.sh        ← Workshop path: SandboxGroup + disk image + sandbox instance mgmt
+│   ├── sandbox.bicep            ← Workshop path: SandboxGroup (real Sandboxes, gVisor, suspend/resume) + UAMI AcrPull role
+│   ├── sandbox-deploy.sh        ← Workshop path: reuses the Module-03 image + SandboxGroup + disk image + sandbox mgmt
 │   ├── dynamic-session-deploy.sh← Optional track: Session pool deployment (custom container)
 │   ├── dynamic-session-invoke.sh← Optional track: Minimal invoke example for session pool endpoint
-│   ├── Dockerfile               ← Multi-stage Python image for both solutions
 │   └── container-app.yaml       ← Legacy standard ACA manifest (reference only)
 └── module-05/
     └── README.md                ← Comparison recap, decision guide, cost tips, prod checklist
