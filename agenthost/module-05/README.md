@@ -37,7 +37,7 @@ Recap the three solutions, provide decision guidance, and share cost optimisatio
 │    → Solution C (ACA Sandbox)                                   │
 │                                                                 │
 │  Maximum control, Micro-VM isolation, private networking?       │
-│    → Solution B (AKS + agent-sandbox)                             │
+│    → Solution B (AKS + agent-sandbox)                           │
 │                                                                 │
 │  One-time / short-lived code execution (e.g. code interpreter)? │
 │    → ACA Dynamic Sessions (not covered in depth, see note)      │
