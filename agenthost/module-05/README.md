@@ -12,7 +12,7 @@ Recap the three solutions, provide decision guidance, and share cost optimisatio
 
 | Dimension | Solution A — Foundry Host Agent | Solution B — AKS + agent-sandbox | Solution C — ACA Sandbox |
 |---|---|---|---|
-| **Isolation** | Managed (per-agent) | Micro-VM (Kata Containers) | OS-level gVisor |
+| **Isolation** | Managed (per-agent) | Micro-VM (Kata Containers) | Service-managed sandbox isolation (micro-VM boundary) |
 | **Scale-to-zero** | ✅ Native | ✅ agent-sandbox hibernate | ✅ Native |
 | **State persistence** | ✅ Built-in | Azure Blob (per-agent JSON) | Azure Blob (per-agent JSON) |
 | **Entra ID auth** | ✅ Native | AAD Workload Identity | UAMI Workload Identity |

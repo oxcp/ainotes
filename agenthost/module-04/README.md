@@ -6,7 +6,7 @@
 
 This module deploys the agent runtime to **Azure Container Apps Sandboxes**, the
 container-based hosting model adopted for this workshop. Sandboxes deliver strong
-OS-level isolation through gVisor, full lifecycle control
+micro-VM-based sandbox isolation, full lifecycle control
 (create, suspend, resume, delete), and snapshot-based state continuity.
 
 > **Primary workshop path:** ACA Sandboxes.
@@ -203,7 +203,7 @@ agent can call as a tool — not as a way to host the agent itself:
 | Aspect | ACA Sandboxes (workshop path) | ACA Dynamic Sessions (optional) |
 |---|---|---|
 | Runtime | `Microsoft.App/SandboxGroups` | Session Pools |
-| Isolation | gVisor OS-level | Session-level isolated containers |
+| Isolation | Service-managed sandbox isolation (micro-VM boundary) | Session-level isolated containers |
 | State | Stateful via snapshots | Ephemeral — destroyed after use, no state retained |
 | Lifecycle | create/suspend/resume/delete | pool-managed, cooldown-based auto-teardown |
 | Primary purpose | Hosting an isolated, resumable agent runtime | Temporary secure execution of untrusted / AI-generated code |

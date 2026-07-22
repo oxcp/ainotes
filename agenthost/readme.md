@@ -7,7 +7,7 @@
   - **Solution A**: Azure AI Foundry Host Agent (ToB managed) — fastest on-ramp, native state & auth.
   - **Solution B**: AKS + agent-sandbox (ToB high-security) — maximum control, Kata Container micro-VMs, custom networking.
   - **Solution C**: ACA container runtime options (Module-04):
-    - **Workshop path**: ACA Sandboxes — gVisor isolation, suspend/resume.
+    - **Workshop path**: ACA Sandboxes — service-managed sandbox isolation (micro-VM boundary), suspend/resume.
     - **Optional learning track**: ACA Dynamic Sessions — session pool based, low-latency ephemeral execution.
 - **Implemented Features**: state persistence, fast-satrt, scale-to-zero, isolation, Entra ID auth, and AI Gateway integration.
 - **Workshop Schedule**: 120-minute hands-on covering core infra setup, above solutions, and wrap-up with tips on cost optimisation and production hardening checklist.
@@ -67,7 +67,7 @@ agenthost/
 │       └── README.md            ← agent-src usage notes
 ├── module-04/
 │   ├── README.md                ← Workshop path: ACA Sandboxes; optional track: Dynamic Sessions
-│   ├── sandbox.bicep            ← Workshop path: SandboxGroup (real Sandboxes, gVisor, suspend/resume) + UAMI AcrPull role
+│   ├── sandbox.bicep            ← Workshop path: SandboxGroup (real Sandboxes, micro-VM boundary, suspend/resume) + UAMI AcrPull role
 │   ├── sandbox-deploy.sh        ← Workshop path: reuses the Module-03 image + SandboxGroup + disk image + sandbox mgmt
 │   ├── dynamic-session-deploy.sh← Optional track: Session pool deployment (custom container)
 │   ├── dynamic-session-invoke.sh← Optional track: Minimal invoke example for session pool endpoint
@@ -87,6 +87,6 @@ agenthost/
 - **Kata Container RuntimeClass** is defined in `agent-sandbox.yaml` and applied to the Sandbox pod on the tainted `kata=true:NoSchedule` node pool.
 
 - **Module-04 Solutions**: 
-  - **Workshop path (ACA Sandboxes)**: Use `sandbox-deploy.sh` for OS-level isolation and suspend/resume.
+  - **Workshop path (ACA Sandboxes)**: Use `sandbox-deploy.sh` for service-managed sandbox isolation (micro-VM boundary) and suspend/resume.
   - **Optional learning track (Dynamic Sessions)**: Use `dynamic-session-deploy.sh` for low-latency ephemeral session pools — not required to complete the workshop.
   - See [Module 4 README](./module-04/README.md) for detailed comparison and decision guide.

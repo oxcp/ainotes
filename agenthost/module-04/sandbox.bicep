@@ -5,7 +5,7 @@
 //
 // Key differences from standard ACA:
 //   - Resource type: Microsoft.App/SandboxGroups (instead of containerApps)
-//   - Compute model: Isolated, ephemeral VMs with gVisor OS-level isolation
+//   - Compute model: Isolated, ephemeral sandbox VMs (micro-VM boundary)
 //   - State: Snapshots with suspend/resume (full memory + disk preservation)
 //   - Networking: Two-plane architecture (ARM control plane + ADC data plane)
 //   - Scaling: Burst from zero to hundreds of concurrent sandboxes

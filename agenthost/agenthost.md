@@ -44,7 +44,7 @@
 | **Container** | Strong (namespace) | Fast (< 2 s) | Good with scale-to-zero | ACA, AKS | ToB / ToC | Mature ecosystem, OCI | Shared kernel |
 | **Process** | Weak (OS process) | Fastest (< 0.5 s) | Best | App Service, Functions | ToC low-risk | Minimal overhead | Noisy-neighbour risk |
 | **Session** | Medium (sandbox) | Fast (< 1 s) | Good | ACA Dynamic Sessions | ToC interactive / short-lived jobs | Managed, serverless; ideal for one-time code execution | Limited customisation; not suited for long-running agents |
-| **Sandbox** | Strong (OS-level gVisor isolation) | Fast (< 2 s) | Good with scale-to-zero | ACA Sandbox *(Public Preview)* | ToC / ToB long-running agents | OS-level isolation without dedicated VMs; runs alongside standard ACA containers | Public preview; feature set still evolving |
+| **Sandbox** | Strong (service-managed sandbox isolation, micro-VM boundary) | Fast (< 2 s) | Good with scale-to-zero | ACA Sandbox *(Public Preview)* | ToC / ToB long-running agents | Strong isolation with lifecycle control (suspend/resume/snapshots) | Public preview; feature set still evolving |
 | **VM** | Strongest | Slowest (> 30 s) | Poorest | Azure VM | Niche / legacy | Full control | Cold-start, cost |
 | **Serverless** | Medium | Fast (< 2 s) | Best (pay-per-exec) | Azure Functions, ACA Jobs | ToC stateless | Zero infra ops | Stateless by design |
 
@@ -54,7 +54,7 @@
 | Azure Resource | Technique | Isolation level | Scale-to-zero | State persistence | Entra ID integration | APIM integration | Best for |
 |---|---|---|---|---|---|---|---|
 | **Azure AI Foundry Host Agent** | Managed agent runtime | Managed (per-agent) | ✅ Native | ✅ Built-in | ✅ Native | ✅ Native | ToB managed, fastest on-ramp |
-| **ACA Sandbox** *(Public Preview)* | Container sandbox (OS-level gVisor isolation) | Strong (per-container) | ✅ Native | ✅ via Blob | ✅ Workload Identity | ✅ | ToC / ToB long-running agents; isolation without dedicated VMs |
+| **ACA Sandbox** *(Public Preview)* | Service-managed sandbox (micro-VM boundary) | Strong (per-sandbox) | ✅ Native | ✅ via Blob | ✅ Workload Identity | ✅ | ToC / ToB long-running agents; strong isolation + lifecycle control |
 | **ACA Dynamic Sessions** | Container sandbox | Strong (per-session) | ✅ Native | ✅ via Blob | ✅ Workload Identity | ✅ | ToC short-lived / one-time code execution; not ideal for persistent long-running agents |
 | **AKS + agent-sandbox** | Micro-VM or Container | Strongest | ✅ Custom | ✅ Custom | ✅ Workload Identity for Pods | ✅ | ToB high-security, full control |
 | **Azure Container Apps** | Container | Strong | ✅ Native | ✅ via Blob | ✅ Workload Identity | ✅ | ToB / ToC general |
@@ -72,10 +72,10 @@ Three complementary solutions are recommended, each optimised for a distinct ope
 |---|---|---|---|
 | **A** | Azure AI Foundry Host Agent | ToB managed | Fully managed; native agent lifecycle, state, auth; fastest time-to-value |
 | **B** | AKS + agent-sandbox | ToB high-security | Maximum control; Micro-VM isolation via Kata Containers; `Sandbox` CRD lifecycle; custom networking and compliance |
-| **C** | ACA Sandbox *(Public Preview)* | ToC / ToB long-running agents | OS-level container isolation via gVisor; long-running agent support; strong isolation without dedicated VMs; true scale-to-zero |
+| **C** | ACA Sandbox *(Public Preview)* | ToC / ToB long-running agents | Service-managed sandbox isolation (micro-VM boundary); long-running agent support; lifecycle control; true scale-to-zero |
 
 > **Why ACA Sandbox instead of ACA Dynamic Sessions for Solution C?**  
-> ACA Dynamic Sessions is optimised for **one-time or short-lived code execution** (e.g. code interpreter tasks, ephemeral sandboxes). It evicts sessions aggressively and is not designed for long-running stateful agents. **ACA Sandbox** provides OS-level isolation (gVisor) within a regular ACA environment, making it a better fit for persistent, long-running agent workloads. Note that ACA Sandbox is currently in **public preview** — evaluate feature availability and SLA before adopting for production.  
+> ACA Dynamic Sessions is optimised for **one-time or short-lived code execution** (e.g. code interpreter tasks, ephemeral sandboxes). It evicts sessions aggressively and is not designed for long-running stateful agents. **ACA Sandbox** provides strong, service-managed sandbox isolation with lifecycle control (create/suspend/resume/delete), making it a better fit for persistent, long-running agent workloads. Note that ACA Sandbox is currently in **public preview** — evaluate feature availability and SLA before adopting for production.  
 > ACA Dynamic Sessions is retained in the comparison tables (Sections 2.1 and 2.2) as a valid option for short-lived execution scenarios.
 
 > **Why not Azure Functions or App Service?**  
@@ -91,7 +91,7 @@ The table below maps each technical requirement to the implementation approach f
 |---|---|---|---|---|
 | 1 | **State & context persistence** | Built-in agent state store (Cosmos/Blob) | Azure Blob (per-agent JSON, saved on every change) | Azure Blob (per-agent JSON, saved on every change) |
 | 2 | **Fast start / scale-to-zero** | Native agent idle eviction + warm resume | agent-sandbox lifecycle: pause / resume / hibernate; state already durable in Blob; optional SandboxWarmPool | ACA Sandbox container pool; idle timeout = 30 min; state already durable in Blob |
-| 3 | **Isolation** | Per-agent managed sandbox | Kata Container Micro-VM per agent; NetworkPolicy + Namespace isolation | Per-container OS-level isolation via gVisor (syscall interception); no dedicated VM required |
+| 3 | **Isolation** | Per-agent managed sandbox | Kata Container Micro-VM per agent; NetworkPolicy + Namespace isolation | Service-managed sandbox isolation (micro-VM boundary) per sandbox |
 | 4 | **Entra ID authentication** | Native AAD integration; user-assigned Managed Identity | AAD Workload Identity for Pods; ingress auth via Entra ID App Registration | ACA Workload Identity (UAMI) + Entra ID token validation at ingress |
 | 5 | **AI Gateway (APIM)** | APIM policy routes all LLM calls; token quota per agent | APIM deployed in VNet; each AKS pod calls APIM internal endpoint | APIM gateway policy; JWT validation; rate-limiting per container |
 | 6 | **Agent-to-Gateway auth** | Managed Identity credential → APIM subscription key + OAuth | Pod Workload Identity → Entra token → APIM OAuth 2.0 token validation | UAMI credential; APIM validates Entra ID token via validate-jwt policy |
@@ -276,12 +276,12 @@ Solution C uses **Path 1 only**.
 
 > **Note:** Azure Container Apps Sandbox is currently in **public preview**. Review the [feature documentation](https://learn.microsoft.com/en-us/azure/container-apps/sandboxes-overview) for current limitations and SLA before adopting for production workloads.
 
-> **ACA Dynamic Sessions vs ACA Sandbox:** ACA Dynamic Sessions is designed for **short-lived, one-time code execution** (e.g. ephemeral code interpreter tasks). Its aggressive session eviction makes it unsuitable for long-running stateful agents. ACA Sandbox runs your container workloads with OS-level gVisor isolation directly within a standard ACA environment, providing the persistent runtime and strong isolation that long-running agents require.
+> **ACA Dynamic Sessions vs ACA Sandbox:** ACA Dynamic Sessions is designed for **short-lived, one-time code execution** (e.g. ephemeral code interpreter tasks). Its aggressive session eviction makes it unsuitable for long-running stateful agents. ACA Sandbox provides service-managed sandbox isolation with lifecycle control and persistent state semantics, making it a better fit for long-running agent workloads.
 
 ```mermaid
 flowchart TD
     user["👤 Consumer / Enterprise User"]
-    aca["ACA Sandbox\n(gVisor-isolated container per agent,\nUAMI / Workload Identity)"]
+    aca["ACA Sandbox\n(sandbox-isolated instance per agent,\nmicro-VM boundary, UAMI / Workload Identity)"]
     blob["Azure Blob Storage\n(per-agent JSON state)"]
     apimApi["APIM AI API\n(Path 1 entry)"]
     llm["LLM in Foundry project"]
@@ -294,7 +294,7 @@ flowchart TD
 
 **Workflow:**
 1. User sends a request to the agent container (user → agent auth is out of scope in this workshop).
-2. ACA resolves the target agent container — resumes an existing (warm) container or starts a new gVisor-isolated one.
+2. ACA resolves the target agent container — resumes an existing (warm) sandbox or starts a new sandbox-isolated instance.
 3. The agent container loads its state directly from Azure Blob.
 4. The agent reaches the model via **Path 1**: it generates an Entra ID token (backed by its UAMI / Workload Identity) and calls the **APIM AI API**; APIM then calls the LLM in the Foundry project using its **UAMI**.
 5. The agent persists updated state to Blob after each turn.
@@ -331,7 +331,7 @@ Run agents on AKS with Kata Containers and the `agent-sandbox` controller (`Sand
 
 ### Module 4 — Solution C: ACA Sandbox (20 min)
 
-Deploy agents in Azure Container Apps with gVisor-based sandbox isolation and dynamic scaling. [See Module 4](./module-04/README.md)
+Deploy agents in Azure Container Apps with service-managed sandbox isolation (micro-VM boundary) and dynamic scaling. [See Module 4](./module-04/README.md)
 
 ---
 
