@@ -16,10 +16,10 @@ Recap the three solutions, provide decision guidance, and share cost optimisatio
 | **Scale-to-zero** | ✅ Native | ✅ agent-sandbox hibernate | ✅ Native |
 | **State persistence** | ✅ Built-in | Azure Blob (per-agent JSON) | Azure Blob (per-agent JSON) |
 | **Entra ID auth** | ✅ Native | AAD Workload Identity | UAMI Workload Identity |
-| **APIM integration** | ✅ Native | ✅ VNet-injected | ✅ |
+| **APIM integration** | ✅ Native | ✅ Configurable | ✅ Configurable |
 | **Operational complexity** | Low | High | Medium |
 | **Cost** | Pay-per-exec | agent-sandbox hibernate + Spot | Serverless |
-| **Best for** | ToB managed fast on-ramp; strong governance & security | ToB / ToC — high customisation (enterprise-specific requirements; cost/performance tuning) | ToC / ToB long-running agents |
+| **Best for** | ToB managed fast on-ramp; strong governance & security | ToB / ToC — high customisation (enterprise-specific requirements; cost/performance tuning) | ToC / ToB long-running agents. Serverless |
 | **Status** | GA | GA | Public Preview |
 
 ---
