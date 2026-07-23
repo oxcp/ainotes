@@ -39,11 +39,11 @@
 
 | Technique | Isolation | Cold-start | Cost efficiency | Azure fit | Suitable for | Advantage | Weakness |
 |---|---|---|---|---|---|---|---|
-| **Foundry Hosted Agent** | Managed (per-agent) | Fast (< 1 s) | Best (pay-per-exec) | Microsoft Foundry | ToB managed | Native agent lifecycle, built-in state & auth | Limited customisation |
-| **Micro-VM** | Strongest (hypervisor) | Slow (2–10 s) | Low (always-on VM) | AKS + Kata / agent-sandbox | ToB high-security | True kernel isolation | Cost, operational overhead |
+| **Foundry Hosted Agent** | Strong, Managed (per-agent) | Fast (< 1 s) | Best (pay-per-exec) | Microsoft Foundry | ToB managed | Native agent lifecycle, built-in state & auth | Limited customisation |
+| **Micro-VM** | Strong (hypervisor) | Slow (2–10 s) | Low (always-on VM) | AKS + Kata / agent-sandbox | ToB high-security | True kernel isolation | Cost, operational overhead |
 | **Session** | Strong (Hyper-V isolated session) | Fast (< 1 s) | Good | ACA Dynamic Sessions | ToC interactive / short-lived jobs | Managed, serverless; ideal for one-time code execution | Limited customisation; not suited for long-running agents |
 | **Sandbox** | Strong (service-managed sandbox isolation, micro-VM boundary) | Fast (< 2 s) | Good with scale-to-zero | ACA Sandbox *(Public Preview)* | ToC / ToB long-running agents | Strong isolation with lifecycle control (suspend/resume/snapshots) | Public preview; feature set still evolving |
-| **Container** | Strong (namespace) | Fast (< 2 s) | Good with scale-to-zero | ACA, AKS | ToB / ToC | Mature ecosystem, OCI | Shared kernel |
+| **Container** | Medium (namespace) | Fast (< 2 s) | Good with scale-to-zero | ACA, AKS | ToB / ToC | Mature ecosystem, OCI | Shared kernel |
 | **Process** | Weak (OS process) | Fastest (< 0.5 s) | Best | App Service, Functions | ToC low-risk | Minimal overhead | Noisy-neighbour risk |
 | **Serverless** | Medium | Fast (< 2 s) | Best (pay-per-exec) | Azure Functions, ACA Jobs | ToC stateless | Zero infra ops | Stateless by design |
 | **VM** | Strongest | Slowest (> 30 s) | Poorest | Azure VM | Niche / legacy | Full control | Cold-start, cost |
@@ -52,11 +52,11 @@
 
 | Azure Resource | Technique | Isolation level | Scale-to-zero | State persistence | Entra ID integration | APIM integration | Best for |
 |---|---|---|---|---|---|---|---|
-| **Foundry Hosted Agent** | Managed agent runtime | Managed (per-agent) | ✅ Native | ✅ Built-in | ✅ Native | ✅ Native | ToB managed, fastest on-ramp |
-| **AKS + agent-sandbox** | Micro-VM or Container | Strongest | ✅ Custom | ✅ Custom | ✅ Workload Identity for Pods | ✅ | ToB high-security, full control |
+| **Foundry Hosted Agent** | Managed agent runtime | Strong, Managed (per-agent) | ✅ Native | ✅ Built-in | ✅ Native | ✅ Native | ToB managed, fastest on-ramp |
+| **AKS + agent-sandbox** | Micro-VM or Container | Strong, Micor-VM | ✅ Custom | ✅ Custom | ✅ Workload Identity for Pods | ✅ | ToB high-security, full control |
 | **ACA Dynamic Sessions** | Hyper-V isolated session pool | Strong (per-session, Hyper-V boundary) | ✅ Native | ✅ via Blob | ✅ Workload Identity | ✅ | ToC short-lived / one-time code execution; not ideal for persistent long-running agents |
-| **ACA Sandbox** *(Public Preview)* | Service-managed sandbox (micro-VM boundary) | Strong (per-sandbox) | ✅ Native | ✅ via Blob | ✅ Workload Identity | ✅ | ToC / ToB long-running agents; strong isolation + lifecycle control |
-| **Azure Container Apps** | Container | Strong | ✅ Native | ✅ via Blob | ✅ Workload Identity | ✅ | ToB / ToC general |
+| **ACA Sandbox** *(Public Preview)* | Service-managed sandbox (micro-VM boundary) | Strong, Micro-VM (per-sandbox) | ✅ Native | ✅ via Blob | ✅ Workload Identity | ✅ | ToC / ToB long-running agents; strong isolation + lifecycle control |
+| **Azure Container Apps** | Container | Medium (namespace) | ✅ Native | ✅ via Blob | ✅ Workload Identity | ✅ | ToB / ToC general |
 | **Azure App Service** | Process / Container | Weak–Medium | ❌ (min 1 instance) | ✅ | ✅ | ✅ | Simple ToC web apps |
 | **Azure Functions** | Serverless | Medium | ✅ Native | Limited | ✅ | ✅ | ToC stateless tasks |
 | **Virtual Machine** | VM | Strongest | ❌ | ✅ | ✅ | ✅ | Legacy / special hardware |
