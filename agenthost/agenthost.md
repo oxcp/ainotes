@@ -130,8 +130,8 @@ New request arrives   →  Restore from Azure Blob
 > only enforced on the hops **between the agent and the model**, described as two
 > paths (see [6.0 Two Access Paths](#60-two-access-paths-shared-model)):
 >
-> - **Path 1** (`Agent → APIM AI API → LLM`): the agent presents an
->   **agent-generated Entra ID token** to the APIM AI API, and APIM calls the
+> - **Path 1** (`Agent → APIM API → LLM`): the agent presents an
+>   **agent-generated Entra ID token** to the APIM API, and APIM calls the
 >   Foundry LLM with its **UAMI**.
 > - **Path 2** (`Agent → Foundry project → APIM AI gateway → LLM`, Solution A
 >   only): the hosted agent uses the **Foundry-assigned identity** (Foundry User)
@@ -146,7 +146,7 @@ Path 1 (all solutions)                     Path 2 (Solution A hosted agent only)
 agent instance                             Foundry hosted agent
    │ agent-generated Entra ID token            │ Foundry-assigned id (Foundry User)
    ▼                                           ▼
-APIM AI API                                Foundry project
+APIM API                                Foundry project
    │ validate-jwt                              │ ProjectManagedIdentity
    │ then APIM UAMI → Foundry                  ▼
    ▼                                       APIM AI gateway
@@ -155,13 +155,13 @@ LLM in Foundry project                         │ APIM UAMI → Foundry
                                            LLM in Foundry project
 ```
 
-- **ToB**: Entra ID App Registration with RBAC roles; Managed Identity per agent. The agent's UAMI / Workload Identity is used to obtain the token for the APIM AI API (Path 1).
+- **ToB**: Entra ID App Registration with RBAC roles; Managed Identity per agent. The agent's UAMI / Workload Identity is used to obtain the token for the APIM API (Path 1).
 - **ToC**: Entra External ID (B2C) may front the user-facing app, but user → agent auth is not covered by this workshop; the agent → model hops still use managed identity.
 
 ### 5.4 APIM AI Gateway Pattern
 
 Key APIM policies applied to the LLM backend:
-1. `validate-jwt` — verify the **agent-generated Entra ID token** on the `Agent → APIM AI API` hop (Path 1). APIM then calls Foundry with its **UAMI**.
+1. `validate-jwt` — verify the **agent-generated Entra ID token** on the `Agent → APIM API` hop (Path 1). APIM then calls Foundry with its **UAMI**.
 2. `rate-limit-by-key` — per agent instance token quota. (To Be Added)
 3. `azure-openai-token-limit` — semantic token counting.
 4. `retry` — automatic retry on 429 / 5xx with exponential back-off. (To Be Added)
@@ -177,10 +177,10 @@ Every solution routes traffic from the user to the model over one of two paths.
 In this workshop, **user → agent authentication is out of scope**; identity is
 only enforced on the hops between the agent and the model:
 
-- **Path 1 — `Agent → APIM AI API → LLM in Foundry project`**
-  - `Agent → APIM AI API`: the agent **dynamically generates an Entra ID token**
-    and presents it to the APIM AI API (`validate-jwt`).
-  - `APIM AI API → LLM in Foundry project`: APIM authenticates to Foundry with
+- **Path 1 — `Agent → APIM API → LLM in Foundry project`**
+  - `Agent → APIM API`: the agent **dynamically generates an Entra ID token**
+    and presents it to the APIM API (`validate-jwt`).
+  - `APIM API → LLM in Foundry project`: APIM authenticates to Foundry with
     its **User-Assigned Managed Identity (UAMI)**.
 - **Path 2 — `Agent → Foundry project → APIM AI gateway → LLM in Foundry project`**
   - `Agent → Foundry project`: the hosted agent calls its own Foundry project
@@ -213,7 +213,7 @@ flowchart TD
     agent["Azure AI Foundry\nHosted Agent"]
     state["Azure Blob Storage\n(per-agent JSON state)"]
     foundryproj["Foundry project"]
-    apimApi["APIM AI API\n(Path 1 entry)"]
+    apimApi["APIM API\n(Path 1 entry)"]
     apimGw["APIM AI gateway\n(Path 2 entry)"]
     llm["LLM in Foundry project"]
 
@@ -232,7 +232,7 @@ flowchart TD
 1. User sends a request to the hosted agent (user → agent auth is out of scope in this workshop).
 2. The hosted agent loads its instance state from Azure Blob.
 3. The agent reaches the model through either path:
-   - **Path 1:** the agent generates an Entra ID token and calls the **APIM AI API**; APIM then calls the LLM in the Foundry project using its **UAMI**.
+   - **Path 1:** the agent generates an Entra ID token and calls the **APIM API**; APIM then calls the LLM in the Foundry project using its **UAMI**.
    - **Path 2:** the agent calls its **Foundry project** with the Foundry-assigned identity (**Foundry User**); the project routes inference through the registered **APIM AI gateway** to the LLM.
 4. The agent persists updated state to Azure Blob after each turn; the response streams back to the user.
 5. If idle > 30 min, the Host Agent evicts the instance; the latest state is already durable in Blob.
@@ -249,7 +249,7 @@ flowchart TD
     ctrl["agent-sandbox controller\n(Sandbox CRD)"]
     kata["Sandbox pod\n(Kata Container, Micro-VM isolation,\nWorkload Identity)"]
     blob["Azure Blob Storage\n(per-agent JSON state)"]
-    apimApi["APIM AI API\n(Path 1 entry)"]
+    apimApi["APIM API\n(Path 1 entry)"]
     llm["LLM in Foundry project"]
 
     user -->|"HTTP (no auth in workshop)"| kata
@@ -263,7 +263,7 @@ flowchart TD
 1. User sends a request to the agent's Sandbox pod (user → agent auth is out of scope in this workshop).
 2. The `agent-sandbox` controller reconciles the `Sandbox` CR for this agent — a stateful, singleton pod with stable identity.
 3. If warm/running, the request reaches the existing Sandbox pod (< 1 s) and state is loaded from Blob; if hibernated, the controller resumes the Sandbox, which reloads its state directly from the Blob JSON.
-4. The agent reaches the model via **Path 1**: it generates an Entra ID token (backed by AKS Workload Identity) and calls the **APIM AI API**; APIM then calls the LLM in the Foundry project using its **UAMI**.
+4. The agent reaches the model via **Path 1**: it generates an Entra ID token (backed by AKS Workload Identity) and calls the **APIM API**; APIM then calls the LLM in the Foundry project using its **UAMI**.
 5. The agent persists updated state to Blob after each turn.
 6. On idle, the Sandbox is paused/hibernated (scale-to-zero); no flush is needed because state was persisted to Blob on every change. An optional `SandboxWarmPool` keeps pre-warmed sandboxes for fast allocation.
 
@@ -282,7 +282,7 @@ flowchart TD
     user["👤 Consumer / Enterprise User"]
     aca["ACA Sandbox\n(sandbox-isolated instance per agent,\nmicro-VM boundary, UAMI / Workload Identity)"]
     blob["Azure Blob Storage\n(per-agent JSON state)"]
-    apimApi["APIM AI API\n(Path 1 entry)"]
+    apimApi["APIM API\n(Path 1 entry)"]
     llm["LLM in Foundry project"]
 
     user -->|"HTTPS (no auth in workshop)"| aca
@@ -295,7 +295,7 @@ flowchart TD
 1. User sends a request to the agent container (user → agent auth is out of scope in this workshop).
 2. ACA resolves the target agent container — resumes an existing (warm) sandbox or starts a new sandbox-isolated instance.
 3. The agent container loads its state directly from Azure Blob.
-4. The agent reaches the model via **Path 1**: it generates an Entra ID token (backed by its UAMI / Workload Identity) and calls the **APIM AI API**; APIM then calls the LLM in the Foundry project using its **UAMI**.
+4. The agent reaches the model via **Path 1**: it generates an Entra ID token (backed by its UAMI / Workload Identity) and calls the **APIM API**; APIM then calls the LLM in the Foundry project using its **UAMI**.
 5. The agent persists updated state to Blob after each turn.
 6. Idle detection: after 30 min, ACA scales the container to zero; no flush needed — state was persisted to Blob on every change.
 7. The next request restores state from Azure Blob.
@@ -341,3 +341,4 @@ Solution comparison, selection guidance, and cost optimisation strategies. [See 
 ---
 
 *Document version 1.0 — prepared for the Azure AI Agent Hosting Workshop*
+
