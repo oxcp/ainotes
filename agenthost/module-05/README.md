@@ -19,7 +19,7 @@ Recap the three solutions, provide decision guidance, and share cost optimisatio
 | **APIM integration** | ✅ Native | ✅ VNet-injected | ✅ |
 | **Operational complexity** | Low | High | Medium |
 | **Cost** | Pay-per-exec | agent-sandbox hibernate + Spot | Serverless |
-| **Best for** | ToB managed fast on-ramp | ToB high-security | ToC / ToB long-running agents |
+| **Best for** | ToB managed fast on-ramp; strong governance & security | ToB / ToC — high customisation (enterprise-specific requirements; cost/performance tuning) | ToC / ToB long-running agents |
 | **Status** | GA | GA | Public Preview |
 
 ---
@@ -36,7 +36,7 @@ Recap the three solutions, provide decision guidance, and share cost optimisatio
 │  Long-running stateful agents, strong isolation, serverless?    │
 │    → Solution C (ACA Sandbox)                                   │
 │                                                                 │
-│  Maximum control, Micro-VM isolation, private networking?       │
+│  Maximum customisation (enterprise reqs or cost/perf tuning)?   │
 │    → Solution B (AKS + agent-sandbox)                           │
 │                                                                 │
 │  One-time / short-lived code execution (e.g. code interpreter)? │

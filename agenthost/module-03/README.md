@@ -4,7 +4,7 @@
 
 ## Overview
 
-Deploy agents on **Azure Kubernetes Service (AKS)** using **official AKS Pod Sandboxing** on an **Azure Linux** Kata node pool, with **[agent-sandbox](https://github.com/kubernetes-sigs/agent-sandbox)** (kubernetes-sigs) managing the agent lifecycle as `Sandbox` custom resources. This is the highest-control, strongest-isolation option for high-security ToB scenarios.
+Deploy agents on **Azure Kubernetes Service (AKS)** using **official AKS Pod Sandboxing** on an **Azure Linux** Kata node pool, with **[agent-sandbox](https://github.com/kubernetes-sigs/agent-sandbox)** (kubernetes-sigs) managing the agent lifecycle as `Sandbox` custom resources. This is the highest-control, most customisable option — serving **ToB** (satisfy enterprise-specific technical requirements) and **ToC** (customise for cost/performance tuning) scenarios alike.
 
 > **Note: Unlike the Hosted Agent in solution A which runs agent in Microsoft Foundry managed environment, in solution B we host our agent in AKS Sandboxing).**
 

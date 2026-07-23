@@ -26,7 +26,7 @@
 |---|---|
 | Typical users | Individual end-users, small teams, developer playground |
 | Scale | Potentially very large number of short-lived sessions |
-| Isolation requirement | Process- or container-level; lighter than enterprise |
+| Isolation requirement | Medium to Strong user-level isolation. Recommend Micro-VM/Sandbox boundaries |
 | Auth | Social login (Entra External ID / B2C) or API key |
 | Cost model | Pure pay-per-use, aggressive scale-to-zero |
 | Priority | Cost · Speed · Simplicity |
@@ -39,8 +39,8 @@
 
 | Technique | Isolation | Cold-start | Cost efficiency | Azure fit | Suitable for | Advantage | Weakness |
 |---|---|---|---|---|---|---|---|
-| **Foundry Hosted Agent** | Strong, Managed (per-agent) | Fast (< 1 s) | Best (pay-per-exec) | Microsoft Foundry | ToB managed | Native agent lifecycle, built-in state & auth | Limited customisation |
-| **Micro-VM** | Strong (hypervisor) | Slow (2–10 s) | Low (always-on VM) | AKS + Kata + agent-sandbox | ToB high-security | True kernel isolation | Cost, operational overhead |
+| **Foundry Hosted Agent** | Strong, Managed (per-agent) | Fast (< 1 s) | Best (pay-per-exec) | Microsoft Foundry | ToB managed | Native agent lifecycle, built-in state & auth; strong governance & security | Limited customisation |
+| **Micro-VM** | Strong (hypervisor) | Slow (2–10 s) | Low (always-on VM) | AKS + Kata + agent-sandbox | ToB / ToC | High customisation (enterprise-specific requirements; cost/performance tuning); true kernel isolation | Cost, operational overhead |
 | **Session** | Strong (Hyper-V isolated session) | Fast (< 1 s) | Good | ACA Dynamic Sessions | ToC interactive / short-lived jobs | Managed, serverless; ideal for one-time code execution | Limited customisation; not suited for long-running agents |
 | **Sandbox** | Strong (service-managed sandbox isolation, micro-VM boundary) | Fast (< 2 s) | Good with scale-to-zero | ACA Sandbox *(Public Preview)* | ToC / ToB long-running agents | Strong isolation with lifecycle control (suspend/resume/snapshots) | Public preview; feature set still evolving |
 | **Container** | Medium (namespace) | Fast (< 2 s) | Good with scale-to-zero | ACA, AKS | ToB / ToC | Mature ecosystem, OCI | Shared kernel |
@@ -53,7 +53,7 @@
 | Azure Resource | Technique | Isolation level | Scale-to-zero | State persistence | Entra ID integration | APIM integration | Best for |
 |---|---|---|---|---|---|---|---|
 | **Foundry Hosted Agent** | Managed agent runtime | Strong, Managed (per-agent) | ✅ Native | ✅ Built-in | ✅ Native | ✅ Native | ToB managed, fastest on-ramp |
-| **AKS + agent-sandbox** | Micro-VM or Container | Strong, Micor-VM | ✅ Custom | ✅ Custom | ✅ Workload Identity for Pods | ✅ | ToB high-security, full control |
+| **AKS + agent-sandbox** | Micro-VM or Container | Strong, Micor-VM | ✅ Custom | ✅ Custom | ✅ Workload Identity for Pods | ✅ | ToB: high customisation for enterprise-specific technical requirements; ToC: high customisation for cost/performance tuning |
 | **ACA Dynamic Sessions** | Hyper-V isolated session pool | Strong (per-session, Hyper-V boundary) | ✅ Native | ✅ via Blob | ✅ Workload Identity | ✅ | ToC short-lived / one-time code execution; not ideal for persistent long-running agents |
 | **ACA Sandbox** *(Public Preview)* | Service-managed sandbox (micro-VM boundary) | Strong, Micro-VM (per-sandbox) | ✅ Native | ✅ via Blob | ✅ Workload Identity | ✅ | ToC / ToB long-running agents; strong isolation + lifecycle control |
 | **Azure Container Apps** | Container | Medium (namespace) | ✅ Native | ✅ via Blob | ✅ Workload Identity | ✅ | ToB / ToC general |
@@ -69,8 +69,8 @@ Three complementary solutions are recommended, each optimised for a distinct ope
 
 | # | Solution | Scenario | Key reason |
 |---|---|---|---|
-| **A** | Azure AI Foundry Host Agent | ToB managed | Fully managed; native agent lifecycle, state, auth; fastest time-to-value |
-| **B** | AKS + agent-sandbox | ToB high-security | Maximum control; Micro-VM isolation via Kata Containers; `Sandbox` CRD lifecycle; custom networking and compliance |
+| **A** | Azure AI Foundry Host Agent | ToB managed | Fully managed; native agent lifecycle, state, auth; built-in governance & security; fastest time-to-value |
+| **B** | AKS + agent-sandbox | ToB / ToC | High customisation is the core value. **ToB:** customise to meet enterprise-specific technical requirements (Micro-VM isolation via Kata Containers, custom networking, compliance); **ToC:** customise for cost/performance tuning (Spot node pools, right-sized SKUs, hibernate/scale-to-zero); `Sandbox` CRD lifecycle across both |
 | **C** | ACA Sandbox *(Public Preview)* | ToC / ToB long-running agents | Service-managed sandbox isolation (micro-VM boundary); long-running agent support; lifecycle control; true scale-to-zero |
 
 > **Why ACA Sandbox instead of ACA Dynamic Sessions for Solution C?**  
@@ -238,9 +238,16 @@ flowchart TD
 
 ---
 
-### Solution B — AKS + agent-sandbox (ToB High-Security)
+### Solution B — AKS + agent-sandbox (ToB / ToC — High Customisation)
 
 Solution B uses **Path 1 only**.
+
+> **Positioning:** The same AKS + agent-sandbox stack serves both audiences through
+> its **high customisability**:
+> - **ToB** — customise to satisfy enterprise-specific technical requirements
+>   (Micro-VM isolation, custom networking, compliance controls).
+> - **ToC** — customise for cost and performance tuning (Spot node pools,
+>   right-sized SKUs, aggressive hibernate/scale-to-zero).
 
 ```mermaid
 flowchart TD

@@ -4,8 +4,8 @@
 
 - **Target Scenarios**: ToB Enterprise vs. ToC Consumer scenarios with distinct priorities for isolation, scale, auth, and cost.
 - **Solutions (see [Workshop Design](./agenthost.md) for detail)**:
-  - **Solution A**: Azure AI Foundry Host Agent (ToB managed) — fastest on-ramp, native state & auth.
-  - **Solution B**: AKS + agent-sandbox (ToB high-security) — maximum control, Kata Container micro-VMs, custom networking.
+  - **Solution A**: Azure AI Foundry Host Agent (ToB managed) — fastest on-ramp, native state & auth, strong governance & security.
+  - **Solution B**: AKS + agent-sandbox (ToB / ToC) — high customisation: for ToB, meet enterprise-specific technical requirements; for ToC, tune cost and performance (Kata Container micro-VMs, custom networking).
   - **Solution C**: ACA container runtime options (Module-04):
     - **Workshop path**: ACA Sandboxes — service-managed sandbox isolation (micro-VM boundary), suspend/resume.
     - **Optional learning track**: ACA Dynamic Sessions — Hyper-V isolated session pools for low-latency ephemeral execution.
