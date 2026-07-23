@@ -40,7 +40,7 @@
 | Technique | Isolation | Cold-start | Cost efficiency | Azure fit | Suitable for | Advantage | Weakness |
 |---|---|---|---|---|---|---|---|
 | **Foundry Hosted Agent** | Strong, Managed (per-agent) | Fast (< 1 s) | Best (pay-per-exec) | Microsoft Foundry | ToB managed | Native agent lifecycle, built-in state & auth | Limited customisation |
-| **Micro-VM** | Strong (hypervisor) | Slow (2–10 s) | Low (always-on VM) | AKS + Kata / agent-sandbox | ToB high-security | True kernel isolation | Cost, operational overhead |
+| **Micro-VM** | Strong (hypervisor) | Slow (2–10 s) | Low (always-on VM) | AKS + Kata + agent-sandbox | ToB high-security | True kernel isolation | Cost, operational overhead |
 | **Session** | Strong (Hyper-V isolated session) | Fast (< 1 s) | Good | ACA Dynamic Sessions | ToC interactive / short-lived jobs | Managed, serverless; ideal for one-time code execution | Limited customisation; not suited for long-running agents |
 | **Sandbox** | Strong (service-managed sandbox isolation, micro-VM boundary) | Fast (< 2 s) | Good with scale-to-zero | ACA Sandbox *(Public Preview)* | ToC / ToB long-running agents | Strong isolation with lifecycle control (suspend/resume/snapshots) | Public preview; feature set still evolving |
 | **Container** | Medium (namespace) | Fast (< 2 s) | Good with scale-to-zero | ACA, AKS | ToB / ToC | Mature ecosystem, OCI | Shared kernel |
