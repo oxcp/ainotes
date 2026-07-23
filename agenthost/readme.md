@@ -8,7 +8,7 @@
   - **Solution B**: AKS + agent-sandbox (ToB high-security) — maximum control, Kata Container micro-VMs, custom networking.
   - **Solution C**: ACA container runtime options (Module-04):
     - **Workshop path**: ACA Sandboxes — service-managed sandbox isolation (micro-VM boundary), suspend/resume.
-    - **Optional learning track**: ACA Dynamic Sessions — session pool based, low-latency ephemeral execution.
+    - **Optional learning track**: ACA Dynamic Sessions — Hyper-V isolated session pools for low-latency ephemeral execution.
 - **Implemented Features**: state persistence, fast-satrt, scale-to-zero, isolation, Entra ID auth, and AI Gateway integration.
 - **Workshop Schedule**: 120-minute hands-on covering core infra setup, above solutions, and wrap-up with tips on cost optimisation and production hardening checklist.
 

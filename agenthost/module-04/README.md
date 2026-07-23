@@ -203,7 +203,7 @@ agent can call as a tool — not as a way to host the agent itself:
 | Aspect | ACA Sandboxes (workshop path) | ACA Dynamic Sessions (optional) |
 |---|---|---|
 | Runtime | `Microsoft.App/SandboxGroups` | Session Pools |
-| Isolation | Service-managed sandbox isolation (micro-VM boundary) | Session-level isolated containers |
+| Isolation | Service-managed sandbox isolation (micro-VM boundary) | Hyper-V isolated sessions |
 | State | Stateful via snapshots | Ephemeral — destroyed after use, no state retained |
 | Lifecycle | create/suspend/resume/delete | pool-managed, cooldown-based auto-teardown |
 | Primary purpose | Hosting an isolated, resumable agent runtime | Temporary secure execution of untrusted / AI-generated code |
