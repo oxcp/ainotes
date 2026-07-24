@@ -5,45 +5,116 @@
     <title>AI Notes - Home</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { font-family: Arial, sans-serif; margin: 2em; background: #f9f9f9; }
-        h1 { color: #333; }
-        h2 { color: #444; margin-top: 1.5em; border-bottom: 2px solid #bbdefb; padding-bottom: 0.3em; }
-        ul.category-list { list-style: none; padding: 0; }
-        ul.category-list li { margin: 1em 0; }
+        :root {
+            --bg1:#eef2f7; --bg2:#dbe4f3;
+            --ink:#1f2733; --muted:#5b6675;
+            --labs:#2563eb; --docs:#7c3aed; --proto:#0d9488;
+            --card:#ffffff; --border:#e6ebf2;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 3rem 1.25rem;
+            color: var(--ink);
+            background: linear-gradient(135deg, var(--bg1), var(--bg2));
+            background-attachment: fixed;
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+        .container { max-width: 980px; margin: 0 auto; }
+
+        header.hero { text-align: center; margin-bottom: 1rem; }
+        header.hero h1 {
+            font-size: clamp(2rem, 4vw, 2.9rem);
+            margin: 0 0 .5rem;
+            font-weight: 800;
+            letter-spacing: -.02em;
+            background: linear-gradient(90deg, #2563eb, #7c3aed);
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        header.hero p { color: var(--muted); font-size: 1.1rem; margin: 0; }
+
+        section.category { margin-top: 2.5rem; }
+        .category h2 {
+            display: flex; align-items: center; gap: .6rem;
+            font-size: 1.35rem; margin: 0 0 1.1rem; font-weight: 700;
+        }
+        .category h2::before {
+            content: ""; width: .55rem; height: 1.4rem; border-radius: 4px;
+            background: var(--accent, #2563eb);
+        }
+
+        ul.category-list {
+            list-style: none; padding: 0; margin: 0;
+            border-top: 1px solid var(--border);
+        }
+        ul.category-list li { margin: 0; }
         ul.category-list a {
-            text-decoration: none;
-            color: #1976d2;
-            font-size: 1.2em;
-            padding: 0.5em 1em;
-            background: #e3f2fd;
-            border-radius: 4px;
-            transition: background 0.2s;
+            display: flex; align-items: center; gap: .65rem;
+            text-decoration: none; color: var(--ink);
+            padding: .7rem .5rem .7rem .9rem;
+            border-bottom: 1px solid var(--border);
+            border-left: 3px solid transparent;
+            font-size: 1.05rem;
+            transition: background .15s ease, border-color .15s ease, padding-left .15s ease, color .15s ease;
+        }
+        ul.category-list a::before {
+            content: ""; width: .45rem; height: .45rem; border-radius: 50%;
+            background: var(--accent, #2563eb); flex: 0 0 auto;
         }
         ul.category-list a:hover {
-            background: #bbdefb;
+            background: rgba(37,99,235,.05);
+            border-left-color: var(--accent, #2563eb);
+            padding-left: 1.15rem;
+            color: var(--accent, #2563eb);
         }
+
+        .labs  { --accent: var(--labs); }
+        .docs  { --accent: var(--docs); }
+        .proto { --accent: var(--proto); }
+
+        footer { text-align: center; color: var(--muted); margin-top: 3rem; font-size: .9rem; }
+        @media (max-width: 520px) { body { padding: 2rem 1rem; } }
     </style>
 </head>
 <body>
-    <h1>Welcome to AI Notes</h1>
-    <p>Select a category to explore:</p>
+    <div class="container">
+        <header class="hero">
+            <h1>Kylercai Technical Notes</h1>
+            <p>Hands-on labs, technical deep-dives, and prototypes.</p>
+        </header>
 
-    <h2>Hands-on Labs</h2>
-    <ul class="category-list">
-        <li><a href="https://github.com/oxcp/ainotes/blob/main/agenthost/readme.md">Agent Hosting on Azure Workshop</a></li>
-        <li><a href="https://github.com/oxcp/ainotes/blob/main/azmetricsexp.md">Exporting Azure Metrics to Prometheus+Grafana</a></li>
-        <li><a href="https://github.com/oxcp/ainotes/blob/main/istio/monitoring/configuration.md">Build completed monitoring for AKS Istio based Service Mesh Add-on</a></li>
-        <li><a href="https://github.com/oxcp/aiexec/blob/main/agents/azureop.md">AzureOpAgent: An AI Agent assisting people in Azure operations</a></li>
-        <li><a href="https://github.com/kylercai/ghcp-proxy">GHCP Proxy: A GitHub proxy tool</a></li>
-        <li><a href="https://github.com/kylercai/OSS-AKS/tree/master/rocketmq-raft">RocketMQ Raft: A distributed messaging system on AKS</a></li>
-    </ul>
+        <section class="category labs">
+            <h2>Hands-on Labs</h2>
+            <ul class="category-list">
+                <li><a href="https://github.com/oxcp/ainotes/blob/main/agenthost/readme.md">Agent Hosting on Azure Workshop</a></li>
+                <li><a href="https://github.com/oxcp/ainotes/blob/main/anyscale-on-aks/README.md">Anyscale on AKS: Deploy, serve, and fine-tune models with Ray</a></li>
+                <li><a href="https://github.com/oxcp/ainotes/blob/main/azmetricsexp.md">Exporting Azure Metrics to Prometheus+Grafana</a></li>
+                <li><a href="https://github.com/oxcp/ainotes/blob/main/istio/monitoring/configuration.md">Build completed monitoring for AKS Istio based Service Mesh Add-on</a></li>
+            </ul>
+        </section>
 
-    <h2>Technical Documents</h2>
-    <ul class="category-list">
-        <li><a href="compare-codegen-ingeneral.html">GPT-5 Code Generation comparison in general</a></li>
-        <li><a href="compare-codegen-realcases.html">GPT-5 Code Generation comparison in real scenarios</a></li>
-        <li><a href="models-in-Bio-Healthcare-industry.html">GPT-5 comparisons in Bio-Healthcare</a></li>
-        <li><a href="model-4-SKH-TC.md">Medical image models comparison</a></li>
-        <li><a href="https://github.com/oxcp/ainotes/blob/main/k8s/multiclustermgmt.md">Multi-cluster management for Kubernetes</a></li>    </ul>
+        <section class="category docs">
+            <h2>Technical Documents</h2>
+            <ul class="category-list">
+                <li><a href="compare-codegen-ingeneral.html">GPT-5 Code Generation comparison in general</a></li>
+                <li><a href="compare-codegen-realcases.html">GPT-5 Code Generation comparison in real scenarios</a></li>
+                <li><a href="models-in-Bio-Healthcare-industry.html">GPT-5 comparisons in Bio-Healthcare</a></li>
+                <li><a href="model-4-SKH-TC.md">Medical image models comparison</a></li>
+                <li><a href="https://github.com/oxcp/ainotes/blob/main/k8s/multiclustermgmt.md">Multi-cluster management for Kubernetes</a></li>
+            </ul>
+        </section>
+
+        <section class="category proto">
+            <h2>Prototype</h2>
+            <ul class="category-list">
+                <li><a href="https://github.com/oxcp/aiexec/blob/main/agents/azureop.md">AzureOpAgent: An AI Agent assisting people in Azure operations</a></li>
+                <li><a href="https://github.com/kylercai/ghcp-proxy">GHCP Proxy: A GitHub proxy tool</a></li>
+                <li><a href="https://github.com/kylercai/OSS-AKS/tree/master/rocketmq-raft">RocketMQ Raft: A distributed messaging system on AKS</a></li>
+            </ul>
+        </section>
+    </div>
 </body>
 </html>
