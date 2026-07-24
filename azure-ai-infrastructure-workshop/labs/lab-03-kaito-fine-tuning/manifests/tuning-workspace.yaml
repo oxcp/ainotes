@@ -1,0 +1,16 @@
+apiVersion: kaito.sh/v1alpha1
+kind: Workspace
+metadata:
+  name: workshop-model-tuning
+resource:
+  instanceType: "<SUPPORTED_GPU_VM_SIZE>"
+tuning:
+  preset:
+    name: "<SUPPORTED_TUNING_PRESET>"
+  method: qlora
+  input:
+    urls:
+      - "<VALIDATED_DATASET_URL>"
+  output:
+    image: "<ACR_NAME>.azurecr.io/workshop-adapter:v1"
+    imagePushSecret: "<ACR_PUSH_SECRET>"

@@ -1,0 +1,9 @@
+apiVersion: kaito.sh/v1alpha1
+kind: Workspace
+metadata:
+  name: workshop-model
+resource:
+  instanceType: "<GPU_VM_SIZE>"
+inference:
+  preset:
+    name: "<VALIDATED_KAITO_PRESET>"

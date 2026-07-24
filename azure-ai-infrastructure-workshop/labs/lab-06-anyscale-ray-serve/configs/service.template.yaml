@@ -1,0 +1,7 @@
+# Template only. Validate against the pinned Anyscale CLI.
+name: ai-infra-workshop-service
+compute_config: <ANYSCALE_COMPUTE_CONFIG>
+applications:
+  - name: workshop
+    import_path: src.serve_app:deployment
+    route_prefix: /

@@ -1,0 +1,9 @@
+.env
+*.local.yaml
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.log
+.DS_Store
+workshop-output/

@@ -1,0 +1,4 @@
+# Template only. Validate against the pinned Anyscale CLI.
+name: ray-train-workshop
+compute_config: <ANYSCALE_COMPUTE_CONFIG>
+entrypoint: python src/train_skeleton.py

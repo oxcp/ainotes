@@ -1,0 +1,4 @@
+# Template only. Pin to the tested Anyscale CLI schema.
+name: ray-data-workshop
+compute_config: <ANYSCALE_COMPUTE_CONFIG>
+entrypoint: python src/batch_processing.py

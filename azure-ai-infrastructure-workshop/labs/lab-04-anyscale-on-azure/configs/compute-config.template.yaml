@@ -1,0 +1,5 @@
+# Template only. Replace with the schema supported by the pinned Anyscale CLI.
+# Prefer an instructor-created named compute configuration for student labs.
+name: <ANYSCALE_COMPUTE_CONFIG>
+cloud: <ANYSCALE_CLOUD>
+# Add verified CPU/GPU worker groups here.

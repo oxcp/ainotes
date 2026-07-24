@@ -1,0 +1,17 @@
+name: validate
+on: [push, pull_request]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - name: Compile Python
+        run: find . -name '*.py' -print0 | xargs -0 -n1 python -m py_compile
+      - name: Check shell syntax
+        run: find . -name '*.sh' -print0 | xargs -0 -n1 bash -n
+      - name: Build Bicep
+        uses: azure/CLI@v2
+        with:
+          inlineScript: az bicep build --file infra/main.bicep
