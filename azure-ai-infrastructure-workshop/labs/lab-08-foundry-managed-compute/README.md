@@ -1,4 +1,4 @@
-# Lab 09: Azure AI Foundry — Managed Compute
+# Lab 08: Azure AI Foundry — Managed Compute
 
 Part of **Track C: Azure AI Foundry**. This lab consumes Azure GPU through Foundry's highest-level managed path: deploying an open model from the Foundry model catalog onto a **dedicated managed online endpoint (managed compute)**, then calling it.
 
@@ -93,7 +93,7 @@ Deleting the endpoint removes its deployments and stops compute billing.
 
 ## How this compares
 
-| | Lab 02 — AKS + KAITO | Lab 09 — Foundry managed compute |
+| | Lab 02 — AKS + KAITO | Lab 08 — Foundry managed compute |
 |---|---|---|
 | You operate Kubernetes | Yes | No |
 | GPU compute | Your AKS GPU node pool | Foundry-managed dedicated compute |
@@ -101,4 +101,4 @@ Deleting the endpoint removes its deployments and stops compute billing.
 | Billing | AKS node uptime | Managed compute core hours |
 | Best when | You want K8s-native control | You want a managed endpoint without operating K8s |
 
-Continue to [Lab 10: Fireworks AI on Foundry](../lab-10-fireworks-ai-foundry/README.md) for the partner Models-as-a-Service path.
+Continue to [Lab 09: Fireworks AI on Foundry](../lab-09-fireworks-ai-foundry/README.md) for the partner Models-as-a-Service path.

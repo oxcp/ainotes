@@ -43,9 +43,9 @@ The **Azure AI Foundry** track (Track C) uses the model catalog's **managed comp
 7. Lab 05: Ray Data batch processing
 8. Lab 06: Ray Serve online service
 9. Lab 07: Ray Train distributed training pattern
-10. Lab 09: Foundry managed compute
-11. Lab 10: Fireworks AI on Foundry
-12. Lab 08: Observability and comparison
+10. Lab 08: Foundry managed compute
+11. Lab 09: Fireworks AI on Foundry
+12. Lab 10: Observability and comparison
 13. Cleanup
 
 ## Repository map

@@ -1,8 +1,8 @@
-# Lab 10: Fireworks AI on Foundry
+# Lab 09: Fireworks AI on Foundry
 
 Part of **Track C: Azure AI Foundry**. This lab consumes a **partner model (Fireworks AI)** from the Foundry model catalog as a **managed, Models-as-a-Service (MaaS) endpoint** — no GPU, Kubernetes, or compute quota to manage.
 
-Where Lab 09 (managed compute) provisions **dedicated GPU compute** you pay for by uptime, this lab consumes a **partner-hosted model** billed **per token**. It is the most hands-off way to run a high-performance open model on Azure.
+Where Lab 08 (managed compute) provisions **dedicated GPU compute** you pay for by uptime, this lab consumes a **partner-hosted model** billed **per token**. It is the most hands-off way to run a high-performance open model on Azure.
 
 ## Objectives
 
@@ -71,7 +71,7 @@ Token-billed MaaS endpoints do not bill for idle compute, but delete unused endp
 
 ## How this compares
 
-| | Lab 09 — Foundry managed compute | Lab 10 — Fireworks AI on Foundry |
+| | Lab 08 — Foundry managed compute | Lab 09 — Fireworks AI on Foundry |
 |---|---|---|
 | Compute | Dedicated GPU (you size it) | Partner-hosted (none to manage) |
 | Quota | VM core quota required | None |
@@ -79,4 +79,4 @@ Token-billed MaaS endpoints do not bill for idle compute, but delete unused endp
 | Model source | Open / custom / Hugging Face / NIM | Partner (Fireworks AI) |
 | Best when | You need isolation, control, steady load | You want fastest time-to-value, bursty/variable load |
 
-This completes **Track C**. Return to [Lab 08: Observability and comparison](../lab-08-observability-comparison/README.md) to compare all tracks, or the [workshop README](../../README.md).
+This completes **Track C**. Return to [Lab 10: Observability and comparison](../lab-10-observability-comparison/README.md) to compare all tracks, or the [workshop README](../../README.md).

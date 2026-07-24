@@ -3,7 +3,21 @@
   "type": "object",
   "properties": {
     "platform": {
-      "type": "string"
+      "type": "string",
+      "description": "Platform label, e.g. aks-kaito, anyscale-ray-serve, foundry-managed-compute, fireworks-on-foundry"
+    },
+    "billing_model": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "compute_core_hours",
+        "node_uptime",
+        "per_token",
+        null
+      ],
+      "description": "How the platform bills: dedicated compute (KAITO/Foundry managed compute), node uptime (self-managed), or per-token (partner MaaS such as Fireworks on Foundry)"
     },
     "workload": {
       "type": "string"

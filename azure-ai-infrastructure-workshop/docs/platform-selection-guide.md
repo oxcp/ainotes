@@ -15,8 +15,8 @@ Choose for managed Ray-based distributed Python workloads spanning data processi
 ## Azure AI Foundry
 Choose when the priority is consuming models as managed endpoints and building AI apps and agents, without owning GPU, Kubernetes, or Ray infrastructure. Foundry provides a model catalog, managed fine-tuning, evaluation, prompt orchestration, and the Agent Service. It is the highest-abstraction option: you consume inference and tuning as a service rather than provisioning and operating GPU compute yourself. Two hands-on paths are covered:
 
-- **Managed compute (Lab 09):** deploy an open model to a dedicated GPU-backed online endpoint. Consumes VM core quota; billed per compute uptime.
-- **Fireworks AI on Foundry (Lab 10):** consume a partner model as a token-billed Models-as-a-Service endpoint, with no dedicated compute to manage.
+- **Managed compute (Lab 08):** deploy an open model to a dedicated GPU-backed online endpoint. Consumes VM core quota; billed per compute uptime.
+- **Fireworks AI on Foundry (Lab 09):** consume a partner model as a token-billed Models-as-a-Service endpoint, with no dedicated compute to manage.
 
 ## Decision questions
 
@@ -37,4 +37,4 @@ Choose when the priority is consuming models as managed endpoints and building A
 | Fine-tuning | Manual | Manual | KAITO tuning workflow | Ray Train | Managed fine-tuning |
 | Scaling | Manual / VMSS | Cluster autoscaler + custom | AKS + KAITO | Ray autoscaling | Platform-managed |
 | Operational ownership | Highest | High | Medium | Low-medium | Lowest |
-| Hands-on in this workshop | Reference | Reference | ✅ Track A | ✅ Track B | ✅ Track C (Labs 09–10) |
+| Hands-on in this workshop | Reference | Reference | ✅ Track A | ✅ Track B | ✅ Track C (Labs 08–09) |
