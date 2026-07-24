@@ -48,6 +48,13 @@ labs/lab-07-anyscale-ray-train/configs/job.template.yaml
 labs/lab-07-anyscale-ray-train/src/train_skeleton.py
 labs/lab-08-observability-comparison/README.md
 labs/lab-08-observability-comparison/benchmark-result.schema.json
+labs/lab-09-foundry-managed-compute/README.md
+labs/lab-09-foundry-managed-compute/configs/deployment.template.yaml
+labs/lab-09-foundry-managed-compute/python/chat.py
+labs/lab-09-foundry-managed-compute/python/requirements.txt
+labs/lab-10-fireworks-ai-foundry/README.md
+labs/lab-10-fireworks-ai-foundry/python/chat.py
+labs/lab-10-fireworks-ai-foundry/python/requirements.txt
 scripts/check-prerequisites.sh
 scripts/check-quota.sh
 scripts/cleanup.sh

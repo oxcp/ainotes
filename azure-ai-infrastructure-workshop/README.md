@@ -1,6 +1,6 @@
 # Azure AI Infrastructure Workshop
 
-Build, run, fine-tune, and scale open AI models on Azure using **AKS with KAITO** and the Azure first-party service **Anyscale on Azure**.
+Build, run, fine-tune, and scale open AI models on Azure using **AKS with KAITO**, the Azure first-party service **Anyscale on Azure**, and **Azure AI Foundry** (managed compute and partner Models-as-a-Service).
 
 > This repository intentionally does not install a self-managed Anyscale Operator on AKS. The Anyscale track uses Anyscale on Azure as documented on Microsoft Learn.
 
@@ -8,13 +8,15 @@ Build, run, fine-tune, and scale open AI models on Azure using **AKS with KAITO*
 
 Participants will:
 
-- Understand Azure AI infrastructure choices: GPU VM, self-managed AKS, AKS + KAITO, and Anyscale on Azure.
+- Understand Azure AI infrastructure choices: GPU VM, self-managed AKS, AKS + KAITO, Anyscale on Azure, and Azure AI Foundry.
 - Validate subscription access, regional availability, and GPU quota before provisioning.
 - Deploy a reusable AKS foundation with Bicep.
 - Use KAITO to deploy an open model and call its OpenAI-compatible endpoint.
 - Explore a KAITO parameter-efficient fine-tuning workflow.
 - Use an existing, provisioned Anyscale on Azure environment.
 - Run Ray Data, Ray Serve, and Ray Train workloads through Anyscale on Azure.
+- Deploy an open model to Foundry **managed compute** (dedicated GPU endpoint) and consume it.
+- Consume a **Fireworks AI** partner model on Foundry as a managed, token-billed endpoint.
 - Compare operations, scaling, control, and workload fit.
 - Clean up all workshop resources.
 
@@ -24,8 +26,11 @@ Participants will:
 |---|---|---|
 | AKS + KAITO | AKS managed add-on simplifies supported AI workloads | Deploy AKS, enable KAITO, create Workspaces, test workloads |
 | Anyscale on Azure | Azure-integrated managed Ray platform | Use the provisioned cloud/project, define compute, jobs, services, and code |
+| Azure AI Foundry | Managed model deployment (managed compute + partner MaaS) | Deploy from the catalog, consume endpoints, manage lifecycle and cleanup |
 
 The Anyscale exercises do **not** include Helm installation of an Anyscale Operator, custom operator values, or manual construction of Anyscale on AKS.
+
+The **Azure AI Foundry** track (Track C) uses the model catalog's **managed compute** and **partner Models-as-a-Service** options; it does not build a custom serving stack. See `docs/platform-selection-guide.md` for where each track fits.
 
 ## Suggested agenda
 
@@ -38,8 +43,10 @@ The Anyscale exercises do **not** include Helm installation of an Anyscale Opera
 7. Lab 05: Ray Data batch processing
 8. Lab 06: Ray Serve online service
 9. Lab 07: Ray Train distributed training pattern
-10. Lab 08: Observability and comparison
-11. Cleanup
+10. Lab 09: Foundry managed compute
+11. Lab 10: Fireworks AI on Foundry
+12. Lab 08: Observability and comparison
+13. Cleanup
 
 ## Repository map
 
