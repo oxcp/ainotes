@@ -18,7 +18,7 @@ This module introduces the agent hosting framework and explains why hosting it o
 
 ---
 
-## What is a hosted agent?
+## What are included in our Agent?
 
 A hosted agent is a stateful AI agent runtime. Each agent instance:
 
