@@ -6,6 +6,10 @@
 
 This module introduces the agent hosting framework and explains why hosting it on Azure is a compelling choice for both enterprise (ToB) and consumer (ToC) scenarios.
 
+> 📊 **Prefer slides?** Open [index.html](index.html) for a slide-based walkthrough of the workshop content and design.
+>
+> 📥 **Download the slides:** [Agent-Hosting-on-Azure-Workshop-Intro.pdf](Agent-Hosting-on-Azure-Workshop-Intro.pdf) — a PDF deck introducing the workshop content and design.
+
 ## Learning Objectives
 
 - Understand what a hosted agent is and its core architecture

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Hosting on Azure — Workshop Intro</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: #1a1a2e;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'WenQuanYi Micro Hei', sans-serif;
+}
+#deck {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: #1a1a2e;
+}
+#stage {
+  position: relative;
+  width: 1280px;
+  height: 720px;
+  transform-origin: center center;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  border-radius: 4px;
+  overflow: hidden;
+  background: #fff;
+}
+.slide {
+  position: absolute; inset: 0;
+  display: none;
+  width: 100%; height: 100%;
+}
+.slide.active { display: block; }
+.slide img {
+  width: 100%; height: 100%;
+  object-fit: fill;
+  display: block;
+}
+
+/* Controls bar */
+#controls {
+  position: fixed; bottom: 18px; right: 18px;
+  display: flex; gap: 6px; z-index: 9999;
+  opacity: 0; transition: opacity 0.3s;
+}
+#deck:hover #controls, #controls:hover { opacity: 1; }
+#controls button {
+  width: 40px; height: 40px; border-radius: 8px; border: 0;
+  background: rgba(255,255,255,0.12); color: #fff;
+  font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(10px); transition: background 0.2s;
+}
+#controls button:hover { background: rgba(255,255,255,0.25); }
+#controls .counter {
+  display: flex; align-items: center; padding: 0 14px;
+  font-size: 12px; color: rgba(255,255,255,0.6);
+  background: rgba(255,255,255,0.08); border-radius: 8px;
+  font-weight: 500;
+}
+
+/* Progress bar */
+#progress {
+  position: fixed; bottom: 0; left: 0; height: 3px;
+  background: linear-gradient(90deg, #0078D4, #00A6A6, #6B46C1);
+  transition: width 0.3s; z-index: 9998;
+}
+
+/* Page number overlay (bottom-right, subtle) */
+#pageNum {
+  position: fixed; bottom: 18px; left: 18px;
+  font-size: 11px; color: rgba(255,255,255,0.35);
+  z-index: 9999; opacity: 0; transition: opacity 0.3s;
+  font-weight: 500;
+}
+#deck:hover #pageNum { opacity: 1; }
+</style>
+</head>
+<body>
+<div id="deck">
+  <div id="stage">
+    <!-- Slides injected by JS -->
+  </div>
+</div>
+
+<div id="controls">
+  <button id="prevBtn" title="Previous (←)">◀</button>
+  <div class="counter"><span id="curPage">1</span> / 16</div>
+  <button id="nextBtn" title="Next (→ / Space)">▶</button>
+  <button id="fullBtn" title="Fullscreen (F)">⛶</button>
+</div>
+<div id="progress"></div>
+<div id="pageNum"></div>
+
+<script>
+const TOTAL = 16;
+const stage = document.getElementById('stage');
+const counter = document.getElementById('curPage');
+const progress = document.getElementById('progress');
+const pageNum = document.getElementById('pageNum');
+
+// Generate slides
+for (let i = 1; i <= TOTAL; i++) {
+  const div = document.createElement('div');
+  div.className = 'slide' + (i === 1 ? ' active' : '');
+  div.id = 's' + i;
+  const img = document.createElement('img');
+  img.src = 'slides/slide-' + String(i).padStart(2,'0') + '.png';
+  img.alt = 'Slide ' + i;
+  img.loading = i < 4 ? 'eager' : 'lazy';
+  div.appendChild(img);
+  stage.appendChild(div);
+}
+
+const slides = document.querySelectorAll('.slide');
+let cur = 0;
+
+function update(n) {
+  if (n < 0 || n >= TOTAL) return;
+  slides[cur].classList.remove('active');
+  cur = n;
+  slides[cur].classList.add('active');
+  counter.textContent = cur + 1;
+  progress.style.width = ((cur + 1) / TOTAL * 100) + '%';
+  pageNum.textContent = (cur + 1) + ' / ' + TOTAL;
+}
+
+// Preload adjacent slides
+function preload() {
+  for (let i = Math.max(0, cur-1); i <= Math.min(TOTAL-1, cur+2); i++) {
+    const img = slides[i].querySelector('img');
+    if (img.dataset.loaded !== '1') {
+      img.dataset.loaded = '1';
+    }
+  }
+}
+
+function show(n) {
+  update(n);
+  preload();
+}
+
+// Buttons
+document.getElementById('prevBtn').addEventListener('click', () => show(cur - 1));
+document.getElementById('nextBtn').addEventListener('click', () => show(cur + 1));
+document.getElementById('fullBtn').addEventListener('click', () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+});
+
+// Keyboard
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); show(cur + 1); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); show(cur - 1); }
+  else if (e.key === 'Home') show(0);
+  else if (e.key === 'End') show(TOTAL - 1);
+  else if (e.key === 'f' || e.key === 'F') document.getElementById('fullBtn').click();
+});
+
+// Touch swipe
+let tx = 0;
+document.addEventListener('touchstart', (e) => { tx = e.changedTouches[0].screenX; });
+document.addEventListener('touchend', (e) => {
+  const dx = e.changedTouches[0].screenX - tx;
+  if (dx > 50) show(cur - 1);
+  else if (dx < -50) show(cur + 1);
+});
+
+// Wheel
+let wheelTimeout;
+document.addEventListener('wheel', (e) => {
+  clearTimeout(wheelTimeout);
+  wheelTimeout = setTimeout(() => {
+    if (e.deltaY > 30) show(cur + 1);
+    else if (e.deltaY < -30) show(cur - 1);
+  }, 80);
+}, { passive: true });
+
+// Auto-scale
+function resize() {
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const s = Math.min(vw / 1280, vh / 720) * 0.97;
+  stage.style.transform = 'scale(' + s + ')';
+}
+window.addEventListener('resize', resize);
+
+// Init
+update(0);
+preload();
+resize();
+</script>
+</body>
+</html>
