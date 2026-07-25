@@ -18,8 +18,6 @@ This workshop introduces a practical Azure agent-hosting journey: start with the
 - **Implemented Features**: state persistence, fast-satrt, scale-to-zero, isolation, Entra ID auth, and AI Gateway integration.
 - **Workshop Schedule**: 120-minute hands-on covering core infra setup, above solutions, and wrap-up with tips on cost optimisation and production hardening checklist.
 
-Refer to [Workshop Design](./agenthost.md) for the full design discussion.
-
 
 ## Prerequisites (before workshop)
 
