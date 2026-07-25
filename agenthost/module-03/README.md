@@ -249,13 +249,10 @@ Containers:
     Container ID:   containerd://a8619d5c5b9eef8906c84d864e9eb6a037882b14b6e7b7a4f2b23010826d5ec3
     Image:          ......
 ```
-<!-- In Microsoft Foundry portal, switch to the Classic mode:
 
-![module-03-agent-in-foundry-portal-switch-to-classic](../pic/module-03-agent-in-foundry-portal-switch-to-classic.png)
+Go to the Foundry portal, in your Foundry project, go to the Agents tab, you should see your agent "agenthost-reflection-agent" (defined in the `.env`) is successfully registered, and the Type is "prompt":
 
-and then in the "Agent" list you will see your agent (We registered our agent into the Foundry portal for visibility and management, for example your can try it in the Playground.):
-
-![module-03-agent-in-foundry-portal-01](../pic/module-03-agent-in-foundry-portal-01.png) -->
+![module-03-agent-in-foundry-portal](../pic/module-03-agent-in-foundry-portal.png)
 
 
 ### Verify Pod Sandboxing Kernel Isolation
