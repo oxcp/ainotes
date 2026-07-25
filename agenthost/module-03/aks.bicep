@@ -45,7 +45,8 @@ param serviceAccountName string = 'agent-sa'
 param kubernetesVersion string = ''
 
 @description('System node pool VM size')
-param systemNodeVmSize string = 'Standard_D4as_v5'
+//param systemNodeVmSize string = 'Standard_D4as_v5'
+param systemNodeVmSize string = 'standard_d4ads_v7'
 
 @description('System node pool OS SKU. Only the sandbox (kata) node pool needs Azure Linux; the system pool can remain Ubuntu.')
 param systemNodeOsSku string = 'Ubuntu'

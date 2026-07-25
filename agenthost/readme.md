@@ -1,5 +1,13 @@
 # Agent Hosting on Azure Workshop
 
+## Workshop Introduction
+
+This workshop introduces a practical Azure agent-hosting journey: start with the shared infrastructure, then compare three deployment options across enterprise and consumer scenarios, and finish with cost and production hardening guidance.
+
+> 📊 **Prefer slides?** Open [slides](https://oxcp.github.io/ainotes/agenthost/module-00/) for a slide-based walkthrough of the workshop content and design.
+
+---
+
 ## Workshop Outline
 
 - **Target Scenarios**: ToB Enterprise vs. ToC Consumer scenarios with distinct priorities for isolation, scale, auth, and cost.
@@ -12,9 +20,8 @@
 - **Implemented Features**: state persistence, fast-satrt, scale-to-zero, isolation, Entra ID auth, and AI Gateway integration.
 - **Workshop Schedule**: 120-minute hands-on covering core infra setup, above solutions, and wrap-up with tips on cost optimisation and production hardening checklist.
 
-**Refer to**[ Workshop Design](./agenthost.md)
+Refer to [Workshop Design](./agenthost.md) for the full design discussion.
 
----
 
 ## Prerequisites (before workshop)
 
@@ -28,7 +35,7 @@
 
 | Module | Topic | Duration | Files |
 |---|---|---|---|
-| [module-00](./module-00/README.md) | Introduction | 10 min | README |
+| [module-00](./module-00/README.md) | Introduction | 10 min | README · slides |
 | [module-01](./module-01/README.md) | Core Infrastructure Setup | 30 min | README · setup.sh · main.bicep · core.bicep |
 | [module-02](./module-02/README.md) | Solution A: Foundry Hosted Agent | 30 min | README · azure.yaml · src/ (main.py, requirements.txt, Dockerfile) · agent-definition.json |
 | [module-03](./module-03/README.md) | Solution B: AKS + agent-sandbox | 40 min | README · deploy.sh · aks.bicep · agent-sandbox.yaml · Dockerfile |
