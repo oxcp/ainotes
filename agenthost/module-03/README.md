@@ -420,6 +420,12 @@ Go to the Foundry portal, in your Foundry project, go to the Agents tab, you sho
 
 ![module-03-agent-in-foundry-portal](../pic/module-03-agent-in-foundry-portal.png)
 
+### Verify agent load status after resuming
+
+Go to the AKS portal to delete the agent pod:
+![module-03-delete-agent-pod-to-verify-load-state](../pic/module-03-delete-agent-pod-to-verify-load-state.png)
+
+Refresh the agent chat window in the browser, you will temporarily lose the agent connection. After the agent pod resumes, you will again see the previous chat history load back into the new chat window.
 
 ### Lifecycle (scale-to-zero via hibernation)
 
