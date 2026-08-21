@@ -64,6 +64,23 @@ Environment overrides: `RESOURCE_GROUP`, `LOCATION`, `NAMESPACE`, `SERVICE_ACCOU
 > Set `AGENT_SANDBOX_VERSION` to a released tag from
 > https://github.com/kubernetes-sigs/agent-sandbox/releases (used in the release manifest URL).
 
+### Optional — Blob Private Link
+
+If Storage public network access is disabled by policy, deploy private Blob
+connectivity after AKS exists. Choose an unused CIDR contained by the
+AKS-managed VNet and not overlapping its node subnet:
+
+```bash
+PRIVATE_ENDPOINT_SUBNET_PREFIX=10.250.0.0/24 ./deploy-storage-private-link.sh
+```
+
+The wrapper discovers the AKS node resource group and managed VNet, creates the
+dedicated `snet-private-endpoints` subnet there, then calls
+`storage-private-link.bicep` against the workshop resource group. The Bicep
+creates the Blob Private Endpoint, `privatelink.blob.core.windows.net` Private
+DNS zone, VNet link, and DNS zone group. The agent continues using the standard
+Blob hostname; private DNS resolves it to the Private Endpoint IP.
+
 ---
 
 ## Manual Steps (equivalent to deploy.sh)
@@ -118,6 +135,22 @@ az deployment group create \
 
 az aks get-credentials -g "$RESOURCE_GROUP" -n "$AKS_NAME" --overwrite-existing
 ```
+
+### Optional Step 3a — Deploy Blob Private Link
+
+If your subscription policy disables Storage public network access, create a
+dedicated Private Endpoint subnet in the AKS-managed VNet and deploy the Blob
+Private Endpoint before starting the agent workload. Choose an unused CIDR that
+is inside the AKS-managed VNet and does not overlap any existing subnet:
+
+```bash
+PRIVATE_ENDPOINT_SUBNET_PREFIX=10.250.0.0/24 ./deploy-storage-private-link.sh
+```
+
+The wrapper creates the subnet in the AKS node resource group, then deploys the
+Private Endpoint and Private DNS resources in the workshop resource group. The
+agent still uses `https://<storage-account>.blob.core.windows.net`; Private DNS
+resolves that hostname to the Private Endpoint IP from inside the AKS VNet.
 
 ### Step 4 — Enable AKS Pod Sandboxing on an Azure Linux node pool
 
@@ -317,6 +350,8 @@ Refer to the [agent-sandbox docs](https://agent-sandbox.sigs.k8s.io/docs/) for p
 |---|---|
 | `deploy.sh` | End-to-end deploy: reads SN, reuses Module 1 ACR/UAMI/Storage/APIM, builds the `agent-src/` image, provisions baseline AKS, enables AKS Pod Sandboxing on an Azure Linux node pool, installs agent-sandbox, and deploys the Sandbox |
 | `aks.bicep` | Baseline AKS cluster; references existing ACR/UAMI/Storage; AcrPull, Storage RBAC, UAMI federated credential. The AKS Pod Sandboxing node pool is added by `deploy.sh`. |
+| `deploy-storage-private-link.sh` | Optional post-AKS wrapper; discovers the AKS-managed VNet, creates a dedicated Private Endpoint subnet, and deploys the Blob Private Link Bicep. |
+| `storage-private-link.bicep` | Optional Blob Private Endpoint, Private DNS zone, VNet link, and DNS zone group in the workshop resource group. |
 | `agent-sandbox.yaml.example` | Template manifest with placeholders for ACR/image tag/namespace/identity values |
 | `agent-sandbox.yaml` | Generated from `agent-sandbox.yaml.example` during deploy; then applied to create ServiceAccount + `Sandbox` CR + Service using AKS `kata-vm-isolation` |
 | `agent-src/` | POC agent source: `app/main.py` (ReflectionAgent HTTP server), `Dockerfile`, `requirements.txt`, `lifecycle-hook.sh`, and a usage `README.md`. This is the image built and deployed as the Sandbox. |
