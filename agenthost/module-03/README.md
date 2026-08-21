@@ -189,18 +189,19 @@ storage-private-link-f28a14  Succeeded  2026-08-21T11:57:12.610428+00:00  Increm
 On Azure portal, go to the storage account, and you will see private endpoint added:
 ![module-03-blob-private-endpoint](../pic/module-03-blob-private-endpoint.png)
 
-> **Note:** The wrapper creates the subnet in the AKS node resource group, then
+> **Note:** The script creates the subnet in the AKS managed vnet, then
 > deploys the Private Endpoint and Private DNS resources in the workshop
 > resource group. The agent still uses
 > `https://<storage-account>.blob.core.windows.net`; Private DNS resolves that
 > hostname to the Private Endpoint IP from inside the AKS VNet. If `VNET_NAME`
-> is omitted, the script asks for confirmation before using the first VNet found
-> in the node resource group. The script automatically picks a free `/24` subnet
-> CIDR from the VNet address space.
+> is omitted when runs the script, the script asks for confirmation before 
+> using the first VNet found in the node resource group. The script automatically
+> picks a free `/24` CIDR from the VNet address space and creates a subnet to 
+> accommodate the private endpoint.
 >
-> For AKS managed VNet scenarios, `agentPoolProfiles[0].vnetSubnetId` can be
-> `null`; this is expected. The script handles that by discovering the VNet from
-> the AKS node resource group.
+> For AKS managed VNet scenarios, `agentPoolProfiles[0].vnetSubnetId` used in the script
+> to find out AKS vnet can be `null`; this is expected. The script handles that by 
+> discovering the VNet from the AKS node resource group.
 
 ### Step 4 — Enable AKS Pod Sandboxing on an Azure Linux node pool
 
@@ -288,7 +289,7 @@ agenthost/module-03$ kubectl get pods -n agent-sandbox-system
 NAME                                        READY   STATUS    RESTARTS   AGE
 agent-sandbox-controller-76885c8b6c-bk84h   1/1     Running   0          117m
 ```
-### Verify the Pod Sandboxing is working
+### Verify the agent is working
 
 Run `kubectl get all -n $NAMESPACE`, you should see output like:
 ```
@@ -297,7 +298,7 @@ NAME             READY   STATUS    RESTARTS   AGE
 pod/agent-host   1/1     Running   0          34s
 
 NAME                 TYPE           CLUSTER-IP   EXTERNAL-IP      PORT(S)        AGE
-service/agent-host   LoadBalancer   10.0.63.89   48.204.162.105   80:31606/TCP   33s
+service/agent-host   LoadBalancer   10.0.63.89   135.***.***.251  80:31606/TCP   33s
 ```
 Open your browser and input URL `http://<EXTERNAL-IP>`, you will see the chat window. Try several questions to see if the agent works:
 
@@ -341,7 +342,7 @@ Expected: `history` contains your chat turns and grows after each interaction.
 
 ![module-03-agent-chat-history-store-in-blob](../pic/module-03-agent-chat-history-store-in-blob.png)
 
-
+### Verify agent runs in sandbox
 
 Run `kubectl describe` you will see the pod is running in Sandbox with runtime class **`kata-vm-isolation`**:
 ```
@@ -370,11 +371,6 @@ Containers:
     Container ID:   containerd://a8619d5c5b9eef8906c84d864e9eb6a037882b14b6e7b7a4f2b23010826d5ec3
     Image:          ......
 ```
-
-Go to the Foundry portal, in your Foundry project, go to the Agents tab, you should see your agent "agenthost-reflection-agent" (defined in the `.env`) is successfully registered, and the Type is "prompt":
-
-![module-03-agent-in-foundry-portal](../pic/module-03-agent-in-foundry-portal.png)
-
 
 ### Verify Pod Sandboxing Kernel Isolation
 
@@ -417,6 +413,13 @@ kubectl delete pod normal-pod -n "$NAMESPACE"
 If the agent pod reports a different kernel from the normal pod, and the agent
 pod is using `runtimeClassName: kata-vm-isolation`, that confirms the workload
 is running inside AKS Pod Sandboxing.
+
+### Verify agent registers in Foundry as "prompt" agent
+
+Go to the Foundry portal, in your Foundry project, go to the Agents tab, you should see your agent "agenthost-reflection-agent" (defined in the `.env`) is successfully registered, and the Type is "prompt":
+
+![module-03-agent-in-foundry-portal](../pic/module-03-agent-in-foundry-portal.png)
+
 
 ### Lifecycle (scale-to-zero via hibernation)
 
