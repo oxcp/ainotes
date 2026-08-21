@@ -67,19 +67,32 @@ Environment overrides: `RESOURCE_GROUP`, `LOCATION`, `NAMESPACE`, `SERVICE_ACCOU
 ### Optional — Blob Private Link
 
 If Storage public network access is disabled by policy, deploy private Blob
-connectivity after AKS exists. Choose an unused CIDR contained by the
-AKS-managed VNet and not overlapping its node subnet:
+connectivity after AKS exists:
 
 ```bash
-PRIVATE_ENDPOINT_SUBNET_PREFIX=10.250.0.0/24 ./deploy-storage-private-link.sh
+./deploy-storage-private-link.sh
+```
+
+Optional override:
+
+```bash
+VNET_NAME=<aks-vnet-name> ./deploy-storage-private-link.sh
 ```
 
 The wrapper discovers the AKS node resource group and managed VNet, creates the
 dedicated `snet-private-endpoints` subnet there, then calls
 `storage-private-link.bicep` against the workshop resource group. The Bicep
 creates the Blob Private Endpoint, `privatelink.blob.core.windows.net` Private
-DNS zone, VNet link, and DNS zone group. The agent continues using the standard
-Blob hostname; private DNS resolves it to the Private Endpoint IP.
+DNS zone, VNet link, and DNS zone group. If no `VNET_NAME` is provided, the
+script prints the first VNet found in the node resource group and asks for
+confirmation before continuing. The subnet CIDR is auto-selected as the first
+available `/24` that does not overlap existing subnets. The agent continues
+using the standard Blob hostname; private DNS resolves it to the Private
+Endpoint IP.
+
+For AKS managed VNet scenarios, `agentPoolProfiles[0].vnetSubnetId` can be
+`null`; this is expected. The script handles that by discovering the VNet from
+the AKS node resource group.
 
 ---
 
@@ -140,17 +153,54 @@ az aks get-credentials -g "$RESOURCE_GROUP" -n "$AKS_NAME" --overwrite-existing
 
 If your subscription policy disables Storage public network access, create a
 dedicated Private Endpoint subnet in the AKS-managed VNet and deploy the Blob
-Private Endpoint before starting the agent workload. Choose an unused CIDR that
-is inside the AKS-managed VNet and does not overlap any existing subnet:
+Private Endpoint before starting the agent workload:
 
 ```bash
-PRIVATE_ENDPOINT_SUBNET_PREFIX=10.250.0.0/24 ./deploy-storage-private-link.sh
+./deploy-storage-private-link.sh
 ```
 
-The wrapper creates the subnet in the AKS node resource group, then deploys the
-Private Endpoint and Private DNS resources in the workshop resource group. The
-agent still uses `https://<storage-account>.blob.core.windows.net`; Private DNS
-resolves that hostname to the Private Endpoint IP from inside the AKS VNet.
+Optional override:
+
+```bash
+VNET_NAME=<aks-vnet-name> ./deploy-storage-private-link.sh
+```
+You will see output like below:
+```
+$ ./deploy-storage-private-link.sh
+WARNING: The behavior of this command has been altered by the following extension: aks-preview
+WARNING: The behavior of this command has been altered by the following extension: aks-preview
+    AKS vnetSubnetId is null (expected for AKS-managed VNet). Discovering VNet in node resource group...
+    No VNET_NAME input provided.
+    First VNet in rg-aks-agenthost-f28a14-nodes: aks-vnet-39023097
+Continue with this VNet? [y/N]: y
+    Auto-selected subnet prefix for snet-private-endpoints: 10.225.0.0/24
+==> Deploying Blob Private Link
+    Workshop RG : rg-agenthost-workshop
+    Node RG     : rg-aks-agenthost-f28a14-nodes
+    VNet        : aks-vnet-39023097
+    PE subnet   : snet-private-endpoints (10.225.0.0/24)
+    Storage     : stcagenthostf28a14
+A new Bicep release is available: v0.46.1. Upgrade now by running "az bicep upgrade".
+Name                         State      Timestamp                         Mode         ResourceGroup
+---------------------------  ---------  --------------------------------  -----------  ---------------------
+storage-private-link-f28a14  Succeeded  2026-08-21T11:57:12.610428+00:00  Incremental  rg-agenthost-workshop
+==> Blob Private Link deployed. Storage clients in the AKS VNet now resolve the Blob endpoint to the Private Endpoint IP.
+```
+On Azure portal, go to the storage account, and you will see private endpoint added:
+![module-03-blob-private-endpoint](../pic/module-03-blob-private-endpoint.png)
+
+> **Note:** The wrapper creates the subnet in the AKS node resource group, then
+> deploys the Private Endpoint and Private DNS resources in the workshop
+> resource group. The agent still uses
+> `https://<storage-account>.blob.core.windows.net`; Private DNS resolves that
+> hostname to the Private Endpoint IP from inside the AKS VNet. If `VNET_NAME`
+> is omitted, the script asks for confirmation before using the first VNet found
+> in the node resource group. The script automatically picks a free `/24` subnet
+> CIDR from the VNet address space.
+>
+> For AKS managed VNet scenarios, `agentPoolProfiles[0].vnetSubnetId` can be
+> `null`; this is expected. The script handles that by discovering the VNet from
+> the AKS node resource group.
 
 ### Step 4 — Enable AKS Pod Sandboxing on an Azure Linux node pool
 
@@ -254,6 +304,44 @@ Open your browser and input URL `http://<EXTERNAL-IP>`, you will see the chat wi
 > ***Tip: Make sure you have the `'http://'` in the URL, otherwise the browser may use https by default which however is not implemented in the agent/workshop yet.***
 
 ![module-03-agent-chat-portal](../pic/module-03-agent-chat-portal.png)
+
+### Verify chat history persisted to Blob
+
+**Tip**:
+If Blob public network access is disabled, run this verification from a jumpbox
+inside private network scope. Both CLI commands and Azure Portal blob browsing
+must be executed from that jumpbox. The jumpbox VNet/subnet must include (or at
+least have private reachability to) the Blob Private Endpoint used by this
+workshop; otherwise data-plane access to `agent-state/agent-host.json` will fail.
+
+After chatting in the portal, verify the conversation state is persisted in the
+`agent-state` container as `agent-host.json`.
+
+```bash
+# List state blobs (should include agent-host.json)
+az storage blob list \
+  --account-name "$STORAGE_ACCOUNT" \
+  --container-name agent-state \
+  --auth-mode login \
+  --query "[].name" -o tsv
+
+# Inspect the saved chat history JSON
+az storage blob download \
+  --account-name "$STORAGE_ACCOUNT" \
+  --container-name agent-state \
+  --name agent-host.json \
+  --file /tmp/agent-host.json \
+  --auth-mode login \
+  --overwrite
+
+cat /tmp/agent-host.json
+```
+
+Expected: `history` contains your chat turns and grows after each interaction.
+
+![module-03-agent-chat-history-store-in-blob](../pic/module-03-agent-chat-history-store-in-blob.png)
+
+
 
 Run `kubectl describe` you will see the pod is running in Sandbox with runtime class **`kata-vm-isolation`**:
 ```
