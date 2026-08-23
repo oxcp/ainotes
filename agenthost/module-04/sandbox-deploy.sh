@@ -11,7 +11,7 @@
 #   6. Launches individual sandbox(es) with lifecycle policies
 #
 # Usage: ./sandbox-deploy.sh [--count=N] [--auto-suspend-mins=M]
-# Defaults: count=1, auto-suspend-mins=30 (auto-suspend idle sandboxes after 30 min)
+# Defaults: count=1, auto-suspend-mins=15 (auto-suspend idle sandboxes after 15 min)
 #
 # Prerequisites:
 #   - Module 1 infrastructure deployed
@@ -26,7 +26,7 @@ RESOURCE_GROUP="${RESOURCE_GROUP:-rg-agenthost-workshop}"
 LOCATION="${LOCATION:-eastus2}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 SANDBOX_COUNT="${SANDBOX_COUNT:-1}"
-AUTO_SUSPEND_MINS="${AUTO_SUSPEND_MINS:-30}"
+AUTO_SUSPEND_MINS="${AUTO_SUSPEND_MINS:-15}"
 
 echo "==> Module 4: Azure Container Apps Sandboxes Deployment (workshop path)"
 echo "Resource Group: $RESOURCE_GROUP"

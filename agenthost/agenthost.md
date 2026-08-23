@@ -89,11 +89,11 @@ The table below maps each technical requirement to the implementation approach f
 | # | Requirement | Foundry Host Agent (A) | AKS + agent-sandbox (B) | ACA Sandbox — *Public Preview* (C) |
 |---|---|---|---|---|
 | 1 | **State & context persistence** | Built-in agent state store (Cosmos/Blob) | Azure Blob (per-agent JSON, saved on every change) | Azure Blob (per-agent JSON, saved on every change) |
-| 2 | **Fast start / scale-to-zero** | Native agent idle eviction + warm resume | agent-sandbox lifecycle: pause / resume / hibernate; state already durable in Blob; optional SandboxWarmPool | ACA Sandbox container pool; idle timeout = 30 min; state already durable in Blob |
+| 2 | **Fast start / scale-to-zero** | Native agent idle eviction + warm resume | agent-sandbox lifecycle: pause / resume / hibernate; state already durable in Blob; optional SandboxWarmPool | ACA Sandbox container pool; idle timeout = 15 min; state already durable in Blob |
 | 3 | **Isolation** | Per-agent managed sandbox | Kata Container Micro-VM per agent; NetworkPolicy + Namespace isolation | Service-managed sandbox isolation (micro-VM boundary) per sandbox |
 | 4 | **Entra ID authentication** | Native AAD integration; user-assigned Managed Identity | AAD Workload Identity for Pods | ACA Workload Identity (UAMI) + Entra ID token validation at ingress |
 | 5 | **AI Gateway (APIM)** | APIM policy routes all LLM calls | APIM gateway policy; JWT validation | APIM gateway policy; JWT validation |
-| 6 | **Cost saving** | Scale-to-zero after 30 min idle | agent-sandbox hibernation; Spot Node Pool for worker nodes; Blob Cool tier for state | True serverless; container destroyed after idle |
+| 6 | **Cost saving** | Scale-to-zero after 15 min idle | agent-sandbox hibernation; Spot Node Pool for worker nodes; Blob Cool tier for state | True serverless; container destroyed after idle |
 
 ---
 
@@ -234,7 +234,7 @@ flowchart TD
    - **Path 1:** the agent generates an Entra ID token and calls the **APIM API**; APIM then calls the LLM in the Foundry project using its **UAMI**.
    - **Path 2:** the agent calls its **Foundry project** with the Foundry-assigned identity (**Foundry User**); the project routes inference through the registered **APIM AI gateway** to the LLM.
 4. The agent persists updated state to Azure Blob after each turn; the response streams back to the user.
-5. If idle > 30 min, the Host Agent evicts the instance; the latest state is already durable in Blob.
+5. If idle > 15 min, the Host Agent evicts the instance; the latest state is already durable in Blob.
 
 ---
 
@@ -303,7 +303,7 @@ flowchart TD
 3. The agent container loads its state directly from Azure Blob.
 4. The agent reaches the model via **Path 1**: it generates an Entra ID token (backed by its UAMI / Workload Identity) and calls the **APIM API**; APIM then calls the LLM in the Foundry project using its **UAMI**.
 5. The agent persists updated state to Blob after each turn.
-6. Idle detection: after 30 min, ACA scales the container to zero; no flush needed — state was persisted to Blob on every change.
+6. Idle detection: after 15 min, ACA scales the container to zero; no flush needed — state was persisted to Blob on every change.
 7. The next request restores state from Azure Blob.
 
 ---
