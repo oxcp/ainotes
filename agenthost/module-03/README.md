@@ -64,35 +64,9 @@ Environment overrides: `RESOURCE_GROUP`, `LOCATION`, `NAMESPACE`, `SERVICE_ACCOU
 > Set `AGENT_SANDBOX_VERSION` to a released tag from
 > https://github.com/kubernetes-sigs/agent-sandbox/releases (used in the release manifest URL).
 
-### Optional — Blob Private Link
-
-If Storage public network access is disabled by policy, deploy private Blob
-connectivity after AKS exists:
-
-```bash
-./deploy-storage-private-link.sh
-```
-
-Optional override:
-
-```bash
-VNET_NAME=<aks-vnet-name> ./deploy-storage-private-link.sh
-```
-
-The wrapper discovers the AKS node resource group and managed VNet, creates the
-dedicated `snet-private-endpoints` subnet there, then calls
-`storage-private-link.bicep` against the workshop resource group. The Bicep
-creates the Blob Private Endpoint, `privatelink.blob.core.windows.net` Private
-DNS zone, VNet link, and DNS zone group. If no `VNET_NAME` is provided, the
-script prints the first VNet found in the node resource group and asks for
-confirmation before continuing. The subnet CIDR is auto-selected as the first
-available `/24` that does not overlap existing subnets. The agent continues
-using the standard Blob hostname; private DNS resolves it to the Private
-Endpoint IP.
-
-For AKS managed VNet scenarios, `agentPoolProfiles[0].vnetSubnetId` can be
-`null`; this is expected. The script handles that by discovering the VNet from
-the AKS node resource group.
+After `deploy.sh` completes, continue with the shared **Deploy Blob Private
+Link (Required)** step below before running verification. This step is required
+for the One-Command path as well as the Manual path.
 
 ---
 
@@ -148,68 +122,6 @@ az deployment group create \
 
 az aks get-credentials -g "$RESOURCE_GROUP" -n "$AKS_NAME" --overwrite-existing
 ```
-
-### Optional Step 3a — Deploy Blob Private Link
-
-If your subscription policy disables Storage public network access, create a
-dedicated Private Endpoint subnet in the AKS-managed VNet and deploy the Blob
-Private Endpoint before starting the agent workload:
-
-> **If the Module-01 Storage account has public network access disabled, or your Azure policy disables your Storage account public network access (usually due to the security regulation in your enterprise), we must have private network connectivity from the AKS-managed VNet to the Blob private endpoint before the agent can read or write its persisted state.**
-
-You need addtional steps to create the private link from AKS-managed VNet to your account storage:
-
-```bash
-./deploy-storage-private-link.sh
-```
-
-The script can automatically detect the AKS-managed VNet name, and ask for your confirmation to use that VNet before continue. 
-You can check the AKS-managed VNet name in the AKS resource group `$RESOURCE_GROUP`. 
-
-If you think the script does not detect the right AKS-managed VNet, answer "N" to prevent the script to continue, and then you can explicitly give the AKS-managed VNet name to run the script:
-
-```bash
-VNET_NAME=<aks-vnet-name> ./deploy-storage-private-link.sh
-```
-
-Below is the example output you will see (if you don't explicitly give the AKS-managed VNet name):
-```
-$ ./deploy-storage-private-link.sh
-WARNING: The behavior of this command has been altered by the following extension: aks-preview
-WARNING: The behavior of this command has been altered by the following extension: aks-preview
-    AKS vnetSubnetId is null (expected for AKS-managed VNet). Discovering VNet in node resource group...
-    No VNET_NAME input provided.
-    First VNet in rg-aks-agenthost-f28a14-nodes: aks-vnet-39023097
-Continue with this VNet? [y/N]: y
-    Auto-selected subnet prefix for snet-private-endpoints: 10.225.0.0/24
-==> Deploying Blob Private Link
-    Workshop RG : rg-agenthost-workshop
-    Node RG     : rg-aks-agenthost-f28a14-nodes
-    VNet        : aks-vnet-39023097
-    PE subnet   : snet-private-endpoints (10.225.0.0/24)
-    Storage     : stcagenthostf28a14
-A new Bicep release is available: v0.46.1. Upgrade now by running "az bicep upgrade".
-Name                         State      Timestamp                         Mode         ResourceGroup
----------------------------  ---------  --------------------------------  -----------  ---------------------
-storage-private-link-f28a14  Succeeded  2026-08-21T11:57:12.610428+00:00  Incremental  rg-agenthost-workshop
-==> Blob Private Link deployed. Storage clients in the AKS VNet now resolve the Blob endpoint to the Private Endpoint IP.
-```
-On Azure portal, go to the storage account, and you will see private endpoint added:
-![module-03-blob-private-endpoint](../pic/module-03-blob-private-endpoint.png)
-
-> **Note:** The script creates the subnet in the AKS managed vnet, then
-> deploys the Private Endpoint and Private DNS resources in the workshop
-> resource group. The agent still uses
-> `https://<storage-account>.blob.core.windows.net`; Private DNS resolves that
-> hostname to the Private Endpoint IP from inside the AKS VNet. If `VNET_NAME`
-> is omitted when runs the script, the script asks for confirmation before 
-> using the first VNet found in the node resource group. The script automatically
-> picks a free `/24` CIDR from the VNet address space and creates a subnet to 
-> accommodate the private endpoint.
->
-> For AKS managed VNet scenarios, `agentPoolProfiles[0].vnetSubnetId` used in the script
-> to find out AKS vnet can be `null`; this is expected. The script handles that by 
-> discovering the VNet from the AKS node resource group.
 
 ### Step 4 — Enable AKS Pod Sandboxing on an Azure Linux node pool
 
@@ -271,6 +183,67 @@ sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|latest|g; s|<NAMESPACE>|${NAMESPA
 
 kubectl apply -f agent-sandbox.yaml
 ```
+
+---
+## Deploy Blob Private Link (optional if your storage account supports public network access)
+
+If your subscription policy disables Storage public network access, you need to create a
+dedicated Private Endpoint subnet in the AKS-managed VNet and deploy the Blob Private Endpoint.
+
+> **If the Module-01 Storage account has public network access disabled, or your Azure policy disables your Storage account public network access (usually due to the security regulation in your enterprise), we must have private network connectivity from the AKS-managed VNet to the Blob private endpoint before the agent can read or write its persisted state to blob.**
+
+You need below steps to create the private link from AKS-managed VNet to your account storage:
+
+```bash
+./deploy-storage-private-link.sh
+```
+
+The script automatically detects the AKS-managed VNet name, and ask for your confirmation to use that VNet before continue. You can check the AKS-managed VNet name in the AKS resource group `$RESOURCE_GROUP`. 
+
+If you think the script does not pickup the right AKS-managed VNet, answer "N" to stop the script, and then you can explicitly give the AKS-managed VNet name to run the script:
+
+```bash
+VNET_NAME=<aks-vnet-name> ./deploy-storage-private-link.sh
+```
+
+Below is the example output you will see (if you don't explicitly give the AKS-managed VNet name):
+```
+$ ./deploy-storage-private-link.sh
+WARNING: The behavior of this command has been altered by the following extension: aks-preview
+WARNING: The behavior of this command has been altered by the following extension: aks-preview
+    AKS vnetSubnetId is null (expected for AKS-managed VNet). Discovering VNet in node resource group...
+    No VNET_NAME input provided.
+    First VNet in rg-aks-agenthost-f28a14-nodes: aks-vnet-39023097
+Continue with this VNet? [y/N]: y
+    Auto-selected subnet prefix for snet-private-endpoints: 10.225.0.0/24
+==> Deploying Blob Private Link
+    Workshop RG : rg-agenthost-workshop
+    Node RG     : rg-aks-agenthost-f28a14-nodes
+    VNet        : aks-vnet-39023097
+    PE subnet   : snet-private-endpoints (10.225.0.0/24)
+    Storage     : stcagenthostf28a14
+A new Bicep release is available: v0.46.1. Upgrade now by running "az bicep upgrade".
+Name                         State      Timestamp                         Mode         ResourceGroup
+---------------------------  ---------  --------------------------------  -----------  ---------------------
+storage-private-link-f28a14  Succeeded  2026-08-21T11:57:12.610428+00:00  Incremental  rg-agenthost-workshop
+==> Blob Private Link deployed. Storage clients in the AKS VNet now resolve the Blob endpoint to the Private Endpoint IP.
+```
+On Azure portal, go to the storage account, and you will see private endpoint added:
+![module-03-blob-private-endpoint](../pic/module-03-blob-private-endpoint.png)
+
+> **Note:** The script creates the subnet in the AKS managed vnet, then
+> deploys the Private Endpoint and Private DNS resources in the workshop
+> resource group. The agent still uses
+> `https://<storage-account>.blob.core.windows.net`; Private DNS resolves that
+> hostname to the Private Endpoint IP from inside the AKS VNet. If `VNET_NAME`
+> is omitted when runs the script, the script asks for confirmation before 
+> using the first VNet found in the node resource group. The script automatically
+> picks a free `/24` CIDR from the VNet address space and creates a subnet to 
+> accommodate the private endpoint.
+>
+> For AKS managed VNet scenarios, `agentPoolProfiles[0].vnetSubnetId` used in the script
+> to find out AKS vnet can be `null`; this is expected. The script handles that by 
+> discovering the VNet from the AKS node resource group.
 
 ---
 
