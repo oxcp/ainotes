@@ -215,6 +215,8 @@ Scroll down to configure lifecycle policy:
 
 ![module-04-Create-Sandbox-Advanced-lifecycle-policy](../pic/module-04-Create-Sandbox-Advanced-lifecycle-policy.png)
 
+> **Tip: We choose "Memory" as the Suspend Mode, to persist eveything running in the memory and restore quickly (for example we will verify the chat history persistance and fast restore)**
+
 #### Memory vs. disk suspend mode
 
 The lifecycle policy offers two suspend modes. Both stop CPU and memory billing
