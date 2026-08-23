@@ -7,7 +7,8 @@
 This module deploys the agent runtime to **Azure Container Apps Sandboxes**, the
 container-based hosting model adopted for this workshop. Sandboxes deliver strong
 micro-VM-based sandbox isolation, full lifecycle control
-(create, suspend, resume, delete), and snapshot-based state continuity.
+(create, suspend, resume, delete), with memory or disk suspend modes for
+state continuity.
 
 > **Primary workshop path:** ACA Sandboxes.
 > An optional learning track, **ACA Dynamic Sessions**, appears at the end of this
@@ -170,7 +171,7 @@ Switch to your sandbox group:
 
 ![module-04-ACA-sandbox-portal-switch-to-your-SG](../pic/module-04-ACA-sandbox-portal-switch-to-your-SG.png)
 
-Connect the ACA SandboxGroup to `aca-subnet`:
+In the **Networking** tab, add VNET connection for the ACA SandboxGroup to `aca-subnet`:
 
 ![module-04-ACA-vnet-connection-SG-to-blob](../pic/module-04-ACA-vnet-connection-SG-to-blob.png)
 
@@ -210,11 +211,34 @@ Scroll down to configure: port:
 
 ![module-04-Create-Sandbox-Advanced-port](../pic/module-04-Create-Sandbox-Advanced-port.png)
 
-Scroll down to confiure lifecycle policy:
+Scroll down to configure lifecycle policy:
 
 ![module-04-Create-Sandbox-Advanced-lifecycle-policy](../pic/module-04-Create-Sandbox-Advanced-lifecycle-policy.png)
 
-Scroll down to configure VNET connection:
+#### Memory vs. disk suspend mode
+
+The lifecycle policy offers two suspend modes. Both stop CPU and memory billing
+while the sandbox is stopped, but they preserve different runtime state:
+
+| Aspect | Memory mode | Disk mode |
+|---|---|---|
+| Preserved state | Sandbox memory and disk | Sandbox disk only |
+| Running processes | Restored with their in-memory context | Not restored; processes and the application start again from disk |
+| Resume experience | Continues from the captured runtime state | Includes application startup and state reload |
+| Best fit | Short interruptions, interactive sessions, and the fastest continuity | Longer idle periods or workloads that already persist state externally |
+| Workshop chat history | Available immediately with the resumed process | Reloaded by the restarted agent from `agent-state/agent-host.json` in Blob |
+
+Use **Memory** mode in this workshop to demonstrate full process and disk
+continuity. Choose **Disk** mode to demonstrate that the agent can restart and
+recover its conversation history from Blob without relying on preserved memory.
+In either mode, keep the auto-suspend timeout at **15 minutes**.
+
+> **Note:** Suspend mode controls the ACA Sandbox snapshot. It is independent of
+> the agent's Blob persistence: the application writes every completed chat turn
+> to Blob, so Disk mode can still recover durable conversation history after the
+> process starts again.
+
+Scroll down to configure VNET connection (**required only if your storage account do not have public network access**) :
 
 ![module-04-Create-Sandbox-Advanced-vnet-connection](../pic/module-04-Create-Sandbox-Advanced-vnet-connection.png)
 
@@ -232,8 +256,6 @@ The sandbox launches within seconds. Try several commands in the console to veri
 A hyperlink appears at the top of the UI. Click it and then the agent chat UI opens in your browser. Submit a few questions to verify the agent is running correctly:
 
 ![module-04-Sandbox-agent-chat-UI](../pic/module-04-Sandbox-agent-chat-UI.png)
-
-Go to the blob container, you will see the chat status is persisted.
 
 To verify the ACA Sandbox automatically helps you persiste status, simply go the the Sandbox portal, on the upper-right click the **Stop** button. After the agent stops, refresh the chat window in browser, you will see below which means your agent is stopped.
 ```

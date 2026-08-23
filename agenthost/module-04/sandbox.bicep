@@ -6,7 +6,8 @@
 // Key differences from standard ACA:
 //   - Resource type: Microsoft.App/SandboxGroups (instead of containerApps)
 //   - Compute model: Isolated, ephemeral sandbox VMs (micro-VM boundary)
-//   - State: Snapshots with suspend/resume (full memory + disk preservation)
+//   - State: Suspend/resume snapshots (memory mode preserves memory + disk;
+//            disk mode preserves disk only)
 //   - Networking: Two-plane architecture (ARM control plane + ADC data plane)
 //   - Scaling: Burst from zero to hundreds of concurrent sandboxes
 //   - Use cases: AI code execution, development environments, burst workloads
