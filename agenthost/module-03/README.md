@@ -64,9 +64,7 @@ Environment overrides: `RESOURCE_GROUP`, `LOCATION`, `NAMESPACE`, `SERVICE_ACCOU
 > Set `AGENT_SANDBOX_VERSION` to a released tag from
 > https://github.com/kubernetes-sigs/agent-sandbox/releases (used in the release manifest URL).
 
-After `deploy.sh` completes, continue with the shared **Deploy Blob Private
-Link (Required)** step below before running verification. This step is required
-for the One-Command path as well as the Manual path.
+After `deploy.sh` completes, jump to the [Deploy Blob Private Link](#deploy-blob-private-link-optional-if-your-storage-account-supports-public-network-access) step below.
 
 ---
 
@@ -198,9 +196,9 @@ You need below steps to create the private link from AKS-managed VNet to your ac
 ./deploy-storage-private-link.sh
 ```
 
-The script automatically detects the AKS-managed VNet name, and ask for your confirmation to use that VNet before continue. You can check the AKS-managed VNet name in the AKS resource group `$RESOURCE_GROUP`. 
-
-If you think the script does not pickup the right AKS-managed VNet, answer "N" to stop the script, and then you can explicitly give the AKS-managed VNet name to run the script:
+> The script automatically detects the AKS-managed VNet name, and ask for your confirmation to use that VNet before continue. You can check the AKS-managed VNet name in the AKS resource group `$RESOURCE_GROUP`. 
+>
+> If you think the script does not pickup the right AKS-managed VNet, answer "N" to stop the script, and then you can explicitly give the AKS-managed VNet name to run the script:
 
 ```bash
 VNET_NAME=<aks-vnet-name> ./deploy-storage-private-link.sh
@@ -233,17 +231,14 @@ On Azure portal, go to the storage account, and you will see private endpoint ad
 
 > **Note:** The script creates the subnet in the AKS managed vnet, then
 > deploys the Private Endpoint and Private DNS resources in the workshop
-> resource group. The agent still uses
+> resource group `$RESOURCE_GROUP`. 
+> 
+> The agent still uses
 > `https://<storage-account>.blob.core.windows.net`; Private DNS resolves that
-> hostname to the Private Endpoint IP from inside the AKS VNet. If `VNET_NAME`
-> is omitted when runs the script, the script asks for confirmation before 
-> using the first VNet found in the node resource group. The script automatically
-> picks a free `/24` CIDR from the VNet address space and creates a subnet to 
-> accommodate the private endpoint.
+> hostname to the Private Endpoint IP from inside the AKS VNet.
 >
-> For AKS managed VNet scenarios, `agentPoolProfiles[0].vnetSubnetId` used in the script
-> to find out AKS vnet can be `null`; this is expected. The script handles that by 
-> discovering the VNet from the AKS node resource group.
+> The script automatically picks a free `/24` CIDR from the VNet address 
+> space and creates a subnet to accommodate the private endpoint.
 
 ---
 
@@ -289,14 +284,14 @@ Open your browser and input URL `http://<EXTERNAL-IP>`, you will see the chat wi
 
 ### Verify chat history persisted to Blob
 
-**Tip**:
-If Blob public network access is disabled, run this verification from a jumpbox
-inside private network scope. Both CLI commands and Azure Portal blob browsing
-must be executed from that jumpbox. The jumpbox VNet/subnet must include (or at
-least have private reachability to) the Blob Private Endpoint used by this
-workshop; otherwise data-plane access to `agent-state/agent-host.json` will fail.
+> **Tip**: If your storage account public network access is disabled, run below verification from a jumpbox with private link to your storage account is needed.
+> The easiest way to in this workshop is to reuse the private link we just created. Steps:
+> 1. create a separated subnet in the AKS-managed VNet
+> 2. create your jumpbox VM in this subnet (Your jumpbox will have a NIC/private IP in the subnet)
+> 3. your jumpbox then can reuse the private link we created above, to access your storage account
 
-After chatting in the portal, verify the conversation state is persisted in the
+
+After several rounds of chat, verify the conversation state is persisted in the
 `agent-state` container as `agent-host.json`.
 
 ```bash
@@ -320,7 +315,7 @@ cat /tmp/agent-host.json
 ```
 
 Expected: `history` contains your chat turns and grows after each interaction.
-
+Or you can open the blob/container portal on your jumpbox browser, go to your blob `agent-host.json` to view the content:
 ![module-03-agent-chat-history-store-in-blob](../pic/module-03-agent-chat-history-store-in-blob.png)
 
 ### Verify agent runs in sandbox
@@ -415,7 +410,8 @@ The Sandbox manifest sets `spec.operatingMode: Running` and `spec.service: true`
 scale the backing pod to zero while keeping the Sandbox object and stable
 service, then patch it back to `Running` when traffic returns.
 
-#### Why auto suspend/resume is not enabled here
+<details>
+<summary><strong>Why auto suspend/resume is not enabled here</strong></summary>
 
 The `Sandbox` CRD provides the `Running` / `Suspended` state transition, but it
 does not provide an `idleTimeout` field and cannot inspect application requests
@@ -429,7 +425,10 @@ KEDA is useful for scaling Deployments or `SandboxWarmPool` capacity from
 metrics, but it does not by itself implement the per-Sandbox session routing and
 wake-before-forward behavior required by this singleton agent.
 
-#### Practical implementation
+</details>
+
+<details>
+<summary><strong>Practical implementation</strong></summary>
 
 A production implementation places an always-running gateway in front of the
 Sandbox and adds an idle sweeper. The browser calls the gateway rather than the
@@ -459,6 +458,8 @@ The control flow is:
 For larger platforms, `SandboxTemplate`, `SandboxClaim`, and `SandboxWarmPool`
 can reduce cold-start latency, but the gateway still owns session routing,
 idle detection, request holding, and wake-on-traffic behavior.
+
+</details>
 
 #### Workshop simplification
 
