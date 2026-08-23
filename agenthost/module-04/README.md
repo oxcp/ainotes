@@ -263,7 +263,7 @@ To verify the ACA Sandbox automatically helps you persiste status, simply go the
 ```
 {"error":"Sandbox is not running"}
 ```
-Then you click the **Resume** to resume the agent, refresh the chat window again, you will find all the previous chat history is restored. This is the great convenience that the ACA Sandbox helps us in the agent status persistence.
+Then you click the **Resume** to resume the agent, refresh the chat window again, you will find all the previous chat history is restored. This is the great convenience that the ACA Sandbox brings to us in agent status persistence.
 
 ### Characteristics
 
