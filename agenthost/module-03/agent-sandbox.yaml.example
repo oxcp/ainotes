@@ -21,7 +21,9 @@ metadata:
 
 ---
 # Sandbox — a stateful, singleton, isolated agent runtime managed by the
-# agent-sandbox controller. Stable identity + lifecycle (pause/resume/hibernate).
+# agent-sandbox controller. `operatingMode` is the cost dial: an external
+# gateway/idle sweeper can patch it to Suspended after 15 minutes of idle time,
+# and back to Running when user traffic returns.
 apiVersion: agents.x-k8s.io/v1beta1
 kind: Sandbox
 metadata:
@@ -31,6 +33,10 @@ metadata:
     app: agent-host
     component: agent-runtime
 spec:
+  operatingMode: Running
+  # Keep the per-sandbox service stable across suspend/resume. A fronting
+  # gateway should wake the Sandbox and proxy traffic to this stable service.
+  service: true
   podTemplate:
     metadata:
       labels:
@@ -127,7 +133,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: agent-host
+  name: agent-host-lb
   namespace: <NAMESPACE>
   labels:
     app: agent-host

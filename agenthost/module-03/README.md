@@ -155,16 +155,24 @@ If your subscription policy disables Storage public network access, create a
 dedicated Private Endpoint subnet in the AKS-managed VNet and deploy the Blob
 Private Endpoint before starting the agent workload:
 
+> **If the Module-01 Storage account has public network access disabled, or your Azure policy disables your Storage account public network access (usually due to the security regulation in your enterprise), we must have private network connectivity from the AKS-managed VNet to the Blob private endpoint before the agent can read or write its persisted state.**
+
+You need addtional steps to create the private link from AKS-managed VNet to your account storage:
+
 ```bash
 ./deploy-storage-private-link.sh
 ```
 
-Optional override:
+The script can automatically detect the AKS-managed VNet name, and ask for your confirmation to use that VNet before continue. 
+You can check the AKS-managed VNet name in the AKS resource group `$RESOURCE_GROUP`. 
+
+If you think the script does not detect the right AKS-managed VNet, answer "N" to prevent the script to continue, and then you can explicitly give the AKS-managed VNet name to run the script:
 
 ```bash
 VNET_NAME=<aks-vnet-name> ./deploy-storage-private-link.sh
 ```
-You will see output like below:
+
+Below is the example output you will see (if you don't explicitly give the AKS-managed VNet name):
 ```
 $ ./deploy-storage-private-link.sh
 WARNING: The behavior of this command has been altered by the following extension: aks-preview
@@ -298,7 +306,7 @@ NAME             READY   STATUS    RESTARTS   AGE
 pod/agent-host   1/1     Running   0          34s
 
 NAME                 TYPE           CLUSTER-IP   EXTERNAL-IP      PORT(S)        AGE
-service/agent-host   LoadBalancer   10.0.63.89   135.***.***.251  80:31606/TCP   33s
+service/agent-host-lb   LoadBalancer   10.0.63.89   135.***.***.251  80:31606/TCP   33s
 ```
 Open your browser and input URL `http://<EXTERNAL-IP>`, you will see the chat window. Try several questions to see if the agent works:
 
@@ -427,17 +435,93 @@ Go to the AKS portal to delete the agent pod:
 
 Refresh the agent chat window in the browser, you will temporarily lose the agent connection. After the agent pod resumes, you will again see the previous chat history load back into the new chat window.
 
-### Lifecycle (scale-to-zero via hibernation)
+### Lifecycle (idle suspend / wake-on-traffic model)
 
-`agent-sandbox` manages the Sandbox lifecycle declaratively. Pause / resume the
-Sandbox (its state persists) instead of KEDA-scaling a Deployment:
+The Sandbox manifest sets `spec.operatingMode: Running` and `spec.service: true`.
+`operatingMode` is the lifecycle control point: patch it to `Suspended` to
+scale the backing pod to zero while keeping the Sandbox object and stable
+service, then patch it back to `Running` when traffic returns.
+
+#### Why auto suspend/resume is not enabled here
+
+The `Sandbox` CRD provides the `Running` / `Suspended` state transition, but it
+does not provide an `idleTimeout` field and cannot inspect application requests
+or decide when a user session is idle. The current public `LoadBalancer` Service also
+routes directly to the agent pod. When that pod is suspended, the Service has no
+ready endpoint and cannot hold the request, patch the Sandbox, wait for startup,
+and retry it. Therefore the Sandbox manifest alone cannot implement "idle for 15
+minutes, then wake on the next HTTP request."
+
+KEDA is useful for scaling Deployments or `SandboxWarmPool` capacity from
+metrics, but it does not by itself implement the per-Sandbox session routing and
+wake-before-forward behavior required by this singleton agent.
+
+#### Practical implementation
+
+A production implementation places an always-running gateway in front of the
+Sandbox and adds an idle sweeper. The browser calls the gateway rather than the
+Sandbox LoadBalancer directly. The gateway and sweeper use Kubernetes RBAC that
+allows `get`, `watch`, and `patch` on the specific Sandbox resources.
+
+The control flow is:
+
+1. The gateway records the last completed request time for each Sandbox. Store
+   this outside the agent pod, for example in Redis or a database, because the
+   pod disappears while suspended.
+2. The idle sweeper periodically finds Sandboxes with no active request and no
+   traffic for 15 minutes, then patches `spec.operatingMode` to `Suspended`.
+3. The agent-sandbox controller terminates the backing pod while retaining the
+   Sandbox object and its stable Service. This workshop's conversation state is
+   already durable in Blob.
+4. When new traffic arrives, the gateway resolves the target Sandbox. If it is
+   suspended, the gateway patches `operatingMode` to `Running` and holds the
+   incoming request.
+5. The gateway watches the Sandbox until `Ready=True`, then forwards the held
+   request to `status.serviceFQDN`. If startup exceeds a configured timeout, it
+   returns a retriable `503` response.
+6. The implementation must serialize concurrent wake requests and recheck the
+   active-request count immediately before suspension, so the sweeper cannot
+   suspend a Sandbox while a request is running.
+
+For larger platforms, `SandboxTemplate`, `SandboxClaim`, and `SandboxWarmPool`
+can reduce cold-start latency, but the gateway still owns session routing,
+idle detection, request holding, and wake-on-traffic behavior.
+
+#### Workshop simplification
+
+To keep this workshop focused on Sandbox lifecycle and state recovery, it does
+not deploy a custom gateway, activity store, or idle-sweeper controller. We use
+manual patches to represent the two actions that those components would perform:
+
+1. After 15 minutes without user traffic, the idle sweeper would patch the
+   Sandbox to `Suspended`.
+2. On the next user request, the gateway would patch the Sandbox back to
+   `Running`, wait for `Ready=True`, then proxy the request to the stable
+   Sandbox Service.
+
+Run the equivalent manual suspend/resume commands:
+
+```bash
+# Suspend after an idle period (the workshop target is 15 minutes)
+kubectl patch sandbox agent-host -n "$NAMESPACE" --type merge \
+  -p '{"spec":{"operatingMode":"Suspended"}}'
+
+# Resume when traffic returns
+kubectl patch sandbox agent-host -n "$NAMESPACE" --type merge \
+  -p '{"spec":{"operatingMode":"Running"}}'
+
+kubectl wait sandbox agent-host -n "$NAMESPACE" --for=condition=Ready --timeout=180s
+```
+
+Inspect lifecycle status:
 
 ```bash
 # Inspect the Sandbox status / lifecycle fields
 kubectl describe sandbox agent-host -n "$NAMESPACE"
 ```
 
-Refer to the [agent-sandbox docs](https://agent-sandbox.sigs.k8s.io/docs/) for pause/resume, scheduled deletion, and `SandboxWarmPool` (pre-warmed sandboxes) via the extensions API.
+Refer to the [agent-sandbox docs](https://agent-sandbox.sigs.k8s.io/docs/) for
+pause/resume, scheduled deletion, and `SandboxWarmPool` patterns.
 
 ---
 
@@ -464,7 +548,7 @@ Refer to the [agent-sandbox docs](https://agent-sandbox.sigs.k8s.io/docs/) for p
 - **Azure Blob Storage**: agent conversation state is persisted directly to Blob as `<AGENT_ID>.json` (container `agent-state`) on every change; the pod recovers it on startup. Blob is the single source of truth — no Redis / hot cache.
 - **AI Gateway**: model calls route through APIM at `https://apim-agenthost-<SN>.azure-api.net/foundry` (the Foundry Responses gateway from Module 1).
 - **Kata Containers**: the `kata` node pool is tainted/labelled, and the agent workload targets it with `runtimeClassName: kata-vm-isolation` plus node selector / toleration.
-- **Scale-to-zero**: provided by agent-sandbox hibernation (pause/resume) rather than KEDA.
+- **Scale-to-zero**: the Sandbox exposes `operatingMode` (`Running` / `Suspended`) as the suspend/resume control point. A gateway or idle sweeper should enforce the 15-minute idle policy and wake the Sandbox before proxying returned traffic.
 
 ---
 

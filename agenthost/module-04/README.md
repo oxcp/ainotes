@@ -42,8 +42,8 @@ az extension add --name containerapp --upgrade --allow-preview true -y
 ### What It Deploys
 
 - A `Microsoft.App/SandboxGroups` resource (preview)
-- SandboxGroup identity and registry bindings
-- The `AcrPull` role assignment for the Module-01 UAMI on the ACR (declared in `sandbox.bicep`)
+- SandboxGroup identity and registry bindings (Assign the Module-01 UAMI to the SandboxGroup)
+- The `AcrPull` role assignment for the Module-01 UAMI to pull container images from the ACR (declared in `sandbox.bicep`)
 - Optional references to Module-01 storage for state workflows
 
 ### Deploy Steps
@@ -58,12 +58,111 @@ On completion, the script has provisioned:
 - An Azure Container Apps SandboxGroup
 - The `AcrPull` role assignment granting the UAMI pull access to the ACR (granted declaratively via `sandbox.bicep`)
 
-In the Azure portal, open your resource group to confirm the SandboxGroup was created. You may need to enable **Show hidden types** in the **Manage view** menu:
+In the Azure portal, open your resource group to confirm the SandboxGroup was created:
 
 ![module-04-ACA-sandboxgroup-in-RG](../pic/module-04-ACA-sandboxgroup-in-RG.png)
 
-Sign in to `https://staging.sandboxes.azure.com/` with your Azure identity and open
-the ACA Sandbox portal:
+### Optional — Connect the SandboxGroup to Blob through Private Link
+
+> **If the Module-01 Storage account has public network access disabled, or your Azure policy disables your Storage account public network access (usually due to the security regulation in your enterprise), the ACA SandboxGroup must have private network connectivity to the Blob endpoint before the agent can read or write its persisted state.**
+
+For workshop convenience, reuse the AKS-managed VNet discovered in Module-03.
+Module-03 already linked this VNet to the Blob Private DNS zone and created the
+Blob Private Endpoint. Do not create another Blob Private Endpoint for Module-04.
+Instead, create a dedicated subnet for ACA Sandboxes in the same VNet and connect
+the SandboxGroup to that subnet:
+
+1. In the Azure portal, open the AKS node resource group and select the
+	AKS-managed VNet used in Module-03.
+2. Create a new subnet named `aca-subnet`. Use a free, non-overlapping address
+	range and keep it separate from both the AKS node subnet and
+	`snet-private-endpoints`.
+
+![module-04-ACA-add-aca-subnet](../pic/module-04-ACA-add-aca-subnet.png)
+
+after create, you should see the subnet `aca-subnet` in the subnet list:
+![module-04-ACA-list-aca-subnet](../pic/module-04-ACA-list-aca-subnet.png)
+
+Now you need to add delegation to the aca-subnet:
+```
+$ az network vnet subnet update \
+  --resource-group rg-aks-agenthost-f28a14-nodes \
+  --vnet-name aks-vnet-39023097 \
+  --name aca-subnet \
+  --delegations Microsoft.App/environments
+```
+You should see output if it is successful:
+```
+{
+  "addressPrefix": "10.225.1.0/24",
+  "defaultOutboundAccess": false,
+  "delegations": [
+    {
+      "actions": [
+        "Microsoft.Network/virtualNetworks/subnets/join/action"
+      ],
+      "etag": "W/\"f2437ea5-8a14-4088-ada3-e8f6f61756ff\"",
+      "id": "/subscriptions/8bef68e4-9675-47c4-b4cd-272dea5455a3/resourceGroups/rg-aks-agenthost-f28a14-nodes/providers/Microsoft.Network/virtualNetworks/aks-vnet-39023097/subnets/aca-subnet/delegations/0",
+      "name": "0",
+      "provisioningState": "Succeeded",
+      "resourceGroup": "rg-aks-agenthost-f28a14-nodes",
+      "serviceName": "Microsoft.App/environments",
+      "type": "Microsoft.Network/virtualNetworks/subnets/delegations"
+    }
+  ],
+  "etag": "W/\"f2437ea5-8a14-4088-ada3-e8f6f61756ff\"",
+  "id": "/subscriptions/8bef68e4-9675-47c4-b4cd-272dea5455a3/resourceGroups/rg-aks-agenthost-f28a14-nodes/providers/Microsoft.Network/virtualNetworks/aks-vnet-39023097/subnets/aca-subnet",
+  "name": "aca-subnet",
+  "privateEndpointNetworkPolicies": "Disabled",
+  "privateLinkServiceNetworkPolicies": "Enabled",
+  "provisioningState": "Succeeded",
+  "resourceGroup": "rg-aks-agenthost-f28a14-nodes",
+  "type": "Microsoft.Network/virtualNetworks/subnets"
+}
+
+```
+
+Verify the delegation for service "Microsoft.App/environments" is added:
+```
+$ az network vnet subnet show \
+  -g rg-aks-agenthost-f28a14-nodes \
+  --vnet-name aks-vnet-39023097 \
+  -n aca-subnet \
+  --query delegations
+```
+
+You shoud see the output like:
+```
+[
+  {
+    "actions": [
+      "Microsoft.Network/virtualNetworks/subnets/join/action"
+    ],
+    "etag": "W/\"f2437ea5-8a14-4088-ada3-e8f6f61756ff\"",
+    "id": "/subscriptions/8bef68e4-9675-47c4-b4cd-272dea5455a3/resourceGroups/rg-aks-agenthost-f28a14-nodes/providers/Microsoft.Network/virtualNetworks/aks-vnet-39023097/subnets/aca-subnet/delegations/0",
+    "name": "0",
+    "provisioningState": "Succeeded",
+    "resourceGroup": "rg-aks-agenthost-f28a14-nodes",
+    "serviceName": "Microsoft.App/environments",
+    "type": "Microsoft.Network/virtualNetworks/subnets/delegations"
+  }
+]
+
+```
+which must include:
+```
+[
+  {
+    "serviceName": "Microsoft.App/environments"
+  }
+]
+```
+
+
+3. In the ACA Sandbox portal at `https://sandboxes.azure.com/`, open the workshop
+	SandboxGroup and connect it to the AKS-managed VNet and `aca-subnet`.
+
+Sign in to `https://sandboxes.azure.com/` with your Azure identity and open the ACA Sandbox portal:
 
 ![module-04-Goto-ACA-sandbox-portal](../pic/module-04-Goto-ACA-sandbox-portal.png)
 
@@ -71,7 +170,31 @@ Switch to your sandbox group:
 
 ![module-04-ACA-sandbox-portal-switch-to-your-SG](../pic/module-04-ACA-sandbox-portal-switch-to-your-SG.png)
 
-Build a disk image from the container image produced in Module-03:
+Connect the ACA SandboxGroup to `aca-subnet`:
+
+![module-04-ACA-vnet-connection-SG-to-blob](../pic/module-04-ACA-vnet-connection-SG-to-blob.png)
+
+
+4. Confirm that the SandboxGroup reports the VNet connection as ready before
+	creating or restarting sandbox instances.
+
+After connected, you should see:
+
+![module-04-ACA-vnet-connection-created](../pic/module-04-ACA-vnet-connection-created.png)
+
+
+> **Note:** The Private Endpoint remains in `snet-private-endpoints`; ACA
+> Sandboxes run in `aca-subnet` and reach that Private Endpoint over the shared
+> VNet. The existing `privatelink.blob.core.windows.net` Private DNS zone link
+> makes the standard Blob hostname resolve to the private IP. The Module-01 UAMI
+> still needs `Storage Blob Data Contributor` for Blob data-plane authorization.
+
+
+### Deploy your agent
+You build a disk image from the container image produced in Module-03. You can find your container image in the Azure Container Registry portal:
+![module-04-ACA-find-your-container-image](../pic/module-04-ACA-find-your-container-image.png)
+
+One the ACA Sandbox portal `https://sandboxes.azure.com/`, go to the **Disk Images** tab. 
 
 ![module-04-Create-DiskImages](../pic/module-04-Create-DiskImages.png)
 
@@ -79,30 +202,44 @@ Once the build completes, the disk image appears in the list:
 
 ![module-04-DiskImages](../pic/module-04-DiskImages.png)
 
-On the **Sandbox** tab, create a new sandbox from the disk image you just built.
-Assign the Module-01 UAMI, which was granted `AcrPull` permission to pull container
-images from the ACR:
+On the **Sandbox** tab, create a new standard sandbox from the disk image you just built. Switch to the **Advanced** tab for configuration:
 
-![module-04-Create-Sandbox](../pic/module-04-Create-Sandbox.png)
+![module-04-Create-Sandbox-Advanced-diskImage](../pic/module-04-Create-Sandbox-Advanced-diskImage.png)
 
-The sandbox launches within seconds. Use the option at the top of the UI to expose a
-port:
+Scroll down to configure: port:
+
+![module-04-Create-Sandbox-Advanced-port](../pic/module-04-Create-Sandbox-Advanced-port.png)
+
+Scroll down to confiure lifecycle policy:
+
+![module-04-Create-Sandbox-Advanced-lifecycle-policy](../pic/module-04-Create-Sandbox-Advanced-lifecycle-policy.png)
+
+Scroll down to configure VNET connection:
+
+![module-04-Create-Sandbox-Advanced-vnet-connection](../pic/module-04-Create-Sandbox-Advanced-vnet-connection.png)
+
+After the configuration above, you will have a **Review** chance before create:
+
+![module-04-Create-Sandbox-Advanced-review-before-create](../pic/module-04-Create-Sandbox-Advanced-review-before-create.png)
+
+If you confirm everything is configured properly, click **Create** to create your agent.
+
+
+The sandbox launches within seconds. Try several commands in the console to verify it is alive:
 
 ![module-04-Sandbox-running](../pic/module-04-Sandbox-running.png)
 
-Expose port 8080, which the container image publishes:
-
-![module-04-Sandbox-expose-port](../pic/module-04-Sandbox-expose-port.png)
-
-A hyperlink then appears at the top of the UI. Select it:
-
-![module-04-Sandbox-hyperlink](../pic/module-04-Sandbox-hyperlink.png)
-
-The agent chat UI opens in your browser. Submit a few questions to verify the agent is
-running correctly:
+A hyperlink appears at the top of the UI. Click it and then the agent chat UI opens in your browser. Submit a few questions to verify the agent is running correctly:
 
 ![module-04-Sandbox-agent-chat-UI](../pic/module-04-Sandbox-agent-chat-UI.png)
 
+Go to the blob container, you will see the chat status is persisted.
+
+To verify the ACA Sandbox automatically helps you persiste status, simply go the the Sandbox portal, on the upper-right click the **Stop** button. After the agent stops, refresh the chat window in browser, you will see below which means your agent is stopped.
+```
+{"error":"Sandbox is not running"}
+```
+Then you click the **Resume** to resume the agent, refresh the chat window again, you will find all the previous chat history is restored. This is the great convenience that the ACA Sandbox helps us in the agent status persistence.
 
 ### Characteristics
 
