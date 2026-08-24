@@ -217,8 +217,8 @@ Scroll down to "Additional Details" to configure environment variables. Configur
 |---|---|---|
 | AGENT_STORAGE_ACCOUNT | stcagenthostf28a14 | Module-01 Storage account name used by the agent to persist chat state in Blob. |
 | AGENT_ID | agent-host-on-aca | Logical agent identifier. Also determines the Blob state file name as `<AGENT_ID>.json`. |
-| FOUNDRY_PROJECT_ENDPOINT | https://foundry-agenthost-f28a14.services.ai.azure.com/api/projects/maf-agent-prj | Foundry project endpoint used for catalog registration and project-scoped agent operations. Find the value in your Microsoft Foundry project Home page. |
-| FOUNDRY_AGENT_NAME | agenthost-reflection-agent-on-aca | Persistent agent name shown in the Foundry catalog. |
+| FOUNDRY_PROJECT_ENDPOINT | https://foundry-agenthost-f28a14.services.ai.azure.com/api/projects/maf-agent-prj | Foundry project endpoint used for catalog registration and project-scoped agent operations. Find the project endpoint value in your Microsoft Foundry project Home page. |
+| FOUNDRY_AGENT_NAME | agenthost-reflection-agent-on-aca | Agent name shown in the Foundry catalog. |
 
 For example you configure the "AGENT_STORAGE_ACCOUNT" variable like below:
 ![module-04-ACA-Create-Sandbox-Advanced-add-envvar-storage-account](../pic/module-04-ACA-Create-Sandbox-Advanced-add-envvar-storage-account.png)
@@ -235,6 +235,7 @@ Scroll down to configure lifecycle policy:
 ![module-04-Create-Sandbox-Advanced-lifecycle-policy](../pic/module-04-Create-Sandbox-Advanced-lifecycle-policy.png)
 
 > **Tip: We choose "Memory" as the Suspend Mode, to persist eveything running in the memory and disk, to restore status quickly from memory (for example we will verify the chat history persistance and fast restore from memory)**
+>
 > We configure the "Idel timeout" as 900 sconds which meet our design (idel time out: 15 minutes)
 
 #### Memory vs. disk suspend mode
@@ -257,8 +258,7 @@ In either mode, keep the auto-suspend timeout at **15 minutes**.
 
 > **Note:** Suspend mode controls the ACA Sandbox snapshot. It is independent of
 > the agent's Blob persistence: the application writes every completed chat turn
-> to Blob, so Disk mode can still recover durable conversation history after the
-> process starts again.
+> to Blob.
 
 Scroll down to configure VNET connection (**required only if your storage account do not have public network access**) :
 
@@ -271,11 +271,11 @@ After the configuration above, you will have a **Review** chance before create:
 If you confirm everything is configured properly, click **Create** to create your agent.
 
 
-The sandbox launches within seconds. Try several commands in the console to verify it is alive:
+The sandbox launches within seconds. Try several commands in the console to verify it is alive. For example below example checks the environment variables and the agent execution files/folders:
 
 ![module-04-Sandbox-running](../pic/module-04-Sandbox-running.png)
 
-A hyperlink appears at the top of the UI. Click it and then the agent chat UI opens in your browser. Submit a few questions to verify the agent is running correctly:
+A hyperlink appears at the top of the UI. Click it and then the agent chat UI opens in your browser. Submit a few conversation to verify the agent is running well (in the backend all the LLM calls go through our APIM AI gateway):
 
 ![module-04-agent-chat-portal](../pic/module-04-agent-chat-portal.png)
 
@@ -285,7 +285,7 @@ Go to your Microsoft Foundry project portal, in the Agent catalog you should see
 Go to the storage account blob container, you should see the chat history persistence file:
 ![module-04-agent-chat-history-store-in-blob](../pic/module-04-agent-chat-history-store-in-blob.png)
 View the persistence file content you should see the chat history:
-![module-04-agent-chat-history-store-in-blob-view-content](../pic/module-04-agent-chat-history-store-in-blob-view-contentb.png)
+![module-04-agent-chat-history-store-in-blob-view-content](../pic/module-04-agent-chat-history-store-in-blob-view-content.png)
 
 > **Tip**: If your storage account public network access is disabled, check the persistence file in your storage account should run on a jumpbox with private link to your storage account is needed. The easiest way is to reuse the jumpbox you used in the module-03.
 
