@@ -205,7 +205,7 @@ You need below steps to create the private link from AKS-managed VNet to your ac
 
 > The script automatically detects the AKS-managed VNet name, and ask for your confirmation to use that VNet before continue. You can check the AKS-managed VNet name in the AKS resource group `$RESOURCE_GROUP`. 
 >
-> If you think the script does not pickup the right AKS-managed VNet, answer "N" to stop the script, and then you can explicitly give the AKS-managed VNet name to run the script:
+> If you think the script does not pickup the right AKS-managed VNet, answer **"N"** to stop the script, and then you can explicitly give the AKS-managed VNet name to run the script:
 
 ```bash
 VNET_NAME=<aks-vnet-name> ./deploy-storage-private-link.sh
@@ -299,8 +299,10 @@ Open your browser and input URL `http://<EXTERNAL-IP>`, you will see the chat wi
 
 
 After several rounds of chat, verify the conversation state is persisted in the
-`agent-state` container as `agent-host.json`.
+`agent-state` container as `agent-host.json`. You can open the blob/container portal on your jumpbox browser, go to your blob `agent-host.json` to view the content. You should see `history` contains your chat turns and grows after each interaction.
+![module-03-agent-chat-history-store-in-blob](../pic/module-03-agent-chat-history-store-in-blob.png)
 
+If your jumpbox does not have a browser, you can download the blob to view it locally:
 ```bash
 # List state blobs (should include agent-host.json)
 az storage blob list \
@@ -320,10 +322,6 @@ az storage blob download \
 
 cat /tmp/agent-host.json
 ```
-
-Expected: `history` contains your chat turns and grows after each interaction.
-Or you can open the blob/container portal on your jumpbox browser, go to your blob `agent-host.json` to view the content:
-![module-03-agent-chat-history-store-in-blob](../pic/module-03-agent-chat-history-store-in-blob.png)
 
 ### Verify agent runs in sandbox
 
@@ -403,7 +401,7 @@ Go to the Foundry portal, in your Foundry project, go to the Agents tab, you sho
 
 ![module-03-agent-in-foundry-portal](../pic/module-03-agent-in-foundry-portal.png)
 
-### Verify agent load status after resuming
+### Verify agent to load status after resuming
 
 Go to the AKS portal to delete the agent pod:
 ![module-03-delete-agent-pod-to-verify-load-state](../pic/module-03-delete-agent-pod-to-verify-load-state.png)
