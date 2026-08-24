@@ -179,7 +179,7 @@ Next: proceed to module-02 to deploy the hosted agent with azd.
 4. **RBAC** — the module-01 UAMI is granted **Cognitive Services OpenAI User** and **Azure AI User** on the Foundry account.
 5. **API** `foundry-ai-gateway` (path `/foundry`) with `responses` (`POST /responses`) and `get-response` (`GET /responses/{response-id}`) operations, plus an API-scope policy that validates the caller's Entra ID token (`validate-jwt`) and then forwards to the backend with a managed-identity token via `authentication-managed-identity` (resource `https://ai.azure.com`).
 
-To make this APIM instance appear in **Microsoft Foundry portal → Operate → Admin console → AI Gateway**, you still need one manual portal step after deployment:
+To make this APIM instance appear in **Microsoft Foundry portal → Manage → AI Gateway**, you still need one manual portal step after deployment:
 
 1. Open **AI Gateway**.
 2. Select **Add AI Gateway**.
