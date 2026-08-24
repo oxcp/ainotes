@@ -207,7 +207,22 @@ On the **Sandbox** tab, create a new standard sandbox from the disk image you ju
 
 ![module-04-Create-Sandbox-Advanced-diskImage](../pic/module-04-Create-Sandbox-Advanced-diskImage.png)
 
-Scroll down to configure: port:
+Scroll down to configure environment variables. Configure the following values:
+
+| Key | Sample value | Description |
+|---|---|---|
+| AGENT_STORAGE_ACCOUNT | stcagenthostf28a14 | Module-01 Storage account name used by the agent to persist chat state in Blob. |
+| AGENT_ID | agent-host-on-aca | Logical agent identifier. Also determines the Blob state file name as `<AGENT_ID>.json`. |
+| FOUNDRY_PROJECT_ENDPOINT | https://foundry-agenthost-f28a14.services.ai.azure.com/api/projects/maf-agent-prj | Foundry project endpoint used for catalog registration and project-scoped agent operations. Find the value in your Microsoft Foundry project Home page. |
+| FOUNDRY_AGENT_NAME | agenthost-reflection-agent-on-aca | Persistent agent name shown in the Foundry catalog. |
+
+For example you configure the "AGENT_STORAGE_ACCOUNT" variable like below:
+![module-04-ACA-Create-Sandbox-Advanced-add-envvar-storage-account](../pic/module-04-ACA-Create-Sandbox-Advanced-add-envvar-storage-account.png)
+
+After the environment variables configuration, you should see the list of environment variables like:
+![module-04-ACA-Create-Sandbox-Advanced-add-envvar-list](../pic/module-04-ACA-Create-Sandbox-Advanced-add-envvar-list.png)
+
+Scroll down to configure port:
 
 ![module-04-Create-Sandbox-Advanced-port](../pic/module-04-Create-Sandbox-Advanced-port.png)
 
@@ -216,6 +231,7 @@ Scroll down to configure lifecycle policy:
 ![module-04-Create-Sandbox-Advanced-lifecycle-policy](../pic/module-04-Create-Sandbox-Advanced-lifecycle-policy.png)
 
 > **Tip: We choose "Memory" as the Suspend Mode, to persist eveything running in the memory and disk, to restore status quickly from memory (for example we will verify the chat history persistance and fast restore from memory)**
+> We configure the "Idel timeout" as 900 sconds which meet our design (idel time out: 15 minutes)
 
 #### Memory vs. disk suspend mode
 
@@ -257,13 +273,24 @@ The sandbox launches within seconds. Try several commands in the console to veri
 
 A hyperlink appears at the top of the UI. Click it and then the agent chat UI opens in your browser. Submit a few questions to verify the agent is running correctly:
 
-![module-04-Sandbox-agent-chat-UI](../pic/module-04-Sandbox-agent-chat-UI.png)
+![module-04-agent-chat-portal](../pic/module-04-agent-chat-portal.png)
 
-To verify the ACA Sandbox automatically helps you persiste status, simply go the the Sandbox portal, on the upper-right click the **Stop** button. After the agent stops, refresh the chat window in browser, you will see below which means your agent is stopped.
+Go to your Microsoft Foundry project portal, in the Agent catalog you should see your Agent runs on ACA Sandbox registers/appears as "Prompt" type in the list:
+![module-04-agent-in-foundry-portal](../pic/module-04-agent-in-foundry-portal.png)
+
+Go to the storage account blob container, you should see the chat history persistence file:
+![module-04-agent-chat-history-store-in-blob](../pic/module-04-agent-chat-history-store-in-blob.png)
+View the persistence file content you should see the chat history:
+![module-04-agent-chat-history-store-in-blob-view-content](../pic/module-04-agent-chat-history-store-in-blob-view-contentb.png)
+
+> **Tip**: If your storage account public network access is disabled, check the persistence file in your storage account should run on a jumpbox with private link to your storage account is needed. The easiest way is to reuse the jumpbox you used in the module-03.
+
+
+To verify the ACA Sandbox automatically helps you persiste status, simply go the the Sandbox portal (if you don't want to wait for 15 minutes before it is idle timeout), on the upper-right click the **Stop** button. After the agent stops, refresh the chat window in browser, you will see below which means your agent is stopped.
 ```
 {"error":"Sandbox is not running"}
 ```
-Then you click the **Resume** to resume the agent, refresh the chat window again, you will find all the previous chat history is restored. This is the great convenience that the ACA Sandbox brings to us in agent status persistence.
+Then you click the **Resume** to resume the agent, refresh the chat window again, you will find all the previous chat history is restored. This is the great convenience that the ACA Sandbox offers for agent status persistence.
 
 ### Characteristics
 
