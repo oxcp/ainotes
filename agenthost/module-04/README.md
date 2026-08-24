@@ -207,7 +207,11 @@ On the **Sandbox** tab, create a new standard sandbox from the disk image you ju
 
 ![module-04-Create-Sandbox-Advanced-diskImage](../pic/module-04-Create-Sandbox-Advanced-diskImage.png)
 
-Scroll down to configure environment variables. Configure the following values:
+Scroll down to make sure your Sandbox is using the identity we built in module-01 (the user assigned managed identity which we grant the necessary roles for the workshop. We assign it to the Sandbox Group when we create it with Bicep template. Usually you should see it automatically take the id when create Sandboxes in the Sandbox Group):
+![module-04-ACA-Create-Sandbox-Advanced-double-confirm-SG-identity](../pic/module-04-ACA-Create-Sandbox-Advanced-double-confirm-SG-identity.png)
+
+
+Scroll down to "Additional Details" to configure environment variables. Configure the following values:
 
 | Key | Sample value | Description |
 |---|---|---|
