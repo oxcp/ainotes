@@ -296,7 +296,7 @@ To verify the ACA Sandbox automatically helps you persiste status, simply go the
 ```
 Then you click the **Resume** to resume the agent, refresh the chat window again, you will find all the previous chat history is restored. This is the great convenience that the ACA Sandbox offers for agent status persistence.
 
-> You will see the same chat history restoring, if your agent automatically timeout/suspend, and then you resume it.
+> You will see the same chat history restoring activity, if your agent automatically timeouts/suspends, and then you resume it.
 
 ### Characteristics
 
