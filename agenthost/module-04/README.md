@@ -287,7 +287,7 @@ Go to the storage account blob container, you should see the chat history persis
 View the persistence file content you should see the chat history:
 ![module-04-agent-chat-history-store-in-blob-view-content](../pic/module-04-agent-chat-history-store-in-blob-view-content.png)
 
-> **Tip**: If your storage account public network access is disabled, check the persistence file in your storage account should run on a jumpbox with private link to your storage account is needed. The easiest way is to reuse the jumpbox you used in the module-03.
+> **Tip**: If your storage account public network access is disabled, to check the persistence file in your storage account should run on a jumpbox with private link to your storage account. The easiest way is to reuse the jumpbox you used in the module-03.
 
 
 To verify the ACA Sandbox automatically helps you persiste status, simply go the the Sandbox portal (if you don't want to wait for 15 minutes before it is idle timeout), on the upper-right click the **Stop** button. After the agent stops, refresh the chat window in browser, you will see below which means your agent is stopped.
@@ -295,6 +295,8 @@ To verify the ACA Sandbox automatically helps you persiste status, simply go the
 {"error":"Sandbox is not running"}
 ```
 Then you click the **Resume** to resume the agent, refresh the chat window again, you will find all the previous chat history is restored. This is the great convenience that the ACA Sandbox offers for agent status persistence.
+
+> You will see the same chat history restoring, if your agent automatically timeout/suspend, and then you resume it.
 
 ### Characteristics
 
