@@ -408,12 +408,14 @@ Go to the AKS portal to delete the agent pod:
 
 Refresh the agent chat window in the browser, you will temporarily lose the agent connection. After the agent pod resumes, you will again see the previous chat history load back into the new chat window.
 
-### Lifecycle (idle suspend / wake-on-traffic model)
+### Lifecycle (idle suspend / resume model)
 
 The Sandbox manifest sets `spec.operatingMode: Running` and `spec.service: true`.
-`operatingMode` is the lifecycle control point: patch it to `Suspended` to
-scale the backing pod to zero while keeping the Sandbox object and stable
-service, then patch it back to `Running` when traffic returns.
+`operatingMode` is the lifecycle control point:
+
+- Patch it to `Suspended` to scale the backing pod to zero while keeping the
+  Sandbox object and stable service.
+- Patch it back to `Running` when traffic returns.
 
 <details>
 <summary><strong>Why auto suspend/resume is not enabled here</strong></summary>
