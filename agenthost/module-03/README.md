@@ -42,6 +42,10 @@ This module **reuses the resources Module 1 already created** (it does not recre
 
 ## One-Command Deploy
 
+> **Choose one deployment path:** use this One-Command flow **or** the
+> [Manual Steps](#manual-steps-equivalent-to-deploysh) below. They are
+> equivalent; do not run both.
+
 ```bash
 cd agenthost/module-03
 ./deploy.sh
@@ -69,6 +73,9 @@ After `deploy.sh` completes, jump to the [Deploy Blob Private Link](#deploy-blob
 ---
 
 ## Manual Steps (equivalent to deploy.sh)
+
+> **Alternative to One-Command Deploy:** follow these steps only if you chose
+> the manual deployment path. Do not run them after `./deploy.sh`.
 
 ### Step 1 — Get the deployment suffix (SN)
 
