@@ -84,7 +84,7 @@ the SandboxGroup to that subnet:
 After creating the subnet, you should see `aca-subnet` in the subnet list:
 ![module-04-ACA-list-aca-subnet](../pic/module-04-ACA-list-aca-subnet.png)
 
-Now add delegation to `aca-subnet`:
+Now delegate the subnet `aca-subnet` to Azure Container Apps so it can be used by a Container Apps environment:
 ```
 $ az network vnet subnet update \
   --resource-group rg-aks-agenthost-f28a14-nodes \
