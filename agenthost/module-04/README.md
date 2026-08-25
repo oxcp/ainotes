@@ -218,7 +218,7 @@ Scroll down to "Additional Details" to configure environment variables. Configur
 |---|---|---|
 | AGENT_STORAGE_ACCOUNT | stcagenthostf28a14 | Module-01 Storage account name used by the agent to persist chat state in Blob. |
 | AGENT_ID | agent-host-on-aca | Logical agent identifier. Also determines the Blob state file name as `<AGENT_ID>.json`. |
-| FOUNDRY_PROJECT_ENDPOINT | https://foundry-agenthost-f28a14.services.ai.azure.com/api/projects/maf-agent-prj | Foundry project endpoint used for catalog registration and project-scoped agent operations. Find the project endpoint value in your Microsoft Foundry project Home page. |
+| FOUNDRY_PROJECT_ENDPOINT | `https://foundry-agenthost-f28a14.services.ai.azure.com/api/projects/maf-agent-prj` | Foundry project endpoint used for catalog registration and project-scoped agent operations. Find the project endpoint value in your Microsoft Foundry project Home page. |
 | FOUNDRY_AGENT_NAME | agenthost-reflection-agent-on-aca | Agent name shown in the Foundry catalog. |
 
 For example, configure the `AGENT_STORAGE_ACCOUNT` variable as shown below:
