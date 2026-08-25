@@ -61,6 +61,8 @@ agenthost/
 │   ├── README.md                ← AKS + agent-sandbox deployment steps + architecture notes
 │   ├── deploy.sh                ← AKS, agent-sandbox Helm install, K8s secrets, Sandbox deploy
 │   ├── aks.bicep                ← AKS with Kata Container node pool + Workload Identity (reuses Module 1)
+│   ├── deploy-storage-private-link.sh ← Optional wrapper: deploys Blob Private Link for AKS private access
+│   ├── storage-private-link.bicep ← Optional Bicep template for Blob Private Endpoint and Private DNS wiring
 │   ├── agent-sandbox.yaml.example ← Template for agent-sandbox.yaml (copy and fill in placeholders)
 │   └── agent-src/               ← POC agent image source (build context for the shared agent image)
 │       ├── app/                 ← Agent application package (main.py, ...)
