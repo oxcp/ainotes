@@ -289,14 +289,16 @@ View the persistence file content you should see the chat history:
 
 > **Tip**: If your storage account public network access is disabled, to check the persistence file in your storage account should run on a jumpbox with private link to your storage account. The easiest way is to reuse the jumpbox you used in the module-03.
 
+To verify the ACA Sandbox automatically helps you persiste status in memory, you can wait for the agent idle timeout and automatically enters "Stopped" status:
+![module-04-ACA-Sandbox-auto-suspend](../pic/module-04-ACA-Sandbox-auto-suspend.png)
 
-To verify the ACA Sandbox automatically helps you persiste status, simply go the the Sandbox portal (if you don't want to wait for 15 minutes before it is idle timeout), on the upper-right click the **Stop** button. After the agent stops, refresh the chat window in browser, you will see below which means your agent is stopped.
+After the agent stops, refresh the chat window in browser, you will see:
 ```
 {"error":"Sandbox is not running"}
 ```
-Then you click the **Resume** to resume the agent, refresh the chat window again, you will find all the previous chat history is restored. This is the great convenience that the ACA Sandbox offers for agent status persistence.
+Then you click the **Resume** on the Sandbox console to resume the agent, refresh the chat window again, and you will find all the previous chat history is restored. This is the great convenience that the ACA Sandbox offers for agent status persistence, including the status in memory.
 
-> You will see the same chat history restoring activity, if your agent automatically timeouts/suspends, and then you resume it.
+> If you don't want to wait for the agent idle timeout (in this workshop it is 15-minutes), you can do the manual stop/resume to simulate the process. Simply go the the Sandbox console, on the upper-right click the **Stop** button and then **Resume** button. Refresh you browser to view the chat connection status and chat history recovery.
 
 ### Characteristics
 
