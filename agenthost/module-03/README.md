@@ -234,7 +234,7 @@ storage-private-link-f28a14  Succeeded  2026-08-21T11:57:12.610428+00:00  Increm
 ==> Blob Private Link deployed. Storage clients in the AKS VNet now resolve the Blob endpoint to the Private Endpoint IP.
 ```
 In the Azure portal, open the storage account and confirm that the private endpoint was added:
-![module-03-blob-private-endpoint](../pic/module-03-blob-private-endpoint.png)
+<img src="../pic/module-03-blob-private-endpoint.png" alt="module-03-blob-private-endpoint">
 
 > **Note:** The script creates the subnet in the AKS-managed VNet, then
 > deploys the Private Endpoint and Private DNS resources in the workshop
@@ -287,7 +287,7 @@ Open `http://<EXTERNAL-IP>` in your browser. You should see the chat window. Ask
 
 > ***Tip: Make sure the URL includes `http://`; otherwise, the browser may default to HTTPS, which is not implemented in this workshop agent yet.***
 
-![module-03-agent-chat-portal](../pic/module-03-agent-chat-portal.png)
+<img src="../pic/module-03-agent-chat-portal.png" alt="module-03-agent-chat-portal">
 
 ### Verify chat history persisted to Blob
 
@@ -300,7 +300,7 @@ Open `http://<EXTERNAL-IP>` in your browser. You should see the chat window. Ask
 
 After several rounds of chat, verify that the conversation state is persisted in the
 `agent-state` container as `agent-host.json`. From the jumpbox browser, open the Blob container in the portal and view `agent-host.json`. The `history` field should contain your chat turns and grow after each interaction.
-![module-03-agent-chat-history-store-in-blob](../pic/module-03-agent-chat-history-store-in-blob.png)
+<img src="../pic/module-03-agent-chat-history-store-in-blob.png" alt="module-03-agent-chat-history-store-in-blob">
 
 If your jumpbox does not have a browser, you can download the blob to view it locally:
 ```bash
@@ -399,12 +399,12 @@ is running inside AKS Pod Sandboxing.
 
 In the Foundry portal, open your Foundry project and go to the **Agents** tab. You should see that the agent `agenthost-reflection-agent` (defined in `.env`) is registered successfully and that its type is `prompt`:
 
-![module-03-agent-in-foundry-portal](../pic/module-03-agent-in-foundry-portal.png)
+<img src="../pic/module-03-agent-in-foundry-portal.png" alt="module-03-agent-in-foundry-portal">
 
 ### Verify that the agent reloads state after resuming
 
 Go to the AKS portal to delete the agent pod:
-![module-03-delete-agent-pod-to-verify-load-state](../pic/module-03-delete-agent-pod-to-verify-load-state.png)
+<img src="../pic/module-03-delete-agent-pod-to-verify-load-state.png" alt="module-03-delete-agent-pod-to-verify-load-state">
 
 Refresh the agent chat window in the browser. You will temporarily lose the agent connection. After the agent pod resumes, the previous chat history should load back into the new chat window.
 

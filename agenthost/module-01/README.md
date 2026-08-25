@@ -186,7 +186,7 @@ To make this APIM instance appear in **Microsoft Foundry portal → Manage → A
 3. Choose **Use existing**.
 4. Select the deployed Foundry account `foundry-agenthost-<deploymentSN>` and the APIM `apim-agenthost-<deploymentSN>` instance, then click **Add**.
 5. Open the gateway entry and verify that the Foundry project is automatically added to the gateway.
-![module-01-AIGW-added](../pic/module-01-AIGW-added.png)
+<img src="../pic/module-01-AIGW-added.png" alt="module-01-AIGW-added">
 
 Call the model through the gateway (the gateway URL is the `apimFoundryGatewayUrl` output). The caller sends its own Entra ID token; APIM validates it and forwards to Foundry with its managed identity:
 
