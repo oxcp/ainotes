@@ -4,13 +4,13 @@
 
 ## Overview
 
-Deploy agents on **Azure Kubernetes Service (AKS)** using **official AKS Pod Sandboxing** on an **Azure Linux** Kata node pool, with **[agent-sandbox](https://github.com/kubernetes-sigs/agent-sandbox)** (kubernetes-sigs) managing the agent lifecycle as `Sandbox` custom resources. This is the highest-control, most customisable option — serving **ToB** (satisfy enterprise-specific technical requirements) and **ToC** (customise for cost/performance tuning) scenarios alike.
+Deploy agents on **Azure Kubernetes Service (AKS)** using **official AKS Pod Sandboxing** on an **Azure Linux** Kata node pool, with **[agent-sandbox](https://github.com/kubernetes-sigs/agent-sandbox)** (kubernetes-sigs) managing the agent lifecycle through `Sandbox` custom resources. This is the highest-control, most customizable option, serving both **ToB** scenarios with enterprise-specific technical requirements and **ToC** scenarios that need cost and performance tuning.
 
-> **Note: Unlike the Hosted Agent in solution A which runs agent in Microsoft Foundry managed environment, in solution B we host our agent in AKS Sandboxing).**
+> **Note:** Unlike the hosted agent in Solution A, which runs in a Microsoft Foundry managed environment, Solution B hosts the agent in AKS Pod Sandboxing.
 
-> **Why agent-sandbox?** `agent-sandbox` is a CNCF/Kubernetes-SIG project that provides a `Sandbox` CRD + controller for managing isolated, stateful, singleton agent pods with a **stable identity**, **persistent storage**, and **lifecycle management** (create / pause / resume / hibernate). Its built-in hibernation replaces the KEDA scale-to-zero.
+> **Why agent-sandbox?** `agent-sandbox` is a CNCF/Kubernetes-SIG project that provides a `Sandbox` CRD and controller for managing isolated, stateful, singleton agent pods with a **stable identity**, **persistent storage**, and **lifecycle management** (create / pause / resume / hibernate). Its built-in hibernation provides the scale-to-zero mechanism used in this module.
 
-This module **reuses the resources Module 1 already created** (it does not recreate them) and provisions the AKS cluster **into the same Module 1 resource group**:
+This module **reuses the resources created by Module 1** instead of recreating them, and provisions the AKS cluster **into the same Module 1 resource group**:
 
 | Reused from Module 1 | Name pattern | Used for |
 |---|---|---|
@@ -195,23 +195,23 @@ kubectl apply -f agent-sandbox.yaml
 If your subscription policy disables Storage public network access, you need to create a
 dedicated Private Endpoint subnet in the AKS-managed VNet and deploy the Blob Private Endpoint.
 
-> **If the Module-01 Storage account has public network access disabled, or your Azure policy disables your Storage account public network access (usually due to the security regulation in your enterprise), we must have private network connectivity from the AKS-managed VNet to the Blob private endpoint before the agent can read or write its persisted state to blob.**
+> **If the Module-01 Storage account has public network access disabled, or if Azure Policy disables public network access for Storage in your environment, the AKS-managed VNet must have private connectivity to the Blob endpoint before the agent can read or write its persisted state.**
 
-You need below steps to create the private link from AKS-managed VNet to your account storage:
+Run the following script to create private connectivity from the AKS-managed VNet to the storage account:
 
 ```bash
 ./deploy-storage-private-link.sh
 ```
 
-> The script automatically detects the AKS-managed VNet name, and ask for your confirmation to use that VNet before continue. You can check the AKS-managed VNet name in the AKS resource group `$RESOURCE_GROUP`. 
+> The script automatically detects the AKS-managed VNet name and asks for your confirmation before continuing. You can also check the AKS-managed VNet name in the AKS resource group `$RESOURCE_GROUP`.
 >
-> If you think the script does not pickup the right AKS-managed VNet, answer **"N"** to stop the script, and then you can explicitly give the AKS-managed VNet name to run the script:
+> If the script does not pick the right AKS-managed VNet, answer **"N"** to stop it, and then explicitly provide the AKS-managed VNet name when you run the script:
 
 ```bash
 VNET_NAME=<aks-vnet-name> ./deploy-storage-private-link.sh
 ```
 
-Below is the example output you will see (if you don't explicitly give the AKS-managed VNet name):
+If you do not explicitly provide the AKS-managed VNet name, you should see output similar to the following:
 ```
 $ ./deploy-storage-private-link.sh
 WARNING: The behavior of this command has been altered by the following extension: aks-preview
@@ -233,10 +233,10 @@ Name                         State      Timestamp                         Mode  
 storage-private-link-f28a14  Succeeded  2026-08-21T11:57:12.610428+00:00  Incremental  rg-agenthost-workshop
 ==> Blob Private Link deployed. Storage clients in the AKS VNet now resolve the Blob endpoint to the Private Endpoint IP.
 ```
-On Azure portal, go to the storage account, and you will see private endpoint added:
+In the Azure portal, open the storage account and confirm that the private endpoint was added:
 ![module-03-blob-private-endpoint](../pic/module-03-blob-private-endpoint.png)
 
-> **Note:** The script creates the subnet in the AKS managed vnet, then
+> **Note:** The script creates the subnet in the AKS-managed VNet, then
 > deploys the Private Endpoint and Private DNS resources in the workshop
 > resource group `$RESOURCE_GROUP`. 
 > 
@@ -274,7 +274,7 @@ agent-sandbox-controller-76885c8b6c-bk84h   1/1     Running   0          117m
 ```
 ### Verify the agent is working
 
-Run `kubectl get all -n $NAMESPACE`, you should see output like:
+Run `kubectl get all -n $NAMESPACE`; you should see output similar to the following:
 ```
 agenthost/module-03$ kubectl get all -n $NAMESPACE
 NAME             READY   STATUS    RESTARTS   AGE
@@ -283,23 +283,23 @@ pod/agent-host   1/1     Running   0          34s
 NAME                 TYPE           CLUSTER-IP   EXTERNAL-IP      PORT(S)        AGE
 service/agent-host-lb   LoadBalancer   10.0.63.89   135.***.***.251  80:31606/TCP   33s
 ```
-Open your browser and input URL `http://<EXTERNAL-IP>`, you will see the chat window. Try several questions to see if the agent works:
+Open `http://<EXTERNAL-IP>` in your browser. You should see the chat window. Ask several questions to confirm that the agent works:
 
-> ***Tip: Make sure you have the `'http://'` in the URL, otherwise the browser may use https by default which however is not implemented in the agent/workshop yet.***
+> ***Tip: Make sure the URL includes `http://`; otherwise, the browser may default to HTTPS, which is not implemented in this workshop agent yet.***
 
 ![module-03-agent-chat-portal](../pic/module-03-agent-chat-portal.png)
 
 ### Verify chat history persisted to Blob
 
-> **Tip**: If your storage account public network access is disabled, run below verification from a jumpbox with private link to your storage account is needed.
-> The easiest way to in this workshop is to reuse the private link we just created. Steps:
-> 1. create a separated subnet in the AKS-managed VNet
-> 2. create your jumpbox VM in this subnet (Your jumpbox will have a NIC/private IP in the subnet)
-> 3. your jumpbox then can reuse the private link we created above, to access your storage account
+> **Tip**: If public network access is disabled on your storage account, run the verification below from a jumpbox that can reach the storage account through Private Link.
+> The easiest approach in this workshop is to reuse the private connectivity you just created:
+> 1. Create a separate subnet in the AKS-managed VNet.
+> 2. Create a jumpbox VM in that subnet. The jumpbox will have a NIC and private IP in the subnet.
+> 3. Use the jumpbox to access the storage account through the private endpoint.
 
 
-After several rounds of chat, verify the conversation state is persisted in the
-`agent-state` container as `agent-host.json`. You can open the blob/container portal on your jumpbox browser, go to your blob `agent-host.json` to view the content. You should see `history` contains your chat turns and grows after each interaction.
+After several rounds of chat, verify that the conversation state is persisted in the
+`agent-state` container as `agent-host.json`. From the jumpbox browser, open the Blob container in the portal and view `agent-host.json`. The `history` field should contain your chat turns and grow after each interaction.
 ![module-03-agent-chat-history-store-in-blob](../pic/module-03-agent-chat-history-store-in-blob.png)
 
 If your jumpbox does not have a browser, you can download the blob to view it locally:
@@ -325,7 +325,7 @@ cat /tmp/agent-host.json
 
 ### Verify agent runs in sandbox
 
-Run `kubectl describe` you will see the pod is running in Sandbox with runtime class **`kata-vm-isolation`**:
+Run `kubectl describe` to confirm that the pod is running in a Sandbox with runtime class **`kata-vm-isolation`**:
 ```
 agenthost/module-03$ kubectl describe pod/agent-host -n $NAMESPACE
 Name:                agent-host
@@ -397,16 +397,16 @@ is running inside AKS Pod Sandboxing.
 
 ### Verify agent registers in Foundry as "prompt" agent
 
-Go to the Foundry portal, in your Foundry project, go to the Agents tab, you should see your agent "agenthost-reflection-agent" (defined in the `.env`) is successfully registered, and the Type is "prompt":
+In the Foundry portal, open your Foundry project and go to the **Agents** tab. You should see that the agent `agenthost-reflection-agent` (defined in `.env`) is registered successfully and that its type is `prompt`:
 
 ![module-03-agent-in-foundry-portal](../pic/module-03-agent-in-foundry-portal.png)
 
-### Verify agent to load status after resuming
+### Verify that the agent reloads state after resuming
 
 Go to the AKS portal to delete the agent pod:
 ![module-03-delete-agent-pod-to-verify-load-state](../pic/module-03-delete-agent-pod-to-verify-load-state.png)
 
-Refresh the agent chat window in the browser, you will temporarily lose the agent connection. After the agent pod resumes, you will again see the previous chat history load back into the new chat window.
+Refresh the agent chat window in the browser. You will temporarily lose the agent connection. After the agent pod resumes, the previous chat history should load back into the new chat window.
 
 ### Lifecycle (idle suspend / resume model)
 

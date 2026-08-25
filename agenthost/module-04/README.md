@@ -5,8 +5,8 @@
 ## Overview
 
 This module deploys the agent runtime to **Azure Container Apps Sandboxes**, the
-container-based hosting model adopted for this workshop. Sandboxes deliver strong
-micro-VM-based sandbox isolation, full lifecycle control
+container-based hosting model adopted for this workshop. Sandboxes provide strong
+micro-VM-based isolation and full lifecycle control
 (create, suspend, resume, delete), with memory or disk suspend modes for
 state continuity.
 
@@ -43,7 +43,7 @@ az extension add --name containerapp --upgrade --allow-preview true -y
 ### What It Deploys
 
 - A `Microsoft.App/SandboxGroups` resource (preview)
-- SandboxGroup identity and registry bindings (Assign the Module-01 UAMI to the SandboxGroup)
+- SandboxGroup identity and registry bindings (assign the Module-01 UAMI to the SandboxGroup)
 - The `AcrPull` role assignment for the Module-01 UAMI to pull container images from the ACR (declared in `sandbox.bicep`)
 - Optional references to Module-01 storage for state workflows
 
@@ -65,7 +65,7 @@ In the Azure portal, open your resource group to confirm the SandboxGroup was cr
 
 ### Optional — Connect the SandboxGroup to Blob through Private Link
 
-> **If the Module-01 Storage account has public network access disabled, or your Azure policy disables your Storage account public network access (usually due to the security regulation in your enterprise), the ACA SandboxGroup must have private network connectivity to the Blob endpoint before the agent can read or write its persisted state.**
+> **If the Module-01 Storage account has public network access disabled, or if Azure Policy disables public network access for Storage in your environment, the ACA SandboxGroup must have private network connectivity to the Blob endpoint before the agent can read or write its persisted state.**
 
 For workshop convenience, reuse the AKS-managed VNet discovered in Module-03.
 Module-03 already linked this VNet to the Blob Private DNS zone and created the
@@ -81,10 +81,10 @@ the SandboxGroup to that subnet:
 
 ![module-04-ACA-add-aca-subnet](../pic/module-04-ACA-add-aca-subnet.png)
 
-after create, you should see the subnet `aca-subnet` in the subnet list:
+After creating the subnet, you should see `aca-subnet` in the subnet list:
 ![module-04-ACA-list-aca-subnet](../pic/module-04-ACA-list-aca-subnet.png)
 
-Now you need to add delegation to the aca-subnet:
+Now add delegation to `aca-subnet`:
 ```
 $ az network vnet subnet update \
   --resource-group rg-aks-agenthost-f28a14-nodes \
@@ -92,7 +92,7 @@ $ az network vnet subnet update \
   --name aca-subnet \
   --delegations Microsoft.App/environments
 ```
-You should see output if it is successful:
+If the command succeeds, you should see output similar to the following:
 ```
 {
   "addressPrefix": "10.225.1.0/24",
@@ -132,7 +132,7 @@ $ az network vnet subnet show \
   --query delegations
 ```
 
-You shoud see the output like:
+You should see output similar to the following:
 ```
 [
   {
@@ -150,7 +150,7 @@ You shoud see the output like:
 ]
 
 ```
-which must include:
+The output must include:
 ```
 [
   {
@@ -179,7 +179,7 @@ In the **Networking** tab, add VNET connection for the ACA SandboxGroup to `aca-
 4. Confirm that the SandboxGroup reports the VNet connection as ready before
 	creating or restarting sandbox instances.
 
-After connected, you should see:
+After the connection is created, you should see:
 
 ![module-04-ACA-vnet-connection-created](../pic/module-04-ACA-vnet-connection-created.png)
 
@@ -192,10 +192,11 @@ After connected, you should see:
 
 
 ### Deploy your agent
+
 You build a disk image from the container image produced in Module-03. You can find your container image in the Azure Container Registry portal:
 ![module-04-ACA-find-your-container-image](../pic/module-04-ACA-find-your-container-image.png)
 
-One the ACA Sandbox portal `https://sandboxes.azure.com/`, go to the **Disk Images** tab. 
+In the ACA Sandbox portal at `https://sandboxes.azure.com/`, go to the **Disk Images** tab.
 
 ![module-04-Create-DiskImages](../pic/module-04-Create-DiskImages.png)
 
@@ -207,7 +208,7 @@ On the **Sandbox** tab, create a new standard sandbox from the disk image you ju
 
 ![module-04-Create-Sandbox-Advanced-diskImage](../pic/module-04-Create-Sandbox-Advanced-diskImage.png)
 
-Scroll down to make sure your Sandbox is using the identity we built in module-01 (the user assigned managed identity which we grant the necessary roles for the workshop. We assign it to the Sandbox Group when we create it with Bicep template. Usually you should see it automatically take the id when create Sandboxes in the Sandbox Group):
+Scroll down and confirm that your Sandbox uses the identity created in module-01. This user-assigned managed identity is granted the roles required for the workshop and is assigned to the SandboxGroup by the Bicep template. In most cases, new Sandboxes in the SandboxGroup automatically inherit this identity:
 ![module-04-ACA-Create-Sandbox-Advanced-double-confirm-SG-identity](../pic/module-04-ACA-Create-Sandbox-Advanced-double-confirm-SG-identity.png)
 
 
@@ -220,10 +221,10 @@ Scroll down to "Additional Details" to configure environment variables. Configur
 | FOUNDRY_PROJECT_ENDPOINT | https://foundry-agenthost-f28a14.services.ai.azure.com/api/projects/maf-agent-prj | Foundry project endpoint used for catalog registration and project-scoped agent operations. Find the project endpoint value in your Microsoft Foundry project Home page. |
 | FOUNDRY_AGENT_NAME | agenthost-reflection-agent-on-aca | Agent name shown in the Foundry catalog. |
 
-For example you configure the "AGENT_STORAGE_ACCOUNT" variable like below:
+For example, configure the `AGENT_STORAGE_ACCOUNT` variable as shown below:
 ![module-04-ACA-Create-Sandbox-Advanced-add-envvar-storage-account](../pic/module-04-ACA-Create-Sandbox-Advanced-add-envvar-storage-account.png)
 
-After the environment variables configuration, you should see the list of environment variables like:
+After configuring the environment variables, you should see a list similar to the following:
 ![module-04-ACA-Create-Sandbox-Advanced-add-envvar-list](../pic/module-04-ACA-Create-Sandbox-Advanced-add-envvar-list.png)
 
 Scroll down to configure port:
@@ -234,9 +235,9 @@ Scroll down to configure lifecycle policy:
 
 ![module-04-Create-Sandbox-Advanced-lifecycle-policy](../pic/module-04-Create-Sandbox-Advanced-lifecycle-policy.png)
 
-> **Tip: We choose "Memory" as the Suspend Mode, to persist eveything running in the memory and disk, to restore status quickly from memory (for example we will verify the chat history persistance and fast restore from memory)**
+> **Tip:** Choose **Memory** as the suspend mode to preserve everything in memory and on disk, and to restore the runtime state quickly from memory. In this workshop, you will use it to verify chat-history persistence and fast restore from memory.
 >
-> We configure the "Idel timeout" as 900 sconds which meet our design (idel time out: 15 minutes)
+> Configure the **Idle timeout** as 900 seconds, which matches the workshop design of a 15-minute idle timeout.
 
 #### Memory vs. disk suspend mode
 
@@ -260,45 +261,45 @@ In either mode, keep the auto-suspend timeout at **15 minutes**.
 > the agent's Blob persistence: the application writes every completed chat turn
 > to Blob.
 
-Scroll down to configure VNET connection (**required only if your storage account do not have public network access**) :
+Scroll down to configure the VNET connection (**required only if your storage account does not have public network access**):
 
 ![module-04-Create-Sandbox-Advanced-vnet-connection](../pic/module-04-Create-Sandbox-Advanced-vnet-connection.png)
 
-After the configuration above, you will have a **Review** chance before create:
+After the configuration above, you will have a **Review** step before creation:
 
 ![module-04-Create-Sandbox-Advanced-review-before-create](../pic/module-04-Create-Sandbox-Advanced-review-before-create.png)
 
-If you confirm everything is configured properly, click **Create** to create your agent.
+If everything is configured correctly, click **Create** to create your agent.
 
 
-The sandbox launches within seconds. Try several commands in the console to verify it is alive. For example below example checks the environment variables and the agent execution files/folders:
+The sandbox launches within seconds. Try several commands in the console to verify that it is alive. The example below checks the environment variables and the agent execution files and folders:
 
 ![module-04-Sandbox-running](../pic/module-04-Sandbox-running.png)
 
-A hyperlink appears at the top of the UI. Click it and then the agent chat UI opens in your browser. Submit a few conversation to verify the agent is running well (in the backend all the LLM calls go through our APIM AI gateway):
+A hyperlink appears at the top of the UI. Click it to open the agent chat UI in your browser. Submit a few messages to verify that the agent is running correctly. In the backend, all LLM calls go through the APIM AI gateway:
 
 ![module-04-agent-chat-portal](../pic/module-04-agent-chat-portal.png)
 
-Go to your Microsoft Foundry project portal, in the Agent catalog you should see your Agent runs on ACA Sandbox registers/appears as "Prompt" type in the list:
+In your Microsoft Foundry project portal, open the Agent catalog. You should see that the agent running on ACA Sandbox is registered and appears with type `Prompt`:
 ![module-04-agent-in-foundry-portal](../pic/module-04-agent-in-foundry-portal.png)
 
-Go to the storage account blob container, you should see the chat history persistence file:
+Open the storage account Blob container. You should see the chat-history persistence file:
 ![module-04-agent-chat-history-store-in-blob](../pic/module-04-agent-chat-history-store-in-blob.png)
-View the persistence file content you should see the chat history:
+Open the persistence file to view the chat history:
 ![module-04-agent-chat-history-store-in-blob-view-content](../pic/module-04-agent-chat-history-store-in-blob-view-content.png)
 
-> **Tip**: If your storage account public network access is disabled, to check the persistence file in your storage account should run on a jumpbox with private link to your storage account. The easiest way is to reuse the jumpbox you used in the module-03.
+> **Tip**: If public network access is disabled on your storage account, check the persistence file from a jumpbox that can reach the storage account through Private Link. The easiest approach is to reuse the jumpbox from module-03.
 
-To verify the ACA Sandbox automatically helps you persiste status in memory, you can wait for the agent idle timeout and automatically enters "Stopped" status:
+To verify that ACA Sandbox helps preserve runtime state, wait for the idle timeout until the agent automatically enters the `Stopped` status:
 ![module-04-ACA-Sandbox-auto-suspend](../pic/module-04-ACA-Sandbox-auto-suspend.png)
 
-After the agent stops, refresh the chat window in browser, you will see:
+After the agent stops, refresh the chat window in the browser. You should see:
 ```
 {"error":"Sandbox is not running"}
 ```
-Then you click the **Resume** on the Sandbox console to resume the agent, refresh the chat window again, and you will find all the previous chat history is restored. This is the great convenience that the ACA Sandbox offers for agent status persistence, including the status in memory.
+Click **Resume** in the Sandbox console, then refresh the chat window again. The previous chat history should be restored. This demonstrates the runtime-state persistence that ACA Sandbox provides, including in-memory state when Memory suspend mode is used.
 
-> If you don't want to wait for the agent idle timeout (in this workshop it is 15-minutes), you can do the manual stop/resume to simulate the process. Simply go the the Sandbox console, on the upper-right click the **Stop** button and then **Resume** button. Refresh you browser to view the chat connection status and chat history recovery.
+> If you do not want to wait for the idle timeout, which is 15 minutes in this workshop, you can manually stop and resume the agent to simulate the process. In the Sandbox console, click **Stop** in the upper-right corner, then click **Resume**. Refresh your browser to view the chat connection status and chat-history recovery.
 
 ### Characteristics
 

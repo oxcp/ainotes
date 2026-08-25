@@ -4,13 +4,13 @@
 
 ## Overview
 
-Recap the three solutions, provide decision guidance, and share cost optimisation tips for production deployments.
+Recap the three solutions, provide decision guidance, and share cost-optimization tips for production deployments.
 
 ---
 
 ## Solution Comparison Recap
 
-| Dimension | Solution A — Foundry Host Agent | Solution B — AKS + agent-sandbox | Solution C — ACA Sandbox |
+| Dimension | Solution A — Foundry Hosted Agent | Solution B — AKS + agent-sandbox | Solution C — ACA Sandbox |
 |---|---|---|---|
 | **Isolation** | Managed (per-agent) | Micro-VM (Kata Containers) | Service-managed sandbox isolation (micro-VM boundary) |
 | **Scale-to-zero** | ✅ Native | ✅ agent-sandbox hibernate | ✅ Native |
@@ -19,7 +19,7 @@ Recap the three solutions, provide decision guidance, and share cost optimisatio
 | **APIM integration** | ✅ Native | ✅ Configurable | ✅ Configurable |
 | **Operational complexity** | Low | High | Medium |
 | **Cost** | Pay-per-exec | agent-sandbox hibernate + Spot | Serverless |
-| **Best for** | ToB managed fast on-ramp; strong governance & security | ToB / ToC — high customisation (enterprise-specific requirements; cost/performance tuning) | ToC / ToB long-running agents. Serverless |
+| **Best for** | ToB managed fast on-ramp; strong governance and security | ToB / ToC — high customization (enterprise-specific requirements; cost/performance tuning) | ToC / ToB long-running, serverless agents |
 | **Status** | GA | GA | Public Preview |
 
 ---
@@ -31,12 +31,12 @@ Recap the three solutions, provide decision guidance, and share cost optimisatio
 │  Which solution should I choose?                                │
 ├─────────────────────────────────────────────────────────────────┤
 │  Fastest managed on-ramp for enterprise?                        │
-│    → Solution A (Azure AI Foundry Host Agent)                   │
+│    → Solution A (Azure AI Foundry Hosted Agent)                 │
 │                                                                 │
 │  Long-running stateful agents, strong isolation, serverless?    │
 │    → Solution C (ACA Sandbox)                                   │
 │                                                                 │
-│  Maximum customisation (enterprise reqs or cost/perf tuning)?   │
+│  Maximum customization (enterprise reqs or cost/perf tuning)?   │
 │    → Solution B (AKS + agent-sandbox)                           │
 │                                                                 │
 │  One-time / short-lived code execution (e.g. code interpreter)? │
@@ -48,14 +48,14 @@ Recap the three solutions, provide decision guidance, and share cost optimisatio
 
 ---
 
-## Cost Optimisation Tips
+## Cost Optimization Tips
 
 | Lever | Impact | Applies to |
 |---|---|---|
 | Scale-to-zero (15-min idle) | Eliminate compute cost during off-hours | A · B · C |
 | APIM Basic v2 SKU | Eligible for Foundry native AI Gateway; fixed baseline cost | A · B · C |
 | Blob Cool tier for cold state | ~50% cheaper than Hot tier | A · B · C |
-| Blob lifecycle management | Auto-tier / expire stale agent state; reduce storage cost | A · B · C |
+| Blob lifecycle management | Auto-tier or expire stale agent state to reduce storage cost | A · B · C |
 | AKS Spot Node Pool | Up to 90% discount for interruptible workloads | B |
 | Azure OpenAI PTU (reserved throughput) | Predictable cost for high-volume ToB | A · B · C |
 | agent-sandbox WarmPool tuning | Balance cold-start latency vs compute savings | B |
@@ -84,7 +84,7 @@ Recap the three solutions, provide decision guidance, and share cost optimisatio
 
 ---
 
-*Workshop completed — Agent Hosting on Azure, 120 minutes.*
+*Workshop complete — Agent Hosting on Azure, 120 minutes.*
 
 ---
 

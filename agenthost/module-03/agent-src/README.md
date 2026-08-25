@@ -1,15 +1,15 @@
 # agent-src — POC Agent (AKS + agent-sandbox)
 
-一个轻量级、有状态的 POC agent，用于在 **Module 3 (Solution B)** 创建的 AKS 集群中，
-通过 `agent-sandbox.yaml` 以 `Sandbox` 自定义资源的形式部署。
+一个轻量级、有状态的 POC agent，用于部署到 **Module 3 (Solution B)** 创建的 AKS 集群中，
+并通过 `agent-sandbox.yaml` 以 `Sandbox` 自定义资源的形式运行。
 
-当前实现与 [app/main.py](d:/OneDriveMS/Learning/ainotes/agenthost/module-03/agent-src/app/main.py) 一致，核心目标只有三件事：
+当前实现与 [app/main.py](app/main.py) 保持一致，核心目标有三项：
 
 1. 提供一个简单的网页聊天入口
 2. 通过 APIM 暴露的 `/openai/v1` Responses API 与后端模型对话
 3. 把对话状态持久化到 Blob，并在重启后恢复历史
 
-同时，应用会在 Foundry project 中创建或复用一个**持久 agent**，因此该 agent 在 Foundry catalog 中可见、可管理。
+同时，应用会在 Foundry project 中创建或复用一个**持久 agent**，因此该 agent 可以在 Foundry catalog 中被看到和管理。
 
 ## 核心特性
 
@@ -17,7 +17,7 @@
 |---|---|
 | **网页聊天 UI** | `portal.html` + `/` 根路径 |
 | **后端 AI 对话** | `ReflectionAgent` 调 `FoundryResponsesClient.reflect()` |
-| **Foundry catalog 可见** | 启动时用 `azure-ai-projects` 在 `FOUNDRY_PROJECT_ENDPOINT` 中创建或复用 `FOUNDRY_AGENT_NAME` |
+| **Foundry catalog 可见** | 启动时使用 `azure-ai-projects` 在 `FOUNDRY_PROJECT_ENDPOINT` 中创建或复用 `FOUNDRY_AGENT_NAME` |
 | **模型经 APIM** | `AGENT_APIM_ENDPOINT` + `/openai/v1`，使用 Responses API |
 | **Microsoft Agent Framework** | `agent_framework.Agent` + `OpenAIChatClient`（Responses API 路径） |
 | **Azure OpenAI SDK** | `AsyncOpenAI` 作为底层客户端，通过 APIM 调用 OpenAI-compatible 接口 |
@@ -105,13 +105,13 @@ curl.exe -X POST http://localhost:8080/reflect `
 
 浏览器访问：http://localhost:8080/
 
-如果未配置 APIM / Foundry / Blob，返回可能是模拟结果，这属于预期行为。
+如果未配置 APIM、Foundry 或 Blob，返回结果可能是模拟响应；这是预期行为。
 
 ---
 
 ## 场景 2 — 本地连 Azure（Blob + Foundry + APIM）
 
-本地如果要走真实 Azure 路径，需要满足：
+如果要在本地走真实 Azure 路径，需要满足以下条件：
 
 1. 已执行 `az login`
 2. 当前身份对 Foundry project 有权限（至少能列出 / 创建 agent）
@@ -160,7 +160,7 @@ docker push "${ACR_NAME}.azurecr.io/agent-host:poc-v1"
 
 ## 场景 4 — 部署到 AKS（通过 agent-sandbox.yaml）
 
-最简单的方式仍然是使用 Module 3 的一键脚本：
+最简单的方式是继续使用 Module 3 的一键脚本：
 
 ```bash
 cd module-03
@@ -191,7 +191,7 @@ curl -X POST http://localhost:8080/reflect \
 
 ---
 
-## 状态持久化说明
+## 状态持久化
 
 当前实现**不再使用 Redis 作为应用状态存储**。
 
@@ -225,7 +225,7 @@ curl -X POST http://localhost:8080/reflect \
 - `AGENT_BLOB_CONTAINER` 正确
 - `AGENT_ID` 稳定不变
 
-如果 `AGENT_ID` 改了，应用会读写另一份 Blob 文件，看起来就像“历史丢失”。
+如果 `AGENT_ID` 发生变化，应用会读写另一份 Blob 文件，看起来就像“历史丢失”。
 
 ---
 

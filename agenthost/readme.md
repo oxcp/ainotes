@@ -2,28 +2,28 @@
 
 ## Workshop Introduction
 
-This workshop introduces a practical Azure agent-hosting journey: start with the shared infrastructure, then compare three deployment options across enterprise and consumer scenarios, and finish with cost and production hardening guidance.
+This workshop introduces a practical Azure agent-hosting journey. You start with shared infrastructure, compare three deployment options for enterprise and consumer scenarios, and finish with cost and production-hardening guidance.
 
 ---
 
 ## Workshop Outline
 
-- **Target Scenarios**: ToB Enterprise vs. ToC Consumer scenarios with distinct priorities for isolation, scale, auth, and cost.
-- **Solutions (see [Workshop Design](./agenthost.md) for detail)**:
-  - **Solution A**: Azure AI Foundry Host Agent (ToB managed) — fastest on-ramp, native state & auth, strong governance & security.
-  - **Solution B**: AKS + agent-sandbox (ToB / ToC) — high customisation: for ToB, meet enterprise-specific technical requirements; for ToC, tune cost and performance.
+- **Target Scenarios**: ToB enterprise and ToC consumer scenarios, each with different priorities for isolation, scale, authentication, and cost.
+- **Solutions (see [Workshop Design](./agenthost.md) for details)**:
+  - **Solution A**: Azure AI Foundry Hosted Agent (ToB managed) — fastest on-ramp, native state and authentication, strong governance and security.
+  - **Solution B**: AKS + agent-sandbox (ToB / ToC) — high customization: meet enterprise-specific technical requirements for ToB, or tune cost and performance for ToC.
   - **Solution C**: ACA container runtime options (ToC / ToB):
     - **Workshop path**: ACA Sandboxes — service-managed sandbox isolation (micro-VM boundary), suspend/resume.
     - **Optional learning track**: ACA Dynamic Sessions — Hyper-V isolated session pools for low-latency ephemeral execution.
-- **Implemented Features**: state persistence, fast-satrt, scale-to-zero, isolation, Entra ID auth, and AI Gateway integration.
-- **Workshop Schedule**: 120-minute hands-on covering core infra setup, above solutions, and wrap-up with tips on cost optimisation and production hardening checklist.
+- **Implemented Features**: state persistence, fast start, scale-to-zero, isolation, Entra ID authentication, and AI Gateway integration.
+- **Workshop Schedule**: A 120-minute hands-on workshop covering core infrastructure setup, the three solutions above, and a wrap-up with cost-optimization tips and a production-hardening checklist.
 
 
 ## Prerequisites (before workshop)
 
 - Azure subscription with Contributor access
 - Azure CLI installed (`az login` completed)
-- Others (see detail in each individual module)
+- Other prerequisites listed in each module
 
 ---
 
@@ -44,11 +44,11 @@ This workshop introduces a practical Azure agent-hosting journey: start with the
 ```
 agenthost/
 ├── readme.md                    ← List workshop modules, structure
-├── agenthost.md                 ← Design consideration for the workshop
+├── agenthost.md                 ← Design considerations for the workshop
 ├── module-00/
 │   └── README.md                ← Introduction: agent overview, state pattern, 3 solutions
 ├── module-01/
-│   ├── README.md                ← Core infra setup steps
+│   ├── README.md                ← Core infrastructure setup steps
 │   ├── setup.sh                 ← One-step wrapper: runs the main.bicep deployment (az deployment sub create)
 │   ├── main.bicep               ← Subscription-scoped Bicep entry point
 │   └── core.bicep               ← Resource group Bicep (Storage, APIM, UAMI, Foundry account + project + model + Defender + AI gateway)
@@ -89,7 +89,7 @@ agenthost/
 
 - **Kata Container RuntimeClass** is defined in `agent-sandbox.yaml` and applied to the Sandbox pod on the tainted `kata=true:NoSchedule` node pool.
 
-- **Module-04 Solutions**: 
+- **Module-04 Solutions**:
   - **Workshop path (ACA Sandboxes)**: Use `sandbox-deploy.sh` for service-managed sandbox isolation (micro-VM boundary) and suspend/resume.
   - **Optional learning track (Dynamic Sessions)**: Use `dynamic-session-deploy.sh` for low-latency ephemeral session pools — not required to complete the workshop.
   - See [Module 4 README](./module-04/README.md) for detailed comparison and decision guide.

@@ -4,20 +4,20 @@
 
 ## Overview
 
-This module introduces the agent hosting framework and explains why hosting it on Azure is a compelling choice for both enterprise (ToB) and consumer (ToC) scenarios.
+This module introduces the agent-hosting framework and explains why Azure is a compelling platform for both enterprise (ToB) and consumer (ToC) scenarios.
 
 > 📊 **Prefer slides?** Open [slides](https://oxcp.github.io/ainotes/agenthost/module-00/) for a slide-based walkthrough of the workshop content and design.
 
 
 ## Learning Objectives
 
-- Understand what a hosted agent is and its core architecture
-- Recognise the three Azure hosting solutions covered in this workshop
+- Understand what a hosted agent is and how its core architecture fits together
+- Recognize the three Azure hosting solutions covered in this workshop
 - Identify the key Azure components: APIM, Entra ID, and Blob Storage
 
 ---
 
-## What are included in our Agent?
+## What Is Included in Our Agent?
 
 A hosted agent is a stateful AI agent runtime. Each agent instance:
 
@@ -30,7 +30,7 @@ A hosted agent is a stateful AI agent runtime. Each agent instance:
 
 | Solution | Azure Resource | Best for |
 |---|---|---|
-| **A** | Azure AI Foundry Host Agent | ToB managed — fastest on-ramp |
+| **A** | Azure AI Foundry Hosted Agent | ToB managed — fastest on-ramp |
 | **B** | AKS + agent-sandbox | ToB high-security |
 | **C** | ACA Sandbox *(Public Preview)* | ToC / ToB long-running agents |
 
@@ -52,7 +52,7 @@ Scale-to-zero  →  No flush needed — latest state already durable in Blob
 
 ## Next Step
 
-Proceed to [Module 1 — Core Infrastructure Setup](../module-01/README.md) to provision the shared Azure resources used across all three solutions.
+Proceed to [Module 1 — Core Infrastructure Setup](../module-01/README.md) to provision the shared Azure resources used by all three solutions.
 
 ---
 

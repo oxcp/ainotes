@@ -4,15 +4,15 @@
 
 ## Overview
 
-The Foundry infrastructure — the `foundry-agenthost-<deploymentSN>` account, the `maf-agent-prj` project, the `gpt-5.4-mini` deployment, Defender for AI, the RAI policies, and the APIM AI gateway — is provisioned by **module-01**. This module deploys the hosted agent itself with `azd`, updated base on the official Microsoft Foundry hosted-agent sample:
+The Foundry infrastructure — the `foundry-agenthost-<deploymentSN>` account, the `maf-agent-prj` project, the `gpt-5.4-mini` deployment, Defender for AI, the RAI policies, and the APIM AI gateway — is provisioned by **module-01**. This module deploys the hosted agent itself with `azd`, based on the official Microsoft Foundry hosted-agent sample:
 
 https://github.com/microsoft-foundry/foundry-samples/tree/main/samples/python/hosted-agents/agent-framework/responses/01-basic
 
 ## Learning Objectives
 
 - Use `azd` to initialize, run locally, deploy, and invoke the hosted agent
-- Our hosted agent uses the `maf-agent-prj` project and `gpt-5.4-mini` deployment created in module-01
-- Support **two model-routing modes** and switch between them with a single env var (`MODEL_ROUTING`):
+- Use the `maf-agent-prj` project and `gpt-5.4-mini` deployment created in module-01
+- Support **two model-routing modes** and switch between them with a single environment variable (`MODEL_ROUTING`):
   - `direct` — the agent calls the Foundry project endpoint directly
   - `gateway` — the agent calls the model through the module-01 APIM AI gateway
 
@@ -64,7 +64,7 @@ az group show --name "$RESOURCE_GROUP" --query "tags.deploymentSN" -o tsv
 
 module-01 already created the Foundry account, the `maf-agent-prj` project, and the `gpt-5.4-mini` deployment. To make `azd` **reuse** them instead of provisioning a brand-new account/project, initialize the agent with the existing project's **ARM resource ID** (`--project-id`).
 
-Grab the project resource ID and project endpoint from the Foundry portal. In the Foundry portal, go to "Operate -> Admin -> enter your project", you will see your project resource id and endpoint. Copy and use them to set environment variables as below:
+Get the project resource ID and project endpoint from the Foundry portal. In the Foundry portal, go to **Operate → Admin**, open your project, and copy the project resource ID and endpoint. Use those values to set the environment variables below:
 
 ![Get Project Endpoint in Foundry](../pic/module-02-get_prj_endpoint_in_foundry.png)
 
@@ -88,14 +88,14 @@ azd auth login
 
 azd ai agent init -m <your module-02 folder path>/azure.yaml --project-id "$PROJECT_ID"
 ```
-After init success, you can see result as below:
+After initialization succeeds, you should see a result similar to the following:
 ![azd_ai_agent_init](../pic/module-02-azd_ai_agent_init.png)
 
 `azd ai agent init` reads `azure.yaml` in module-02, whose `project: agent-src` points at the agent source under `module-02/agent-src/`. `--project-id` binds `azd` to module-01's existing project, so **no new resource group, Foundry account, or project provisioning is created**.
 
-> **Important:** module-02 **does not run `azd provision`**, so `azd` never creates or reconciles the model deployment — it deploys the agent against module-01's existing `gpt-5.4-mini`. So in `azure.yaml` environmentVariables maps, make sure `AI_MODEL_DEPLOYMENT_NAME` resolves to `gpt-5.4-mini`.
+> **Important:** module-02 **does not run `azd provision`**, so `azd` never creates or reconciles the model deployment. It deploys the agent against module-01's existing `gpt-5.4-mini`. In the `azure.yaml` `environmentVariables` map, make sure `AI_MODEL_DEPLOYMENT_NAME` resolves to `gpt-5.4-mini`.
 
-After you initialize the agent, you will see a new sub-folder with the agent name (in this workshop, by default the agent name is "maf-agent"). You need to enter the sub-folder, and the later steps are best to run under this folder to avoid troubles.
+After you initialize the agent, you will see a new subfolder with the agent name. In this workshop, the default agent name is `maf-agent`. Enter that subfolder and run the remaining steps from there.
 ```bash
 cd maf-agent
 ```
@@ -103,9 +103,9 @@ cd maf-agent
 
 ### Update `azure.yaml` with deployment suffix and routing mode
 
-Open `azure.yaml` in `maf-agent` folder, and make below updates:
+Open `azure.yaml` in the `maf-agent` folder and make the following updates:
 
-**Set the MODEL_ROUTING mode** (optional; default is `"direct"` for simple, and `"gateway"` is recommended for production use):
+**Set the MODEL_ROUTING mode** (optional; the default is `"direct"` for simplicity, while `"gateway"` is recommended for production use):
 
 Find the line:
 
@@ -146,7 +146,7 @@ Or use bash to replace automatically:
 ```bash
 sed -i "s/<SN>/$SN/g" <your module-02 folder path>/azure.yaml
 ```
-> **Auth prerequisite (gateway mode only):** the gateway's `validate-jwt` policy requires a caller token (The caller must present a HTTP header like "Authorization: Bearer eyJ0eXAiOiJ..." ) to grant the caller access. The gateway then re-authenticates to Foundry with its own user-assigned managed identity. In `direct` mode this token is not needed.
+> **Auth prerequisite (gateway mode only):** the gateway's `validate-jwt` policy requires a caller token. The caller must send an HTTP header such as `Authorization: Bearer eyJ0eXAiOiJ...` to access the gateway. The gateway then re-authenticates to Foundry with its own user-assigned managed identity. In `direct` mode, this token is not needed.
 
 ## Step 2 — Bind the azd environment (skip provision) and run locally
 
@@ -165,13 +165,13 @@ azd env get-values
 
 ```
 
-## Step 3 - Run the agent locally
+## Step 3 — Run the agent locally
 
 ```bash
 azd ai agent run
 ```
 ![azd_ai_agent_run](../pic/module-02-azd_ai_agent_run.png)
-If success, you should see "Agent ready" info and it is ready to receive response on local 8088 port.
+If the command succeeds, you should see `Agent ready`, and the agent will be ready to receive requests on local port 8088.
 
 The local host listens on `http://localhost:8088`. In a second terminal, invoke it:
 
@@ -180,7 +180,7 @@ azd ai agent invoke --local "Hi"
 ```
 ![azd_ai_agent_invoke_local](../pic/module-02-azd_ai_agent_invoke_local.png)
 
-If success, you should see the response.
+If the command succeeds, you should see a response.
 
 ## Step 4 — Deploy the hosted agent
 
@@ -189,11 +189,11 @@ azd deploy
 ```
 ![azd_deploying](../pic/module-02-azd_deploying.png)
 
-If success, you should see:
+If the deployment succeeds, you should see:
 
 ![azd_deployed_CLI](../pic/module-02-azd_deployed_CLI.png)
 
-Go to the Foundry portal, in your Foundry project, go to the Agents tab, you should see your agent is successfully deployed, and the Type is "hosted":
+In the Foundry portal, open your Foundry project and go to the **Agents** tab. You should see that your agent has been deployed successfully and that its type is `hosted`:
 
 ![azd_deployed_portal](../pic/module-02-azd_deployed_portal.png)
 
@@ -204,14 +204,14 @@ Each deployment creates a new hosted-agent version in Foundry.
 ```bash
 azd ai agent invoke "Hi"
 ```
-If success, this time you should see the response from **remote agent**.
+If the command succeeds, this time you should see the response from the **remote agent**.
 ![azd_ai_agent_invoke_remote](../pic/module-02-azd_ai_agent_invoke_remote.png)
 
 
-Try the agent in Playground it should work:
+Try the agent in Playground; it should work there as well:
 ![azd_deployed_playground](../pic/module-02-azd_deployed_playground.png)
 
-If you are using APIM as the AI gateway ("gateway" mode set in the `azure.yaml`), in the right panel of the Playground, you can see the log stream mentions the calling to AI models are routed through the APIM URL:
+If you are using APIM as the AI gateway (`"gateway"` mode in `azure.yaml`), the Playground log stream shows that model calls are routed through the APIM URL:
 ![azd_deployed_playground_aigw](../pic/module-02-azd_deployed_playground_aigw.png)
 
 

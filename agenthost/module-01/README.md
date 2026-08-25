@@ -56,14 +56,14 @@ export LOCATION="eastus2"
 
 ## Step 2 — Deploy Infrastructure via Bicep
 
-Deploy everything with a **single command** using the wrapper script (recommended). It just calls `az deployment sub create` on `main.bicep`, generates the deployment suffix for you, and prints the outputs:
+Deploy everything with a **single command** by using the wrapper script (recommended). The script calls `az deployment sub create` on `main.bicep`, generates the deployment suffix for you, and prints the outputs:
 
 ```bash
 chmod +x setup.sh
 ./setup.sh
 ```
 
-> Before run the `setup.sh`, optionally you can override parameters in `main.bicep` as you need.
+> Before running `setup.sh`, you can optionally override parameters in `main.bicep` as needed.
 
 Or run the equivalent Bicep deployment manually:
 
@@ -80,7 +80,7 @@ az deployment sub create \
       deploymentSN="$SN"
 
 ```
-> The bicep deployment or running `setup.sh` may take minutes to complete. After the successful deployment, you will see output including deployment info like below:
+> The Bicep deployment, whether run directly or through `setup.sh`, may take several minutes to complete. After a successful deployment, you will see output similar to the following:
 ```
 ==> Deployment 'main-****' complete. Outputs:
 {
@@ -179,13 +179,13 @@ Next: proceed to module-02 to deploy the hosted agent with azd.
 4. **RBAC** — the module-01 UAMI is granted **Cognitive Services OpenAI User** and **Azure AI User** on the Foundry account.
 5. **API** `foundry-ai-gateway` (path `/foundry`) with `responses` (`POST /responses`) and `get-response` (`GET /responses/{response-id}`) operations, plus an API-scope policy that validates the caller's Entra ID token (`validate-jwt`) and then forwards to the backend with a managed-identity token via `authentication-managed-identity` (resource `https://ai.azure.com`).
 
-To make this APIM instance appear in **Microsoft Foundry portal → Manage → AI Gateway**, you still need one manual portal step after deployment:
+To make this APIM instance appear in **Microsoft Foundry portal → Manage → AI Gateway**, complete one manual portal step after deployment:
 
 1. Open **AI Gateway**.
 2. Select **Add AI Gateway**.
 3. Choose **Use existing**.
-4. Select the deployed foundry account `foundry-agenthost-<deploymentSN>` and the APIM `apim-agenthost-<deploymentSN>` instance, click "Add".
-5. Open the gateway entry and check the foundry project is automatically added to the gateway.
+4. Select the deployed Foundry account `foundry-agenthost-<deploymentSN>` and the APIM `apim-agenthost-<deploymentSN>` instance, then click **Add**.
+5. Open the gateway entry and verify that the Foundry project is automatically added to the gateway.
 ![module-01-AIGW-added](../pic/module-01-AIGW-added.png)
 
 Call the model through the gateway (the gateway URL is the `apimFoundryGatewayUrl` output). The caller sends its own Entra ID token; APIM validates it and forwards to Foundry with its managed identity:
@@ -204,7 +204,7 @@ curl -s -X POST \
 | jq -r '.output'
 
 ```
-You should see output like below:
+You should see output similar to the following:
 ```
 [
   {
