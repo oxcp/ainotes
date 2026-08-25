@@ -209,6 +209,7 @@ On the **Sandbox** tab, create a new standard sandbox from the disk image you ju
 ![module-04-Create-Sandbox-Advanced-diskImage](../pic/module-04-Create-Sandbox-Advanced-diskImage.png)
 
 Scroll down and confirm that your Sandbox uses the identity created in module-01. This user-assigned managed identity is granted the roles required for the workshop and is assigned to the SandboxGroup by the Bicep template. In most cases, new Sandboxes in the SandboxGroup automatically inherit this identity:
+
 ![module-04-ACA-Create-Sandbox-Advanced-double-confirm-SG-identity](../pic/module-04-ACA-Create-Sandbox-Advanced-double-confirm-SG-identity.png)
 
 
