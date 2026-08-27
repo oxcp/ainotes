@@ -4,13 +4,13 @@
 
 ## Overview
 
-Deploy agents on **Azure Kubernetes Service (AKS)** using **official AKS Pod Sandboxing** on an **Azure Linux** Kata node pool, with **[agent-sandbox](https://github.com/kubernetes-sigs/agent-sandbox)** (kubernetes-sigs) managing the agent lifecycle through `Sandbox` custom resources. This is the highest-control, most customizable option, serving both **ToB** scenarios with enterprise-specific technical requirements and **ToC** scenarios that need cost and performance tuning.
+Deploy agents on **Azure Kubernetes Service (AKS)** using **official AKS Pod Sandboxing** on an **Azure Linux** Kata node pool. **[agent-sandbox](https://github.com/kubernetes-sigs/agent-sandbox)** (a Kubernetes SIG project) manages the agent lifecycle through `Sandbox` custom resources. This is the most controllable and customizable option, supporting both **ToB** scenarios with enterprise-specific technical requirements and **ToC** scenarios that require cost and performance tuning.
 
 > **Note:** Unlike the hosted agent in Solution A, which runs in a Microsoft Foundry managed environment, Solution B hosts the agent in AKS Pod Sandboxing.
 
-> **Why agent-sandbox?** `agent-sandbox` is a CNCF/Kubernetes-SIG project that provides a `Sandbox` CRD and controller for managing isolated, stateful, singleton agent pods with a **stable identity**, **persistent storage**, and **lifecycle management** (create / pause / resume / hibernate). Its built-in hibernation provides the scale-to-zero mechanism used in this module.
+> **Why agent-sandbox?** `agent-sandbox` is a CNCF/Kubernetes SIG project that provides a `Sandbox` CRD and controller for managing isolated, stateful, singleton agent pods with a **stable identity**, **persistent storage**, and **lifecycle management** (create, pause, resume, and hibernate). Its built-in hibernation provides the scale-to-zero mechanism used in this module.
 
-This module **reuses the resources created by Module 1** instead of recreating them, and provisions the AKS cluster **into the same Module 1 resource group**:
+This module **reuses the resources created by Module 1** instead of recreating them and provisions the AKS cluster **in the same resource group**:
 
 | Reused from Module 1 | Name pattern | Used for |
 |---|---|---|
@@ -19,20 +19,20 @@ This module **reuses the resources created by Module 1** instead of recreating t
 | Azure Blob Storage | `stcagenthost<SN>` | Agent state store (JSON per agent, container `agent-state`) |
 | API Management | `apim-agenthost-<SN>` | AI Gateway for model calls (`/foundry`) |
 
-`<SN>` is the deployment suffix stored as the `deploymentSN` tag on the Module 1 resource group; `deploy.sh` reads it automatically.
+`<SN>` is the deployment suffix stored in the `deploymentSN` tag on the Module 1 resource group. `deploy.sh` reads it automatically.
 
 ## Learning Objectives
 
-- Provision AKS with OIDC issuer + Workload Identity, then enable AKS Pod Sandboxing on an Azure Linux node pool
-- Install the `agent-sandbox` controller (release manifest) and run the agent as a `Sandbox` CR
-- Wire the agent to Module 1 Blob / APIM
-- Observe agent-sandbox lifecycle (pause / resume / hibernate) as the scale-to-zero mechanism
+- Provision AKS with an OIDC issuer and Workload Identity, then enable AKS Pod Sandboxing on an Azure Linux node pool
+- Install the `agent-sandbox` controller from a release manifest and run the agent as a `Sandbox` CR
+- Connect the agent to the Module 1 Blob Storage account and APIM gateway
+- Observe the agent-sandbox lifecycle (pause, resume, and hibernate) as the scale-to-zero mechanism
 
 ---
 
 ## Prerequisites
 
-> **Note:** Run all commands in this README from this module's root directory (`agenthost/module-03/`).
+> **Note:** Run all commands in this README from the module root directory (`agenthost/module-03/`).
 
 - **Module 1 deployed** (Blob, APIM, ACR, UAMI) — `deploymentSN` tag present on the RG
 - `az`, `kubectl`, and Docker installed and logged in (`az login`)
@@ -42,7 +42,7 @@ This module **reuses the resources created by Module 1** instead of recreating t
 
 ## One-Command Deploy
 
-> **Choose one deployment path:** use this One-Command flow **or** the
+> **Choose one deployment path:** use this one-command flow **or** the
 > [Manual Steps](#manual-steps-equivalent-to-deploysh) below. They are
 > equivalent; do not run both.
 
@@ -51,21 +51,21 @@ cd agenthost/module-03
 ./deploy.sh
 ```
 
-`deploy.sh` performs, end to end:
+`deploy.sh` performs the following steps end to end:
 
-1. Read `deploymentSN` (SN) from the Module 1 resource group tag
-2. Build and push the agent image to the **existing** ACR `acragenthost<SN>`
-3. Deploy `aks.bicep` — creates the baseline AKS `aks-agenthost-<SN>`, federates the Module 1 UAMI, grants AcrPull (kubelet) + Storage Blob Data Contributor (UAMI)
-4. Add an Azure Linux `kata` node pool with `KataVmIsolation`, run `az aks update`, and fetch AKS credentials
-5. Install the **agent-sandbox controller** from release manifest (core + extensions)
-6. Create the `agent` namespace
-7. Create runtime secrets from Module 1 Storage / APIM gateway URL
-8. Copy `agent-sandbox.yaml.example` to `agent-sandbox.yaml`, replace placeholders, and deploy the agent as a `Sandbox` custom resource that uses AKS `kata-vm-isolation`
-9. Wait for the Sandbox pod to become ready
+1. Read `deploymentSN` (SN) from the Module 1 resource group tag.
+2. Build and push the agent image to the **existing** ACR, `acragenthost<SN>`.
+3. Deploy `aks.bicep`, which creates the baseline AKS cluster `aks-agenthost-<SN>`, federates the Module 1 UAMI, and grants AcrPull to the kubelet identity and Storage Blob Data Contributor to the UAMI.
+4. Add an Azure Linux `kata` node pool with `KataVmIsolation`, run `az aks update`, and retrieve the AKS credentials.
+5. Install the **agent-sandbox controller** from the release manifest, including the core components and extensions.
+6. Create the `agent` namespace.
+7. Create runtime secrets using the Module 1 Storage account and APIM gateway URL.
+8. Copy `agent-sandbox.yaml.example` to `agent-sandbox.yaml`, replace the placeholders, and deploy the agent as a `Sandbox` custom resource that uses the AKS `kata-vm-isolation` runtime class.
+9. Wait for the Sandbox pod to become ready.
 
 Environment overrides: `RESOURCE_GROUP`, `LOCATION`, `NAMESPACE`, `SERVICE_ACCOUNT`, `IMAGE_TAG`, `KATA_NODEPOOL_NAME`, `KATA_NODE_VM_SIZE`, `AGENT_SANDBOX_VERSION`.
 
-> Set `AGENT_SANDBOX_VERSION` to a released tag from
+> Set `AGENT_SANDBOX_VERSION` to a release tag from
 > https://github.com/kubernetes-sigs/agent-sandbox/releases (used in the release manifest URL).
 
 After `deploy.sh` completes, jump to the [Deploy Blob Private Link](#deploy-blob-private-link-optional-if-your-storage-account-supports-public-network-access) step below.
@@ -74,7 +74,7 @@ After `deploy.sh` completes, jump to the [Deploy Blob Private Link](#deploy-blob
 
 ## Manual Steps (equivalent to deploy.sh)
 
-> **Alternative to One-Command Deploy:** follow these steps only if you chose
+> **Alternative to one-command deployment:** follow these steps only if you chose
 > the manual deployment path. Do not run them after `./deploy.sh`.
 
 ### Step 1 — Get the deployment suffix (SN)
@@ -104,10 +104,10 @@ docker build -t "${ACR_NAME}.azurecr.io/agent-host:latest" agent-src/
 docker push "${ACR_NAME}.azurecr.io/agent-host:latest"
 ```
 
-> The agent application lives in [`agent-src/`](./agent-src/README.md) — a simple
-> reflection-loop agent that demonstrates LLM endpoint config, `Authorization: Bearer`
-> auth (static key or Workload Identity), Blob state persistence/recovery, and hibernate/resume
-> recovery. See its README for local-run and API details.
+> The agent application lives in [`agent-src/`](./agent-src/README.md). It is a simple
+> reflection-loop agent that demonstrates LLM endpoint configuration, `Authorization: Bearer`
+> authentication (using either a static key or Workload Identity), Blob state persistence and
+> recovery, and hibernate/resume recovery. See its README for local-run and API details.
 
 ### Step 3 — Deploy the baseline AKS cluster (reusing Module 1 resources)
 
@@ -190,28 +190,28 @@ kubectl apply -f agent-sandbox.yaml
 ```
 
 ---
-## Deploy Blob Private Link (optional if your storage account supports public network access)
+## Deploy Blob Private Link (optional when public network access is disabled)
 
-If your subscription policy disables Storage public network access, you need to create a
-dedicated Private Endpoint subnet in the AKS-managed VNet and deploy the Blob Private Endpoint.
+If your subscription policy disables public network access for Storage, create a
+dedicated Private Endpoint subnet in the AKS-managed VNet and deploy a Blob Private Endpoint.
 
 > **If the Module-01 Storage account has public network access disabled, or if Azure Policy disables public network access for Storage in your environment, the AKS-managed VNet must have private connectivity to the Blob endpoint before the agent can read or write its persisted state.**
 
-Run the following script to create private connectivity from the AKS-managed VNet to the storage account:
+Run the following script to establish private connectivity between the AKS-managed VNet and the storage account:
 
 ```bash
 ./deploy-storage-private-link.sh
 ```
 
-> The script automatically detects the AKS-managed VNet name and asks for your confirmation before continuing. You can also check the AKS-managed VNet name in the AKS resource group `$RESOURCE_GROUP`.
+> The script automatically detects the AKS-managed VNet name and asks for confirmation before continuing. You can also find the AKS-managed VNet name in the AKS resource group `$RESOURCE_GROUP`.
 >
-> If the script does not pick the right AKS-managed VNet, answer **"N"** to stop it, and then explicitly provide the AKS-managed VNet name when you run the script:
+> If the script does not select the correct AKS-managed VNet, answer **"N"** to stop it, then provide the VNet name explicitly when you run the script:
 
 ```bash
 VNET_NAME=<aks-vnet-name> ./deploy-storage-private-link.sh
 ```
 
-If you do not explicitly provide the AKS-managed VNet name, you should see output similar to the following:
+If you do not provide the AKS-managed VNet name explicitly, you should see output similar to the following:
 ```
 $ ./deploy-storage-private-link.sh
 WARNING: The behavior of this command has been altered by the following extension: aks-preview
@@ -238,14 +238,14 @@ In the Azure portal, open the storage account and confirm that the private endpo
 
 > **Note:** The script creates the subnet in the AKS-managed VNet, then
 > deploys the Private Endpoint and Private DNS resources in the workshop
-> resource group `$RESOURCE_GROUP`. 
+> resource group `$RESOURCE_GROUP`.
 > 
-> The agent still uses
+> The agent continues to use
 > `https://<storage-account>.blob.core.windows.net`; Private DNS resolves that
 > hostname to the Private Endpoint IP from inside the AKS VNet.
 >
-> The script automatically picks a free `/24` CIDR from the VNet address 
-> space and creates a subnet to accommodate the private endpoint.
+> The script automatically selects an available `/24` CIDR block from the VNet address
+> space and creates a subnet for the private endpoint.
 
 ---
 
@@ -259,7 +259,7 @@ kubectl wait --for=condition=Ready pod -l app=agent-host -n "$NAMESPACE" --timeo
 # Controller
 kubectl get pods -n agent-sandbox-system
 ```
-You should see output like:
+You should see output similar to the following:
 ```
 agenthost/module-03$ kubectl get sandbox,pods -n "$NAMESPACE"
 NAME                                 READY   REASON              AGE
@@ -277,7 +277,7 @@ agent-sandbox-controller-76885c8b6c-gjbk7   1/1     Running   0          117m
 ```
 ### Verify the agent is working
 
-Run `kubectl get all -n $NAMESPACE`; you should see output similar to the following:
+Run `kubectl get all -n $NAMESPACE`. You should see output similar to the following:
 ```
 agenthost/module-03$ kubectl get all -n $NAMESPACE
 NAME             READY   STATUS    RESTARTS   AGE
@@ -287,15 +287,15 @@ NAME                    TYPE           CLUSTER-IP    EXTERNAL-IP     PORT(S)    
 service/agent-host      ClusterIP      None          <none>          <none>         10m
 service/agent-host-lb   LoadBalancer   10.0.164.26   135.**.**.251   80:32234/TCP   10m
 ```
-Open `http://<EXTERNAL-IP>` in your browser. You should see the chat window. Ask several questions to confirm that the agent works:
+Open `http://<EXTERNAL-IP>` in your browser. The chat window should appear. Ask several questions to confirm that the agent is working:
 
-> ***Tip: Make sure the URL includes `http://`; otherwise, the browser may default to HTTPS, which is not implemented in this workshop agent yet.***
+> ***Tip: Make sure the URL includes `http://`. Otherwise, the browser may default to HTTPS, which is not yet implemented by this workshop agent.***
 
 ![module-03-agent-chat-portal](../pic/module-03-agent-chat-portal.png)
 
 ### Verify chat history persisted to Blob
 
-> **Tip**: If public network access is disabled on your storage account, run the verification below from a jumpbox that can reach the storage account through Private Link.
+> **Tip:** If public network access is disabled on your storage account, run the verification below from a jumpbox that can reach the storage account through Private Link.
 > The easiest approach in this workshop is to reuse the private connectivity you just created:
 > 1. Create a separate subnet in the AKS-managed VNet.
 > 2. Create a jumpbox VM in that subnet. The jumpbox will have a NIC and private IP in the subnet.
@@ -327,7 +327,7 @@ az storage blob download \
 cat /tmp/agent-host.json
 ```
 
-### Verify agent runs in sandbox
+### Verify the agent runs in a sandbox
 
 Run `kubectl describe` to confirm that the pod is running in a Sandbox with runtime class **`kata-vm-isolation`**:
 ```
@@ -359,8 +359,8 @@ Containers:
 
 ### Verify Pod Sandboxing Kernel Isolation
 
-Use `uname -r` inside the sandboxed agent pod to confirm it is running with the
-AKS Pod Sandboxing runtime, then compare it with a normal pod on the cluster.
+Use `uname -r` inside the sandboxed agent pod to confirm that it is running with the
+AKS Pod Sandboxing runtime. Then compare its kernel with that of a normal pod on the cluster.
 
 ```bash
 AGENT_POD=$(kubectl get pod -n "$NAMESPACE" -l app=agent-host -o jsonpath='{.items[0].metadata.name}')
@@ -368,8 +368,8 @@ AGENT_POD=$(kubectl get pod -n "$NAMESPACE" -l app=agent-host -o jsonpath='{.ite
 # Sandbox pod: should show the Kata sandbox kernel.
 kubectl exec -it -n "$NAMESPACE" "$AGENT_POD" -- uname -r
 
-# Example expected shape:
-# 6.6.137.mshv1-1.azl3    <-- note: The mshv1 suffix indicates a Microsoft Hyper-V optimized kernel. In Azure Sandbox environments, this kernel is commonly used as the guest OS kernel running inside the isolated VM.
+# Example output:
+# 6.6.137.mshv1-1.azl3    <-- The mshv1 suffix indicates a Microsoft Hyper-V-optimized kernel. In Azure Sandbox environments, this kernel is commonly used as the guest OS kernel inside the isolated VM.
 
 # Optional comparison: run a normal pod without kata-vm-isolation.
 cat <<EOF | kubectl apply -f -
@@ -389,50 +389,52 @@ EOF
 kubectl wait --for=condition=Ready pod/normal-pod -n "$NAMESPACE" --timeout=2m
 kubectl exec -it -n "$NAMESPACE" normal-pod -- uname -r
 
-# Example expected shape for a normal (non-sandbox) node kernel:
+# Example output for a normal (non-sandboxed) node kernel:
 # 6.8.0-1059-azure
 
 kubectl delete pod normal-pod -n "$NAMESPACE"
 ```
 
-If the agent pod reports a different kernel from the normal pod, and the agent
-pod is using `runtimeClassName: kata-vm-isolation`, that confirms the workload
-is running inside AKS Pod Sandboxing.
+If the agent pod reports a different kernel from the normal pod and uses
+`runtimeClassName: kata-vm-isolation`, the workload is running inside AKS Pod Sandboxing.
 
-### Verify agent registers in Foundry as "prompt" agent
+### Verify that the agent is registered in Foundry as a "prompt" agent
 
-In the Foundry portal, open your Foundry project and go to the **Agents** tab. You should see that the agent `agenthost-reflection-agent` (defined in `.env`) is registered successfully and that its type is `prompt`:
+In the Foundry portal, open your Foundry project and go to the **Agents** tab. The agent
+`agenthost-reflection-agent` (defined in `.env`) should be registered successfully with
+the type `prompt`:
 
 ![module-03-agent-in-foundry-portal](../pic/module-03-agent-in-foundry-portal.png)
 
-### Verify that the agent reloads state after resuming
+### Verify that the agent reloads its state after resuming
 
-Go to the AKS portal to delete the agent pod:
+In the AKS portal, delete the agent pod:
 ![module-03-delete-agent-pod-to-verify-load-state](../pic/module-03-delete-agent-pod-to-verify-load-state.png)
 
-Refresh the agent chat window in the browser. You will temporarily lose the agent connection. After the agent pod resumes, the previous chat history should load back into the new chat window.
+Refresh the agent chat window in the browser. The agent connection will be unavailable temporarily.
+After the agent pod resumes, the previous chat history should load into the chat window again.
 
-### Lifecycle (idle suspend / resume model)
+### Lifecycle (idle suspend/resume model)
 
 The Sandbox manifest sets `spec.operatingMode: Running` and `spec.service: true`.
-`operatingMode` is the lifecycle control point:
+`operatingMode` controls the Sandbox lifecycle:
 
-- Patch it to `Suspended` to scale the backing pod to zero while keeping the
-  Sandbox object and stable service.
-- Patch it back to `Running` when traffic returns.
+- Patch it to `Suspended` to scale the backing pod to zero while retaining the
+  Sandbox object and its stable Service.
+- Patch it back to `Running` when traffic resumes.
 
 <details>
 <summary><strong>Why auto suspend/resume is not enabled here</strong></summary>
 
 The `Sandbox` CRD provides the `Running` / `Suspended` state transition, but it
 does not provide an `idleTimeout` field and cannot inspect application requests
-or decide when a user session is idle. The current public `LoadBalancer` Service also
-routes directly to the agent pod. When that pod is suspended, the Service has no
-ready endpoint and cannot hold the request, patch the Sandbox, wait for startup,
-and retry it. Therefore the Sandbox manifest alone cannot implement "idle for 15
-minutes, then wake on the next HTTP request."
+or determine when a user session becomes idle. The current public `LoadBalancer` Service
+also routes directly to the agent pod. When that pod is suspended, the Service has no
+ready endpoint and cannot hold a request, patch the Sandbox, wait for startup, and retry
+the request. Therefore, the Sandbox manifest alone cannot implement the behavior
+"idle for 15 minutes, then wake on the next HTTP request."
 
-KEDA is useful for scaling Deployments or `SandboxWarmPool` capacity from
+KEDA is useful for scaling Deployments or `SandboxWarmPool` capacity based on
 metrics, but it does not by itself implement the per-Sandbox session routing and
 wake-before-forward behavior required by this singleton agent.
 
@@ -442,37 +444,37 @@ wake-before-forward behavior required by this singleton agent.
 <summary><strong>Practical implementation</strong></summary>
 
 A production implementation places an always-running gateway in front of the
-Sandbox and adds an idle sweeper. The browser calls the gateway rather than the
-Sandbox LoadBalancer directly. The gateway and sweeper use Kubernetes RBAC that
-allows `get`, `watch`, and `patch` on the specific Sandbox resources.
+Sandbox and adds an idle sweeper. The browser calls the gateway instead of the
+Sandbox LoadBalancer directly. The gateway and sweeper use Kubernetes RBAC with
+`get`, `watch`, and `patch` permissions on the relevant Sandbox resources.
 
 The control flow is:
 
-1. The gateway records the last completed request time for each Sandbox. Store
-   this outside the agent pod, for example in Redis or a database, because the
-   pod disappears while suspended.
+1. The gateway records the time of the last completed request for each Sandbox.
+  Store this information outside the agent pod, for example in Redis or a database,
+  because the pod disappears while suspended.
 2. The idle sweeper periodically finds Sandboxes with no active request and no
    traffic for 15 minutes, then patches `spec.operatingMode` to `Suspended`.
 3. The agent-sandbox controller terminates the backing pod while retaining the
-   Sandbox object and its stable Service. This workshop's conversation state is
-   already durable in Blob.
+  Sandbox object and its stable Service. This workshop's conversation state is
+  already persisted durably in Blob Storage.
 4. When new traffic arrives, the gateway resolves the target Sandbox. If it is
    suspended, the gateway patches `operatingMode` to `Running` and holds the
    incoming request.
 5. The gateway watches the Sandbox until `Ready=True`, then forwards the held
-   request to `status.serviceFQDN`. If startup exceeds a configured timeout, it
-   returns a retriable `503` response.
+  request to `status.serviceFQDN`. If startup exceeds a configured timeout, the
+  gateway returns a retryable `503` response.
 6. The implementation must serialize concurrent wake requests and recheck the
    active-request count immediately before suspension, so the sweeper cannot
    suspend a Sandbox while a request is running.
 
 For larger platforms, `SandboxTemplate`, `SandboxClaim`, and `SandboxWarmPool`
-can reduce cold-start latency, but the gateway still owns session routing,
-idle detection, request holding, and wake-on-traffic behavior.
+can reduce cold-start latency. The gateway still owns session routing, idle detection,
+request holding, and wake-on-traffic behavior.
 
 </details>
 
-#### Workshop simplification
+#### Workshop Simplification
 
 To keep this workshop focused on Sandbox lifecycle and state recovery, it does
 not deploy a custom gateway, activity store, or idle-sweeper controller. We use
@@ -484,21 +486,71 @@ manual patches to represent the two actions that those components would perform:
    `Running`, wait for `Ready=True`, then proxy the request to the stable
    Sandbox Service.
 
-Run the equivalent manual suspend/resume commands:
+Run the equivalent manual suspend and resume commands:
 
 ```bash
 # Suspend after an idle period (the workshop target is 15 minutes)
 kubectl patch sandbox agent-host -n "$NAMESPACE" --type merge \
   -p '{"spec":{"operatingMode":"Suspended"}}'
-
-# Resume when traffic returns
-kubectl patch sandbox agent-host -n "$NAMESPACE" --type merge \
-  -p '{"spec":{"operatingMode":"Running"}}'
-
-kubectl wait sandbox agent-host -n "$NAMESPACE" --for=condition=Ready --timeout=180s
 ```
+Check the pod, Service, and Sandbox. You should see the following:
+1. The pod is stopped.
+2. The Services are retained.
+3. The Sandbox status is `False/SandboxSuspended`, which means it is not ready.
 
-Inspect lifecycle status:
+```
+agenthost/module-03$ kubectl get pods -n $NAMESPACE
+No resources found in agent namespace.
+
+agenthost/module-03$ kubectl get all -n $NAMESPACE
+NAME                    TYPE           CLUSTER-IP    EXTERNAL-IP     PORT(S)        AGE
+service/agent-host      ClusterIP      None          <none>          <none>         62m
+service/agent-host-lb   LoadBalancer   10.0.164.26   135.**.**.251   80:32234/TCP   62m
+
+agenthost/module-03$ kubectl get Sandbox -n $NAMESPACE
+NAME         READY   REASON             AGE
+agent-host   False   SandboxSuspended   62m
+```
+If you refresh the Agent Chat UI in the browser, it will be unreachable.
+
+Next, resume the pod and Sandbox to simulate traffic returning:
+
+```
+# Resume when traffic returns
+agenthost/module-03$ kubectl patch sandbox agent-host -n "$NAMESPACE" --type merge \
+  -p '{"spec":{"operatingMode":"Running"}}'
+sandbox.agents.x-k8s.io/agent-host patched
+
+agenthost/module-03$ kubectl wait sandbox agent-host -n "$NAMESPACE" --for=condition=Ready --timeout=180s
+sandbox.agents.x-k8s.io/agent-host condition met
+```
+Then check the pod, Service, and Sandbox status again. You should see the following:
+1. The pod has resumed and is running.
+2. The Services are running and healthy.
+3. The Sandbox status is `True/DependenciesReady`.
+
+```
+agenthost/module-03$ kubectl get pods -n $NAMESPACE
+NAME         READY   STATUS    RESTARTS   AGE
+agent-host   1/1     Running   0          2m30s
+
+agenthost/module-03$ kubectl get all -n $NAMESPACE
+NAME             READY   STATUS    RESTARTS   AGE
+pod/agent-host   1/1     Running   0          2m38s
+
+NAME                    TYPE           CLUSTER-IP    EXTERNAL-IP     PORT(S)        AGE
+service/agent-host      ClusterIP      None          <none>          <none>         70m
+service/agent-host-lb   LoadBalancer   10.0.164.26   135.**.**.251   80:32234/TCP   70m
+
+caikai@KCLATP7INT:/mnt/d/OneDriveMS/Learning/ainotes/agenthost/module-03$ kubectl get Sandbox -n $NAMESPACE
+NAME         READY   REASON              AGE
+agent-host   True    DependenciesReady   71m
+```
+If you refresh the Agent Chat UI in the browser, it should be available again, with the
+previous chat history restored.
+
+
+Inspect the Sandbox lifecycle status with the following command:
 
 ```bash
 # Inspect the Sandbox status / lifecycle fields
@@ -514,26 +566,26 @@ pause/resume, scheduled deletion, and `SandboxWarmPool` patterns.
 
 | File | Description |
 |---|---|
-| `deploy.sh` | End-to-end deploy: reads SN, reuses Module 1 ACR/UAMI/Storage/APIM, builds the `agent-src/` image, provisions baseline AKS, enables AKS Pod Sandboxing on an Azure Linux node pool, installs agent-sandbox, and deploys the Sandbox |
-| `aks.bicep` | Baseline AKS cluster; references existing ACR/UAMI/Storage; AcrPull, Storage RBAC, UAMI federated credential. The AKS Pod Sandboxing node pool is added by `deploy.sh`. |
-| `deploy-storage-private-link.sh` | Optional post-AKS wrapper; discovers the AKS-managed VNet, creates a dedicated Private Endpoint subnet, and deploys the Blob Private Link Bicep. |
+| `deploy.sh` | End-to-end deployment: reads SN, reuses the Module 1 ACR/UAMI/Storage/APIM resources, builds the `agent-src/` image, provisions the baseline AKS cluster, enables AKS Pod Sandboxing on an Azure Linux node pool, installs agent-sandbox, and deploys the Sandbox. |
+| `aks.bicep` | Baseline AKS cluster definition. It references the existing ACR, UAMI, and Storage account, and configures AcrPull, Storage RBAC, and the UAMI federated credential. The AKS Pod Sandboxing node pool is added by `deploy.sh`. |
+| `deploy-storage-private-link.sh` | Optional post-AKS wrapper that discovers the AKS-managed VNet, creates a dedicated Private Endpoint subnet, and deploys the Blob Private Link Bicep template. |
 | `storage-private-link.bicep` | Optional Blob Private Endpoint, Private DNS zone, VNet link, and DNS zone group in the workshop resource group. |
-| `agent-sandbox.yaml.example` | Template manifest with placeholders for ACR/image tag/namespace/identity values |
-| `agent-sandbox.yaml` | Generated from `agent-sandbox.yaml.example` during deploy; then applied to create ServiceAccount + `Sandbox` CR + Service using AKS `kata-vm-isolation` |
-| `agent-src/` | POC agent source: `app/main.py` (ReflectionAgent HTTP server), `Dockerfile`, `requirements.txt`, `lifecycle-hook.sh`, and a usage `README.md`. This is the image built and deployed as the Sandbox. |
+| `agent-sandbox.yaml.example` | Template manifest with placeholders for the ACR, image tag, namespace, and identity values. |
+| `agent-sandbox.yaml` | Generated from `agent-sandbox.yaml.example` during deployment, then applied to create the ServiceAccount, `Sandbox` CR, and Service using AKS `kata-vm-isolation`. |
+| `agent-src/` | POC agent source: `app/main.py` (the ReflectionAgent HTTP server), `Dockerfile`, `requirements.txt`, `lifecycle-hook.sh`, and a usage `README.md`. This is the image built and deployed as the Sandbox. |
 
 ---
 
 ## Architecture Notes
 
-- **Reuse, not recreate**: `aks.bicep` references the Module 1 ACR / UAMI / Storage as `existing`; only the AKS cluster and role/federation wiring are new.
-- **AKS Pod Sandboxing**: the sandbox node pool is created with `--os-sku AzureLinux --workload-runtime KataVmIsolation`, which gives the cluster the built-in `kata-vm-isolation` runtime class used by the agent workload.
-- **agent-sandbox**: the `Sandbox` CRD (`agents.x-k8s.io/v1beta1`) + controller manage the agent as an isolated, stateful, singleton pod with stable identity and lifecycle.
-- **Workload Identity**: the Module 1 UAMI (`id-agenthost-<SN>`) gets a federated credential trusting the AKS OIDC issuer for `system:serviceaccount:agent:agent-sa` — pods obtain Azure AD tokens with no secrets.
-- **Azure Blob Storage**: agent conversation state is persisted directly to Blob as `<AGENT_ID>.json` (container `agent-state`) on every change; the pod recovers it on startup. Blob is the single source of truth — no Redis / hot cache.
-- **AI Gateway**: model calls route through APIM at `https://apim-agenthost-<SN>.azure-api.net/foundry` (the Foundry Responses gateway from Module 1).
-- **Kata Containers**: the `kata` node pool is tainted/labelled, and the agent workload targets it with `runtimeClassName: kata-vm-isolation` plus node selector / toleration.
-- **Scale-to-zero**: the Sandbox exposes `operatingMode` (`Running` / `Suspended`) as the suspend/resume control point. A gateway or idle sweeper should enforce the 15-minute idle policy and wake the Sandbox before proxying returned traffic.
+- **Reuse, not recreation**: `aks.bicep` references the Module 1 ACR, UAMI, and Storage account as `existing`; only the AKS cluster and role/federation wiring are new.
+- **AKS Pod Sandboxing**: the sandbox node pool is created with `--os-sku AzureLinux --workload-runtime KataVmIsolation`, which provides the built-in `kata-vm-isolation` runtime class used by the agent workload.
+- **agent-sandbox**: the `Sandbox` CRD (`agents.x-k8s.io/v1beta1`) and controller manage the agent as an isolated, stateful, singleton pod with a stable identity and lifecycle.
+- **Workload Identity**: the Module 1 UAMI (`id-agenthost-<SN>`) receives a federated credential that trusts the AKS OIDC issuer for `system:serviceaccount:agent:agent-sa`. Pods can then obtain Azure AD tokens without storing secrets.
+- **Azure Blob Storage**: the agent persists conversation state directly to Blob as `<AGENT_ID>.json` in the `agent-state` container after every change, and the pod recovers it on startup. Blob Storage is the single source of truth; there is no Redis or hot cache.
+- **AI Gateway**: model calls route through APIM at `https://apim-agenthost-<SN>.azure-api.net/foundry`, the Foundry Responses gateway from Module 1.
+- **Kata Containers**: the `kata` node pool is tainted and labelled, and the agent workload targets it with `runtimeClassName: kata-vm-isolation` plus a node selector and toleration.
+- **Scale-to-zero**: the Sandbox exposes `operatingMode` (`Running` / `Suspended`) as the suspend/resume control point. A gateway or idle sweeper should enforce the 15-minute idle policy and wake the Sandbox before proxying incoming traffic.
 
 ---
 
