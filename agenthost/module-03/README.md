@@ -81,7 +81,7 @@ After `deploy.sh` completes, jump to the [Deploy Blob Private Link](#deploy-blob
 
 ```bash
 RESOURCE_GROUP="rg-agenthost-workshop"
-SN=$(az group show -g "$RESOURCE_GROUP" --query "tags.deploymentSN" -o tsv)
+SN=$(az group show --resource-group "$RESOURCE_GROUP" --query "tags.deploymentSN" --output tsv 2>/dev/null | tr -d "\r\n")
 
 ACR_NAME="acragenthost${SN}"
 IDENTITY_NAME="id-agenthost-${SN}"
@@ -179,7 +179,7 @@ kubectl create secret generic agent-config -n "$NAMESPACE" \
 ### Step 7 — Deploy the agent as a Sandbox
 
 ```bash
-IDENTITY_CLIENT_ID=$(az identity show -g "$RESOURCE_GROUP" -n "$IDENTITY_NAME" --query clientId -o tsv)
+IDENTITY_CLIENT_ID=$(az identity show -g "$RESOURCE_GROUP" -n "$IDENTITY_NAME" --query clientId -o tsv | tr -d "\r\n")
 
 cp agent-sandbox.yaml.example agent-sandbox.yaml
 
@@ -263,14 +263,17 @@ You should see output like:
 ```
 agenthost/module-03$ kubectl get sandbox,pods -n "$NAMESPACE"
 NAME                                 READY   REASON              AGE
-sandbox.agents.x-k8s.io/agent-host   True    DependenciesReady   2m12s
+sandbox.agents.x-k8s.io/agent-host   True    DependenciesReady   5m2s
 
 NAME             READY   STATUS    RESTARTS   AGE
-pod/agent-host   1/1     Running   0          2m12s
+pod/agent-host   1/1     Running   0          5m1s
+
+agenthost/module-03$ kubectl wait --for=condition=Ready pod -l app=agent-host -n "$NAMESPACE" --timeout=3m
+pod/agent-host condition met
 
 agenthost/module-03$ kubectl get pods -n agent-sandbox-system
 NAME                                        READY   STATUS    RESTARTS   AGE
-agent-sandbox-controller-76885c8b6c-bk84h   1/1     Running   0          117m
+agent-sandbox-controller-76885c8b6c-gjbk7   1/1     Running   0          117m
 ```
 ### Verify the agent is working
 
@@ -278,10 +281,11 @@ Run `kubectl get all -n $NAMESPACE`; you should see output similar to the follow
 ```
 agenthost/module-03$ kubectl get all -n $NAMESPACE
 NAME             READY   STATUS    RESTARTS   AGE
-pod/agent-host   1/1     Running   0          34s
+pod/agent-host   1/1     Running   0          10m
 
-NAME                 TYPE           CLUSTER-IP   EXTERNAL-IP      PORT(S)        AGE
-service/agent-host-lb   LoadBalancer   10.0.63.89   135.***.***.251  80:31606/TCP   33s
+NAME                    TYPE           CLUSTER-IP    EXTERNAL-IP     PORT(S)        AGE
+service/agent-host      ClusterIP      None          <none>          <none>         10m
+service/agent-host-lb   LoadBalancer   10.0.164.26   135.**.**.251   80:32234/TCP   10m
 ```
 Open `http://<EXTERNAL-IP>` in your browser. You should see the chat window. Ask several questions to confirm that the agent works:
 
