@@ -542,7 +542,7 @@ NAME                    TYPE           CLUSTER-IP    EXTERNAL-IP     PORT(S)    
 service/agent-host      ClusterIP      None          <none>          <none>         70m
 service/agent-host-lb   LoadBalancer   10.0.164.26   135.**.**.251   80:32234/TCP   70m
 
-caikai@KCLATP7INT:/mnt/d/OneDriveMS/Learning/ainotes/agenthost/module-03$ kubectl get Sandbox -n $NAMESPACE
+agenthost/module-03$ kubectl get Sandbox -n $NAMESPACE
 NAME         READY   REASON              AGE
 agent-host   True    DependenciesReady   71m
 ```
