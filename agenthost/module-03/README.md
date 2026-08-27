@@ -365,7 +365,7 @@ AGENT_POD=$(kubectl get pod -n "$NAMESPACE" -l app=agent-host -o jsonpath='{.ite
 kubectl exec -it -n "$NAMESPACE" "$AGENT_POD" -- uname -r
 
 # Example expected shape:
-# 6.6.137.mshv1-1.azl3
+# 6.6.137.mshv1-1.azl3    <-- note: The mshv1 suffix indicates a Microsoft Hyper-V optimized kernel. In Azure Sandbox environments, this kernel is commonly used as the guest OS kernel running inside the isolated VM.
 
 # Optional comparison: run a normal pod without kata-vm-isolation.
 cat <<EOF | kubectl apply -f -
