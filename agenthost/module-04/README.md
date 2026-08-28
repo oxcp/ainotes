@@ -323,9 +323,9 @@ Click **Resume** in the Sandbox console, then refresh the chat window again. The
 <details>
 <summary><strong>Optional Learning Track — ACA Dynamic Sessions</strong> (click to expand)</summary>
 
-> This section is **optional**. It is provided for learners who complete the main
-> Sandbox path early and want to compare a different Azure Container Apps execution
-> model. It is **not required** to complete the workshop.
+This section is **optional**. It is provided for learners who complete the main
+Sandbox path early and want to compare a different Azure Container Apps execution
+model.
 
 > [!IMPORTANT]
 > **Dynamic Sessions is not an ideal host for running an agent.**
