@@ -85,7 +85,7 @@ After creating the subnet, you should see `aca-subnet` in the subnet list:
 ![module-04-ACA-list-aca-subnet](../pic/module-04-ACA-list-aca-subnet.png)
 
 Now delegate the subnet `aca-subnet` to Azure Container Apps so it can be used by a Container Apps environment:
-```
+```bash
 $ az network vnet subnet update \
   --resource-group rg-aks-agenthost-f28a14-nodes \
   --vnet-name aks-vnet-39023097 \
@@ -93,7 +93,7 @@ $ az network vnet subnet update \
   --delegations Microsoft.App/environments
 ```
 If the command succeeds, you should see output similar to the following:
-```
+```json
 {
   "addressPrefix": "10.225.1.0/24",
   "defaultOutboundAccess": false,
@@ -124,7 +124,7 @@ If the command succeeds, you should see output similar to the following:
 ```
 
 Verify the delegation for service "Microsoft.App/environments" is added:
-```
+```bash
 $ az network vnet subnet show \
   -g rg-aks-agenthost-f28a14-nodes \
   --vnet-name aks-vnet-39023097 \
@@ -133,7 +133,7 @@ $ az network vnet subnet show \
 ```
 
 You should see output similar to the following:
-```
+```json
 [
   {
     "actions": [
@@ -151,7 +151,7 @@ You should see output similar to the following:
 
 ```
 The output must include:
-```
+```json
 [
   {
     "serviceName": "Microsoft.App/environments"
@@ -295,7 +295,7 @@ To verify that ACA Sandbox helps preserve runtime state, wait for the idle timeo
 ![module-04-ACA-Sandbox-auto-suspend](../pic/module-04-ACA-Sandbox-auto-suspend.png)
 
 After the agent stops, refresh the chat window in the browser. You should see:
-```
+```json
 {"error":"Sandbox is not running"}
 ```
 Click **Resume** in the Sandbox console, then refresh the chat window again. The previous chat history should be restored. This demonstrates the runtime-state persistence that ACA Sandbox provides, including in-memory state when Memory suspend mode is used.

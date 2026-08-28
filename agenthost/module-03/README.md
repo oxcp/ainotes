@@ -212,7 +212,7 @@ VNET_NAME=<aks-vnet-name> ./deploy-storage-private-link.sh
 ```
 
 If you do not provide the AKS-managed VNet name explicitly, you should see output similar to the following:
-```
+```bash
 $ ./deploy-storage-private-link.sh
 WARNING: The behavior of this command has been altered by the following extension: aks-preview
 WARNING: The behavior of this command has been altered by the following extension: aks-preview
@@ -260,7 +260,7 @@ kubectl wait --for=condition=Ready pod -l app=agent-host -n "$NAMESPACE" --timeo
 kubectl get pods -n agent-sandbox-system
 ```
 You should see output similar to the following:
-```
+```bash
 agenthost/module-03$ kubectl get sandbox,pods -n "$NAMESPACE"
 NAME                                 READY   REASON              AGE
 sandbox.agents.x-k8s.io/agent-host   True    DependenciesReady   5m2s
@@ -278,7 +278,7 @@ agent-sandbox-controller-76885c8b6c-gjbk7   1/1     Running   0          117m
 ### Verify the agent is working
 
 Run `kubectl get all -n $NAMESPACE`. You should see output similar to the following:
-```
+```bash
 agenthost/module-03$ kubectl get all -n $NAMESPACE
 NAME             READY   STATUS    RESTARTS   AGE
 pod/agent-host   1/1     Running   0          10m
@@ -330,7 +330,7 @@ cat /tmp/agent-host.json
 ### Verify the agent runs in a sandbox
 
 Run `kubectl describe` to confirm that the pod is running in a Sandbox with runtime class **`kata-vm-isolation`**:
-```
+```bash
 agenthost/module-03$ kubectl describe pod/agent-host -n $NAMESPACE
 Name:                agent-host
 Namespace:           agent
@@ -498,7 +498,7 @@ Check the pod, Service, and Sandbox. You should see the following:
 2. The Services are retained.
 3. The Sandbox status is `False/SandboxSuspended`, which means it is not ready.
 
-```
+```bash
 agenthost/module-03$ kubectl get pods -n $NAMESPACE
 No resources found in agent namespace.
 
@@ -515,7 +515,7 @@ If you refresh the Agent Chat UI in the browser, it will be unreachable.
 
 Next, resume the pod and Sandbox to simulate traffic returning:
 
-```
+```bash
 # Resume when traffic returns
 agenthost/module-03$ kubectl patch sandbox agent-host -n "$NAMESPACE" --type merge \
   -p '{"spec":{"operatingMode":"Running"}}'
@@ -529,7 +529,7 @@ Then check the pod, Service, and Sandbox status again. You should see the follow
 2. The Services are running and healthy.
 3. The Sandbox status is `True/DependenciesReady`.
 
-```
+```bash
 agenthost/module-03$ kubectl get pods -n $NAMESPACE
 NAME         READY   STATUS    RESTARTS   AGE
 agent-host   1/1     Running   0          2m30s
