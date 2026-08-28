@@ -68,7 +68,7 @@ Environment overrides: `RESOURCE_GROUP`, `LOCATION`, `NAMESPACE`, `SERVICE_ACCOU
 > Set `AGENT_SANDBOX_VERSION` to a release tag from
 > https://github.com/kubernetes-sigs/agent-sandbox/releases (used in the release manifest URL).
 
-After `deploy.sh` completes, jump to the [Deploy Blob Private Link](#deploy-blob-private-link-optional-if-your-storage-account-supports-public-network-access) step below.
+After `deploy.sh` completes, continue to [Configure Blob Private Link](#configure-blob-private-link-required-when-storage-public-network-access-is-disabled) only if the Storage account has public network access disabled.
 
 ---
 
@@ -190,12 +190,14 @@ kubectl apply -f agent-sandbox.yaml
 ```
 
 ---
-## Deploy Blob Private Link (optional when public network access is disabled)
+## Configure Blob Private Link (required when Storage account public network access is disabled)
 
-If your subscription policy disables public network access for Storage, create a
-dedicated Private Endpoint subnet in the AKS-managed VNet and deploy a Blob Private Endpoint.
+Complete this section only when the Module 1 Storage account has public network access
+disabled. In that case, the AKS-managed VNet needs private connectivity to the Blob endpoint
+before the agent can read or write its persisted state. If public network access is enabled,
+this section is optional and you can skip this section if you want.
 
-> **If the Module-01 Storage account has public network access disabled, or if Azure Policy disables public network access for Storage in your environment, the AKS-managed VNet must have private connectivity to the Blob endpoint before the agent can read or write its persisted state.**
+> **Note:** Azure Policy may enforce this Storage account setting in your environment.
 
 Run the following script to establish private connectivity between the AKS-managed VNet and the storage account:
 
