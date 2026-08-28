@@ -211,9 +211,15 @@ Run the following script to establish private connectivity between the AKS-manag
 VNET_NAME=<aks-vnet-name> ./deploy-storage-private-link.sh
 ```
 
-If you do not provide the AKS-managed VNet name explicitly, you should see output similar to the following:
+If you do not provide the AKS-managed VNet name explicitly, run the following command:
+
 ```bash
-$ ./deploy-storage-private-link.sh
+./deploy-storage-private-link.sh
+```
+
+**Expected output:**
+
+```text
 WARNING: The behavior of this command has been altered by the following extension: aks-preview
 WARNING: The behavior of this command has been altered by the following extension: aks-preview
     AKS vnetSubnetId is null (expected for AKS-managed VNet). Discovering VNet in node resource group...
@@ -251,6 +257,8 @@ In the Azure portal, open the storage account and confirm that the private endpo
 
 ## Verify
 
+Run the following commands to verify that the Sandbox and its pod are ready, and that the controller is running:
+
 ```bash
 # The Sandbox CR and its pod
 kubectl get sandbox,pods -n "$NAMESPACE"
@@ -259,27 +267,32 @@ kubectl wait --for=condition=Ready pod -l app=agent-host -n "$NAMESPACE" --timeo
 # Controller
 kubectl get pods -n agent-sandbox-system
 ```
-You should see output similar to the following:
-```bash
-agenthost/module-03$ kubectl get sandbox,pods -n "$NAMESPACE"
+
+**Expected output:**
+
+```text
 NAME                                 READY   REASON              AGE
 sandbox.agents.x-k8s.io/agent-host   True    DependenciesReady   5m2s
 
 NAME             READY   STATUS    RESTARTS   AGE
 pod/agent-host   1/1     Running   0          5m1s
 
-agenthost/module-03$ kubectl wait --for=condition=Ready pod -l app=agent-host -n "$NAMESPACE" --timeout=3m
 pod/agent-host condition met
 
-agenthost/module-03$ kubectl get pods -n agent-sandbox-system
 NAME                                        READY   STATUS    RESTARTS   AGE
 agent-sandbox-controller-76885c8b6c-gjbk7   1/1     Running   0          117m
 ```
 ### Verify the agent is working
 
-Run `kubectl get all -n $NAMESPACE`. You should see output similar to the following:
+Run the following command:
+
 ```bash
-agenthost/module-03$ kubectl get all -n $NAMESPACE
+kubectl get all -n "$NAMESPACE"
+```
+
+**Expected output:**
+
+```text
 NAME             READY   STATUS    RESTARTS   AGE
 pod/agent-host   1/1     Running   0          10m
 
@@ -329,9 +342,15 @@ cat /tmp/agent-host.json
 
 ### Verify the agent runs in a sandbox
 
-Run `kubectl describe` to confirm that the pod is running in a Sandbox with runtime class **`kata-vm-isolation`**:
+Run the following command to confirm that the pod is running in a Sandbox with runtime class **`kata-vm-isolation`**:
+
 ```bash
-agenthost/module-03$ kubectl describe pod/agent-host -n $NAMESPACE
+kubectl describe pod/agent-host -n "$NAMESPACE"
+```
+
+**Expected output:**
+
+```text
 Name:                agent-host
 Namespace:           agent
 Priority:            0
@@ -364,14 +383,20 @@ AKS Pod Sandboxing runtime. Then compare its kernel with that of a normal pod on
 
 ```bash
 AGENT_POD=$(kubectl get pod -n "$NAMESPACE" -l app=agent-host -o jsonpath='{.items[0].metadata.name}')
-
-# Sandbox pod: should show the Kata sandbox kernel.
 kubectl exec -it -n "$NAMESPACE" "$AGENT_POD" -- uname -r
+```
 
-# Example output:
-# 6.6.137.mshv1-1.azl3    <-- The mshv1 suffix indicates a Microsoft Hyper-V-optimized kernel. In Azure Sandbox environments, this kernel is commonly used as the guest OS kernel inside the isolated VM.
+**Expected output:**
 
-# Optional comparison: run a normal pod without kata-vm-isolation.
+```text
+6.6.137.mshv1-1.azl3
+```
+
+The `mshv1` suffix indicates a Microsoft Hyper-V-optimized kernel. In Azure Sandbox environments, this kernel is commonly used as the guest OS kernel inside the isolated VM.
+
+Optionally, run a normal pod without `kata-vm-isolation` for comparison:
+
+```bash
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: Pod
@@ -388,10 +413,17 @@ EOF
 
 kubectl wait --for=condition=Ready pod/normal-pod -n "$NAMESPACE" --timeout=2m
 kubectl exec -it -n "$NAMESPACE" normal-pod -- uname -r
+```
 
-# Example output for a normal (non-sandboxed) node kernel:
-# 6.8.0-1059-azure
+**Expected output:**
 
+```text
+6.8.0-1059-azure
+```
+
+**Clean up:**
+
+```bash
 kubectl delete pod normal-pod -n "$NAMESPACE"
 ```
 
@@ -488,53 +520,74 @@ manual patches to represent the two actions that those components would perform:
 
 Run the equivalent manual suspend and resume commands:
 
+**Run:**
+
 ```bash
 # Suspend after an idle period (the workshop target is 15 minutes)
 kubectl patch sandbox agent-host -n "$NAMESPACE" --type merge \
   -p '{"spec":{"operatingMode":"Suspended"}}'
 ```
-Check the pod, Service, and Sandbox. You should see the following:
-1. The pod is stopped.
-2. The Services are retained.
-3. The Sandbox status is `False/SandboxSuspended`, which means it is not ready.
+
+Check the pod, Service, and Sandbox:
 
 ```bash
-agenthost/module-03$ kubectl get pods -n $NAMESPACE
+kubectl get pods -n "$NAMESPACE"
+kubectl get all -n "$NAMESPACE"
+kubectl get sandbox -n "$NAMESPACE"
+```
+
+**Expected output:**
+
+```text
 No resources found in agent namespace.
 
-agenthost/module-03$ kubectl get all -n $NAMESPACE
 NAME                    TYPE           CLUSTER-IP    EXTERNAL-IP     PORT(S)        AGE
 service/agent-host      ClusterIP      None          <none>          <none>         62m
 service/agent-host-lb   LoadBalancer   10.0.164.26   135.**.**.251   80:32234/TCP   62m
 
-agenthost/module-03$ kubectl get Sandbox -n $NAMESPACE
 NAME         READY   REASON             AGE
 agent-host   False   SandboxSuspended   62m
 ```
+
+1. The pod is stopped.
+2. The Services are retained.
+3. The Sandbox status is `False/SandboxSuspended`, which means it is not ready.
+
 If you refresh the Agent Chat UI in the browser, it will be unreachable.
 
 Next, resume the pod and Sandbox to simulate traffic returning:
 
+**Run:**
+
 ```bash
 # Resume when traffic returns
-agenthost/module-03$ kubectl patch sandbox agent-host -n "$NAMESPACE" --type merge \
+kubectl patch sandbox agent-host -n "$NAMESPACE" --type merge \
   -p '{"spec":{"operatingMode":"Running"}}'
-sandbox.agents.x-k8s.io/agent-host patched
 
-agenthost/module-03$ kubectl wait sandbox agent-host -n "$NAMESPACE" --for=condition=Ready --timeout=180s
+kubectl wait sandbox agent-host -n "$NAMESPACE" --for=condition=Ready --timeout=180s
+```
+
+**Expected output:**
+
+```text
+sandbox.agents.x-k8s.io/agent-host patched
 sandbox.agents.x-k8s.io/agent-host condition met
 ```
-Then check the pod, Service, and Sandbox status again. You should see the following:
-1. The pod has resumed and is running.
-2. The Services are running and healthy.
-3. The Sandbox status is `True/DependenciesReady`.
+
+Check the pod, Service, and Sandbox status again:
 
 ```bash
-agenthost/module-03$ kubectl get pods -n $NAMESPACE
+kubectl get pods -n "$NAMESPACE"
+kubectl get all -n "$NAMESPACE"
+kubectl get sandbox -n "$NAMESPACE"
+```
+
+**Expected output:**
+
+```text
 NAME         READY   STATUS    RESTARTS   AGE
 agent-host   1/1     Running   0          2m30s
 
-agenthost/module-03$ kubectl get all -n $NAMESPACE
 NAME             READY   STATUS    RESTARTS   AGE
 pod/agent-host   1/1     Running   0          2m38s
 
@@ -542,10 +595,13 @@ NAME                    TYPE           CLUSTER-IP    EXTERNAL-IP     PORT(S)    
 service/agent-host      ClusterIP      None          <none>          <none>         70m
 service/agent-host-lb   LoadBalancer   10.0.164.26   135.**.**.251   80:32234/TCP   70m
 
-agenthost/module-03$ kubectl get Sandbox -n $NAMESPACE
 NAME         READY   REASON              AGE
 agent-host   True    DependenciesReady   71m
 ```
+
+1. The pod has resumed and is running.
+2. The Services are running and healthy.
+3. The Sandbox status is `True/DependenciesReady`.
 If you refresh the Agent Chat UI in the browser, it should be available again, with the
 previous chat history restored.
 
