@@ -207,8 +207,8 @@ Run the following script to establish private connectivity between the AKS-manag
 ```
 
 > The script automatically detects the AKS-managed VNet name and asks for confirmation before continuing. You can find the AKS-managed VNet name in the AKS resource group `$RESOURCE_GROUP`.
->
-> If the script does not select the correct AKS-managed VNet, answer **"N"** to stop it, then provide the VNet name explicitly when you run the script:
+
+If the script does not select the correct AKS-managed VNet, answer **"N"** to stop it, then provide the VNet name explicitly when you run the script:
 
 ```bash
 VNET_NAME=<aks-vnet-name> ./deploy-storage-private-link.sh
