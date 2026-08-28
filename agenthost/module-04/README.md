@@ -84,15 +84,20 @@ the SandboxGroup to that subnet:
 After creating the subnet, you should see `aca-subnet` in the subnet list:
 ![module-04-ACA-list-aca-subnet](../pic/module-04-ACA-list-aca-subnet.png)
 
-Now delegate the subnet `aca-subnet` to Azure Container Apps so it can be used by a Container Apps environment:
+Now delegate the subnet `aca-subnet` to Azure Container Apps so it can be used by a Container Apps environment.
+
+**Run:**
+
 ```bash
-$ az network vnet subnet update \
+az network vnet subnet update \
   --resource-group rg-aks-agenthost-f28a14-nodes \
   --vnet-name aks-vnet-39023097 \
   --name aca-subnet \
   --delegations Microsoft.App/environments
 ```
-If the command succeeds, you should see output similar to the following:
+
+**Expected output:**
+
 ```json
 {
   "addressPrefix": "10.225.1.0/24",
@@ -123,16 +128,20 @@ If the command succeeds, you should see output similar to the following:
 
 ```
 
-Verify the delegation for service "Microsoft.App/environments" is added:
+Verify that the `Microsoft.App/environments` service delegation was added.
+
+**Run:**
+
 ```bash
-$ az network vnet subnet show \
+az network vnet subnet show \
   -g rg-aks-agenthost-f28a14-nodes \
   --vnet-name aks-vnet-39023097 \
   -n aca-subnet \
   --query delegations
 ```
 
-You should see output similar to the following:
+**Expected output:**
+
 ```json
 [
   {

@@ -427,8 +427,7 @@ kubectl exec -it -n "$NAMESPACE" normal-pod -- uname -r
 kubectl delete pod normal-pod -n "$NAMESPACE"
 ```
 
-If the agent pod reports a different kernel from the normal pod and uses
-`runtimeClassName: kata-vm-isolation`, the workload is running inside AKS Pod Sandboxing.
+> **Note:** If the agent pod reports a different kernel from the normal pod and uses `runtimeClassName: kata-vm-isolation`, the workload is running inside AKS Pod Sandboxing.
 
 ### Verify that the agent is registered in Foundry as a "prompt" agent
 
@@ -548,7 +547,7 @@ service/agent-host-lb   LoadBalancer   10.0.164.26   135.**.**.251   80:32234/TC
 NAME         READY   REASON             AGE
 agent-host   False   SandboxSuspended   62m
 ```
-
+The output indicates:
 1. The pod is stopped.
 2. The Services are retained.
 3. The Sandbox status is `False/SandboxSuspended`, which means it is not ready.
@@ -598,23 +597,22 @@ service/agent-host-lb   LoadBalancer   10.0.164.26   135.**.**.251   80:32234/TC
 NAME         READY   REASON              AGE
 agent-host   True    DependenciesReady   71m
 ```
-
+The output indicates:
 1. The pod has resumed and is running.
 2. The Services are running and healthy.
 3. The Sandbox status is `True/DependenciesReady`.
-If you refresh the Agent Chat UI in the browser, it should be available again, with the
-previous chat history restored.
+
+> If you refresh the Agent Chat UI in the browser, it should be available again, with the previous chat history restored.
 
 
-Inspect the Sandbox lifecycle status with the following command:
+Anytime you can inspect the Sandbox lifecycle status with the following command:
 
 ```bash
 # Inspect the Sandbox status / lifecycle fields
 kubectl describe sandbox agent-host -n "$NAMESPACE"
 ```
 
-Refer to the [agent-sandbox docs](https://agent-sandbox.sigs.k8s.io/docs/) for
-pause/resume, scheduled deletion, and `SandboxWarmPool` patterns.
+> Tip: For more detail of the agent-sandbox on agent lifecycle management, refer to the [agent-sandbox docs](https://agent-sandbox.sigs.k8s.io/docs/) for pause/resume, scheduled deletion, and `SandboxWarmPool` patterns.
 
 ---
 
