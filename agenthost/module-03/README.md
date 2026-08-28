@@ -40,7 +40,7 @@ This module **reuses the resources created by Module 1** instead of recreating t
 
 ---
 
-## One-Command Deploy
+## One-Command Deployment
 
 > **Choose one deployment path:** use this one-command flow **or** the
 > [Manual Steps](#manual-steps-equivalent-to-deploysh) below. They are
@@ -74,8 +74,9 @@ After `deploy.sh` completes, continue to [Configure Blob Private Link](#configur
 
 ## Manual Steps (equivalent to deploy.sh)
 
-> **Alternative to one-command deployment:** follow these steps only if you chose
-> the manual deployment path. Do not run them after `./deploy.sh`.
+> **Alternative to One-Command Deployment:** follow these steps only if you chose
+> the manual deployment path.
+> **Do not run them after `./deploy.sh`**.
 
 ### Step 1 — Get the deployment suffix (SN)
 
@@ -190,7 +191,7 @@ kubectl apply -f agent-sandbox.yaml
 ```
 
 ---
-## Configure Blob Private Link (required when Storage account public network access is disabled)
+## Configure Blob Private Link (required when your Storage account public network access is disabled)
 
 Complete this section only when the Module 1 Storage account has public network access
 disabled. In that case, the AKS-managed VNet needs private connectivity to the Blob endpoint
@@ -205,7 +206,7 @@ Run the following script to establish private connectivity between the AKS-manag
 ./deploy-storage-private-link.sh
 ```
 
-> The script automatically detects the AKS-managed VNet name and asks for confirmation before continuing. You can also find the AKS-managed VNet name in the AKS resource group `$RESOURCE_GROUP`.
+> The script automatically detects the AKS-managed VNet name and asks for confirmation before continuing. You can find the AKS-managed VNet name in the AKS resource group `$RESOURCE_GROUP`.
 >
 > If the script does not select the correct AKS-managed VNet, answer **"N"** to stop it, then provide the VNet name explicitly when you run the script:
 
@@ -213,13 +214,7 @@ Run the following script to establish private connectivity between the AKS-manag
 VNET_NAME=<aks-vnet-name> ./deploy-storage-private-link.sh
 ```
 
-If you do not provide the AKS-managed VNet name explicitly, run the following command:
-
-```bash
-./deploy-storage-private-link.sh
-```
-
-**Expected output:**
+**Expected output (if you do not provide the VNet name explicitly):**
 
 ```text
 WARNING: The behavior of this command has been altered by the following extension: aks-preview
