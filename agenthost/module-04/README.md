@@ -11,8 +11,8 @@ micro-VM-based isolation and full lifecycle control
 state continuity.
 
 > **Primary workshop path:** ACA Sandboxes.
-> An optional learning track, **ACA Dynamic Sessions**, appears at the end of this
-> module for those who wish to explore an alternative execution model.
+> An optional learning track, [ACA Dynamic Sessions](./dynamic-sessions.md), is
+> documented separately for those who wish to explore an alternative execution model.
 
 ---
 
@@ -330,78 +330,22 @@ Click **Resume** in the Sandbox console, then refresh the chat window again. The
 > [!IMPORTANT]
 > **Dynamic Sessions is not an ideal host for running an agent.**
 > It is purpose-built to provide **temporary, strongly isolated execution
-> environments** — for example, safely running AI-generated or otherwise untrusted
+> environments**, for example, to safely run AI-generated or otherwise untrusted
 > code. Each session is **ephemeral**: it is allocated on demand, runs a short-lived
 > task, and is **destroyed after use with no state retained**. A long-running agent
-> typically requires a stable, addressable, stateful runtime — precisely what the
+> typically requires a stable, addressable, stateful runtime, which is what the
 > **Sandbox** workshop path provides. Treat Dynamic Sessions as a **tool the agent
-> calls** to execute code safely, not as the place where the agent itself lives.
+> calls** to execute code safely, not as the place where the agent itself runs.
 >
 > See the official comparison:
 > [Sandboxes vs. Dynamic Sessions](https://learn.microsoft.com/en-us/azure/container-apps/sandboxes-overview#sandboxes-vs-dynamic-sessions).
 
-Dynamic Sessions use prewarmed **session pools** for fast, ephemeral, high-concurrency
-execution — a strong fit for short-lived, disposable task runs such as executing
-AI-generated code, tool calls, or code interpreters. In an agent architecture, the
-agent runs elsewhere (for example, on the Sandbox path) and **offloads risky code
-execution** to a Dynamic Session, discarding the session once the task completes.
+**This learning track is still under development and will be updated soon.**
 
-### Files
+Check the Dynamic Sessions content:
+[ACA Dynamic Sessions learning track](./dynamic-sessions.md).
 
-- `dynamic-session-deploy.sh`
-- `dynamic-session-invoke.sh` (minimal invocation example)
-
-### What It Deploys
-
-- ACA environment for session pool hosting (if missing)
-- Custom container session pool via `az containerapp sessionpool create`
-- Management endpoint for per-session invocation (`identifier` based routing)
-
-### Deploy
-
-```bash
-cd agenthost/module-04
-./dynamic-session-deploy.sh
-```
-
-### Minimal Invoke Example
-
-```bash
-cd agenthost/module-04
-
-# Default: calls /health with identifier=test-session
-./dynamic-session-invoke.sh
-
-# Custom identifier
-./dynamic-session-invoke.sh user-42
-
-# Custom endpoint and JSON body
-ENDPOINT_PATH=/api/projects/demo/openai/v1/responses \
-METHOD=POST \
-BODY='{"messages":[{"role":"user","content":"hello"}]}' \
-./dynamic-session-invoke.sh user-42
-```
-
-### Validate
-
-```bash
-az containerapp sessionpool list -g rg-agenthost-workshop -o table
-```
-
-### When to Explore This
-
-Explore Dynamic Sessions to understand the **secure code-execution** model that an
-agent can call as a tool — not as a way to host the agent itself:
-
-- You want to safely run AI-generated or untrusted code in a throwaway environment
-- You need strong isolation for a single short task, followed by automatic teardown
-- You want fast per-request or per-session allocation from a prewarmed pool
-- You explicitly do **not** need to preserve state between runs
-
-> If you need a persistent, addressable, stateful place to run the agent, use the
-> **Sandbox** workshop path instead.
-
-</details>
+</detail>
 
 ---
 
