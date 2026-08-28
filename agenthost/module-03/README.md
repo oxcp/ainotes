@@ -35,8 +35,7 @@ This module **reuses the resources created by Module 1** instead of recreating t
 > **Note:** Run all commands in this README from the module root directory (`agenthost/module-03/`).
 
 - **Module 1 deployed** (Blob, APIM, ACR, UAMI) — `deploymentSN` tag present on the RG
-- A Linux console or WSL environment with an active Azure login (`az login`)
-- `az`, `kubectl`, and Docker installed and available in that environment
+- `az`, `kubectl`, and Docker installed and logged in (`az login`)
 - Azure CLI `2.80.0+` for AKS Pod Sandboxing support
 
 ---
