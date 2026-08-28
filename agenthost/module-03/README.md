@@ -63,8 +63,6 @@ cd agenthost/module-03
 8. Copy `agent-sandbox.yaml.example` to `agent-sandbox.yaml`, replace the placeholders, and deploy the agent as a `Sandbox` custom resource that uses the AKS `kata-vm-isolation` runtime class.
 9. Wait for the Sandbox pod to become ready.
 
-Environment overrides: `RESOURCE_GROUP`, `LOCATION`, `NAMESPACE`, `SERVICE_ACCOUNT`, `IMAGE_TAG`, `KATA_NODEPOOL_NAME`, `KATA_NODE_VM_SIZE`, `AGENT_SANDBOX_VERSION`.
-
 > To construct the agent-sandbox release manifest URL, the `deploy.sh` sets the `AGENT_SANDBOX_VERSION` to a 
 > default value which could not be the up-to-date version or fit for your needs.
 > You can override the `AGENT_SANDBOX_VERSION` value to a release tag. Check the available value from
