@@ -22,7 +22,8 @@ This workshop introduces a practical Azure agent-hosting journey. You start with
 ## Prerequisites (before workshop)
 
 - Azure subscription with Contributor access
-- Azure CLI installed (`az login` completed)
+- Linux console or WSL environment for running workshop scripts and commands
+- Azure CLI `2.80.0+` installed, with an active Azure login (`az login`)
 - Other prerequisites listed in each module
 
 ---
