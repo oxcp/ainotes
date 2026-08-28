@@ -329,6 +329,7 @@ Click **Resume** in the Sandbox console, then refresh the chat window again. The
 
 > [!IMPORTANT]
 > **Dynamic Sessions is not an ideal host for running an agent.**
+>
 > It is purpose-built to provide **temporary, strongly isolated execution
 > environments**, for example, to safely run AI-generated or otherwise untrusted
 > code. Each session is **ephemeral**: it is allocated on demand, runs a short-lived
