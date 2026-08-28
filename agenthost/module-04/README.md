@@ -345,7 +345,7 @@ Click **Resume** in the Sandbox console, then refresh the chat window again. The
 Check the Dynamic Sessions content:
 [ACA Dynamic Sessions learning track](./dynamic-sessions.md).
 
-</detail>
+</details>
 
 ---
 
