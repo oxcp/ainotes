@@ -65,10 +65,12 @@ cd agenthost/module-03
 
 Environment overrides: `RESOURCE_GROUP`, `LOCATION`, `NAMESPACE`, `SERVICE_ACCOUNT`, `IMAGE_TAG`, `KATA_NODEPOOL_NAME`, `KATA_NODE_VM_SIZE`, `AGENT_SANDBOX_VERSION`.
 
-> Set `AGENT_SANDBOX_VERSION` to a release tag from
-> https://github.com/kubernetes-sigs/agent-sandbox/releases (used in the release manifest URL).
+> To construct the agent-sandbox release manifest URL, the `deploy.sh` sets the `AGENT_SANDBOX_VERSION` to a 
+> default value which could not be the up-to-date version or fit for your needs.
+> You can override the `AGENT_SANDBOX_VERSION` value to a release tag. Check the available value from
+> https://github.com/kubernetes-sigs/agent-sandbox/releases.
 
-After `deploy.sh` completes, continue to [Configure Blob Private Link](#configure-blob-private-link-required-when-storage-public-network-access-is-disabled) only if the Storage account has public network access disabled.
+After `deploy.sh` completes, continue to [Configure Blob Private Link](#configure-blob-private-link-required-when-storage-public-network-access-is-disabled) only if your Storage account has public network access disabled.
 
 ---
 
