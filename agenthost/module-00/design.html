@@ -1,0 +1,1225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Agent Hosting on Azure workshop presentation">
+  <title>Agent Hosting on Azure</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap");
+
+    :root {
+      --ink: #eaf6ff;
+      --muted: #94abc0;
+      --navy: #07121d;
+      --panel: #0d2030;
+      --panel-2: #112b3e;
+      --cyan: #52d3ff;
+      --cyan-soft: #9ae7ff;
+      --orange: #ff9f43;
+      --green: #76e6a6;
+      --red: #ff7188;
+      --line: rgba(154, 231, 255, 0.18);
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+      --title-size: clamp(2.45rem, 7vw, 6.7rem);
+      --section-size: clamp(2rem, 4.4vw, 4.4rem);
+      --body-size: clamp(0.86rem, 1.45vw, 1.22rem);
+      --small-size: clamp(0.68rem, 1vw, 0.9rem);
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+      background: var(--navy);
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--navy);
+      font-family: "Manrope", sans-serif;
+      font-size: var(--body-size);
+      line-height: 1.45;
+    }
+
+    .slide {
+      position: relative;
+      display: grid;
+      align-items: center;
+      min-height: 100vh;
+      height: 100vh;
+      height: 100dvh;
+      padding: clamp(1.6rem, 4vw, 4.5rem) clamp(1.4rem, 6vw, 7rem);
+      overflow: hidden;
+      isolation: isolate;
+      scroll-snap-align: start;
+      background:
+        radial-gradient(circle at 88% 10%, rgba(82, 211, 255, 0.12), transparent 27%),
+        linear-gradient(135deg, #07121d 0%, #0a1926 100%);
+    }
+
+    .slide::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      opacity: 0.3;
+      background-image:
+        linear-gradient(rgba(154, 231, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(154, 231, 255, 0.05) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: linear-gradient(to bottom, black, transparent 92%);
+    }
+
+    .slide[data-theme] {
+      --ink: #eaf6ff;
+      --muted: #94abc0;
+      --panel: #0d2030;
+      --panel-2: #112b3e;
+      --line: rgba(154, 231, 255, 0.18);
+      background:
+        radial-gradient(circle at 88% 10%, rgba(82, 211, 255, 0.12), transparent 27%),
+        linear-gradient(135deg, #07121d 0%, #0a1926 100%);
+    }
+
+    .content {
+      width: min(100%, 1180px);
+      margin-inline: auto;
+    }
+
+    .eyebrow {
+      margin: 0 0 0.75rem;
+      color: var(--cyan);
+      font: 500 var(--small-size)/1.2 "DM Mono", monospace;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      max-width: 11ch;
+      margin-bottom: 1.1rem;
+      font-size: var(--title-size);
+      line-height: 0.94;
+      letter-spacing: -0.065em;
+    }
+
+    h2 {
+      margin-bottom: clamp(1rem, 2.5vh, 2rem);
+      font-size: var(--section-size);
+      line-height: 1.02;
+      letter-spacing: -0.045em;
+    }
+
+    h3 {
+      margin-bottom: 0.55rem;
+      font-size: clamp(1rem, 1.8vw, 1.45rem);
+      line-height: 1.12;
+    }
+
+    .lede {
+      max-width: 65ch;
+      color: var(--muted);
+      font-size: clamp(1rem, 1.8vw, 1.45rem);
+    }
+
+    .accent { color: var(--cyan); }
+    .orange { color: var(--orange); }
+    .green { color: var(--green); }
+    .hero-mark {
+      position: absolute;
+      right: clamp(-2rem, 2vw, 3rem);
+      top: 50%;
+      z-index: -1;
+      width: min(48vw, 660px);
+      aspect-ratio: 1;
+      transform: translateY(-50%);
+      border: 1px solid rgba(82, 211, 255, 0.25);
+      border-radius: 50%;
+      box-shadow:
+        inset 0 0 0 70px rgba(82, 211, 255, 0.025),
+        inset 0 0 0 140px rgba(82, 211, 255, 0.025);
+    }
+
+    .hero-mark::before,
+    .hero-mark::after {
+      content: "";
+      position: absolute;
+      inset: 15%;
+      border: 2px solid rgba(82, 211, 255, 0.38);
+      transform: rotate(45deg);
+    }
+
+    .hero-mark::after {
+      inset: 32%;
+      border-color: var(--orange);
+      background: rgba(255, 159, 67, 0.08);
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      margin-top: 1.6rem;
+    }
+
+    .tag {
+      padding: 0.45rem 0.75rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.035);
+      font: 500 var(--small-size)/1 "DM Mono", monospace;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+      gap: clamp(0.75rem, 1.5vw, 1.2rem);
+    }
+
+    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+    .card {
+      position: relative;
+      padding: clamp(1rem, 2vw, 1.65rem);
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: color-mix(in srgb, var(--panel) 84%, transparent);
+      box-shadow: var(--shadow);
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: var(--cyan);
+      transform-origin: left;
+    }
+
+    .card.orange-top::before { background: var(--orange); }
+    .card.green-top::before { background: var(--green); }
+
+    .card p, .card li { color: var(--muted); }
+    .card p:last-child { margin-bottom: 0; }
+
+    .big-number {
+      display: block;
+      margin-bottom: 0.65rem;
+      color: var(--cyan);
+      font: 500 clamp(2rem, 4vw, 4rem)/1 "DM Mono", monospace;
+    }
+
+    .persona {
+      min-height: min(51vh, 420px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .persona-icon {
+      display: grid;
+      place-items: center;
+      width: clamp(3.1rem, 6vw, 5.4rem);
+      aspect-ratio: 1;
+      margin-bottom: 1rem;
+      border-radius: 16px;
+      background: var(--panel-2);
+      color: var(--cyan);
+      font: 500 clamp(1.3rem, 2.8vw, 2.4rem)/1 "DM Mono", monospace;
+    }
+
+    .priority {
+      margin-top: 1rem;
+      padding-top: 0.8rem;
+      border-top: 1px solid var(--line);
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .matrix {
+      display: grid;
+      grid-template-columns: 1.1fr repeat(4, minmax(90px, 1fr));
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: color-mix(in srgb, var(--panel) 88%, transparent);
+      box-shadow: var(--shadow);
+    }
+
+    .matrix > div {
+      min-height: clamp(42px, 6vh, 64px);
+      display: flex;
+      align-items: center;
+      padding: 0.55rem 0.8rem;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: clamp(0.67rem, 1.02vw, 0.91rem);
+    }
+
+    .matrix > div:nth-child(5n) { border-right: 0; }
+    .matrix > div:nth-last-child(-n + 5) { border-bottom: 0; }
+    .matrix .head {
+      color: var(--ink);
+      background: rgba(82, 211, 255, 0.09);
+      font: 500 var(--small-size)/1.2 "DM Mono", monospace;
+      text-transform: uppercase;
+    }
+    .matrix .name { color: var(--ink); font-weight: 700; }
+    .score { color: var(--green) !important; font-weight: 700; }
+    .warn { color: var(--orange) !important; font-weight: 700; }
+
+    .solution {
+      display: flex;
+      min-height: min(48vh, 390px);
+      flex-direction: column;
+    }
+
+    .solution .letter {
+      display: inline-grid;
+      place-items: center;
+      width: 2.8rem;
+      height: 2.8rem;
+      margin-bottom: 1rem;
+      border-radius: 10px;
+      color: #04121d;
+      background: var(--cyan);
+      font: 700 1.2rem/1 "DM Mono", monospace;
+    }
+
+    .solution:nth-child(2) .letter { background: var(--orange); }
+    .solution:nth-child(3) .letter { background: var(--green); }
+    .solution .fit { margin-top: auto; }
+
+    .selection-cue {
+      margin-top: 0.8rem;
+      padding-top: 0.7rem;
+      border-top: 1px solid var(--line);
+      color: var(--ink);
+      font-size: var(--small-size);
+      font-weight: 700;
+    }
+
+    .mini-list {
+      padding: 0;
+      margin: 0.9rem 0;
+      list-style: none;
+    }
+
+    .mini-list li {
+      position: relative;
+      padding: 0.35rem 0 0.35rem 1.15rem;
+    }
+
+    .mini-list li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.78rem;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--cyan);
+    }
+
+    .decision {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(0.75rem, 1.5vw, 1.2rem);
+    }
+
+    .decision-step {
+      position: relative;
+      padding: clamp(1rem, 2vw, 1.6rem);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel);
+    }
+
+    .decision-step:not(:last-child)::after {
+      content: ">";
+      position: absolute;
+      top: 50%;
+      right: calc(-1 * clamp(0.85rem, 1.45vw, 1.25rem));
+      z-index: 3;
+      color: var(--orange);
+      font: 700 1.3rem/1 "DM Mono", monospace;
+    }
+
+    .diagram {
+      display: grid;
+      grid-template-columns: 1fr 0.5fr 1.1fr 0.5fr 1fr;
+      align-items: center;
+      gap: clamp(0.35rem, 1vw, 0.8rem);
+      margin-top: 1.5rem;
+    }
+
+    .node {
+      display: grid;
+      place-items: center;
+      min-height: clamp(78px, 12vh, 120px);
+      padding: 0.8rem;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel);
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+
+    .node strong { display: block; color: var(--ink); }
+    .node span { color: var(--muted); font-size: var(--small-size); }
+
+    .arrow {
+      color: var(--cyan);
+      text-align: center;
+      font: 500 clamp(1.1rem, 2.4vw, 2rem)/1 "DM Mono", monospace;
+    }
+
+    .path-label {
+      display: inline-block;
+      margin-bottom: 0.35rem;
+      padding: 0.25rem 0.45rem;
+      border-radius: 5px;
+      color: #04121d;
+      background: var(--cyan);
+      font: 700 0.66rem/1 "DM Mono", monospace;
+    }
+
+    .path-two .path-label { background: var(--orange); }
+    .path-two .arrow { color: var(--orange); }
+
+    .path-two { margin-top: 1.1rem; }
+
+    .arch {
+      display: grid;
+      grid-template-columns: 0.92fr 1.08fr;
+      gap: clamp(1rem, 3vw, 2.6rem);
+      align-items: center;
+    }
+
+    .stack {
+      display: grid;
+      gap: 0.55rem;
+    }
+
+    .stack-item {
+      display: grid;
+      grid-template-columns: 38px 1fr;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.7rem 0.9rem;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+    }
+
+    .stack-item b {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      color: #04121d;
+      background: var(--cyan);
+      font: 700 0.78rem/1 "DM Mono", monospace;
+    }
+
+    .stack-item small { display: block; color: var(--muted); }
+
+    .blueprint-slide {
+      --blueprint-accent: var(--cyan);
+    }
+
+    .blueprint-slide h2 {
+      margin-bottom: clamp(0.65rem, 1.5vh, 1rem);
+      font-size: clamp(1.65rem, 3.5vw, 3.5rem);
+    }
+
+    .blueprint-foundry { --blueprint-accent: #39b6ff; }
+    .blueprint-aks { --blueprint-accent: #b79aff; }
+    .blueprint-aca { --blueprint-accent: #4de0c1; }
+    .blueprint-slide .eyebrow { color: var(--blueprint-accent); }
+
+    .blueprint {
+      position: relative;
+      height: min(53vh, 470px);
+      overflow: hidden;
+      border: 1px solid color-mix(in srgb, var(--blueprint-accent) 35%, #294663);
+      border-radius: 22px;
+      background:
+        radial-gradient(circle at center, color-mix(in srgb, var(--blueprint-accent) 8%, transparent), transparent 46%),
+        rgba(3, 13, 24, 0.72);
+      box-shadow: inset 0 0 70px rgba(0, 0, 0, 0.28), var(--shadow);
+    }
+
+    .blueprint::after {
+      content: "ARCHITECTURE BLUEPRINT";
+      position: absolute;
+      right: 16px;
+      bottom: 11px;
+      color: color-mix(in srgb, var(--blueprint-accent) 60%, #668099);
+      font: 700 clamp(0.48rem, 0.62vw, 0.64rem)/1 "DM Mono", monospace;
+      letter-spacing: 0.15em;
+    }
+
+    .bp-wires {
+      position: absolute;
+      z-index: 1;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .bp-wires > path {
+      fill: none;
+      stroke: color-mix(in srgb, var(--blueprint-accent) 75%, white);
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 8 8;
+      opacity: 0.72;
+      animation: wireFlow 1.4s linear infinite;
+    }
+
+    .bp-wires > path.secondary {
+      stroke: #668099;
+      stroke-width: 1.7;
+      opacity: 0.58;
+    }
+
+    @keyframes wireFlow { to { stroke-dashoffset: -32; } }
+
+    .bp-node {
+      position: absolute;
+      z-index: 3;
+      display: grid;
+      width: clamp(105px, 11.5vw, 172px);
+      min-height: clamp(62px, 9vh, 88px);
+      padding: clamp(0.5rem, 0.85vw, 0.78rem);
+      place-items: center;
+      border: 1px solid color-mix(in srgb, var(--blueprint-accent) 55%, #35516d);
+      border-radius: 15px;
+      background: linear-gradient(145deg, rgba(17, 42, 67, 0.95), rgba(7, 25, 43, 0.95));
+      color: var(--ink);
+      text-align: center;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.3), inset 0 1px rgba(255, 255, 255, 0.06);
+    }
+
+    .bp-node strong {
+      display: block;
+      color: var(--blueprint-accent);
+      font-size: clamp(0.72rem, 0.95vw, 0.95rem);
+      line-height: 1.1;
+    }
+
+    .bp-node span {
+      display: block;
+      margin-top: 0.28rem;
+      color: #9fbbd2;
+      font-size: clamp(0.52rem, 0.68vw, 0.7rem);
+      line-height: 1.22;
+    }
+
+    .bp-node.primary {
+      border-width: 2px;
+      box-shadow:
+        0 0 0 7px color-mix(in srgb, var(--blueprint-accent) 7%, transparent),
+        0 16px 45px rgba(0, 0, 0, 0.35);
+    }
+
+    .bp-node.satellite {
+      border-style: dashed;
+      background: rgba(8, 29, 48, 0.84);
+    }
+
+    .bp-path {
+      position: absolute;
+      z-index: 4;
+      padding: 0.28rem 0.5rem;
+      border: 1px solid color-mix(in srgb, var(--blueprint-accent) 65%, white);
+      border-radius: 999px;
+      color: var(--blueprint-accent);
+      background: #071526;
+      font: 700 clamp(0.5rem, 0.65vw, 0.68rem)/1 "DM Mono", monospace;
+      letter-spacing: 0.06em;
+    }
+
+    .bp-caption {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.65rem;
+      margin-top: 0.65rem;
+    }
+
+    .bp-caption div {
+      padding: 0.55rem 0.7rem;
+      border: 1px solid color-mix(in srgb, var(--blueprint-accent) 24%, #294663);
+      border-radius: 10px;
+      color: #a9c2d8;
+      background: rgba(8, 28, 47, 0.72);
+      font-size: clamp(0.58rem, 0.75vw, 0.78rem);
+    }
+
+    .bp-caption b { color: var(--ink); }
+
+    .pos-user { left: 3%; top: 40%; }
+    .pos-agent { left: 23%; top: 35%; }
+    .pos-blob { left: 24%; top: 70%; }
+    .pos-apim-top { left: 50%; top: 10%; }
+    .pos-project { left: 48%; top: 64%; }
+    .pos-gateway { left: 68%; top: 64%; }
+    .pos-model { right: 3%; top: 36%; }
+    .pos-controller { left: 23%; top: 6%; }
+    .pos-sandbox { left: 25%; top: 38%; }
+    .pos-warmpool { left: 24%; top: 73%; }
+    .pos-aks-blob { left: 48%; top: 73%; }
+    .pos-aks-apim { left: 58%; top: 38%; }
+    .pos-aca-control { left: 22%; top: 7%; }
+    .pos-aca-sandbox { left: 25%; top: 38%; }
+    .pos-lifecycle { left: 24%; top: 73%; }
+    .pos-aca-blob { left: 48%; top: 73%; }
+    .pos-aca-apim { left: 58%; top: 38%; }
+    .bp-path.path-one { left: 45%; top: 31%; }
+    .bp-path.path-two { left: 44%; top: 57%; margin: 0; }
+    .path-control { left: 38%; top: 22%; }
+    .path-state { left: 40%; top: 77%; }
+    .path-identity { left: 47%; top: 43%; }
+
+    .visible .bp-node {
+      animation: nodeFloat 4.5s ease-in-out infinite;
+    }
+
+    .visible .bp-node:nth-of-type(2n) { animation-delay: -0.8s; }
+    .visible .bp-node:nth-of-type(3n) { animation-delay: -1.6s; }
+
+    @keyframes nodeFloat {
+      0%, 100% { translate: 0 0; }
+      50% { translate: 0 -5px; }
+    }
+
+    .policy-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.65rem;
+    }
+
+    .policy {
+      min-height: min(30vh, 220px);
+      padding: 1rem;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: var(--panel);
+    }
+
+    .policy code {
+      display: block;
+      margin-bottom: 0.75rem;
+      color: var(--cyan);
+      font: 500 clamp(0.66rem, 0.92vw, 0.82rem)/1.2 "DM Mono", monospace;
+    }
+
+    .policy p {
+      color: var(--muted);
+      font-size: var(--small-size);
+    }
+
+    .status {
+      display: inline-block;
+      margin-top: 0.55rem;
+      padding: 0.22rem 0.42rem;
+      border-radius: 5px;
+      color: var(--green);
+      background: rgba(118, 230, 166, 0.08);
+      font: 500 0.62rem/1 "DM Mono", monospace;
+    }
+
+    .status.todo {
+      color: var(--orange);
+      background: rgba(255, 159, 67, 0.08);
+    }
+
+    .callout {
+      margin-top: 1rem;
+      padding: 0.85rem 1rem;
+      border-left: 4px solid var(--orange);
+      border-radius: 0 10px 10px 0;
+      color: var(--muted);
+      background: rgba(255, 159, 67, 0.08);
+    }
+
+    .lifecycle {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      align-items: center;
+      gap: 0.55rem;
+    }
+
+    .life-step {
+      min-height: min(23vh, 170px);
+      padding: 1rem 0.8rem;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel);
+      text-align: center;
+    }
+
+    .life-step b {
+      display: grid;
+      place-items: center;
+      width: 2.25rem;
+      height: 2.25rem;
+      margin: 0 auto 0.7rem;
+      border-radius: 50%;
+      color: #04121d;
+      background: var(--cyan);
+      font: 700 0.8rem/1 "DM Mono", monospace;
+    }
+
+    .life-step p { margin: 0; color: var(--muted); font-size: var(--small-size); }
+
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 0.55rem;
+    }
+
+    .module {
+      min-height: min(34vh, 260px);
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+      border-top: 4px solid var(--cyan);
+      border-radius: 8px 8px 16px 16px;
+      color: var(--ink);
+      background: var(--panel);
+    }
+
+    .module:nth-child(3n + 2) { border-top-color: var(--orange); }
+    .module:nth-child(3n) { border-top-color: var(--green); }
+    .module .time { margin-top: auto; color: var(--cyan); font: 500 var(--small-size)/1 "DM Mono", monospace; }
+    .module p { color: var(--muted); font-size: var(--small-size); }
+
+    .footer {
+      position: absolute;
+      left: clamp(1.4rem, 3vw, 3rem);
+      bottom: clamp(0.75rem, 2vh, 1.4rem);
+      color: var(--muted);
+      font: 400 0.68rem/1 "DM Mono", monospace;
+      letter-spacing: 0.08em;
+    }
+
+    .slide-number {
+      position: absolute;
+      right: clamp(1.4rem, 3vw, 3rem);
+      bottom: clamp(0.75rem, 2vh, 1.4rem);
+      color: var(--muted);
+      font: 400 0.68rem/1 "DM Mono", monospace;
+    }
+
+    .progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 20;
+      width: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--cyan), var(--orange));
+      transition: width 220ms ease;
+    }
+
+    .nav {
+      position: fixed;
+      right: max(1rem, env(safe-area-inset-right));
+      top: 50%;
+      z-index: 20;
+      display: grid;
+      gap: 0.45rem;
+      transform: translateY(-50%);
+    }
+
+    .nav button {
+      width: 2.3rem;
+      height: 2.3rem;
+      padding: 0;
+      border: 1px solid rgba(154, 231, 255, 0.22);
+      border-radius: 50%;
+      color: var(--ink);
+      background: rgba(7, 18, 29, 0.7);
+      backdrop-filter: blur(10px);
+      cursor: pointer;
+      font: 500 1rem/1 "DM Mono", monospace;
+    }
+
+    .nav button:hover { border-color: var(--cyan); color: var(--cyan); }
+
+    .reveal, .reveal-left, .reveal-scale {
+      opacity: 0;
+      transition:
+        opacity 0.6s var(--ease-out-expo),
+        transform 0.6s var(--ease-out-expo);
+    }
+
+    .reveal { transform: translateY(22px); }
+    .reveal-left { transform: translateX(-26px); }
+    .reveal-scale { transform: scale(0.94); }
+    .visible { opacity: 1; transform: none; }
+
+    .stagger > *:nth-child(1) { transition-delay: 0.05s; }
+    .stagger > *:nth-child(2) { transition-delay: 0.12s; }
+    .stagger > *:nth-child(3) { transition-delay: 0.19s; }
+    .stagger > *:nth-child(4) { transition-delay: 0.26s; }
+    .stagger > *:nth-child(5) { transition-delay: 0.33s; }
+    .stagger > *:nth-child(6) { transition-delay: 0.4s; }
+
+    @media (max-width: 900px) {
+      .grid.three, .decision { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .arch { grid-template-columns: 0.85fr 1.15fr; }
+      .matrix { grid-template-columns: 1.25fr repeat(4, minmax(70px, 1fr)); }
+      .timeline { grid-template-columns: repeat(3, 1fr); }
+      .module { min-height: min(19vh, 150px); }
+      .policy-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 700px) {
+      .slide { padding-inline: clamp(1rem, 4vw, 2rem); }
+      .nav { display: none; }
+      .hero-mark { opacity: 0.45; width: 74vw; }
+      .grid.two, .arch { grid-template-columns: 1fr; }
+      .persona { min-height: auto; }
+      .arch-copy { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+      .diagram { grid-template-columns: 1fr 0.35fr 1fr; }
+      .diagram .optional { display: none; }
+      .matrix > div { padding: 0.4rem; }
+      .blueprint { height: min(48vh, 420px); }
+    }
+
+    @media (max-height: 700px) {
+      :root { --body-size: clamp(0.76rem, 1.25vw, 1rem); }
+      .slide { padding-block: clamp(1rem, 2.5vh, 2rem); }
+      h2 { margin-bottom: 0.75rem; }
+      .card { padding: 0.85rem 1rem; }
+      .persona, .solution { min-height: min(45vh, 315px); }
+      .mini-list li { padding-block: 0.22rem; }
+      .callout { margin-top: 0.6rem; padding-block: 0.55rem; }
+    }
+
+    @media (max-height: 600px) {
+      .tag-row, .footer { display: none; }
+      .persona, .solution { min-height: min(42vh, 260px); }
+      .node { min-height: 70px; }
+      .life-step { min-height: 120px; }
+      .module { min-height: 115px; }
+    }
+
+    @media (max-height: 500px) {
+      :root { --section-size: clamp(1.55rem, 4vw, 2.6rem); }
+      .slide { padding-block: 0.8rem; }
+      .card p, .mini-list { margin-bottom: 0.25rem; }
+      .big-number { font-size: 1.6rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+      }
+      .reveal, .reveal-left, .reveal-scale { opacity: 1; transform: none; }
+    }
+
+    @media print {
+      @page { size: landscape; margin: 0; }
+      html, body { background: #fff; }
+      .slide {
+        height: 100vh;
+        page-break-after: always;
+        break-after: page;
+      }
+      .nav, .progress { display: none; }
+      .reveal, .reveal-left, .reveal-scale { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="progress" aria-hidden="true"></div>
+  <nav class="nav" aria-label="Slide navigation">
+    <button id="prev" type="button" aria-label="Previous slide">^</button>
+    <button id="next" type="button" aria-label="Next slide">v</button>
+  </nav>
+
+  <main>
+    <section class="slide" id="slide-1">
+      <div class="hero-mark reveal-scale" aria-hidden="true"></div>
+      <div class="content">
+        <p class="eyebrow reveal">Azure AI Agent Hosting Workshop</p>
+        <h1 class="reveal">Host agents with the <span class="accent">right boundary.</span></h1>
+        <p class="lede reveal">A practical decision framework for managed hosting, high-customization sandboxes, identity, durable state, and scale-to-zero.</p>
+        <div class="tag-row stagger">
+          <span class="tag reveal">Foundry Hosted Agent</span>
+          <span class="tag reveal">AKS + agent-sandbox</span>
+          <span class="tag reveal">ACA Sandbox</span>
+        </div>
+      </div>
+      <span class="footer">AGENT HOSTING ON AZURE</span>
+      <span class="slide-number">01 / 12</span>
+    </section>
+
+    <section class="slide" id="slide-2">
+      <div class="content">
+        <p class="eyebrow reveal">Start with the operating model</p>
+        <h2 class="reveal">The hosting decision is a balance of <span class="accent">seven forces.</span></h2>
+        <div class="grid stagger">
+          <article class="card reveal"><h3><span class="accent">01</span> Isolation</h3><p>Managed per-agent, container, or micro-VM boundaries.</p></article>
+          <article class="card orange-top reveal"><h3><span class="orange">02</span> Lifecycle</h3><p>Warm response, suspend/resume, hibernation, and scale-to-zero.</p></article>
+          <article class="card green-top reveal"><h3><span class="green">03</span> Control</h3><p>Managed defaults versus ownership of runtime, network, and nodes.</p></article>
+          <article class="card reveal"><h3><span class="accent">04</span> Stateful</h3><p>Durable conversation and tool context across restart and eviction.</p></article>
+          <article class="card orange-top reveal"><h3><span class="orange">05</span> Identity &amp; Auth</h3><p>Entra ID, managed identities, token validation, and workload identity.</p></article>
+          <article class="card green-top reveal"><h3><span class="green">06</span> Governance</h3><p>Audit, policy, tenant boundaries, networking, compliance, and quotas.</p></article>
+          <article class="card reveal"><h3><span class="accent">07</span> Economics</h3><p>Idle cost, cold start, capacity model, and operational overhead.</p></article>
+        </div>
+      </div>
+      <span class="slide-number">02 / 12</span>
+    </section>
+
+    <section class="slide" id="slide-3">
+      <div class="content">
+        <p class="eyebrow reveal">Two audiences, different priorities</p>
+        <h2 class="reveal">Enterprise optimizes for trust. Consumer optimizes for flow.</h2>
+        <div class="grid two stagger">
+          <article class="card persona reveal-left">
+            <div>
+              <div class="persona-icon">B2B</div>
+              <h3>Enterprise / Business</h3>
+              <p>Named agent instances for internal teams and multi-tenant platforms.</p>
+              <ul class="mini-list">
+                <li>Strict tenant and department boundaries</li>
+                <li>Entra ID, RBAC, Conditional Access</li>
+                <li>Auditability, private networking, data residency</li>
+                <li>Predictable capacity and SLA</li>
+              </ul>
+            </div>
+            <div class="priority">Security - Governance - Reliability</div>
+          </article>
+          <article class="card persona orange-top reveal">
+            <div>
+              <div class="persona-icon">B2C</div>
+              <h3>Consumer / End-user</h3>
+              <p>High-volume, often short-lived sessions for users, teams, and playgrounds.</p>
+              <ul class="mini-list">
+                <li>Fast activation and simple operations</li>
+                <li>User-level sandbox isolation</li>
+                <li>External identity or API-driven access</li>
+                <li>Aggressive scale-to-zero and pay-per-use</li>
+              </ul>
+            </div>
+            <div class="priority">Cost - Speed - Simplicity</div>
+          </article>
+        </div>
+      </div>
+      <span class="slide-number">03 / 12</span>
+    </section>
+
+    <section class="slide" id="slide-4">
+      <div class="content">
+        <p class="eyebrow reveal">Technique landscape</p>
+        <h2 class="reveal">No runtime wins every dimension.</h2>
+        <div class="matrix reveal-scale">
+          <div class="head">Technique</div><div class="head">Isolation</div><div class="head">Start</div><div class="head">Efficiency</div><div class="head">Best fit</div>
+          <div class="name">Foundry Hosted Agent</div><div class="score">Strong / managed</div><div class="score">&lt; 1 sec</div><div class="score">Best</div><div>Managed B2B</div>
+          <div class="name">AKS + micro-VM</div><div class="score">Strong / kernel</div><div class="warn">2-10 sec</div><div class="warn">Lower</div><div>Custom B2B/B2C</div>
+          <div class="name">ACA Dynamic Sessions</div><div class="score">Strong / Hyper-V</div><div class="score">&lt; 1 sec</div><div class="score">Good</div><div>Short-lived jobs</div>
+          <div class="name">ACA Sandbox</div><div class="score">Strong / sandbox</div><div class="score">&lt; 2 sec</div><div class="score">Good</div><div>Long-running agents</div>
+          <div class="name">Container / serverless</div><div>Medium</div><div class="score">&lt; 2 sec</div><div class="score">Good-best</div><div>General / stateless</div>
+          <div class="name">Dedicated VM</div><div class="score">Strongest</div><div class="warn">&gt; 30 sec</div><div class="warn">Poorest</div><div>Legacy / hardware</div>
+        </div>
+        <p class="callout reveal"><strong>Key distinction:</strong> Dynamic Sessions fit one-time execution; ACA Sandbox adds lifecycle control for persistent, long-running agents.</p>
+      </div>
+      <span class="slide-number">04 / 12</span>
+    </section>
+
+    <section class="slide" id="slide-5">
+      <div class="content">
+        <p class="eyebrow reveal">Recommended portfolio and selection guide</p>
+        <h2 class="reveal">Choose by the constraint you cannot compromise.</h2>
+        <div class="grid three stagger">
+          <article class="card solution reveal">
+            <span class="letter">A</span>
+            <h3>Foundry Hosted Agent</h3>
+            <p>Managed lifecycle, state, identity, and governance with the fastest time-to-value.</p>
+            <div class="selection-cue">Choose when managed enterprise governance is the priority.</div>
+            <div class="fit"><span class="tag">Managed B2B</span></div>
+          </article>
+          <article class="card solution orange-top reveal">
+            <span class="letter">B</span>
+            <h3>AKS + agent-sandbox</h3>
+            <p>Kata micro-VM isolation, custom networking, Spot nodes, and explicit pause/resume control.</p>
+            <div class="selection-cue">Choose when runtime, network, or compliance control is non-negotiable.</div>
+            <div class="fit"><span class="tag">High customization</span></div>
+          </article>
+          <article class="card solution green-top reveal">
+            <span class="letter">C</span>
+            <h3>ACA Sandbox</h3>
+            <p>Service-managed sandbox boundary and lifecycle control with native scale-to-zero.</p>
+            <div class="selection-cue">Choose when long-running agents need managed sandbox operations.</div>
+            <div class="fit"><span class="tag">Long-running B2C/B2B</span></div>
+          </article>
+        </div>
+        <p class="callout reveal"><strong>Production note:</strong> ACA Sandbox is in public preview; validate current limitations and SLA before adoption.</p>
+      </div>
+      <span class="slide-number">05 / 12</span>
+    </section>
+
+    <section class="slide" id="slide-6">
+      <div class="content">
+        <p class="eyebrow reveal">Key Technical Considerations - Stateful design</p>
+        <h2 class="reveal">Persist first. Then hibernate safely.</h2>
+        <div class="lifecycle stagger">
+          <article class="life-step reveal"><b>1</b><h3>Start</h3><p>Resolve the agent ID and load its JSON state from Blob.</p></article>
+          <article class="life-step reveal"><b>2</b><h3>Act</h3><p>Handle messages, tools, and governed model calls.</p></article>
+          <article class="life-step reveal"><b>3</b><h3>Save</h3><p>Write conversation and tool state after every change.</p></article>
+          <article class="life-step reveal"><b>4</b><h3>Idle</h3><p>Evict, pause, or scale to zero without a final flush.</p></article>
+          <article class="life-step reveal"><b>5</b><h3>Resume</h3><p>Restore directly from the latest durable Blob version.</p></article>
+        </div>
+        <p class="callout reveal"><strong>Single source of truth:</strong> <code>&lt;AGENT_ID&gt;.json</code> in Blob Cool tier with versioning. No separate Redis hot cache.</p>
+      </div>
+      <span class="slide-number">06 / 12</span>
+    </section>
+
+    <section class="slide" id="slide-7">
+      <div class="content">
+        <p class="eyebrow reveal">Key Technical Considerations - APIM AI Gateway Pattern</p>
+        <h2 class="reveal">Put policy between every agent and the model.</h2>
+        <div class="policy-grid stagger">
+          <article class="policy reveal"><code>validate-jwt</code><h3>Authenticate</h3><p>Verify the agent-generated Entra ID token before model access.</p><span class="status">IMPLEMENTED</span></article>
+          <article class="policy reveal"><code>rate-limit-by-key</code><h3>Control quota</h3><p>Apply per-agent or per-tenant request and token limits.</p><span class="status todo">TO BE ADDED</span></article>
+          <article class="policy reveal"><code>azure-openai-token-limit</code><h3>Count tokens</h3><p>Enforce semantic token budgets at the shared gateway.</p><span class="status">IMPLEMENTED</span></article>
+          <article class="policy reveal"><code>retry</code><h3>Improve resilience</h3><p>Retry 429 and 5xx responses with exponential back-off.</p><span class="status todo">TO BE ADDED</span></article>
+          <article class="policy reveal"><code>cache-lookup/store</code><h3>Reduce cost</h3><p>Cache safe, identical requests where the workload permits.</p><span class="status todo">TO BE ADDED</span></article>
+        </div>
+      </div>
+      <span class="slide-number">07 / 12</span>
+    </section>
+
+    <section class="slide" id="slide-8">
+      <div class="content">
+        <p class="eyebrow reveal">Key Technical Considerations - Identity and model access</p>
+        <h2 class="reveal">One model. Two governed paths.</h2>
+        <div class="path-one reveal">
+          <span class="path-label">PATH 1 - ALL SOLUTIONS</span>
+          <div class="diagram">
+            <div class="node"><div><strong>Agent</strong><span>Generated Entra ID token</span></div></div>
+            <div class="arrow">--&gt;</div>
+            <div class="node"><div><strong>APIM API</strong><span>validate-jwt, then APIM UAMI</span></div></div>
+            <div class="arrow">--&gt;</div>
+            <div class="node"><div><strong>Foundry LLM</strong><span>Shared project model</span></div></div>
+          </div>
+        </div>
+        <div class="path-two reveal">
+          <span class="path-label">PATH 2 - SOLUTION A ONLY</span>
+          <div class="diagram">
+            <div class="node"><div><strong>Hosted Agent</strong><span>Foundry-assigned identity</span></div></div>
+            <div class="arrow">--&gt;</div>
+            <div class="node"><div><strong>Foundry Project</strong><span>ProjectManagedIdentity</span></div></div>
+            <div class="arrow">--&gt;</div>
+            <div class="node"><div><strong>APIM AI Gateway</strong><span>Governed route to the LLM</span></div></div>
+          </div>
+        </div>
+      </div>
+      <span class="slide-number">08 / 12</span>
+    </section>
+
+    <section class="slide blueprint-slide blueprint-foundry" id="slide-9">
+      <div class="content">
+        <p class="eyebrow reveal">Solution A - Architecture</p>
+        <h2 class="reveal">Foundry Hosted Agent: two governed paths to one model</h2>
+        <div class="blueprint reveal-scale">
+          <svg class="bp-wires" viewBox="0 0 1200 500" preserveAspectRatio="none" aria-hidden="true">
+            <defs><marker id="arrow-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#39b6ff"/></marker></defs>
+            <path d="M110 245 H276" marker-end="url(#arrow-a)"/>
+            <path d="M426 220 C510 220 520 95 600 95" marker-end="url(#arrow-a)"/>
+            <path d="M750 95 C860 95 925 220 1015 220" marker-end="url(#arrow-a)"/>
+            <path d="M426 250 C500 250 520 365 576 365" marker-end="url(#arrow-a)"/>
+            <path d="M726 365 H816" marker-end="url(#arrow-a)"/>
+            <path d="M966 365 C1010 365 995 260 1015 245" marker-end="url(#arrow-a)"/>
+            <path class="secondary" d="M351 278 V350" marker-end="url(#arrow-a)"/>
+          </svg>
+          <div class="bp-node pos-user"><div><strong>Enterprise user</strong><span>HTTPS request</span></div></div>
+          <div class="bp-node primary pos-agent"><div><strong>Foundry Hosted Agent</strong><span>Managed sandbox, identity, and lifecycle</span></div></div>
+          <div class="bp-node satellite pos-blob"><div><strong>Azure Blob</strong><span>Durable per-agent state</span></div></div>
+          <div class="bp-node pos-apim-top"><div><strong>APIM API</strong><span>Validate agent-generated Entra token</span></div></div>
+          <div class="bp-node pos-project"><div><strong>Foundry project</strong><span>Foundry-assigned identity</span></div></div>
+          <div class="bp-node pos-gateway"><div><strong>APIM AI gateway</strong><span>ProjectManagedIdentity connection</span></div></div>
+          <div class="bp-node primary pos-model"><div><strong>Foundry model</strong><span>Shared governed inference</span></div></div>
+          <span class="bp-path path-one">PATH 1</span>
+          <span class="bp-path path-two">PATH 2</span>
+        </div>
+        <div class="bp-caption stagger">
+          <div class="reveal"><b>Managed runtime</b> - endpoint, identity, scaling, state, and lifecycle are platform services.</div>
+          <div class="reveal"><b>Path 1</b> - agent to APIM API to model using an agent-generated Entra token.</div>
+          <div class="reveal"><b>Path 2</b> - agent to Foundry project to registered APIM AI gateway to model.</div>
+        </div>
+      </div>
+      <span class="slide-number">09 / 12</span>
+    </section>
+
+    <section class="slide blueprint-slide blueprint-aks" id="slide-10">
+      <div class="content">
+        <p class="eyebrow reveal">Solution B - Architecture</p>
+        <h2 class="reveal">AKS + agent-sandbox: maximum control inside a micro-VM boundary</h2>
+        <div class="blueprint reveal-scale">
+          <svg class="bp-wires" viewBox="0 0 1200 500" preserveAspectRatio="none" aria-hidden="true">
+            <defs><marker id="arrow-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#b79aff"/></marker></defs>
+            <path d="M110 245 H300" marker-end="url(#arrow-b)"/>
+            <path d="M375 90 V190" marker-end="url(#arrow-b)"/>
+            <path d="M450 235 H696" marker-end="url(#arrow-b)"/>
+            <path d="M846 235 H1015" marker-end="url(#arrow-b)"/>
+            <path class="secondary" d="M375 285 V365" marker-end="url(#arrow-b)"/>
+            <path class="secondary" d="M450 255 C520 275 530 390 576 390" marker-end="url(#arrow-b)"/>
+            <path class="secondary" d="M375 365 V285" marker-end="url(#arrow-b)"/>
+          </svg>
+          <div class="bp-node pos-user"><div><strong>Enterprise / consumer</strong><span>Request to stable Sandbox identity</span></div></div>
+          <div class="bp-node satellite pos-controller"><div><strong>agent-sandbox controller</strong><span>Reconcile, pause, resume, hibernate</span></div></div>
+          <div class="bp-node primary pos-sandbox"><div><strong>Sandbox pod</strong><span>Kata micro-VM + Workload Identity</span></div></div>
+          <div class="bp-node satellite pos-warmpool"><div><strong>SandboxWarmPool</strong><span>Optional pre-warmed capacity</span></div></div>
+          <div class="bp-node satellite pos-aks-blob"><div><strong>Azure Blob</strong><span>Per-agent JSON state</span></div></div>
+          <div class="bp-node pos-aks-apim"><div><strong>APIM API</strong><span>JWT policy + APIM UAMI</span></div></div>
+          <div class="bp-node primary pos-model"><div><strong>Foundry model</strong><span>Path 1 inference</span></div></div>
+          <span class="bp-path path-control">CONTROL PLANE</span>
+          <span class="bp-path path-state">DURABLE STATE</span>
+          <span class="bp-path path-identity">WORKLOAD IDENTITY</span>
+        </div>
+        <div class="bp-caption stagger">
+          <div class="reveal"><b>ToB</b> - customize isolation, networking, compliance controls, and integration.</div>
+          <div class="reveal"><b>ToC</b> - tune SKUs, Spot pools, warm capacity, and hibernation for economics.</div>
+          <div class="reveal"><b>Lifecycle</b> - stable Sandbox identity while compute can pause or disappear.</div>
+        </div>
+      </div>
+      <span class="slide-number">10 / 12</span>
+    </section>
+
+    <section class="slide blueprint-slide blueprint-aca" id="slide-11">
+      <div class="content">
+        <p class="eyebrow reveal">Solution C - Architecture (Public Preview)</p>
+        <h2 class="reveal">ACA Sandbox: service-managed isolation for long-running agents</h2>
+        <div class="blueprint reveal-scale">
+          <svg class="bp-wires" viewBox="0 0 1200 500" preserveAspectRatio="none" aria-hidden="true">
+            <defs><marker id="arrow-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#4de0c1"/></marker></defs>
+            <path d="M110 245 H300" marker-end="url(#arrow-c)"/>
+            <path d="M375 95 V190" marker-end="url(#arrow-c)"/>
+            <path d="M450 235 H696" marker-end="url(#arrow-c)"/>
+            <path d="M846 235 H1015" marker-end="url(#arrow-c)"/>
+            <path class="secondary" d="M375 285 V365" marker-end="url(#arrow-c)"/>
+            <path class="secondary" d="M450 255 C520 275 530 390 576 390" marker-end="url(#arrow-c)"/>
+          </svg>
+          <div class="bp-node pos-user"><div><strong>Consumer / enterprise</strong><span>HTTPS request</span></div></div>
+          <div class="bp-node satellite pos-aca-control"><div><strong>ACA SandboxGroup</strong><span>Service-managed provisioning and isolation</span></div></div>
+          <div class="bp-node primary pos-aca-sandbox"><div><strong>ACA Sandbox</strong><span>Secure boundary + UAMI / Workload Identity</span></div></div>
+          <div class="bp-node satellite pos-lifecycle"><div><strong>Lifecycle</strong><span>Create, suspend, resume, delete</span></div></div>
+          <div class="bp-node satellite pos-aca-blob"><div><strong>Azure Blob</strong><span>Restore state after scale-to-zero</span></div></div>
+          <div class="bp-node pos-aca-apim"><div><strong>APIM API</strong><span>Validate token and govern inference</span></div></div>
+          <div class="bp-node primary pos-model"><div><strong>Foundry model</strong><span>Path 1 inference</span></div></div>
+          <span class="bp-path path-control">MANAGED CONTROL</span>
+          <span class="bp-path path-state">STATE RESTORE</span>
+          <span class="bp-path path-identity">MANAGED IDENTITY</span>
+        </div>
+        <div class="bp-caption stagger">
+          <div class="reveal"><b>Isolation</b> - each sandbox runs inside its own service-managed secure boundary.</div>
+          <div class="reveal"><b>Economics</b> - idle sandboxes scale to zero while state remains in Blob.</div>
+          <div class="reveal"><b>Positioning</b> - persistent agents; Dynamic Sessions remains the short-lived option.</div>
+        </div>
+      </div>
+      <span class="slide-number">11 / 12</span>
+    </section>
+
+    <section class="slide" id="slide-12">
+      <div class="content">
+        <p class="eyebrow reveal">Workshop flow - 135 minutes total</p>
+        <h2 class="reveal">Six modules. Three implementations. One decision framework.</h2>
+        <div class="timeline stagger">
+          <article class="module reveal"><h3>00<br>Introduction</h3><p>Problem framing and architecture overview.</p><span class="time">10 MIN</span></article>
+          <article class="module reveal"><h3>01<br>Core infra</h3><p>Resource group, Blob, APIM, Entra ID, Key Vault.</p><span class="time">30 MIN</span></article>
+          <article class="module reveal"><h3>02<br>Foundry</h3><p>Managed host agent, state, and scale-to-zero.</p><span class="time">30 MIN</span></article>
+          <article class="module reveal"><h3>03<br>AKS</h3><p>Kata isolation and Sandbox CRD lifecycle.</p><span class="time">40 MIN</span></article>
+          <article class="module reveal"><h3>04<br>ACA</h3><p>Service-managed sandbox isolation and scaling.</p><span class="time">20 MIN</span></article>
+          <article class="module reveal"><h3>05<br>Wrap-up</h3><p>Selection guidance and cost optimization.</p><span class="time">5 MIN</span></article>
+        </div>
+        <div class="tag-row reveal">
+          <span class="tag">Source: oxcp/ainotes - agenthost/agenthost.md</span>
+          <span class="tag">Document version 1.0</span>
+        </div>
+      </div>
+      <span class="slide-number">12 / 12</span>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll(".slide")];
+      const progress = document.querySelector(".progress");
+      let current = 0;
+      let touchStartY = 0;
+
+      const show = (index) => {
+        current = Math.max(0, Math.min(slides.length - 1, index));
+        slides[current].scrollIntoView({ behavior: "smooth", block: "start" });
+        progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.querySelectorAll(".reveal, .reveal-left, .reveal-scale")
+            .forEach((element) => element.classList.add("visible"));
+          current = slides.indexOf(entry.target);
+          progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+          history.replaceState(null, "", `#slide-${current + 1}`);
+        });
+      }, { threshold: 0.6 });
+
+      slides.forEach((slide) => observer.observe(slide));
+
+      document.getElementById("prev").addEventListener("click", () => show(current - 1));
+      document.getElementById("next").addEventListener("click", () => show(current + 1));
+
+      document.addEventListener("keydown", (event) => {
+        if (["ArrowDown", "ArrowRight", "PageDown", " "].includes(event.key)) {
+          event.preventDefault();
+          show(current + 1);
+        }
+        if (["ArrowUp", "ArrowLeft", "PageUp"].includes(event.key)) {
+          event.preventDefault();
+          show(current - 1);
+        }
+        if (event.key === "Home") show(0);
+        if (event.key === "End") show(slides.length - 1);
+      });
+
+      document.addEventListener("touchstart", (event) => {
+        touchStartY = event.changedTouches[0].screenY;
+      }, { passive: true });
+
+      document.addEventListener("touchend", (event) => {
+        const delta = touchStartY - event.changedTouches[0].screenY;
+        if (Math.abs(delta) < 45) return;
+        show(current + (delta > 0 ? 1 : -1));
+      }, { passive: true });
+
+      const requested = Number(location.hash.replace("#slide-", "")) - 1;
+      show(Number.isFinite(requested) && requested >= 0 ? requested : 0);
+    })();
+  </script>
+</body>
+</html>
