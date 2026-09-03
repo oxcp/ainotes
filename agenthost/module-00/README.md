@@ -6,7 +6,9 @@
 
 This module introduces the agent-hosting framework and explains why Azure is a compelling platform for both enterprise (ToB) and consumer (ToC) scenarios.
 
-> 📊 **Prefer slides?** Open [slides](https://oxcp.github.io/ainotes/agenthost/module-00/) for a slide-based walkthrough of the workshop content and design.
+> 📊 **Prefer slides?** 
+> Open [introduction](https://oxcp.github.io/ainotes/agenthost/module-00/) to walkthrough the workshop content.
+> Open [design](https://oxcp.github.io/ainotes/agenthost/module-00/design.html) to walkthrough the workshop design.
 
 
 ## Learning Objectives
