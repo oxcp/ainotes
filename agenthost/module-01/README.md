@@ -183,7 +183,7 @@ Below summarizes what `core.bicep` provisioned for the Foundry stack and how it 
 
 ---
 
-## Step 3 — Add APIM to the Foundry AI Gateway
+## Step 3 — Add APIM to the Foundry project as AI Gateway
 
 To make this APIM instance appear in **Microsoft Foundry portal → Manage → AI Gateway**, complete one manual portal step after deployment:
 
