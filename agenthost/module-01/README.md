@@ -171,7 +171,9 @@ Next: proceed to module-02 to deploy the hosted agent with azd.
 
 ### Additional information for Step 2 — Foundry AI gateway (already provisioned)
 
-> **No additional action is required in this section.** The previous step already deployed the resources described below. This section is for reference only and summarizes what `core.bicep` provisioned for the Foundry stack and how it wired the module-01 API Management instance as its AI gateway:
+> **No additional action is required in this section. It is for reference purpose only.**
+>
+Below summarizes what `core.bicep` provisioned for the Foundry stack and how it wired the module-01 API Management instance as its AI gateway:
 
 1. **Foundry account** `foundry-agenthost-<deploymentSN>` (kind `AIServices`, `disableLocalAuth: true`) with the project `maf-agent-prj`, the `gpt-5.4-mini` deployment (GlobalStandard, capacity 50), and Defender for AI.
 2. **APIM** `apim-agenthost-<deploymentSN>` is created on the **Basic v2** tier so it is eligible for Foundry's native AI Gateway feature.
@@ -181,7 +183,7 @@ Next: proceed to module-02 to deploy the hosted agent with azd.
 
 ---
 
-## Step 2 — Add APIM to the Foundry AI Gateway
+## Step 3 — Add APIM to the Foundry AI Gateway
 
 To make this APIM instance appear in **Microsoft Foundry portal → Manage → AI Gateway**, complete one manual portal step after deployment:
 
