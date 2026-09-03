@@ -169,9 +169,9 @@ Next: proceed to module-02 to deploy the hosted agent with azd.
 
 ---
 
-## Step 3 — Foundry AI gateway (provisioned with the core deployment)
+### Additional information for Step 2 — Foundry AI gateway (already provisioned)
 
-`core.bicep` provisions the Foundry stack and wires the module-01 API Management instance as its AI gateway:
+> **No additional action is required in this section.** The previous step already deployed the resources described below. This section is for reference only and summarizes what `core.bicep` provisioned for the Foundry stack and how it wired the module-01 API Management instance as its AI gateway:
 
 1. **Foundry account** `foundry-agenthost-<deploymentSN>` (kind `AIServices`, `disableLocalAuth: true`) with the project `maf-agent-prj`, the `gpt-5.4-mini` deployment (GlobalStandard, capacity 50), and Defender for AI.
 2. **APIM** `apim-agenthost-<deploymentSN>` is created on the **Basic v2** tier so it is eligible for Foundry's native AI Gateway feature.
@@ -179,13 +179,18 @@ Next: proceed to module-02 to deploy the hosted agent with azd.
 4. **RBAC** — the module-01 UAMI is granted **Cognitive Services OpenAI User** and **Azure AI User** on the Foundry account.
 5. **API** `foundry-ai-gateway` (path `/foundry`) with `responses` (`POST /responses`) and `get-response` (`GET /responses/{response-id}`) operations, plus an API-scope policy that validates the caller's Entra ID token (`validate-jwt`) and then forwards to the backend with a managed-identity token via `authentication-managed-identity` (resource `https://ai.azure.com`).
 
+---
+
+## Step 2 — Add APIM to the Foundry AI Gateway
+
 To make this APIM instance appear in **Microsoft Foundry portal → Manage → AI Gateway**, complete one manual portal step after deployment:
 
 1. Open **AI Gateway**.
 2. Select **Add AI Gateway**.
-3. Choose **Use existing**.
-4. Select the deployed Foundry account `foundry-agenthost-<deploymentSN>` and the APIM `apim-agenthost-<deploymentSN>` instance, then click **Add**.
-5. Open the gateway entry and verify that the Foundry project is automatically added to the gateway.
+3. Under **AI Foundry resource**, select the Foundry project created in the previous step, `foundry-agenthost-<deploymentSN>`, from the drop-down list.
+4. Choose **Use existing**.
+5. Select the deployed APIM `apim-agenthost-<deploymentSN>` instance, then click **Add**.
+6. Open the gateway entry and verify that the Foundry project is automatically added to the gateway.
 ![module-01-AIGW-added](../pic/module-01-AIGW-added.png)
 
 Call the model through the gateway (the gateway URL is the `apimFoundryGatewayUrl` output). The caller sends its own Entra ID token; APIM validates it and forwards to Foundry with its managed identity:
