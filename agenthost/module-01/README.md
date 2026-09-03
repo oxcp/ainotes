@@ -167,11 +167,8 @@ Next: proceed to module-02 to deploy the hosted agent with azd.
 
 > **RBAC note:** the Foundry account sets `disableLocalAuth: true`, so APIM must call it with an Entra ID token from the user-assigned managed identity. The deployment therefore automatically grants the UAMI the **Cognitive Services OpenAI User** role on the Foundry account. Creating that role assignment requires the deployer to have **Owner** or **User Access Administrator** on the resource group (Contributor alone cannot create role assignments).
 
----
 
-### Additional information for Step 2 — Foundry AI gateway (already provisioned)
-
-> **No additional action is required in this section. It is for reference purpose only.**
+> **No additional action is required in below part. It is for reference purpose only.**
 >
 Below summarizes what `core.bicep` provisioned for the Foundry stack and how it wired the module-01 API Management instance as its AI gateway:
 
