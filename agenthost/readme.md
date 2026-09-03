@@ -5,6 +5,7 @@
 This workshop introduces a practical Azure agent-hosting journey. You start with shared infrastructure, compare three deployment options for enterprise and consumer scenarios, and finish with cost and production-hardening guidance.
 
 > 📊 **Prefer slides?** 
+>
 > Open [introduction](https://oxcp.github.io/ainotes/agenthost/module-00/) to walkthrough the workshop content.
 
 ---
