@@ -30,18 +30,18 @@ This workshop introduces a practical Azure agent-hosting journey. You start with
 - Azure CLI `2.80.0+` installed, with an active Azure login (`az login`)
 - Other prerequisites listed in each module
 
-> If you need a quick checker helps you instead of manual work, you can use the `check-prerequisites.sh` in the workshop folder.
+> To verify the prerequisites automatically instead of checking them manually, use `check-prerequisites.sh` in the workshop folder.
 
-From the `agenthost` directory, run the prerequisite checker before starting the workshop:
+Before starting the workshop, run the prerequisite checker from the `agenthost` directory:
 
 ```bash
 chmod +x check-prerequisites.sh
 bash check-prerequisites.sh
 ```
 
-The checker groups results by module, displays passed and failed requirements, and provides a remediation link for each failed check.
+The checker groups the results by module, clearly identifies passed and failed requirements, and provides a remediation link for each failed check.
 
-You will see check result like below:
+The output will look similar to the following:
 
 ```text
 Agent Hosting on Azure Workshop - Prerequisite Check
@@ -63,7 +63,7 @@ Module 01 and common prerequisites for all modules
 Prerequisite                             | Result     | Details
 -----------------------------------------+------------+-----------------------------------------
 Azure CLI 2.80.0+                        | Pass       | Installed: 2.85.0
-Active Azure login                       | Pass       | kacai_internal (c14f0d46-cae2-4c8e-b9ff-b73f094caa96)
+Active Azure login                       | Pass       | <subscription-name> (<subscription-id>)
 Subscription Contributor access          | Pass       | Contributor or Owner assignment found
 
 Module 02
@@ -92,7 +92,7 @@ SandboxGroup Data Owner role             | Pass       | Role assignment found fo
 
 Summary: 11 passed, 1 failed
 ```
-If there are failed checked items, please follow the corresponding fix suggestion to resolve it.
+If any checks fail, follow the corresponding suggestions to resolve the issues before continuing with the workshop.
 
 ---
 
