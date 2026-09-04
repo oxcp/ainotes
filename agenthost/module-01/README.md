@@ -195,6 +195,8 @@ To make this APIM instance appear in **Microsoft Foundry portal → Manage → A
 Call the model through the gateway (the gateway URL is the `apimFoundryGatewayUrl` output). The caller sends its own Entra ID token; APIM validates it and forwards to Foundry with its managed identity:
 
 ```bash
+export SN=$(az group show --resource-group "$RESOURCE_GROUP" --query "tags.deploymentSN" --output tsv 2>/dev/null | tr -d "\r\n" || echo "")
+
 export ACCESSTOKEN=$(az account get-access-token --query accessToken -o tsv | tr -d '\r\n')
 
 curl -s -X POST \
