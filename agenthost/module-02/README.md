@@ -58,11 +58,11 @@ echo $SN
 
 > The module-01 already created the Foundry account, the `maf-agent-prj` project, and the `gpt-5.4-mini` deployment. In this module-01, to **reuse** them instead of provisioning new ones, we initialize the agent with the existing project's **Endpoint** and **ARM resource ID** (`--project-id`). We can get the project endpoint and project ID from the Foundry portal.
 
-In the Foundry portal, in the top-left drop down menu, select **"View all resources"**, and then in the resources list enter your project `foundry-agenthost-<SN>`. In the project panel, go to **"Resource details"** in the left side and you will see the **Endpoint**:
-![Get Project Endpoint in Foundry](../pic/module-02-get_prj_endpoint_in_foundry.png)
+In the Foundry portal, in the top-left drop down menu, select **"View all resources"**, and then in the resources list enter your project `maf-agent-prj` whose Parent resource is `foundry-agenthost-<SN>`:
+![module-02-resource_list_in_foundry](../pic/module-02-resource_list_in_foundry.png)
 
-Then go to **"Project details"** in the left side, and you will see the **Project ID**:
-![module-02-get_prj_id_in_foundry](../pic/module-02-get_prj_id_in_foundry.png)
+In the `maf-agent-prj` project panel, go to **"Manage"** in the top meanu bar, in the **Project details** you will see the **Project endpoint** and **Project ID**：
+![module-02-get_prj_endpoint+id_in_foundry](../pic/module-02-get_prj_endpoint+id_in_foundry.png)
 
 Copy the project endpoint and project ID. Use those values to set the environment variables below:
 
@@ -76,19 +76,19 @@ echo "$PROJECT_ENDPOINT"
 
 ### Initialize the agent bound to Foundry project
 
-> **Tip:** Create a working directory anywhere outside of your module-02 folder. Because you need to run the `azd ai agent init` from a directory outside the template file `azure.yaml` in the module-02 folder. 
+> **Tip:** Create a working directory anywhere outside of your module-02 folder. Because you need to run the `azd ai agent init` from a directory outside the template file `azure.yaml` (in module-02 folder). 
 
 For example create a subfolder in your HOME folder, and switch into it:
 
 ```bash
-cd "$HOME"
-mkdir -p workshop
-cd workshop
+cd ~
+mkdir -p workshop/module-02
+cd workshop/module-02
 azd auth login
 # Or use: azd auth login --tenant-id <your_tenant_id>, if you have multiple tenants
 
-azd ai agent init -m ../azure.yaml --project-id "$PROJECT_ID"
-# note: if your working folder is not a subfolder in the module-02 folder, you need pointing to the right location of azure.yaml file (in the module-02 folder), for example: <your_clone_path>/ainotes/agenthost/module-02/azure.yaml
+azd ai agent init -m <your_cloned_module-02_path>/azure.yaml --project-id "$PROJECT_ID"
+# note: you need pointing to the right location of azure.yaml file (in the module-02 folder), for example: <your_clone_path>/ainotes/agenthost/module-02/azure.yaml
 ```
 After initialization succeeds, you should see a result similar to the following:
 ![azd_ai_agent_init](../pic/module-02-azd_ai_agent_init.png)
