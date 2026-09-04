@@ -30,6 +30,69 @@ This workshop introduces a practical Azure agent-hosting journey. You start with
 - Azure CLI `2.80.0+` installed, with an active Azure login (`az login`)
 - Other prerequisites listed in each module
 
+> If you need a quick checker helps you, you can run the `check-prerequisites.sh` in the workshop folder.
+From the `agenthost` directory, run the prerequisite checker before starting the workshop:
+
+```bash
+chmod +x check-prerequisites.sh
+bash check-prerequisites.sh
+```
+
+The checker groups results by module, displays passed and failed requirements, and provides a remediation link for each failed check.
+
+You will see check result like below:
+
+```text
+Agent Hosting on Azure Workshop - Prerequisite Check
+------
+[01/12] Checking Azure CLI 2.80.0+...
+[02/12] Checking active Azure login...
+[03/12] Checking subscription Contributor access...
+[04/12] Checking Azure Developer CLI installation...
+[05/12] Checking active azd login...
+[06/12] Checking Microsoft Foundry azd extension...
+[07/12] Checking Foundry User role...
+[08/12] Checking kubectl installation...
+[09/12] Checking Docker installation...
+[10/12] Checking Azure CLI support for AKS Pod Sandboxing...
+[11/12] Checking Container Apps preview extension...
+[12/12] Checking Container Apps SandboxGroup Data Owner role...
+
+Module 01 and common prerequisites for all modules
+Prerequisite                             | Result     | Details
+-----------------------------------------+------------+-----------------------------------------
+Azure CLI 2.80.0+                        | Pass       | Installed: 2.85.0
+Active Azure login                       | Pass       | kacai_internal (c14f0d46-cae2-4c8e-b9ff-b73f094caa96)
+Subscription Contributor access          | Pass       | Contributor or Owner assignment found
+
+Module 02
+Prerequisite                             | Result     | Details
+-----------------------------------------+------------+-----------------------------------------
+Azure Developer CLI installed            | Pass       | Installed: 1.27.0
+Active azd login                         | Pass       | azd authentication is active
+Microsoft Foundry azd extension          | Pass       | microsoft.foundry is installed
+Foundry User role                        | Pass       | Role assignment found for the current subscription
+
+Module 03
+Prerequisite                             | Result     | Details
+-----------------------------------------+------------+-----------------------------------------
+kubectl installed                        | Pass       | Installed: v1.35.0
+Docker installed and running             | Failed     | Docker version: not detected; CLI is not installed or not available
+Azure CLI for AKS Pod Sandboxing         | Pass       | Installed: 2.85.0
+
+Fix suggestion:
+- Docker installed and running: https://docs.docker.com/engine/install/
+
+Module 04
+Prerequisite                             | Result     | Details
+-----------------------------------------+------------+-----------------------------------------
+Container Apps preview extension         | Pass       | containerapp 1.3.0b4 (preview enabled)
+SandboxGroup Data Owner role             | Pass       | Role assignment found for the current subscription
+
+Summary: 11 passed, 1 failed
+```
+If there are failed checked items, please follow the corresponding fix suggestion to resolve it.
+
 ---
 
 ## How to use this workshop
@@ -81,6 +144,7 @@ This downloads the content required for the `agenthost` workshop instead of chec
 agenthost/
 ├── readme.md                    ← List workshop modules, structure
 ├── agenthost.md                 ← Design considerations for the workshop
+├── check-prerequisites.sh       ← Checks tools, Azure login state, extensions, and required RBAC roles
 ├── module-00/
 │   └── README.md                ← Introduction: agent overview, state pattern, 3 solutions
 ├── module-01/
