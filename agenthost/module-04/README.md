@@ -30,6 +30,7 @@ az extension add --name containerapp --upgrade --allow-preview true -y
 ```
 
 5. Your identity holds the `Container Apps SandboxGroup Data Owner` role assignment.
+6. Your identity can create role assignments (`Microsoft.Authorization/roleAssignments/write`) because this module grants `AcrPull` to the Module 1 managed identity. Typical options are **Owner**, or **Contributor** plus **Role Based Access Control Administrator**.
 
 ---
 

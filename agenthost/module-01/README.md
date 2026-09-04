@@ -40,8 +40,10 @@ The Foundry account ships with:
 
 > **Note:** Run all commands in this README from this module's root directory (`agenthost/module-01/`).
 
-- Azure subscription with **Contributor** access
-- Azure CLI installed and authenticated (`az login`)
+- Complete the [common workshop prerequisites](../readme.md#prerequisites-before-workshop).
+- `curl` installed
+- `jq` installed
+- Permission to create role assignments (`Microsoft.Authorization/roleAssignments/write`) for the resources deployed by this module. Typical options are **Owner**, or **Contributor** plus **Role Based Access Control Administrator**.
 
 ---
 

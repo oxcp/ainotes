@@ -37,6 +37,8 @@ This module **reuses the resources created by Module 1** instead of recreating t
 - **Module 1 deployed** (Blob, APIM, ACR, UAMI) — `deploymentSN` tag present on the RG
 - `az`, `kubectl`, and Docker installed and logged in (`az login`)
 - Azure CLI `2.80.0+` for AKS Pod Sandboxing support
+- Permission to create the AKS cluster, node pools, federated identity credential, and role assignments. Role assignment creation requires `Microsoft.Authorization/roleAssignments/write` (for example, **Owner**, or **Contributor** plus **Role Based Access Control Administrator**).
+- Permission to push images to the Module 1 ACR (`Microsoft.ContainerRegistry/registries/push/write`), normally granted through **AcrPush** on that registry.
 
 ---
 
