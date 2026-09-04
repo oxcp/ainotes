@@ -56,9 +56,9 @@ echo $SN
 
 ### Set Foundry project environment variables
 
-> The module-01 already created the Foundry account, the `maf-agent-prj` project, and the `gpt-5.4-mini` deployment. In this module-01, to **reuse** them instead of provisioning new ones, we initialize the agent with the existing project's **Endpoint** and**ARM resource ID** (`--project-id`). We can get the project endpoint and project ID from the Foundry portal.
+> The module-01 already created the Foundry account, the `maf-agent-prj` project, and the `gpt-5.4-mini` deployment. In this module-01, to **reuse** them instead of provisioning new ones, we initialize the agent with the existing project's **Endpoint** and **ARM resource ID** (`--project-id`). We can get the project endpoint and project ID from the Foundry portal.
 
-In the Foundry portal, in the top-left drop down menu, select **"View all resources"**, and then in the resources list enter your project `foundry-agenthost-<SN>`. In the project panel, you will see the **Endpoint**:
+In the Foundry portal, in the top-left drop down menu, select **"View all resources"**, and then in the resources list enter your project `foundry-agenthost-<SN>`. In the project panel, go to **"Resource details"** in the left side and you will see the **Endpoint**:
 ![Get Project Endpoint in Foundry](../pic/module-02-get_prj_endpoint_in_foundry.png)
 
 Then go to **"Project details"** in the left side, and you will see the **Project ID**:
@@ -76,15 +76,16 @@ echo "$PROJECT_ENDPOINT"
 
 ### Initialize the agent bound to Foundry project
 
-Create the azd working directory anywhere you want and switch to it:
+Create the azd working directory anywhere you want. For example create a subfolder in the current module-02 folder, and switch to it:
 
 ```bash
-mkdir workshop #<your_working_dir>
-cd workshop #<your_working_dir>
+cd <your module-02 folder> # example: .../myworkshop/ainotes/agenthost/module-02
+mkdir workshop #<your_module-02_working_dir>
+cd workshop #<your_module-02_working_dir>
 azd auth login
 # Or use: azd auth login --tenant-id <your_tenant_id>, if you have multiple tenants
 
-azd ai agent init -m <your module-02 folder path>/azure.yaml --project-id "$PROJECT_ID"
+azd ai agent init -m <your module-02 folder path>/azure.yaml --project-id "$PROJECT_ID" # example: .../myworkshop/ainotes/agenthost/module-02/azure.yaml
 ```
 After initialization succeeds, you should see a result similar to the following:
 ![azd_ai_agent_init](../pic/module-02-azd_ai_agent_init.png)
