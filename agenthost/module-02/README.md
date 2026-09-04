@@ -56,11 +56,15 @@ echo $SN
 
 ### Set Foundry project environment variables
 
-module-01 already created the Foundry account, the `maf-agent-prj` project, and the `gpt-5.4-mini` deployment. To make `azd` **reuse** them instead of provisioning a brand-new account/project, initialize the agent with the existing project's **ARM resource ID** (`--project-id`).
+The module-01 already created the Foundry account, the `maf-agent-prj` project, and the `gpt-5.4-mini` deployment. In this module-01, to **reuse** them instead of provisioning new ones, we initialize the agent with the existing project's **ARM resource ID** (`--project-id`).
 
-Get the project resource ID and project endpoint from the Foundry portal. In the Foundry portal, go to **Operate → Admin**, open your project, and copy the project resource ID and endpoint. Use those values to set the environment variables below:
-
+Get the project resource ID and project endpoint from the Foundry portal. In the Foundry portal, in the top-left drop down menu, select **"View all resources"**, and then in the resources list enter your project `foundry-agenthost-<SN>`. In the project panel, you will see the **Endpoint**:
 ![Get Project Endpoint in Foundry](../pic/module-02-get_prj_endpoint_in_foundry.png)
+
+Then go to **"Project details"** in the left side, and you will see the **Project ID**:
+![module-02-get_prj_id_in_foundry](../pic/module-02-get_prj_id_in_foundry.png)
+
+Copy the project endpoint and project ID. Use those values to set the environment variables below:
 
 ```bash
 export PROJECT_ID=<your Foundry project resource id>
