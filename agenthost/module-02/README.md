@@ -46,18 +46,12 @@ Both clients speak the **Responses** protocol, so the hosted agent (served by `R
 
 ### Get deployment suffix from module-01
 
-First, retrieve the `SN` (deployment suffix) from your module-01 deployment. This is used to construct resource names like the APIM gateway URL.
-
-```bash
-export SN=<your deployment suffix from module-01>  # e.g., "abc123"
-echo $SN
-```
-
-If you don't have it, you can retrieve it from module-01's resource group tags:
+First, retrieve the `SN` (deployment suffix) from your module-01 deployment. This is used to construct resource names like the APIM gateway URL. You can retrieve it from module-01's resource group tags:
 
 ```bash
 export RESOURCE_GROUP="rg-agenthost-workshop"
-az group show --name "$RESOURCE_GROUP" --query "tags.deploymentSN" -o tsv
+export SN=$(az group show --resource-group "$RESOURCE_GROUP" --query "tags.deploymentSN" --output tsv 2>/dev/null | tr -d "\r\n" || echo "")
+echo $SN
 ```
 
 ### Set Foundry project environment variables
