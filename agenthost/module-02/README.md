@@ -76,7 +76,7 @@ echo "$PROJECT_ENDPOINT"
 
 ### Initialize the agent bound to Foundry project
 
-Create the azd working directory anywhere you want. For example create a subfolder in the current module-02 folder, and switch to it:
+Create the azd working directory anywhere you want. For example create a subfolder in the current module-02 folder, and switch into it:
 
 ```bash
 cd <your module-02 folder> # example: .../myworkshop/ainotes/agenthost/module-02
@@ -85,7 +85,8 @@ cd workshop #<your_module-02_working_dir>
 azd auth login
 # Or use: azd auth login --tenant-id <your_tenant_id>, if you have multiple tenants
 
-azd ai agent init -m <your module-02 folder path>/azure.yaml --project-id "$PROJECT_ID" # example: .../myworkshop/ainotes/agenthost/module-02/azure.yaml
+azd ai agent init -m ../azure.yaml --project-id "$PROJECT_ID"
+# note: you need pointing to the right location of azure.yaml file (in the module-02 folder), for example: <your_clone_path>/ainotes/agenthost/module-02/azure.yaml
 ```
 After initialization succeeds, you should see a result similar to the following:
 ![azd_ai_agent_init](../pic/module-02-azd_ai_agent_init.png)
