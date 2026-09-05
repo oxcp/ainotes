@@ -83,7 +83,7 @@ az deployment sub create \
 
 ```
 > [!NOTE]
-> The Bicep deployment, whether run directly or through `setup.sh`, may take several minutes to complete. After a successful deployment, you will see output similar to the following:
+> The Bicep deployment, whether run directly or through `setup.sh`, may take several minutes (ususally 3~4 minutes) to complete. After a successful deployment, you will see output similar to the following:
 ```
 ==> Deployment 'main-<deploymentSN>' complete. Outputs:
 {
@@ -166,6 +166,10 @@ Next:
 2. Add the APIM to the Foundry project as a Foundry Native AI Gateway.
 ```
 
+After the template deployed, you have a resource group created with below resources in it:
+![module-01-bicep_deployed](../pic/module-01-bicep_deployed.png)
+
+
 > [!NOTE]
 > **For reference, the template deploys and configures the following resources:**
 > 1. **User-assigned managed identity (UAMI)** for workloads in later modules. It receives access to Foundry inference and the agent-state storage account.
@@ -182,8 +186,10 @@ Next:
 > 12. **APIM API** `workshop-ai-gateway` at path `/foundry`, with subscription keys disabled and two operations: `responses` (`POST /openai/v1/responses`) and `get-response` (`GET /responses/{response-id}`).
 > 13. **APIM API policy** that validates the caller's Entra ID token with `validate-jwt`, selects `foundry-backend`, and authenticates to Foundry as the APIM system-assigned managed identity through `authentication-managed-identity` using the `https://ai.azure.com` resource.
 
-After the template deployment, you can retrieve the key outputs whenever needed:
+After the template deployment, you can retrieve the property values you need with commands as below:
 ```bash
+export SN=$(az group show --resource-group "$RESOURCE_GROUP" --query "tags.deploymentSN" --output tsv 2>/dev/null | tr -d "\r\n" || echo "")
+
 az deployment sub show \
   --name main-$SN \
   --query "properties.outputs.{endpoint:foundryProjectEndpoint.value, model:modelDeploymentName.value, gateway:apimFoundryGatewayUrl.value, backend:apimFoundryBackendName.value}"
@@ -193,7 +199,13 @@ az deployment sub show \
 
 ## Step 3 — Verify APIM as a standalone gateway
 
-Call the model through the APIM by using the `apimFoundryGatewayUrl` output. The caller sends its own Entra ID token, and APIM validates the token and forwards the request to Foundry using its managed identity:
+In the resource group, click the APIM and enter the APIM portal, you will see the API is added with pointing to the Foundry project endpoint:
+![module-01-standalone-gw](../pic/module-01-standalone-gw.png)
+
+There are 2 operations are also defined ( /responses, /get-response), with the inbound processing policies:
+![module-01-standalone-gw-ops+policies](../pic/module-01-standalone-gw-ops+policies.png)
+
+Let's call the model through the APIM (standalone gateway) by using the API/operations. To authenticate to the APIM，the caller sends its own Entra ID token, and APIM validates the token with `validate-jwt` policy and forwards the request to Foundry using its managed identity:
 
 ```bash
 export SN=$(az group show --resource-group "$RESOURCE_GROUP" --query "tags.deploymentSN" --output tsv 2>/dev/null | tr -d "\r\n" || echo "")
