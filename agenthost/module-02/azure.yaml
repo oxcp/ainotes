@@ -60,6 +60,8 @@ services:
         value: "gpt-5.4-mini"
       - name: APIM_GATEWAY_URL
         value: "https://apim-agenthost-<SN>.azure-api.net/foundry"
+      - name: FOUNDRY_PROJECT_ENDPOINT
+        value: "https://foundry-agenthost-<SN>.services.ai.azure.com/api/projects/maf-agent-prj"
 
     container:
       resources:
