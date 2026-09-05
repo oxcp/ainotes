@@ -96,7 +96,7 @@ cd maf-agent
 
 Open `azure.yaml` in the `maf-agent` folder and make the following updates:
 
-**Set the MODEL_ROUTING mode** (optional; the default is `"direct"` for simplicity, while `"gateway"` is recommended for production use):
+**Set the MODEL_ROUTING mode:**
 
 Find the line:
 
@@ -131,7 +131,7 @@ For gateway mode:
 
 **Replace the `<SN>` placeholder**:
 
-If you chose `"gateway"` mode above, you must update the APIM gateway URL with your deployment suffix. Find the line:
+Find the line:
 
 ```yaml
       - name: APIM_GATEWAY_URL
