@@ -108,7 +108,7 @@ Find the line:
 You can keep it as `"direct"` (default, simpler, lower latency) or change it to `"gateway"` (centralized governance via APIM):
 
 - `"direct"` — agent calls the Foundry project endpoint directly
-- `"gateway"` — agent calls through the module-01 APIM AI gateway
+- `"gateway"` — agent calls through the module-01 APIM standalone AI gateway
 
 For gateway mode:
 ```yaml
@@ -116,22 +116,18 @@ For gateway mode:
         value: "gateway"
 ```
 > [!TIP]
-> **Tip:** `direct` and `gateway` represent two different request paths to the LLM:
+> `direct` and `gateway` represent two different request paths to the LLM:
 > - `direct`: Agent → Foundry project endpoint → APIM Foundry native AI gateway → LLM deployment
 > - `gateway`: Agent → APIM standalone AI gateway (`/foundry`) → Foundry project endpoint → LLM deployment
 >
 > Comparison for the two paths:
 >| Aspect | `direct` (default) | `gateway` |
 >|---|---|---|
->| Client | `FoundryChatClient` → project endpoint | `OpenAIChatClient` → `<gateway>/responses` |
->| Call flows | Agent → Foundry project endpoint → Foundry native AI gateway (APIM) → Foundry project models | Agent → APIM → Foundry project endpoint → Foundry project models |
->| Auth to model | Agent identity holds **Azure AI User** on the Foundry account (module-01 RBAC). It automatically gets the trust internal of Foundry project | The **end-caller** Entra token sent in HTTP header such as `Authorization: Bearer eyJ0eXAiOiJ...`. **APIM** validates the call via `validate-jwt` policy, and then the APIM re-authenticates to Foundry with its own managed identity which holds the Foundry RBAC |
->| Required env | `FOUNDRY_PROJECT_ENDPOINT` | `APIM_GATEWAY_URL` |
->| Pros | Fewer hops → lower latency; nothing extra to stand up; simplest RBAC | Central governance: rate-limiting, quotas, logging, caching, key rotation, per-caller JWT validation; hides the Foundry endpoint; one front door for many callers |
->| Cons | No central throttling/observability; every caller needs direct Foundry RBAC; endpoint exposed to each client | Extra hop → added latency + APIM cost; requires the `api://agenthost` Entra app to exist and callers to be granted; more moving parts to operate |
->| Best for | Simple, low-scale, single-consumer agents | Shared/enterprise gateways, many consumers, policy enforcement |
->
-> Both clients speak the **Responses** protocol, so the hosted agent (served by `ResponsesHostServer`) behaves identically to callers regardless of the mode.
+>| Client talks to | `FoundryChatClient` → project endpoint | `OpenAIChatClient` → `<gateway>/responses` |
+>| Auth to model | Agent identity holds **Azure AI User** on the Foundry account (module-01 RBAC). It automatically gets the trust in the Foundry project | The **end-caller** Entra token sent in HTTP header such as `Authorization: Bearer eyJ0eXAiOiJ...`. **APIM** validates the call via `validate-jwt` policy, and then the APIM re-authenticates to Foundry with its own managed identity which holds Foundry RBAC |
+>| Pros | Fewer hops → lower latency; nothing extra to stand up; simplest RBAC; default policies | Central governance: authentication, rate-limiting, quotas, logging, caching, key rotation; hides the Foundry endpoint; one front door for many callers |
+>| Cons | No central throttling/observability; every caller needs direct Foundry RBAC; endpoint exposed to each client | Extra hop → added latency + APIM cost; requires the token authentication; more moving parts to operate |
+>| Best for | Simple, low-scale agents | Enterprise gateways, many consumers, policy enforcement |
 
 **Replace the `<SN>` placeholder (no need for `direct` mode; REQUIRED for `gateway` mode)**:
 
