@@ -45,15 +45,45 @@ This module **reuses the resources created by Module 1** instead of recreating t
 
 ## One-Command Deployment
 
-> [!important]
+> [!warning]
 > **Choose one deployment path:** use this one-command flow **or** the [Manual Steps](#manual-steps-equivalent-to-deploysh) below. 
 >
 > They are equivalent; **DO NOT** run both.
 
 ```bash
 cd agenthost/module-03
+chmod +x deploy.sh
 ./deploy.sh
 ```
+> [!important]
+> During deployment, the `aks-preview` extension may ask whether to reconcile the AKS cluster with its current settings. Enter `y` and press Enter to continue:
+>
+> ```text
+> ==> [4/9] Enabling AKS Pod Sandboxing on an Azure Linux node pool
+> The behavior of this command has been altered by the following extension: aks-preview
+> no argument specified to update would you like to reconcile to current settings? (y/N): y
+> ```
+
+The `deploy.sh` will print output like below to indicate success:
+```text
+==> Solution B (AKS + agent-sandbox) deployed, reusing Module 1 resources.
+    SN            : acf0a3
+    AKS           : aks-agenthost-acf0a3
+    Namespace     : agent
+    Kata pool     : kata (Standard_D4s_v3, AzureLinux, KataVmIsolation)
+    agent-sandbox : v0.5.2 (ns agent-sandbox-system)
+    ACR           : acragenthostacf0a3.azurecr.io
+    APIM          : https://apim-agenthost-acf0a3.azure-api.net/foundry
+
+NAME                                 READY   REASON              AGE
+sandbox.agents.x-k8s.io/agent-host   True    DependenciesReady   30s
+
+NAME             READY   STATUS    RESTARTS   AGE
+pod/agent-host   1/1     Running   0          31s
+```
+
+After `deploy.sh` completes, in the resource group you will see your AKS cluster is created:
+![module-03-aks-created](../pic/module-03-aks-created.png)
 
 > [!note]
 > `deploy.sh` makes the following key changes:
@@ -64,13 +94,17 @@ cd agenthost/module-03
 > 4. Install the `agent-sandbox` CRD and controller, which manage Sandbox creation and lifecycle transitions such as running and suspended states.
 > 5. Create the runtime configuration and deploy the `agent-host` Sandbox, its Workload Identity service account, and Services. The resulting pod runs on the Kata node pool and connects to the existing Blob Storage, APIM gateway, and Foundry project.
 
+
 > [!IMPORTANT]
 > To construct the agent-sandbox release manifest URL, the `deploy.sh` sets the `AGENT_SANDBOX_VERSION` to a 
 > default value which could not be the up-to-date version or fit for your needs.
 > You can override the `AGENT_SANDBOX_VERSION` value to a release tag. Check the available value from
 > https://github.com/kubernetes-sigs/agent-sandbox/releases.
 
-After `deploy.sh` completes, continue to [Configure Blob Private Link](#configure-blob-private-link) only if your Storage account has public network access disabled.
+Next:
+
+- If your Storage account has public network access disabled, continue to [Configure Blob Private Link](#configure-blob-private-link).
+- Otherwise, go directly to [Verify](#verify).
 
 ---
 
@@ -270,6 +304,7 @@ In the Azure portal, open the storage account and confirm that the private endpo
 > space and creates a subnet for the private endpoint.
 
 ---
+<a id="verify"></a>
 
 ## Verify
 
