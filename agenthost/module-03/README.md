@@ -109,9 +109,10 @@ Next:
 ---
 
 ## Manual Steps (equivalent to deploy.sh)
-> [!important]
+> [!warning]
 > **Alternative to One-Command Deployment:** follow these steps only if you chose
 > the manual deployment path.
+>
 > **Do not run them after `./deploy.sh`**.
 
 ### Step 1 — Get the deployment suffix (SN)
