@@ -199,7 +199,7 @@ az deployment sub show \
 
 ## Step 3 — Verify APIM as a standalone gateway
 
-In the resource group, click the APIM and enter the APIM portal, you will see the API is added with pointing to the Foundry project endpoint:
+In the resource group, click the APIM and enter the APIM portal, you will see an API `workshop-ai-gateway` is added with pointing to the Foundry project endpoint:
 ![module-01-standalone-gw](../pic/module-01-standalone-gw.png)
 
 There are 2 operations are also defined ( /responses, /get-response), with the inbound processing policies:
