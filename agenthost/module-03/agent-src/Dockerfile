@@ -10,6 +10,7 @@
 FROM python:3.12-slim AS builder
 
 WORKDIR /app
+ENV PIP_ROOT_USER_ACTION=ignore
 COPY requirements.txt ./
 RUN pip install --no-cache-dir --upgrade pip \
  && pip install --no-cache-dir --target /app/deps -r requirements.txt
@@ -18,10 +19,10 @@ RUN pip install --no-cache-dir --upgrade pip \
 FROM python:3.12-slim AS runtime
 
 # Azure CLI is required by the preStop lifecycle hook (blob upload via az login).
-RUN apt-get update \
- && apt-get install -y --no-install-recommends curl ca-certificates \
- && curl -sL https://aka.ms/InstallAzureCLIDeb | bash \
- && apt-get clean && rm -rf /var/lib/apt/lists/*
+# RUN apt-get update \
+#  && apt-get install -y --no-install-recommends curl ca-certificates \
+#  && curl -sL https://aka.ms/InstallAzureCLIDeb | bash \
+#  && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Non-root user
 RUN groupadd -r agent && useradd -r -g agent agent
@@ -29,8 +30,8 @@ RUN groupadd -r agent && useradd -r -g agent agent
 WORKDIR /app
 COPY --from=builder /app/deps /app/deps
 COPY app/ ./app/
-COPY app/.env ./app/.env
-COPY lifecycle-hook.sh /app/lifecycle-hook.sh
+#COPY app/.env ./app/.env
+COPY lifecycle-hook.sh ./lifecycle-hook.sh
 RUN chmod +x /app/lifecycle-hook.sh
 
 ENV PYTHONPATH="/app/deps" \

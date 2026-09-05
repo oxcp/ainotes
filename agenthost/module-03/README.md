@@ -36,10 +36,10 @@ This module **reuses the resources created by Module 1** instead of recreating t
 > **Run all commands in this README from the module root directory (`agenthost/module-03/`).**
 
 - **Module 1 deployed** (Blob, APIM, ACR, UAMI) — `deploymentSN` tag present on the RG
-- `az`, `kubectl`, and Docker installed and logged in (`az login`)
+- `az` and `kubectl` installed, with Azure CLI logged in (`az login`)
 - Azure CLI `2.80.0+` for AKS Pod Sandboxing support
 - Permission to create the AKS cluster, node pools, federated identity credential, and role assignments. Role assignment creation requires `Microsoft.Authorization/roleAssignments/write` (for example, **Owner**, or **Contributor** plus **Role Based Access Control Administrator**).
-- Permission to push images to the Module 1 ACR (`Microsoft.ContainerRegistry/registries/push/write`), normally granted through **AcrPush** on that registry.
+- Permission to run an ACR quick build and push its result to the Module 1 ACR. **Contributor** on the registry is sufficient; custom roles must include the ACR build and image push actions.
 
 ---
 
@@ -48,7 +48,7 @@ This module **reuses the resources created by Module 1** instead of recreating t
 > [!important]
 > **Choose one deployment path:** use this one-command flow **or** the [Manual Steps](#manual-steps-equivalent-to-deploysh) below. 
 >
-> They are equivalent; <span style="color: red;"><strong>DO NOT</strong></span> run both.
+> They are equivalent; **DO NOT** run both.
 
 ```bash
 cd agenthost/module-03
@@ -59,7 +59,7 @@ cd agenthost/module-03
 > `deploy.sh` performs the following steps end to end:
 >
 > 1. Read `deploymentSN` (`SN`) and the deployment location from the Module 1 resource group. Use the suffix to resolve the existing ACR, UAMI, Storage account, APIM instance, and Foundry project, and derive the AKS cluster name `aks-agenthost-<SN>`.
-> 2. Create `agent-src/app/.env` from `.env.example`, replace its `<SN>` placeholder, sign in to the existing ACR `acragenthost<SN>`, then build and push `agent-host:<IMAGE_TAG>` from the `agent-src/` build context.
+> 2. Create `agent-src/app/.env` from `.env.example`, replace its `<SN>` placeholder, then use an ACR quick build to build and push `agent-host:<IMAGE_TAG>` from the `agent-src/` build context. No local Docker daemon is required.
 > 3. Deploy `aks.bicep` into the Module 1 resource group. The template creates the baseline AKS cluster with OIDC and Workload Identity enabled, federates the Module 1 UAMI with the `agent-sa` Kubernetes service account, grants the AKS kubelet identity `AcrPull` on the existing ACR, and grants the UAMI `Storage Blob Data Contributor` on the existing Storage account.
 > 4. Reuse the configured `kata` node pool if it already exists; otherwise, create an autoscaling Azure Linux user node pool with `KataVmIsolation`, the `kata=true:NoSchedule` taint, and the `kata-containers=true` label. Update AKS, retrieve its credentials, and verify that the `kata-vm-isolation` RuntimeClass is available.
 > 5. Install the selected `agent-sandbox` release's combined core-and-extensions manifest, wait for the `Sandbox` CRD to become established, and wait for the controller pod in `agent-sandbox-system` to become ready.
@@ -105,10 +105,12 @@ SERVICE_ACCOUNT="agent-sa"
 cp agent-src/app/.env.example agent-src/app/.env
 sed -i "s|<SN>|${SN}|g" agent-src/app/.env
 
-az acr login --name "$ACR_NAME"
-# Build context is ./agent-src (app + Dockerfile + lifecycle hook)
-docker build -t "${ACR_NAME}.azurecr.io/agent-host:latest" agent-src/
-docker push "${ACR_NAME}.azurecr.io/agent-host:latest"
+# Build context is ./agent-src (app + Dockerfile + lifecycle hook).
+# ACR builds the image remotely and pushes it to this registry.
+az acr build \
+  --registry "$ACR_NAME" \
+  --image "agent-host:latest" \
+  agent-src/
 ```
 > [!tip]
 > The agent application lives in [`agent-src/`](./agent-src/README.md). It is a simple reflection-loop agent that demonstrates:

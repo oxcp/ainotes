@@ -12,7 +12,7 @@
 # Usage: ./deploy.sh
 # Env overrides: RESOURCE_GROUP, LOCATION, NAMESPACE, SERVICE_ACCOUNT, IMAGE_TAG,
 #                KATA_NODEPOOL_NAME, KATA_NODE_VM_SIZE, AGENT_SANDBOX_VERSION
-# Prerequisites: Module 1 deployed; Docker, kubectl, az installed.
+# Prerequisites: Module 1 deployed; kubectl and az installed.
 
 set -euo pipefail
 
@@ -59,10 +59,12 @@ echo "    ACR=$ACR_NAME  UAMI=$IDENTITY_NAME  Storage=$STORAGE_ACCOUNT  APIM=$AP
 echo "==> [2/9] Building and pushing the agent image to the EXISTING ACR"
 cp agent-src/app/.env.example agent-src/app/.env
 sed -i "s|<SN>|${SN}|g" agent-src/app/.env
-# Build context is ./agent-src (contains the app, Dockerfile, and lifecycle hook).
-az acr login --name "$ACR_NAME"
-docker build -t "${ACR_NAME}.azurecr.io/agent-host:${IMAGE_TAG}" agent-src/
-docker push "${ACR_NAME}.azurecr.io/agent-host:${IMAGE_TAG}"
+# Build remotely in ACR so the deployment does not require a local Docker daemon.
+# The build context contains the app, Dockerfile, and lifecycle hook.
+az acr build \
+  --registry "$ACR_NAME" \
+  --image "agent-host:${IMAGE_TAG}" \
+  agent-src/
 
 echo "==> [3/9] Deploying baseline AKS (reusing ACR/UAMI/Storage) via Bicep"
 az deployment group create \

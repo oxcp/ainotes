@@ -4,7 +4,7 @@
 set -u
 
 MIN_AZ_VERSION="2.80.0"
-TOTAL_CHECKS=15
+TOTAL_CHECKS=14
 CURRENT_CHECK=0
 RESOURCE_GROUP="${RESOURCE_GROUP:-rg-agenthost-workshop}"
 
@@ -52,6 +52,12 @@ declare -a REQUIRED_DEPLOYMENT_ACTIONS=(
   "Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials/write"
   "Microsoft.App/SandboxGroups/write"
   "Microsoft.Authorization/roleAssignments/write"
+)
+declare -a REQUIRED_ACR_BUILD_ACTIONS=(
+  "Microsoft.ContainerRegistry/registries/read"
+  "Microsoft.ContainerRegistry/registries/listBuildSourceUploadUrl/action"
+  "Microsoft.ContainerRegistry/registries/scheduleRun/action"
+  "Microsoft.ContainerRegistry/registries/push/write"
 )
 
 add_result() {
@@ -273,23 +279,7 @@ else
   add_result "$GROUP_MODULE_03" "kubectl installed" "Failed" "kubectl was not found" "https://kubernetes.io/docs/tasks/tools/#kubectl"
 fi
 
-show_progress "Docker installation"
-DOCKER_VERSION=""
-if command -v docker >/dev/null 2>&1; then
-  DOCKER_VERSION="$(docker --version 2>/dev/null | sed -n 's/^Docker version \([^,]*\).*/\1/p')"
-fi
-
-if [[ -n "$DOCKER_VERSION" ]]; then
-  if docker info >/dev/null 2>&1; then
-    add_result "$GROUP_MODULE_03" "Docker installed and running" "Pass" "Docker version: $DOCKER_VERSION; daemon is running" ""
-  else
-    add_result "$GROUP_MODULE_03" "Docker installed and running" "Failed" "Docker version: $DOCKER_VERSION; daemon is not running or not reachable" "https://docs.docker.com/config/daemon/start/"
-  fi
-else
-  add_result "$GROUP_MODULE_03" "Docker installed and running" "Failed" "Docker version: not detected; CLI is not installed or not available" "https://docs.docker.com/engine/install/"
-fi
-
-show_progress "ACR image push permission"
+show_progress "ACR remote build permissions"
 ACR_ID=""
 ACR_PERMISSION_BLOCKS=""
 if $AZ_LOGGED_IN; then
@@ -303,14 +293,21 @@ if $AZ_LOGGED_IN; then
   fi
 fi
 
+MISSING_ACR_BUILD_ACTIONS=()
+if [[ -n "$ACR_PERMISSION_BLOCKS" ]]; then
+  for required_action in "${REQUIRED_ACR_BUILD_ACTIONS[@]}"; do
+    has_effective_permission "$required_action" "$ACR_PERMISSION_BLOCKS" || MISSING_ACR_BUILD_ACTIONS+=("$required_action")
+  done
+fi
+
 if [[ -z "$ACR_ID" ]]; then
-  add_result "$GROUP_MODULE_03" "ACR image push permission" "Skipped" "No container registry was found in $RESOURCE_GROUP; check again after deploying Module 01" ""
+  add_result "$GROUP_MODULE_03" "ACR remote build permissions" "Skipped" "No container registry was found in $RESOURCE_GROUP; check again after deploying Module 01" ""
 elif [[ -z "$ACR_PERMISSION_BLOCKS" ]]; then
-  add_result "$GROUP_MODULE_03" "ACR image push permission" "Failed" "Could not read effective permissions for the workshop registry" "https://learn.microsoft.com/azure/container-registry/container-registry-roles"
-elif has_effective_permission "Microsoft.ContainerRegistry/registries/push/write" "$ACR_PERMISSION_BLOCKS"; then
-  add_result "$GROUP_MODULE_03" "ACR image push permission" "Pass" "Microsoft.ContainerRegistry/registries/push/write is allowed" ""
+  add_result "$GROUP_MODULE_03" "ACR remote build permissions" "Failed" "Could not read effective permissions for the workshop registry" "https://learn.microsoft.com/azure/container-registry/container-registry-roles"
+elif ((${#MISSING_ACR_BUILD_ACTIONS[@]} == 0)); then
+  add_result "$GROUP_MODULE_03" "ACR remote build permissions" "Pass" "All ${#REQUIRED_ACR_BUILD_ACTIONS[@]} required ACR build and push actions are allowed" ""
 else
-  add_result "$GROUP_MODULE_03" "ACR image push permission" "Failed" "Microsoft.ContainerRegistry/registries/push/write is not allowed" "https://learn.microsoft.com/azure/container-registry/container-registry-roles"
+  add_result "$GROUP_MODULE_03" "ACR remote build permissions" "Failed" "Missing ${#MISSING_ACR_BUILD_ACTIONS[@]} required ACR action(s); Contributor on the registry is sufficient" "https://learn.microsoft.com/azure/container-registry/container-registry-roles"
 fi
 
 show_progress "Azure CLI support for AKS Pod Sandboxing"
@@ -379,6 +376,11 @@ print_group() {
           printf -- '- Missing ARM action: %s\n' "$missing_action"
         done
         printf -- '- Permission guidance: %s\n' "${LINKS[$index]}"
+      elif [[ "${ITEMS[$index]}" == "ACR remote build permissions" && ${#MISSING_ACR_BUILD_ACTIONS[@]} -gt 0 ]]; then
+        for missing_action in "${MISSING_ACR_BUILD_ACTIONS[@]}"; do
+          printf -- '- Missing ACR action: %s\n' "$missing_action"
+        done
+        printf -- '- Assign Contributor at registry scope, or an equivalent custom role: %s\n' "${LINKS[$index]}"
       else
         printf -- '- %s: %s\n' "${ITEMS[$index]}" "${LINKS[$index]}"
       fi
