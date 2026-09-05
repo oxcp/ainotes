@@ -102,26 +102,21 @@ Find the line:
 
 ```yaml
       - name: MODEL_ROUTING
-        value: "direct" # allowed values: "gateway" or "direct"
+        value: "gateway" # allowed values: "gateway" or "direct"
 ```
 
-You can keep it as `"direct"` (default, simpler, lower latency) or change it to `"gateway"` (centralized governance via APIM):
+The supported values are `"gateway"` and `"direct"`. Keep `"gateway"` for the default, centrally governed route through APIM, or change it to `"direct"` for the simpler, lower-latency route. If `MODEL_ROUTING` is not set, the agent also defaults to `"gateway"`:
 
+- `"gateway"` (default) — agent calls through the module-01 APIM standalone AI gateway
 - `"direct"` — agent calls the Foundry project endpoint directly
-- `"gateway"` — agent calls through the module-01 APIM standalone AI gateway
 
-For gateway mode:
-```yaml
-      - name: MODEL_ROUTING
-        value: "gateway"
-```
 > [!TIP]
 > `direct` and `gateway` represent two different request paths to the LLM:
 > - `direct`: Agent → Foundry project endpoint → APIM Foundry native AI gateway → LLM deployment
 > - `gateway`: Agent → APIM standalone AI gateway (`/foundry`) → Foundry project endpoint → LLM deployment
 >
 > Comparison for the two paths:
->| Aspect | `direct` (default) | `gateway` |
+>| Aspect | `direct` | `gateway` (default) |
 >|---|---|---|
 >| Client talks to | `FoundryChatClient` → project endpoint | `OpenAIChatClient` → `<gateway>/responses` |
 >| Auth to model | Agent identity holds **Azure AI User** on the Foundry account (module-01 RBAC). It automatically gets the trust in the Foundry project | The **end-caller** Entra token sent in HTTP header such as `Authorization: Bearer eyJ0eXAiOiJ...`. **APIM** validates the call via `validate-jwt` policy, and then the APIM re-authenticates to Foundry with its own managed identity which holds Foundry RBAC |

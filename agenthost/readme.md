@@ -42,6 +42,8 @@ bash check-prerequisites.sh
 The checker groups the results by module, clearly identifies passed and failed requirements, and provides a remediation link for each failed check.
 
 The output will look similar to the following:
+> [!TIP]
+> The example below has unmeet prerequisites.
 
 ```text
 Agent Hosting on Azure Workshop - Prerequisite Check
@@ -81,7 +83,10 @@ Prerequisite                             | Result     | Details
 Azure Developer CLI installed            | Pass       | Installed: 1.27.0
 Active azd login                         | Pass       | azd authentication is active
 Microsoft Foundry azd extension          | Pass       | microsoft.foundry is installed
-Foundry User role                        | Pass       | Role assignment found for the current subscription
+Foundry User role                        | Failed     | Role assignment not found for the current subscription
+
+Fix suggestion:
+- Foundry User role: https://learn.microsoft.com/azure/ai-foundry/concepts/rbac-azure-ai-foundry
 
 Module 03
 Prerequisite                             | Result     | Details
@@ -98,25 +103,23 @@ Module 04
 Prerequisite                             | Result     | Details
 -----------------------------------------+------------+-----------------------------------------
 Container Apps preview extension         | Pass       | containerapp 1.3.0b4 (preview enabled)
-SandboxGroup Data Owner role             | Pass       | Role assignment found for the current subscription
+SandboxGroup Data Owner role             | Failed     | Role assignment not found for the current subscription
 
-Summary: 13 passed, 1 skipped, 1 failed
+Fix suggestion:
+- SandboxGroup Data Owner role: https://learn.microsoft.com/azure/container-apps/sandboxes
+
+Summary: 11 passed, 1 skipped, 3 failed
 Workshop readiness: Ready to start.
+Module notice: Resolve the failed Module 02 prerequisite(s) before starting that module.
 Module notice: Resolve the failed Module 03 prerequisite(s) before starting that module.
+Module notice: Resolve the failed Module 04 prerequisite(s) before starting that module.
 Module notice: Re-run this check after Module 01 to validate the skipped ACR permission before Module 03.
 ```
-
-Before Module 01 creates the workshop container registry, the ACR image push permission check is shown as `Skipped` and does not cause the checker to fail. Run the checker again after Module 01 to validate push access before starting Module 03.
-
-When there are no failed checks and ACR is the only skipped check, the final result confirms that you can start the workshop:
-
-```text
-Summary: 14 passed, 1 skipped, 0 failed
-Workshop readiness: Ready to start.
-Module notice: Re-run this check after Module 01 to validate the skipped ACR permission before Module 03.
-```
-
-The workshop readiness decision uses only the common and Module 01 checks. A failure that applies only to Module 02, 03, or 04 does not prevent you from starting the workshop; it produces a module-specific notice that must be resolved before you begin that module. The script returns a nonzero exit code only when a common or Module 01 failure prevents the workshop from starting.
+> [!TIP]
+> 1. If **Common prerequisites for all modules** and **Module 01** contain no failed checks, the script reports `Workshop readiness: Ready to start`, and you can begin the workshop.
+> 2. Failed checks under **Module 02** through **Module 04** do not prevent you from starting the workshop. Follow the reported details and fix suggestions, then run `check-prerequisites.sh` again before starting the corresponding module. Begin that module only after all of its prerequisites are satisfied.
+> 3. Before the workshop starts, Azure Container Registry has not yet been deployed, so `check-prerequisites.sh` reports the **ACR image push permission** check as `Skipped`. Run the checker again after completing Module 01 to verify this permission.
+> 4. **Module 03** and **Module 04** share the same Azure Container Registry and container image. Therefore, a deployed and accessible ACR is a prerequisite for both Module 03 and Module 04, even though the ACR permission check is displayed under Module 03.
 
 If the "Workshop deployment permissions" check finds that any actions required for workshop deployment are not permitted, the checker lists each missing ARM action, as shown below:
 
@@ -128,8 +131,6 @@ Fix suggestion:
 - Missing ARM action: Microsoft.ContainerService/managedClusters/write
 - Permission guidance: https://learn.microsoft.com/azure/role-based-access-control/role-assignments-portal-subscription-admin
 ```
-
-If any checks fail, follow the corresponding suggestions to resolve the issues before continuing with the workshop.
 
 ---
 
