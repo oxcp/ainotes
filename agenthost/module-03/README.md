@@ -6,8 +6,9 @@
 
 Deploy agents on **Azure Kubernetes Service (AKS)** using **official AKS Pod Sandboxing** on an **Azure Linux** Kata node pool. **[agent-sandbox](https://github.com/kubernetes-sigs/agent-sandbox)** (a Kubernetes SIG project) manages the agent lifecycle through `Sandbox` custom resources. This is the most controllable and customizable option, supporting both **ToB** scenarios with enterprise-specific technical requirements and **ToC** scenarios that require cost and performance tuning.
 
-> **Note:** Unlike the hosted agent in Solution A, which runs in a Microsoft Foundry managed environment, Solution B hosts the agent in AKS Pod Sandboxing.
-
+> [!Note]
+> Unlike the hosted agent in Solution A, which runs in a Microsoft Foundry managed environment, Solution B hosts the agent in AKS Pod Sandboxing.
+>
 > **Why agent-sandbox?** `agent-sandbox` is a CNCF/Kubernetes SIG project that provides a `Sandbox` CRD and controller for managing isolated, stateful, singleton agent pods with a **stable identity**, **persistent storage**, and **lifecycle management** (create, pause, resume, and hibernate). Its built-in hibernation provides the scale-to-zero mechanism used in this module.
 
 This module **reuses the resources created by Module 1** instead of recreating them and provisions the AKS cluster **in the same resource group**:
@@ -31,8 +32,8 @@ This module **reuses the resources created by Module 1** instead of recreating t
 ---
 
 ## Prerequisites
-
-> **Note:** Run all commands in this README from the module root directory (`agenthost/module-03/`).
+> [!IMPORTANT]
+> **Run all commands in this README from the module root directory (`agenthost/module-03/`).**
 
 - **Module 1 deployed** (Blob, APIM, ACR, UAMI) — `deploymentSN` tag present on the RG
 - `az`, `kubectl`, and Docker installed and logged in (`az login`)
@@ -44,27 +45,30 @@ This module **reuses the resources created by Module 1** instead of recreating t
 
 ## One-Command Deployment
 
-> **Choose one deployment path:** use this one-command flow **or** the
-> [Manual Steps](#manual-steps-equivalent-to-deploysh) below. They are
-> equivalent; do not run both.
+> [!important]
+> **Choose one deployment path:** use this one-command flow **or** the [Manual Steps](#manual-steps-equivalent-to-deploysh) below. 
+>
+> They are equivalent; **Do NOT** run both.
 
 ```bash
 cd agenthost/module-03
 ./deploy.sh
 ```
 
-`deploy.sh` performs the following steps end to end:
+> [!note]
+> `deploy.sh` performs the following steps end to end:
+>
+> 1. Read `deploymentSN` (`SN`) and the deployment location from the Module 1 resource group. Use the suffix to resolve the existing ACR, UAMI, Storage account, APIM instance, and Foundry project, and derive the AKS cluster name `aks-agenthost-<SN>`.
+> 2. Create `agent-src/app/.env` from `.env.example`, replace its `<SN>` placeholder, sign in to the existing ACR `acragenthost<SN>`, then build and push `agent-host:<IMAGE_TAG>` from the `agent-src/` build context.
+> 3. Deploy `aks.bicep` into the Module 1 resource group. The template creates the baseline AKS cluster with OIDC and Workload Identity enabled, federates the Module 1 UAMI with the `agent-sa` Kubernetes service account, grants the AKS kubelet identity `AcrPull` on the existing ACR, and grants the UAMI `Storage Blob Data Contributor` on the existing Storage account.
+> 4. Reuse the configured `kata` node pool if it already exists; otherwise, create an autoscaling Azure Linux user node pool with `KataVmIsolation`, the `kata=true:NoSchedule` taint, and the `kata-containers=true` label. Update AKS, retrieve its credentials, and verify that the `kata-vm-isolation` RuntimeClass is available.
+> 5. Install the selected `agent-sandbox` release's combined core-and-extensions manifest, wait for the `Sandbox` CRD to become established, and wait for the controller pod in `agent-sandbox-system` to become ready.
+> 6. Create or reconcile the `agent` namespace.
+> 7. Create or update the `agent-config` secret with the Module 1 Storage account, `agent-state` Blob container, standalone APIM gateway URL, model deployment name, and Foundry project endpoint.
+> 8. Look up the Module 1 UAMI client ID, copy `agent-sandbox.yaml.example` to `agent-sandbox.yaml`, replace the ACR, image tag, namespace, and identity placeholders, then apply the manifest. This creates the service account, `Sandbox` custom resource, and Services for an agent workload that uses Workload Identity and the `kata-vm-isolation` runtime class.
+> 9. Wait up to three minutes for the `agent-host` pod to become ready, then print the deployment summary and current Sandbox and pod status. A readiness timeout is reported but does not cause `deploy.sh` itself to fail, so use the verification steps below if the pod is not ready yet.
 
-1. Read `deploymentSN` (SN) from the Module 1 resource group tag.
-2. Build and push the agent image to the **existing** ACR, `acragenthost<SN>`.
-3. Deploy `aks.bicep`, which creates the baseline AKS cluster `aks-agenthost-<SN>`, federates the Module 1 UAMI, and grants AcrPull to the kubelet identity and Storage Blob Data Contributor to the UAMI.
-4. Add an Azure Linux `kata` node pool with `KataVmIsolation`, run `az aks update`, and retrieve the AKS credentials.
-5. Install the **agent-sandbox controller** from the release manifest, including the core components and extensions.
-6. Create the `agent` namespace.
-7. Create runtime secrets using the Module 1 Storage account and APIM gateway URL.
-8. Copy `agent-sandbox.yaml.example` to `agent-sandbox.yaml`, replace the placeholders, and deploy the agent as a `Sandbox` custom resource that uses the AKS `kata-vm-isolation` runtime class.
-9. Wait for the Sandbox pod to become ready.
-
+> [!IMPORTANT]
 > To construct the agent-sandbox release manifest URL, the `deploy.sh` sets the `AGENT_SANDBOX_VERSION` to a 
 > default value which could not be the up-to-date version or fit for your needs.
 > You can override the `AGENT_SANDBOX_VERSION` value to a release tag. Check the available value from
@@ -75,7 +79,7 @@ After `deploy.sh` completes, continue to [Configure Blob Private Link](#configur
 ---
 
 ## Manual Steps (equivalent to deploy.sh)
-
+> [!important]
 > **Alternative to One-Command Deployment:** follow these steps only if you chose
 > the manual deployment path.
 > **Do not run them after `./deploy.sh`**.
@@ -106,11 +110,13 @@ az acr login --name "$ACR_NAME"
 docker build -t "${ACR_NAME}.azurecr.io/agent-host:latest" agent-src/
 docker push "${ACR_NAME}.azurecr.io/agent-host:latest"
 ```
-
-> The agent application lives in [`agent-src/`](./agent-src/README.md). It is a simple
-> reflection-loop agent that demonstrates LLM endpoint configuration, `Authorization: Bearer`
-> authentication (using either a static key or Workload Identity), Blob state persistence and
-> recovery, and hibernate/resume recovery. See its README for local-run and API details.
+> [!tip]
+> The agent application lives in [`agent-src/`](./agent-src/README.md). It is a simple reflection-loop agent that demonstrates:
+> - LLM endpoint configuration
+> - `Authorization: Bearer` token authentication
+> - Blob state persistence and recovery
+> - suspend/hibernate/resume recovery
+> - See its README for local-run and API details.
 
 ### Step 3 — Deploy the baseline AKS cluster (reusing Module 1 resources)
 
@@ -200,15 +206,25 @@ disabled. In that case, the AKS-managed VNet needs private connectivity to the B
 before the agent can read or write its persisted state. If public network access is enabled,
 this section is optional and you can skip this section if you want.
 
-> **Note:** Azure Policy may enforce this Storage account setting in your environment.
+> [!tip]
+> **Azure Policy may enforce this Storage account setting in your environment.**
 
 Run the following script to establish private connectivity between the AKS-managed VNet and the storage account:
 
 ```bash
 ./deploy-storage-private-link.sh
 ```
-
-> The script automatically detects the AKS-managed VNet name and asks for confirmation before continuing. You can find the AKS-managed VNet name in the AKS resource group `$RESOURCE_GROUP`.
+> [!note]
+> `deploy-storage-private-link.sh` performs the following work:
+>
+> 1. Reads `deploymentSN` from the workshop resource group (`$RESOURCE_GROUP`) and derives the AKS cluster and Module 1 Storage account names. It then queries AKS for its separate **node resource group**.
+> 2. Selects the AKS VNet. If `VNET_NAME` is provided, the script uses it. Otherwise, it reads the VNet from the AKS subnet resource ID when available. For an AKS-managed VNet whose `vnetSubnetId` is empty, it selects the first VNet in the AKS node resource group and asks you to confirm before continuing.
+> 3. Reads the selected VNet's address spaces and all existing subnet prefixes, then finds the first available, non-overlapping `/24` CIDR block. The script uses `snet-private-endpoints` as the dedicated Private Endpoint subnet name unless `PRIVATE_ENDPOINT_SUBNET_NAME` is overridden.
+> 4. Reuses the dedicated subnet if it already exists. Otherwise, it creates the subnet in the AKS-managed VNet and disables Private Endpoint network policies on it.
+> 5. Deploys `storage-private-link.bicep` to the workshop resource group. The template creates a Blob Private Endpoint for the existing Module 1 Storage account, the `privatelink.blob.core.windows.net` Private DNS zone, a link from that zone to the AKS-managed VNet, and a Private DNS zone group on the endpoint.
+> 6. After deployment, workloads in the AKS VNet continue using the standard `https://<storage-account>.blob.core.windows.net` hostname. Private DNS resolves that hostname to the Blob Private Endpoint's private IP.
+>
+> The VNet and dedicated subnet are in the **AKS node resource group**, while the Private Endpoint and Private DNS resources are deployed in the **workshop resource group**. You can find the node resource group name on the AKS resource's **Properties** page or by running `az aks show -g "$RESOURCE_GROUP" -n "aks-agenthost-${SN}" --query nodeResourceGroup -o tsv`.
 
 If the script does not select the correct AKS-managed VNet, answer **"N"** to stop it, then provide the VNet name explicitly when you run the script:
 
@@ -241,7 +257,8 @@ storage-private-link-f28a14  Succeeded  2026-08-21T11:57:12.610428+00:00  Increm
 In the Azure portal, open the storage account and confirm that the private endpoint was added:
 ![module-03-blob-private-endpoint](../pic/module-03-blob-private-endpoint.png)
 
-> **Note:** The script creates the subnet in the AKS-managed VNet, then
+> [!note]
+> The script creates the subnet in the AKS-managed VNet, then
 > deploys the Private Endpoint and Private DNS resources in the workshop
 > resource group `$RESOURCE_GROUP`.
 > 
@@ -301,13 +318,14 @@ service/agent-host-lb   LoadBalancer   10.0.164.26   135.**.**.251   80:32234/TC
 ```
 Open `http://<EXTERNAL-IP>` in your browser. The chat window should appear. Ask several questions to confirm that the agent is working:
 
-> ***Tip: Make sure the URL includes `http://`. Otherwise, the browser may default to HTTPS, which is not yet implemented by this workshop agent.***
+> [!tip]
+> **Make sure the URL includes `http://`. Otherwise, the browser may default to HTTPS, which is not yet implemented by this workshop agent.***
 
 ![module-03-agent-chat-portal](../pic/module-03-agent-chat-portal.png)
 
 ### Verify chat history persisted to Blob
-
-> **Tip:** If public network access is disabled on your storage account, run the verification below from a jumpbox that can reach the storage account through Private Link.
+> [!important]
+> If public network access is disabled on your storage account, run the verification below from a jumpbox that can reach the storage account through Private Link.
 > The easiest approach in this workshop is to reuse the private connectivity you just created:
 > 1. Create a separate subnet in the AKS-managed VNet.
 > 2. Create a jumpbox VM in that subnet. The jumpbox will have a NIC and private IP in the subnet.
@@ -425,8 +443,8 @@ kubectl exec -it -n "$NAMESPACE" normal-pod -- uname -r
 ```bash
 kubectl delete pod normal-pod -n "$NAMESPACE"
 ```
-
-> **Note:** If the agent pod reports a different kernel from the normal pod and uses `runtimeClassName: kata-vm-isolation`, the workload is running inside AKS Pod Sandboxing.
+> [!tip]
+> If the agent pod reports a different kernel from the normal pod and uses `runtimeClassName: kata-vm-isolation`, it confirms that the workload is running inside AKS Pod Sandboxing.
 
 ### Verify that the agent is registered in Foundry as a "prompt" agent
 
@@ -610,8 +628,8 @@ Anytime you can inspect the Sandbox lifecycle status with the following command:
 # Inspect the Sandbox status / lifecycle fields
 kubectl describe sandbox agent-host -n "$NAMESPACE"
 ```
-
-> Tip: For more detail of the agent-sandbox on agent lifecycle management, refer to the [agent-sandbox docs](https://agent-sandbox.sigs.k8s.io/docs/) for pause/resume, scheduled deletion, and `SandboxWarmPool` patterns.
+> [!tip]
+> For more detail of the agent-sandbox on agent lifecycle management, refer to the [agent-sandbox docs](https://agent-sandbox.sigs.k8s.io/docs/) for pause/resume, scheduled deletion, and `SandboxWarmPool` patterns.
 
 ---
 
