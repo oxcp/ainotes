@@ -243,7 +243,7 @@ You can create a new version of the hosted agent in the Foundry portal and chang
   > [!IMPORTANT]
   > For `direct` mode, use the **FOUNDRY_PROJECT_ENDPOINT**. `FoundryChatClient` uses this project endpoint to call the model through the Responses protocol.
   >
-  > For `gateway` mode, use the base APIM gateway URL ending in `/foundry`. Do not append `/openai/v1` or `/responses`; The APIM will handle the API path when works as standalone gateway.
+  > For `gateway` mode, use the **APIM_GATEWAY_URL**. It ends in `/foundry`. Do not append `/openai/v1` or `/responses`. The APIM will handle the API path when works as standalone gateway.
 
 4. Keep `AI_MODEL_DEPLOYMENT_NAME=gpt-5.4-mini`, save the configuration, and it will create a new agent version.
 
@@ -251,8 +251,8 @@ You can create a new version of the hosted agent in the Foundry portal and chang
 ![module-02-hosted-agent-edit-envvars-new-version](../pic/module-02-hosted-agent-edit-envvars-new-version.png)
 
 6. Send test messages to try the new version. Review the hosted-agent log stream to confirm the selected routing path:
-  - `direct`: Agent → Foundry project endpoint → Foundry native AI gateway (APIM) → model deployment
-  - `gateway`: Agent → standalone APIM gateway → Foundry project endpoint → model deployment
+  - `direct`: Agent → POST to Foundry project endpoint
+  - `gateway`: Agent → POST to standalone APIM gateway
 
 If you are using `direct` mode, the Playground log stream shows that model calls are routed through the PROJECT endpoint:
 ![module-02-hosted-agent-direct-via-project-endpoint](../pic/module-02-hosted-agent-direct-via-project-endpoint.png)
