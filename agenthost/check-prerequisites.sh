@@ -394,9 +394,17 @@ print_group "$GROUP_MODULE_04"
 
 FAILED_COUNT=0
 SKIPPED_COUNT=0
+START_BLOCKER_COUNT=0
 for result in "${RESULTS[@]}"; do
   [[ "$result" == "Failed" ]] && ((FAILED_COUNT += 1))
   [[ "$result" == "Skipped" ]] && ((SKIPPED_COUNT += 1))
+done
+
+for index in "${!RESULTS[@]}"; do
+  if [[ "${RESULTS[$index]}" == "Failed" ]] &&
+    [[ "${RESULT_GROUPS[$index]}" == "$GROUP_COMMON" || "${RESULT_GROUPS[$index]}" == "$GROUP_MODULE_01" ]]; then
+    ((START_BLOCKER_COUNT += 1))
+  fi
 done
 
 printf '\nSummary: %b%d passed%b, %b%d skipped%b, %b%d failed%b\n' \
@@ -404,6 +412,29 @@ printf '\nSummary: %b%d passed%b, %b%d skipped%b, %b%d failed%b\n' \
   "$YELLOW" "$SKIPPED_COUNT" "$RESET" \
   "$RED" "$FAILED_COUNT" "$RESET"
 
-if ((FAILED_COUNT > 0)); then
+if ((START_BLOCKER_COUNT > 0)); then
+  printf '%bWorkshop readiness: Not ready to start. Resolve the failed Common and Module 01 prerequisite(s) above.%b\n' "$RED" "$RESET"
+else
+  printf '%bWorkshop readiness: Ready to start.%b\n' "$GREEN" "$RESET"
+fi
+
+for group in "$GROUP_MODULE_02" "$GROUP_MODULE_03" "$GROUP_MODULE_04"; do
+  group_has_failures=false
+  for index in "${!RESULTS[@]}"; do
+    if [[ "${RESULT_GROUPS[$index]}" == "$group" && "${RESULTS[$index]}" == "Failed" ]]; then
+      group_has_failures=true
+      break
+    fi
+  done
+  if $group_has_failures; then
+    printf '%bModule notice: Resolve the failed %s prerequisite(s) before starting that module.%b\n' "$YELLOW" "$group" "$RESET"
+  fi
+done
+
+if ((SKIPPED_COUNT > 0)); then
+  printf '%bModule notice: Re-run this check after Module 01 to validate the skipped ACR permission before Module 03.%b\n' "$YELLOW" "$RESET"
+fi
+
+if ((START_BLOCKER_COUNT > 0)); then
   exit 1
 fi

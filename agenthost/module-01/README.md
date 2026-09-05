@@ -37,7 +37,7 @@ The Foundry account ships with:
 ---
 
 ## Prerequisites
-
+> [!IMPORTANT]
 > **Note:** Run all commands in this README from this module's root directory (`agenthost/module-01/`).
 
 - Complete the [common workshop prerequisites](../readme.md#prerequisites-before-workshop).
@@ -64,7 +64,7 @@ Deploy everything with a **single command** by using the wrapper script (recomme
 chmod +x setup.sh
 ./setup.sh
 ```
-
+> [!TIP]
 > Before running `setup.sh`, you can optionally override parameters in `main.bicep` as needed.
 
 Or run the equivalent Bicep deployment manually:
@@ -82,17 +82,18 @@ az deployment sub create \
       deploymentSN="$SN"
 
 ```
+> [!NOTE]
 > The Bicep deployment, whether run directly or through `setup.sh`, may take several minutes to complete. After a successful deployment, you will see output similar to the following:
 ```
-==> Deployment 'main-****' complete. Outputs:
+==> Deployment 'main-<deploymentSN>' complete. Outputs:
 {
   "acrLoginServer": {
     "type": "String",
-    "value": "acragenthost****.azurecr.io"
+    "value": "acragenthost<deploymentSN>.azurecr.io"
   },
   "acrName": {
     "type": "String",
-    "value": "acragenthost****"
+    "value": "acragenthost<deploymentSN>"
   },
   "apimFoundryBackendName": {
     "type": "String",
@@ -100,11 +101,11 @@ az deployment sub create \
   },
   "apimFoundryGatewayUrl": {
     "type": "String",
-    "value": "https://apim-agenthost-****.azure-api.net/foundry"
+    "value": "https://apim-agenthost-<deploymentSN>.azure-api.net/foundry"
   },
   "apimServiceUrl": {
     "type": "String",
-    "value": "https://apim-agenthost-****.azure-api.net"
+    "value": "https://apim-agenthost-<deploymentSN>.azure-api.net"
   },
   "deploymentStatus": {
     "type": "Object",
@@ -120,11 +121,11 @@ az deployment sub create \
   },
   "foundryProjectEndpoint": {
     "type": "String",
-    "value": "https://foundry-agenthost-****.services.ai.azure.com/api/projects/maf-agent-prj"
+    "value": "https://foundry-agenthost-<deploymentSN>.services.ai.azure.com/api/projects/maf-agent-prj"
   },
   "foundryProjectId": {
     "type": "String",
-    "value": "/subscriptions/********-****-****-****-************/resourceGroups/rg-agenthost-workshop/providers/Microsoft.CognitiveServices/accounts/foundry-agenthost-****/projects/maf-agent-prj"
+    "value": "/subscriptions/<subscription-id>/resourceGroups/rg-agenthost-workshop/providers/Microsoft.CognitiveServices/accounts/foundry-agenthost-<deploymentSN>/projects/maf-agent-prj"
   },
   "foundryProjectName": {
     "type": "String",
@@ -132,19 +133,19 @@ az deployment sub create \
   },
   "foundryResourceName": {
     "type": "String",
-    "value": "foundry-agenthost-****"
+    "value": "foundry-agenthost-<deploymentSN>"
   },
   "identityClientId": {
     "type": "String",
-    "value": "********-****-****-****-************"
+    "value": "<identity-client-id>"
   },
   "keyVaultName": {
     "type": "String",
-    "value": "kv-agenthost-****"
+    "value": "kv-agenthost-<deploymentSN>"
   },
   "keyVaultUri": {
     "type": "String",
-    "value": "https://kv-agenthost-****.vault.azure.net/"
+    "value": "https://kv-agenthost-<deploymentSN>.vault.azure.net/"
   },
   "modelDeploymentName": {
     "type": "String",
@@ -156,11 +157,13 @@ az deployment sub create \
   },
   "storageAccountName": {
     "type": "String",
-    "value": "stcagenthost****"
+    "value": "stcagenthost<deploymentSN>"
   }
 }
-
-Next: proceed to module-02 to deploy the hosted agent with azd.
+Template deployed successfully.
+Next:
+1. Verify the APIM works as standalone gateway by accessing the API through the APIM endpoint.
+2. Add the APIM to the Foundry project as a Foundry Native AI Gateway.
 ```
 
 > [!NOTE]

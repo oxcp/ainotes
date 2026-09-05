@@ -101,9 +101,22 @@ Container Apps preview extension         | Pass       | containerapp 1.3.0b4 (pr
 SandboxGroup Data Owner role             | Pass       | Role assignment found for the current subscription
 
 Summary: 13 passed, 1 skipped, 1 failed
+Workshop readiness: Ready to start.
+Module notice: Resolve the failed Module 03 prerequisite(s) before starting that module.
+Module notice: Re-run this check after Module 01 to validate the skipped ACR permission before Module 03.
 ```
 
 Before Module 01 creates the workshop container registry, the ACR image push permission check is shown as `Skipped` and does not cause the checker to fail. Run the checker again after Module 01 to validate push access before starting Module 03.
+
+When there are no failed checks and ACR is the only skipped check, the final result confirms that you can start the workshop:
+
+```text
+Summary: 14 passed, 1 skipped, 0 failed
+Workshop readiness: Ready to start.
+Module notice: Re-run this check after Module 01 to validate the skipped ACR permission before Module 03.
+```
+
+The workshop readiness decision uses only the common and Module 01 checks. A failure that applies only to Module 02, 03, or 04 does not prevent you from starting the workshop; it produces a module-specific notice that must be resolved before you begin that module. The script returns a nonzero exit code only when a common or Module 01 failure prevents the workshop from starting.
 
 If the "Workshop deployment permissions" check finds that any actions required for workshop deployment are not permitted, the checker lists each missing ARM action, as shown below:
 
