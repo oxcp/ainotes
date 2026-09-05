@@ -254,10 +254,10 @@ You can create a new version of the hosted agent in the Foundry portal and chang
   - `direct`: Agent → POST to Foundry project endpoint
   - `gateway`: Agent → POST to standalone APIM gateway
 
-If you are using `direct` mode, the Playground log stream shows that model calls are routed through the PROJECT endpoint:
+If you are using `direct` mode, the Playground log stream shows that model calls are routed through the PROJECT endpoint (see below):
 ![module-02-hosted-agent-direct-via-project-endpoint](../pic/module-02-hosted-agent-direct-via-project-endpoint.png)
 
-If you are using `gateway` mode, the Playground log stream shows that model calls are routed through the APIM URL:
+If you are using `gateway` mode, the Playground log stream shows that model calls are routed through the APIM URL (see below):
 ![module-02-hosted-agent-gateway-via-apim-url](../pic/module-02-hosted-agent-gateway-via-apim-url.png)
 
 The previous agent version remains available, allowing you to switch between versions and compare the two routing modes.
