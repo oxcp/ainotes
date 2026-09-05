@@ -237,14 +237,13 @@ kubectl apply -f agent-sandbox.yaml
 
 Complete this section only when the Module 1 Storage account has public network access disabled.
 
-[!tip]
+> [!tip]
+> **Azure Policy may enforce this Storage account setting in your environment.**
+>
 >You can check it in your storage account portal, go to the **Networking** tab, you will see if your storage account public network access is disabled or not:
 >![module-03-storageaccount-disable-public-network-access](../pic/module-03-storageaccount-disable-public-network-access.png)
 
 If your storage account has public network access disabled, the AKS-managed VNet needs private connectivity to the Blob endpoint before the agent can read or write its persisted state. 
-
-> [!tip]
-> **Azure Policy may enforce this Storage account setting in your environment.**
 
 Run the following script to establish private connectivity between the AKS-managed VNet and the storage account:
 
@@ -259,7 +258,7 @@ The script may ask you to confirm that it detected the correct AKS-managed VNet:
     First VNet in rg-aks-agenthost-acf0a3-nodes: aks-vnet-39076840
 Continue with this VNet? [y/N]: y
 ```
-Verify the VNet name in the AKS node resource group. If the detected VNet is correct, enter **y** to continue. Otherwise, enter **N** to stop the script, then rerun it with the VNet name specified explicitly:
+Verify the VNet name in the **AKS node resource group**. If the detected VNet is correct, enter **y** to continue. Otherwise, enter **N** to stop the script, then rerun it with the VNet name specified explicitly:
 
 ```bash
 VNET_NAME=<aks-vnet-name> ./deploy-storage-private-link.sh
@@ -275,7 +274,7 @@ VNET_NAME=<aks-vnet-name> ./deploy-storage-private-link.sh
 > The VNet and subnet remain in the **AKS node resource group**. The Private Endpoint and Private DNS resources are created in the **workshop resource group**.
 
 
-**Expected output (if you do not provide the VNet name explicitly):**
+**Expected output after `deploy-storage-private-link.sh` completes successfully:**
 
 ```text
     Auto-selected subnet prefix for snet-private-endpoints: 10.225.0.0/24
@@ -314,6 +313,8 @@ In the Azure portal, open the storage account and confirm that the private endpo
 Run the following commands to verify that the Sandbox and its pod are ready, and that the controller is running:
 
 ```bash
+export NAMESPACE="agent"
+
 # The Sandbox CR and its pod
 kubectl get sandbox,pods -n "$NAMESPACE"
 kubectl wait --for=condition=Ready pod -l app=agent-host -n "$NAMESPACE" --timeout=3m
@@ -494,11 +495,11 @@ the type `prompt`:
 
 ### Verify that the agent reloads its state after resuming
 
-In the AKS portal, delete the agent pod:
+In the Azure portal, open the AKS cluster, go to **Workloads**, select the agent pod, and then click **Delete**:
 ![module-03-delete-agent-pod-to-verify-load-state](../pic/module-03-delete-agent-pod-to-verify-load-state.png)
 
-Refresh the agent chat window in the browser. The agent connection will be unavailable temporarily.
-After the agent pod resumes, the previous chat history should load into the chat window again.
+Refresh the agent chat window in your browser. The agent will be temporarily unavailable while the pod restarts.
+After the pod is running again, refresh the page. The previous chat history should be restored.
 
 ### Lifecycle (idle suspend/resume model)
 
@@ -608,6 +609,7 @@ The output indicates:
 3. The Sandbox status is `False/SandboxSuspended`, which means it is not ready.
 
 If you refresh the Agent Chat UI in the browser, it will be unreachable.
+If you refresh the **Workloads -> Pods** in AKS portal, our agent pod `agent-host` dispears. 
 
 Next, resume the pod and Sandbox to simulate traffic returning:
 
@@ -657,7 +659,8 @@ The output indicates:
 2. The Services are running and healthy.
 3. The Sandbox status is `True/DependenciesReady`.
 
-> If you refresh the Agent Chat UI in the browser, it should be available again, with the previous chat history restored.
+> [!tip]
+> If you refresh the Agent Chat UI in the browser, it should be available again, with the previous **chat history restored.**
 
 
 Anytime you can inspect the Sandbox lifecycle status with the following command:
