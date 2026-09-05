@@ -164,15 +164,22 @@ Next: proceed to module-02 to deploy the hosted agent with azd.
 ```
 
 > [!NOTE]
-> **This part is for your reference to understand what are deployed:**
->
->1. **Foundry account** `foundry-agenthost-<deploymentSN>` (kind `AIServices`, `disableLocalAuth: true`) with the project `maf-agent-prj`, the `gpt-5.4-mini` deployment (GlobalStandard, capacity 50), and Defender for AI.
->2. **APIM** `apim-agenthost-<deploymentSN>` is created on the **Basic v2** tier.
->3. **Backend** `foundry-backend` points to the Foundry project endpoint.
->4. **RBAC** grants **Cognitive Services OpenAI User** and **Azure AI User** to the APIM system-assigned managed identity and the module-01 UAMI. Because the Foundry account sets `disableLocalAuth: true`, APIM uses its system-assigned managed identity to obtain an Entra ID token when calling Foundry.
->5. **API** `workshop-ai-gateway` (path `/foundry`) provides the `responses` (`POST /openai/v1/responses`) and `get-response` (`GET /responses/{response-id}`) operations. Its API-level policy validates the caller's Entra ID token with `validate-jwt`, routes the request to the backend, and authenticates to Foundry through `authentication-managed-identity` using the `https://ai.azure.com` resource.
+> **For reference, the template deploys and configures the following resources:**
+> 1. **User-assigned managed identity (UAMI)** for workloads in later modules. It receives access to Foundry inference and the agent-state storage account.
+> 2. **Azure Storage account** using Standard LRS and the Cool access tier, with HTTPS-only access, TLS 1.2, and public blob access disabled. Blob versioning is enabled, and a private `agent-state` container is created for durable agent state.
+> 3. **Azure Key Vault** using the Standard tier, with RBAC authorization, soft delete, purge protection, and public network access enabled.
+> 4. **Azure Container Registry (ACR)** using the Standard tier, with the administrator account disabled.
+> 5. **Microsoft Foundry account** `foundry-agenthost-<deploymentSN>` of kind `AIServices`, with a system-assigned managed identity, local key authentication disabled, project management enabled, and public network access enabled.
+> 6. **Foundry project** `maf-agent-prj`, configured as the account's default and associated project and assigned its own system-assigned managed identity.
+> 7. **Model deployment** `gpt-5.4-mini`, using the specified model version, the Global Standard SKU with capacity 50, automatic upgrades to new default versions, and the `Microsoft.DefaultV2` RAI policy.
+> 8. **Defender for AI**, enabled on the Foundry account after the project is created.
+> 9. **Azure API Management (APIM)** `apim-agenthost-<deploymentSN>` using the Basic v2 tier, with both system-assigned and user-assigned managed identities. TLS 1.0 and TLS 1.1 are disabled.
+> 10. **RBAC assignments** granting **Cognitive Services OpenAI User** and **Azure AI User** on the Foundry account to both the APIM system-assigned managed identity and the module-01 UAMI. The UAMI also receives **Storage Blob Data Contributor** on the storage account.
+> 11. **APIM backend** `foundry-backend`, which points to the Foundry project endpoint and validates the backend TLS certificate and hostname.
+> 12. **APIM API** `workshop-ai-gateway` at path `/foundry`, with subscription keys disabled and two operations: `responses` (`POST /openai/v1/responses`) and `get-response` (`GET /responses/{response-id}`).
+> 13. **APIM API policy** that validates the caller's Entra ID token with `validate-jwt`, selects `foundry-backend`, and authenticates to Foundry as the APIM system-assigned managed identity through `authentication-managed-identity` using the `https://ai.azure.com` resource.
 
-After the template deployment, you can retrieve the key outputs whenver you need:
+After the template deployment, you can retrieve the key outputs whenever needed:
 ```bash
 az deployment sub show \
   --name main-$SN \
@@ -183,7 +190,7 @@ az deployment sub show \
 
 ## Step 3 — Verify APIM as a standalone gateway
 
-Call the model through the gateway by using the `apimFoundryGatewayUrl` output. The caller sends its own Entra ID token; APIM validates the token and forwards the request to Foundry using its managed identity:
+Call the model through the APIM by using the `apimFoundryGatewayUrl` output. The caller sends its own Entra ID token, and APIM validates the token and forwards the request to Foundry using its managed identity:
 
 ```bash
 export SN=$(az group show --resource-group "$RESOURCE_GROUP" --query "tags.deploymentSN" --output tsv 2>/dev/null | tr -d "\r\n" || echo "")
@@ -202,7 +209,7 @@ curl -s -X POST \
 
 ```
 You should see output similar to the following:
-```
+```text
 [
   {
     "type": "message",
@@ -236,7 +243,7 @@ In module-02, agents run as Foundry hosted agents. They can access the project m
 | Standalone gateway | Agent → APIM → Foundry project endpoint → Foundry project models |
 | Foundry native AI gateway | Agent → Foundry project endpoint → Foundry native AI gateway (APIM) → Foundry project models |
 
-> **Tip:**
+> [!TIP]
 >
 > Because Foundry hosted agents run within the Foundry project, they can use the project's trust context to access its model endpoints. You do not need to assign the `Foundry User` role separately to every hosted-agent identity, which simplifies access management.
 >
