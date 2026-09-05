@@ -272,7 +272,7 @@ In module-02, agents run as Foundry hosted agents. They can access the Foundry p
 
 To configure APIM as the Foundry project's native AI gateway, complete the following steps manually:
 
-1. Go to the Microsoft Foundry portal, in the top-left drop down menu, select "View all resources", and then in the resources list enter your project maf-agent-prj whose Parent resource is foundry-agenthost-<SN>.
+1. Go to the Microsoft Foundry portal, in the top-left drop down menu, select "View all resources", and then in the resources list enter your project maf-agent-prj whose Parent resource is `foundry-agenthost-<deploymentSN>`.
 
 ![module-02-resource_list_in_foundry](../pic/module-02-resource_list_in_foundry.png)
 

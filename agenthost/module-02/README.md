@@ -147,7 +147,7 @@ Replace `<SN>` with your deployment suffix. For example, if `SN = "abc123"`, cha
         value: "https://apim-agenthost-abc123.azure-api.net/foundry"
       - name: FOUNDRY_PROJECT_ENDPOINT
         value: "https://foundry-agenthost-abc123.services.ai.azure.com/api/projects/maf-agent-prj"```
-
+```
 Or use bash to replace automatically:
 
 ```bash
