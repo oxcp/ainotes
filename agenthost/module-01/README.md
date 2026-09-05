@@ -163,15 +163,14 @@ az deployment sub create \
 Next: proceed to module-02 to deploy the hosted agent with azd.
 ```
 
-> **No additional action is required for the following resources. This section is for reference only.**
+> [!NOTE]
+> **This part is for your reference to understand what are deployed:**
 >
-The following list summarizes the Foundry stack provisioned by `core.bicep` and how the module-01 API Management instance is configured as a standalone AI gateway:
-
-1. **Foundry account** `foundry-agenthost-<deploymentSN>` (kind `AIServices`, `disableLocalAuth: true`) with the project `maf-agent-prj`, the `gpt-5.4-mini` deployment (GlobalStandard, capacity 50), and Defender for AI.
-2. **APIM** `apim-agenthost-<deploymentSN>` is created on the **Basic v2** tier.
-3. **Backend** `foundry-backend` points to the Foundry project endpoint.
-4. **RBAC** grants **Cognitive Services OpenAI User** and **Azure AI User** to the APIM system-assigned managed identity and the module-01 UAMI. Because the Foundry account sets `disableLocalAuth: true`, APIM uses its system-assigned managed identity to obtain an Entra ID token when calling Foundry.
-5. **API** `workshop-ai-gateway` (path `/foundry`) provides the `responses` (`POST /openai/v1/responses`) and `get-response` (`GET /responses/{response-id}`) operations. Its API-level policy validates the caller's Entra ID token with `validate-jwt`, routes the request to the backend, and authenticates to Foundry through `authentication-managed-identity` using the `https://ai.azure.com` resource.
+>1. **Foundry account** `foundry-agenthost-<deploymentSN>` (kind `AIServices`, `disableLocalAuth: true`) with the project `maf-agent-prj`, the `gpt-5.4-mini` deployment (GlobalStandard, capacity 50), and Defender for AI.
+>2. **APIM** `apim-agenthost-<deploymentSN>` is created on the **Basic v2** tier.
+>3. **Backend** `foundry-backend` points to the Foundry project endpoint.
+>4. **RBAC** grants **Cognitive Services OpenAI User** and **Azure AI User** to the APIM system-assigned managed identity and the module-01 UAMI. Because the Foundry account sets `disableLocalAuth: true`, APIM uses its system-assigned managed identity to obtain an Entra ID token when calling Foundry.
+>5. **API** `workshop-ai-gateway` (path `/foundry`) provides the `responses` (`POST /openai/v1/responses`) and `get-response` (`GET /responses/{response-id}`) operations. Its API-level policy validates the caller's Entra ID token with `validate-jwt`, routes the request to the backend, and authenticates to Foundry through `authentication-managed-identity` using the `https://ai.azure.com` resource.
 
 After the template deployment, you can retrieve the key outputs whenver you need:
 ```bash
