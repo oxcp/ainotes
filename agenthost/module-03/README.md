@@ -56,17 +56,13 @@ cd agenthost/module-03
 ```
 
 > [!note]
-> `deploy.sh` performs the following steps end to end:
+> `deploy.sh` makes the following key changes:
 >
-> 1. Read `deploymentSN` (`SN`) and the deployment location from the Module 1 resource group. Use the suffix to resolve the existing ACR, UAMI, Storage account, APIM instance, and Foundry project, and derive the AKS cluster name `aks-agenthost-<SN>`.
-> 2. Create `agent-src/app/.env` from `.env.example`, replace its `<SN>` placeholder, then use an ACR quick build to build and push `agent-host:<IMAGE_TAG>` from the `agent-src/` build context. No local Docker daemon is required.
-> 3. Deploy `aks.bicep` into the Module 1 resource group. The template creates the baseline AKS cluster with OIDC and Workload Identity enabled, federates the Module 1 UAMI with the `agent-sa` Kubernetes service account, grants the AKS kubelet identity `AcrPull` on the existing ACR, and grants the UAMI `Storage Blob Data Contributor` on the existing Storage account.
-> 4. Reuse the configured `kata` node pool if it already exists; otherwise, create an autoscaling Azure Linux user node pool with `KataVmIsolation`, the `kata=true:NoSchedule` taint, and the `kata-containers=true` label. Update AKS, retrieve its credentials, and verify that the `kata-vm-isolation` RuntimeClass is available.
-> 5. Install the selected `agent-sandbox` release's combined core-and-extensions manifest, wait for the `Sandbox` CRD to become established, and wait for the controller pod in `agent-sandbox-system` to become ready.
-> 6. Create or reconcile the `agent` namespace.
-> 7. Create or update the `agent-config` secret with the Module 1 Storage account, `agent-state` Blob container, standalone APIM gateway URL, model deployment name, and Foundry project endpoint.
-> 8. Look up the Module 1 UAMI client ID, copy `agent-sandbox.yaml.example` to `agent-sandbox.yaml`, replace the ACR, image tag, namespace, and identity placeholders, then apply the manifest. This creates the service account, `Sandbox` custom resource, and Services for an agent workload that uses Workload Identity and the `kata-vm-isolation` runtime class.
-> 9. Wait up to three minutes for the `agent-host` pod to become ready, then print the deployment summary and current Sandbox and pod status. A readiness timeout is reported but does not cause `deploy.sh` itself to fail, so use the verification steps below if the pod is not ready yet.
+> 1. Build the agent image in the existing ACR and push it as `agent-host:<IMAGE_TAG>`. The build runs in ACR, so no local Docker daemon is required.
+> 2. Create the AKS cluster with OIDC and Workload Identity, connect it to the existing ACR and Storage account, and grant the identities the permissions required to pull images and persist agent state.
+> 3. Add an autoscaling Azure Linux node pool with `KataVmIsolation`. This provides the `kata-vm-isolation` runtime used to isolate the agent pod in a lightweight VM.
+> 4. Install the `agent-sandbox` CRD and controller, which manage Sandbox creation and lifecycle transitions such as running and suspended states.
+> 5. Create the runtime configuration and deploy the `agent-host` Sandbox, its Workload Identity service account, and Services. The resulting pod runs on the Kata node pool and connects to the existing Blob Storage, APIM gateway, and Foundry project.
 
 > [!IMPORTANT]
 > To construct the agent-sandbox release manifest URL, the `deploy.sh` sets the `AGENT_SANDBOX_VERSION` to a 
@@ -74,7 +70,7 @@ cd agenthost/module-03
 > You can override the `AGENT_SANDBOX_VERSION` value to a release tag. Check the available value from
 > https://github.com/kubernetes-sigs/agent-sandbox/releases.
 
-After `deploy.sh` completes, continue to [Configure Blob Private Link](#configure-blob-private-link-required-when-storage-public-network-access-is-disabled) only if your Storage account has public network access disabled.
+After `deploy.sh` completes, continue to [Configure Blob Private Link](#configure-blob-private-link) only if your Storage account has public network access disabled.
 
 ---
 
@@ -201,6 +197,8 @@ kubectl apply -f agent-sandbox.yaml
 ```
 
 ---
+<a id="configure-blob-private-link"></a>
+
 ## Configure Blob Private Link (required when your Storage account public network access is disabled)
 
 Complete this section only when the Module 1 Storage account has public network access
