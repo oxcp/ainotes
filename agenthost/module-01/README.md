@@ -269,15 +269,16 @@ In module-02, agents run as Foundry hosted agents. They can access the Foundry p
 To configure APIM as the Foundry project's native AI gateway, complete the following steps manually:
 
 1. Go to the Microsoft Foundry portal, in the top-left drop down menu, select "View all resources", and then in the resources list enter your project maf-agent-prj whose Parent resource is foundry-agenthost-<SN>:
-![module-02-get_prj_endpoint+id_in_foundry](../pic/module-02-get_prj_endpoint+id_in_foundry.png)
+![module-02-resource_list_in_foundry](../pic/module-02-resource_list_in_foundry.png)
+
 2. In the `maf-agent-prj` project panel, go to **"Manage"** in the top meanu bar. In the left panel, open **AI Gateway**.
 3. Select **Add AI Gateway**.
 4. Under **AI Foundry resource**, select the Foundry project created in the previous step, `foundry-agenthost-<deploymentSN>`, from the drop-down list.
 5. Choose **Use existing**.
 6. Select the deployed APIM `apim-agenthost-<deploymentSN>` instance, then click **Add**.
-7. Open the gateway entry and verify that the Foundry project is automatically added to the gateway.
+7. In the result **"Gateway name"** list, open the gateway entry and verify that the Foundry project is automatically added to the gateway.
 ![module-01-AIGW-added](../pic/module-01-AIGW-added.png)
-8. Open the APIM instance in the Azure portal and verify that a new API was added automatically:
+8. Open the APIM instance in the Azure portal and verify that a new API was added automatically. This API will only be used when the APIM works as Foundry native AI gateway in module-02:
 ![module-01-AIGW-added-APIM-API-added](../pic/module-01-AIGW-added-APIM-API-added.png)
 
 ---
