@@ -127,7 +127,25 @@ For gateway mode:
         value: "gateway"
 ```
 
-**Replace the `<SN>` placeholder (optional; required only for `gateway` mode)**:
+> **Tip:** `direct` and `gateway` represent two different request paths to the LLM:
+> - `direct`: Agent → Foundry project endpoint → APIM Foundry native AI gateway → LLM deployment
+> - `gateway`: Agent → APIM standalone AI gateway (`/foundry`) → Foundry project endpoint → LLM deployment
+>
+> Direct mode provides a simpler path with lower latency. Gateway mode adds a centralized layer for authentication, governance, policy enforcement, monitoring, and routing.
+>
+> In `gateway` mode the Foundry hosted agent calls APIM explicitly, and then the APIM route the calls to Foundry. In the `gateway` mode, you have the APIM as the central governance point for all LLM calls.
+>
+> In module-01 we have already configured the APIM to support both request paths.
+>
+> The two modes also work in different ways on calls authentication:
+>
+>| | Who authenticates the **caller** | What APIM sees inbound |
+>|---|---|---|
+>| `gateway` | **APIM** (`validate-jwt` on the `foundry-ai-gateway` API) | the **end-caller** Entra token sent in HTTP header such as `Authorization: Bearer eyJ0eXAiOiJ...`The APIM then re-authenticates to Foundry with its own managed identity |
+>| `direct` + AI Gateway | **Foundry project RBAC** (`Azure AI User`) | the **Foundry project managed identity** token which is automatically trusted internal of Foundry project |
+
+
+**Replace the `<SN>` placeholder (no need for `direct` mode; REQUIRED for `gateway` mode)**:
 
 If you chose `"gateway"` mode above, you must update the APIM gateway URL with your deployment suffix. Find the line:
 
@@ -148,15 +166,14 @@ Or use bash to replace automatically:
 ```bash
 sed -i "s/<SN>/$SN/g" <your module-02 folder path>/azure.yaml
 ```
-> **Auth prerequisite (gateway mode only):** the gateway's `validate-jwt` policy requires a caller token. The caller must send an HTTP header such as `Authorization: Bearer eyJ0eXAiOiJ...` to access the gateway. The gateway then re-authenticates to Foundry with its own user-assigned managed identity. In `direct` mode, this token is not needed.
 
 ## Step 2 — Bind the azd environment (skip provision) and run locally
 
 Point the azd environment at the existing project so `azd deploy` (Step 3) targets it directly:
 
 ```bash
-azd env set AZURE_TENANT_ID $(az account show --query tenantId -o tsv)
-azd env set AZURE_SUBSCRIPTION_ID $(az account show --query id -o tsv)
+azd env set AZURE_TENANT_ID $(az account show --query tenantId -o tsv | tr -d "\r\n")
+azd env set AZURE_SUBSCRIPTION_ID $(az account show --query id -o tsv | tr -d "\r\n")
 azd env set AZURE_LOCATION $LOCATION
 azd env set AZURE_RESOURCE_GROUP $RESOURCE_GROUP
 azd env set AZURE_AI_PROJECT_ID  "$PROJECT_ID"
@@ -175,7 +192,7 @@ azd ai agent run
 ![azd_ai_agent_run](../pic/module-02-azd_ai_agent_run.png)
 If the command succeeds, you should see `Agent ready`, and the agent will be ready to receive requests on local port 8088.
 
-The local host listens on `http://localhost:8088`. In a second terminal, invoke it:
+In a second terminal, switch to the same `maf-agent` folder, and invoke it:
 
 ```bash
 azd ai agent invoke --local "Hi"
@@ -183,6 +200,14 @@ azd ai agent invoke --local "Hi"
 ![azd_ai_agent_invoke_local](../pic/module-02-azd_ai_agent_invoke_local.png)
 
 If the command succeeds, you should see a response.
+
+Back to the terminal you run commend `azd ai agent run`, press Ctrl+C to terminate the agent local run. You will see output like:
+```text
+^C
+Stopping agent...
+~/workshop/module-02/maf-agent$ Agent stopped.
+``` 
+Now we verified the agent can work through end-to-end. Next we will deploy the agent to Microsoft Foundry (Hosted Agent).
 
 ## Step 4 — Deploy the hosted agent
 
@@ -195,7 +220,7 @@ If the deployment succeeds, you should see:
 
 ![azd_deployed_CLI](../pic/module-02-azd_deployed_CLI.png)
 
-In the Foundry portal, open your Foundry project and go to the **Agents** tab. You should see that your agent has been deployed successfully and that its type is `hosted`:
+In the Foundry portal, open your Foundry project and go to the **Agents** tab. You should see that your agent has been deployed successfully and its type is `hosted`:
 
 ![azd_deployed_portal](../pic/module-02-azd_deployed_portal.png)
 
@@ -216,66 +241,6 @@ Try the agent in Playground; it should work there as well:
 If you are using APIM as the AI gateway (`"gateway"` mode in `azure.yaml`), the Playground log stream shows that model calls are routed through the APIM URL:
 ![azd_deployed_playground_aigw](../pic/module-02-azd_deployed_playground_aigw.png)
 
-
-## (Optional) Route `direct` mode through APIM by registering it as the project's AI Gateway
-
-`gateway` mode calls APIM explicitly. You can **also** make **`direct` mode** go through
-APIM — without changing any code — by registering APIM as the Foundry **project's AI
-Gateway**. Foundry then transparently forwards the project's model inference (including
-agent runs) to APIM. The two modes stay independent:
-
-| | Who authenticates the **caller** | What APIM sees inbound |
-|---|---|---|
-| `gateway` | **APIM** (`validate-jwt` on the `foundry-ai-gateway` API) | the **end-caller** Entra token |
-| `direct` + AI Gateway | **Foundry project RBAC** (`Azure AI User`) | the **Foundry project managed identity** token |
-
-### Step A — Register APIM as the project's AI Gateway (creates a NEW API)
-
-In the Foundry portal: **Operate → Admin → AI Gateway → Add AI Gateway → Use existing →
-Add project to gateway**. This **auto-creates a new API in APIM** (separate from the
-`foundry-ai-gateway` API that `gateway` mode uses). From now on, `direct`-mode model
-calls are routed through APIM.
-
-### Step B — Harden the new API (add `validate-jwt`)
-
-By default the auto-created API only has a rate-limit (flow-limit) policy — **no token
-validation**. Because the APIM URL is publicly reachable, add a `validate-jwt` that
-locks the API to **only your Foundry project managed identity** (the identity Foundry
-uses to forward to APIM). This is defense-in-depth on top of the project RBAC that
-already authenticates the end caller.
-
-1. **APIM portal → APIs →** the **new** auto-created API (NOT `foundry-ai-gateway` / path `/foundry`).
-2. **Inbound processing → `</>` (code view)**.
-3. Insert the `<validate-jwt>` element from
-   [ai-gateway-inbound-policy.xml](ai-gateway-inbound-policy.xml) into the existing
-   `<inbound>`, **right after `<base />` and before the auto-generated rate-limit** —
-   **do not replace the whole policy** (keep the rate-limit APIM added).
-4. Fill the placeholders and apply.
-
-Get the placeholder values:
-
-```bash
-export RESOURCE_GROUP="rg-agenthost-workshop"
-export SN=$(az group show -g "$RESOURCE_GROUP" --query "tags.deploymentSN" -o tsv)
-
-# __TENANT_ID__
-az account show --query tenantId -o tsv
-
-# Foundry project managed identity objectId (principalId) → use for the `oid` claim
-az cognitiveservices account show -g "$RESOURCE_GROUP" -n "foundry-agenthost-$SN" \
-  --query "identity.principalId" -o tsv
-# To get the application (client) id for the `appid` claim, resolve the SP:
-#   az ad sp show --id <principalId> --query appId -o tsv
-```
-
-> **Phased rollout (avoid a surprise 401):** first apply with only `openid-config` +
-> `issuers` + `audiences` (comment out `required-claims`) and confirm `direct` mode
-> still works; then turn on APIM **Trace**, send one `direct`-mode request, read the
-> inbound JWT's real `oid`/`appid`, fill `required-claims`, and re-apply to lock it down.
-
-> ⚠️ Do **not** add this project-MI lock to the `gateway`-mode API (`foundry-ai-gateway`,
-> path `/foundry`) — that API validates the **end-caller** token, so locking it to the
-> project MI would break `gateway` mode.
 
 ## Files in This Module
 

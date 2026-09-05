@@ -64,5 +64,7 @@ az deployment sub show \
   --query properties.outputs \
   --output jsonc
 
-echo ""
-echo "Next: proceed to module-02 to deploy the hosted agent with azd."
+echo "Template deployed successfully."
+printf '\033[31mNext:\033[0m\n'
+echo "1. Verify the APIM works as standalone gateway by accessing the API through the APIM endpoint."
+echo "2. Add the APIM to the Foundry project as a Foundry Native AI Gateway."

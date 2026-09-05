@@ -305,30 +305,6 @@ resource storageBlobRbacUami 'Microsoft.Authorization/roleAssignments@2022-04-01
   }
 }
 
-// ── Register APIM as the Foundry project's AI Gateway ────────────────────────
-// Creates a Foundry connection of category 'ApiManagement' so the project's
-// model/inference traffic is governed through the APIM AI gateway. The Agents
-// service authenticates to the gateway with the project's managed identity
-// against the Cognitive Services audience. target = APIM gateway URL + the
-// foundry-ai-gateway API path.
-resource foundryApimGatewayConnection 'Microsoft.CognitiveServices/accounts/projects/connections@2025-04-01-preview' = {
-  parent: foundryProject
-  name: 'foundry-apim-gateway'
-  properties: {
-    category: 'ApiManagement'
-    target: '${apim.properties.gatewayUrl}/${foundryGatewayApi.properties.path}'
-    // 'ProjectManagedIdentity' is a valid runtime authType for Foundry
-    // connections; the current type definition lags, so suppress BCP036.
-    #disable-next-line BCP036
-    authType: 'ProjectManagedIdentity'
-    audience: 'https://ai.azure.com'
-    isSharedToAll: true
-    credentials: {}
-    metadata: {
-      inferenceAPIVersion: 'preview'
-    }
-  }
-}
 
 // ── APIM Backend — Foundry hosted-agent inference ────────────────────────────
 // The gateway policy routes to this backend via <set-backend-service
@@ -349,11 +325,11 @@ resource foundryBackend 'Microsoft.ApiManagement/service/backends@2023-05-01-pre
 }
 
 // ── APIM AI Gateway API — exposes Foundry OpenAI inference ───────────────────
-resource foundryGatewayApi 'Microsoft.ApiManagement/service/apis@2023-05-01-preview' = {
+resource workshopGatewayApi 'Microsoft.ApiManagement/service/apis@2023-05-01-preview' = {
   parent: apim
-  name: 'foundry-ai-gateway'
+  name: 'workshop-ai-gateway'
   properties: {
-    displayName: 'Foundry AI Gateway'
+    displayName: 'workshop-ai-gateway'
     description: 'AI gateway exposing the Foundry Responses API (openai/v1/responses) through APIM with caller Entra ID validation and managed-identity backend auth.'
     path: gatewayApiPath
     protocols: [
@@ -370,11 +346,11 @@ resource foundryGatewayApi 'Microsoft.ApiManagement/service/apis@2023-05-01-prev
 
 // Responses API: model name is supplied in the request body, so the operation
 // has no path parameter. Callers POST /foundry/responses with {"model":"..."}.
-resource foundryGatewayOp 'Microsoft.ApiManagement/service/apis/operations@2023-05-01-preview' = {
-  parent: foundryGatewayApi
+resource workshopGatewayResponsesOp 'Microsoft.ApiManagement/service/apis/operations@2023-05-01-preview' = {
+  parent: workshopGatewayApi
   name: 'responses'
   properties: {
-    displayName: 'Create Response'
+    displayName: 'responses'
     method: 'POST'
     urlTemplate: '/openai/v1/responses'
   }
@@ -382,11 +358,11 @@ resource foundryGatewayOp 'Microsoft.ApiManagement/service/apis/operations@2023-
 
 // Retrieve a previously created response by its ID:
 // GET /foundry/responses/{response-id}
-resource foundryGatewayGetOp 'Microsoft.ApiManagement/service/apis/operations@2023-05-01-preview' = {
-  parent: foundryGatewayApi
+resource workshopGatewayGetResponseOp 'Microsoft.ApiManagement/service/apis/operations@2023-05-01-preview' = {
+  parent: workshopGatewayApi
   name: 'get-response'
   properties: {
-    displayName: 'Get Response'
+    displayName: 'get-response'
     method: 'GET'
     urlTemplate: '/responses/{response-id}'
     templateParameters: [
@@ -402,8 +378,8 @@ resource foundryGatewayGetOp 'Microsoft.ApiManagement/service/apis/operations@20
 var gatewayPolicyWithTenant = replace(gatewayPolicyTemplate, '__TENANT_ID__', tenantId)
 var gatewayPolicyXml = replace(gatewayPolicyWithTenant, '__LOGIN_ENDPOINT__', entraLoginEndpoint)
 
-resource foundryGatewayPolicy 'Microsoft.ApiManagement/service/apis/policies@2023-05-01-preview' = {
-  parent: foundryGatewayApi
+resource workshopGatewayPolicy 'Microsoft.ApiManagement/service/apis/policies@2023-05-01-preview' = {
+  parent: workshopGatewayApi
   name: 'policy'
   properties: {
     format: 'rawxml'
@@ -439,7 +415,6 @@ output foundryProjectEndpoint string = 'https://${foundryResourceName}.services.
 output modelDeploymentName string = foundryModel.name
 output apimFoundryBackendName string = foundryBackend.name
 output apimFoundryGatewayUrl string = 'https://${apim.properties.gatewayUrl}/${gatewayApiPath}'
-output foundryApimGatewayConnectionName string = foundryApimGatewayConnection.name
 
 // ── Deployment status ────────────────────────────────────────────────────────
 // Bicep is declarative and can't print mid-deployment, so surface each
