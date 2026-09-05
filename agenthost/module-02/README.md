@@ -151,7 +151,7 @@ Replace `<SN>` with your deployment suffix. For example, if `SN = "abc123"`, cha
 Or use bash to replace automatically:
 
 ```bash
-sed -i "s/<SN>/$SN/g" <your module-02 folder path>/azure.yaml
+sed -i "s/<SN>/$SN/g" ./azure.yaml
 ```
 
 ## Step 3 — Bind the azd environment (skip provision)
