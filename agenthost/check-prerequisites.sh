@@ -16,6 +16,7 @@ GROUP_MODULE_04="Module 04"
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
+YELLOW='\033[0;33m'
 BOLD='\033[1m'
 RESET='\033[0m'
 
@@ -303,7 +304,7 @@ if $AZ_LOGGED_IN; then
 fi
 
 if [[ -z "$ACR_ID" ]]; then
-  add_result "$GROUP_MODULE_03" "ACR image push permission" "Failed" "No container registry was found in $RESOURCE_GROUP; deploy Module 01 first" "https://learn.microsoft.com/azure/container-registry/container-registry-roles"
+  add_result "$GROUP_MODULE_03" "ACR image push permission" "Skipped" "No container registry was found in $RESOURCE_GROUP; check again after deploying Module 01" ""
 elif [[ -z "$ACR_PERMISSION_BLOCKS" ]]; then
   add_result "$GROUP_MODULE_03" "ACR image push permission" "Failed" "Could not read effective permissions for the workshop registry" "https://learn.microsoft.com/azure/container-registry/container-registry-roles"
 elif has_effective_permission "Microsoft.ContainerRegistry/registries/push/write" "$ACR_PERMISSION_BLOCKS"; then
@@ -354,11 +355,11 @@ print_group() {
 
   for index in "${!ITEMS[@]}"; do
     [[ "${RESULT_GROUPS[$index]}" == "$group" ]] || continue
-    if [[ "${RESULTS[$index]}" == "Pass" ]]; then
-      result_color="$GREEN"
-    else
-      result_color="$RED"
-    fi
+    case "${RESULTS[$index]}" in
+      Pass) result_color="$GREEN" ;;
+      Skipped) result_color="$YELLOW" ;;
+      *) result_color="$RED" ;;
+    esac
     printf '%-40s | %b%-10s%b | %s\n' "${ITEMS[$index]}" "$result_color" "${RESULTS[$index]}" "$RESET" "${DETAILS[$index]}"
   done
 
@@ -392,12 +393,15 @@ print_group "$GROUP_MODULE_03"
 print_group "$GROUP_MODULE_04"
 
 FAILED_COUNT=0
+SKIPPED_COUNT=0
 for result in "${RESULTS[@]}"; do
   [[ "$result" == "Failed" ]] && ((FAILED_COUNT += 1))
+  [[ "$result" == "Skipped" ]] && ((SKIPPED_COUNT += 1))
 done
 
-printf '\nSummary: %b%d passed%b, %b%d failed%b\n' \
-  "$GREEN" "$((${#RESULTS[@]} - FAILED_COUNT))" "$RESET" \
+printf '\nSummary: %b%d passed%b, %b%d skipped%b, %b%d failed%b\n' \
+  "$GREEN" "$((${#RESULTS[@]} - FAILED_COUNT - SKIPPED_COUNT))" "$RESET" \
+  "$YELLOW" "$SKIPPED_COUNT" "$RESET" \
   "$RED" "$FAILED_COUNT" "$RESET"
 
 if ((FAILED_COUNT > 0)); then

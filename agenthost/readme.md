@@ -88,7 +88,7 @@ Prerequisite                             | Result     | Details
 -----------------------------------------+------------+-----------------------------------------
 kubectl installed                        | Pass       | Installed: v1.35.0
 Docker installed and running             | Failed     | Docker version: not detected; CLI is not installed or not available
-ACR image push permission                | Pass       | Microsoft.ContainerRegistry/registries/push/write is allowed
+ACR image push permission                | Skipped    | No container registry was found in rg-agenthost-workshop; check again after deploying Module 01
 Azure CLI for AKS Pod Sandboxing         | Pass       | Installed: 2.85.0
 
 Fix suggestion:
@@ -100,8 +100,10 @@ Prerequisite                             | Result     | Details
 Container Apps preview extension         | Pass       | containerapp 1.3.0b4 (preview enabled)
 SandboxGroup Data Owner role             | Pass       | Role assignment found for the current subscription
 
-Summary: 14 passed, 1 failed
+Summary: 13 passed, 1 skipped, 1 failed
 ```
+
+Before Module 01 creates the workshop container registry, the ACR image push permission check is shown as `Skipped` and does not cause the checker to fail. Run the checker again after Module 01 to validate push access before starting Module 03.
 
 If the "Workshop deployment permissions" check finds that any actions required for workshop deployment are not permitted, the checker lists each missing ARM action, as shown below:
 
@@ -206,15 +208,14 @@ agenthost/
 
 ---
 
-## Tips
-
-- **Bicep IaC** — module-01 uses a subscription-scoped `main.bicep` that delegates to `core.bicep` (resource group scope); modules 02–04 each have self-contained deployment Bicep files targeting their respective Azure resources.
-
-- **agent-sandbox** (module-03) provides the `Sandbox` CRD + controller (kubernetes-sigs) for isolated, stateful, singleton agent pods with stable identity and lifecycle (pause / resume / hibernate) — the scale-to-zero mechanism, replacing the earlier E2B Manager + KEDA.
-
-- **Kata Container RuntimeClass** is defined in `agent-sandbox.yaml` and applied to the Sandbox pod on the tainted `kata=true:NoSchedule` node pool.
-
-- **Module-04 Solutions**:
-  - **Workshop path (ACA Sandboxes)**: Use `sandbox-deploy.sh` for service-managed sandbox isolation (micro-VM boundary) and suspend/resume.
-  - **Optional learning track (Dynamic Sessions)**: Use `dynamic-session-deploy.sh` for low-latency ephemeral session pools — not required to complete the workshop.
-  - See [Module 4 README](./module-04/README.md) for detailed comparison and decision guide.
+> [!NOTE]
+>
+>- **Bicep IaC** — module-01 uses a subscription-scoped `main.bicep` that delegates to `core.bicep` (resource group scope); modules 02–04 each have self-contained deployment Bicep files targeting their respective Azure resources.
+>
+>- **agent-sandbox** (module-03) provides the `Sandbox` CRD + controller (kubernetes-sigs) for isolated, stateful, singleton agent pods with stable identity and lifecycle (pause / resume / hibernate) — the scale-to-zero mechanism, replacing the earlier E2B Manager + KEDA.
+>
+>- **Kata Container RuntimeClass** is defined in `agent-sandbox.yaml` and applied to the Sandbox pod on the tainted `kata=true:NoSchedule` node pool.
+>
+>- **Module-04 Solutions**:
+>  - **Workshop path (ACA Sandboxes)**: Use `sandbox-deploy.sh` for service-managed sandbox isolation (micro-VM boundary) and suspend/resume.
+>  - **Optional learning track (Dynamic Sessions)**: Use `dynamic-session-deploy.sh` for low-latency ephemeral session pools — not required to complete the workshop.
