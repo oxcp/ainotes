@@ -48,7 +48,7 @@ This module **reuses the resources created by Module 1** instead of recreating t
 > [!important]
 > **Choose one deployment path:** use this one-command flow **or** the [Manual Steps](#manual-steps-equivalent-to-deploysh) below. 
 >
-> They are equivalent; **Do NOT** run both.
+> They are equivalent; <span style="color: red;"><strong>DO NOT</strong></span> run both.
 
 ```bash
 cd agenthost/module-03
