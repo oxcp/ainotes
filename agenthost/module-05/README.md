@@ -84,7 +84,7 @@ Recap the three solutions, provide decision guidance, and share cost-optimizatio
 
 ---
 
-*Workshop complete — Agent Hosting on Azure, 120 minutes.*
+*Workshop complete — Agent Hosting on Azure, 135 minutes.*
 
 ---
 

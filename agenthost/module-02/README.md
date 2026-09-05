@@ -232,13 +232,13 @@ You can create a new version of the hosted agent in the Foundry portal and chang
 
 1. In the Foundry portal, open the `maf-agent-prj` project and select **Agents**.
 2. Open the deployed `maf-agent` hosted agent.
-3. In the Playground, enter the **"Environment variables"**, and update the environment variables for `MODEL_ROUTING` and `APIM_GATEWAY_URL`
+3. In the Playground, enter the **"Environment variables / Edit"**, and update the environment variables:
 ![module-02-hosted-agent-edit-envvars](../pic/module-02-hosted-agent-edit-envvars.png)
 
   | Routing mode | Environment variables |
   |---|---|
-  | `direct` | `MODEL_ROUTING=direct`<br>`FOUNDRY_PROJECT_ENDPOINT=https://foundry-agenthost-<SN>.services.ai.azure.com/api/projects/maf-agent-prj` |
-  | `gateway` | `MODEL_ROUTING=gateway`<br>`APIM_GATEWAY_URL=https://apim-agenthost-<SN>.azure-api.net/foundry` |
+  | `direct` | `MODEL_ROUTING=direct`<br>`FOUNDRY_PROJECT_ENDPOINT=https://foundry-agenthost-<SN>.services.ai.azure.com/api/projects/maf-agent-prj` <br>`APIM_GATEWAY_URL` is not used |
+  | `gateway` | `MODEL_ROUTING=gateway`<br>`APIM_GATEWAY_URL=https://apim-agenthost-<SN>.azure-api.net/foundry`<br>`FOUNDRY_PROJECT_ENDPOINT` is not used  |
 
   > [!IMPORTANT]
   > For `direct` mode, use the **FOUNDRY_PROJECT_ENDPOINT**. `FoundryChatClient` uses this project endpoint to call the model through the Responses protocol.
@@ -248,7 +248,7 @@ You can create a new version of the hosted agent in the Foundry portal and chang
 4. Keep `AI_MODEL_DEPLOYMENT_NAME=gpt-5.4-mini`, save the configuration, and it will create a new agent version.
 ![module-02-hosted-agent-edit-envvars-new-version](../pic/module-02-hosted-agent-edit-envvars-new-version.png)
 
-5. Open the new version in the Playground and send a test message.
+5. Active the new version in the Playground and send test messages.
 6. Review the hosted-agent logs to confirm the selected routing path:
   - `direct`: Agent → Foundry project endpoint → Foundry native AI gateway (APIM) → model deployment
   - `gateway`: Agent → standalone APIM gateway → Foundry project endpoint → model deployment

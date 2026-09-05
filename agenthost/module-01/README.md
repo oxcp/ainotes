@@ -1,4 +1,4 @@
-# Module 1 — Core Infrastructure Setup (30 min)
+# Module 1 — Core Infrastructure Setup (20 min)
 
 [⬆ Back to Workshop Home](../readme.md)
 

@@ -1,4 +1,4 @@
-# Module 4 — Solution C: Container-based Agent Runtime (ACA Sandboxes, 20 min)
+# Module 4 — Solution C: Container-based Agent Runtime (ACA Sandboxes, 30 min)
 
 [⬆ Back to Workshop Home](../readme.md)
 

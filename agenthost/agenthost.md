@@ -320,7 +320,7 @@ Problem framing and architecture overview. [See Module 0](./module-00/README.md)
 
 ---
 
-### Module 1 — Core Infrastructure Setup (30 min)
+### Module 1 — Core Infrastructure Setup (20 min)
 
 Deploy foundational Azure services: Resource Group, Blob Storage, APIM, Entra ID, and Key Vault. [See Module 1](./module-01/README.md)
 
@@ -338,7 +338,7 @@ Run agents on AKS with Kata Containers and the `agent-sandbox` controller (`Sand
 
 ---
 
-### Module 4 — Solution C: ACA Sandbox (20 min)
+### Module 4 — Solution C: ACA Sandbox (30 min)
 
 Deploy agents in Azure Container Apps with service-managed sandbox isolation (micro-VM boundary) and dynamic scaling. [See Module 4](./module-04/README.md)
 
