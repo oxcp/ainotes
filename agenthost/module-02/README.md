@@ -18,16 +18,26 @@ https://github.com/microsoft-foundry/foundry-samples/tree/main/samples/python/ho
 
 ## Prerequisites
 
-> [!CAUTION]
-> **Run all steps in this module from a working directory anywhere outside of your module-02 folder.**
-
 - Module 1 already deployed (Foundry account `foundry-agenthost-<deploymentSN>`, project `maf-agent-prj`, model `gpt-5.4-mini`)
 - The module-01 resource group still contains the `deploymentSN` tag
 - Azure CLI, Azure Developer CLI installed
 - The Microsoft Foundry extension for azd installed: `azd ext install microsoft.foundry`
 - You have the "Foundry User" role in your subscription
 
-## Step 1 — Bind the hosted agent to the module-01 Foundry project
+## Step 1 — Create a working directory
+
+> [!CAUTION]
+> Run the commands in this module from a working directory outside the cloned `module-02` directory. The `azd ai agent init` command must not run from the directory that contains the source `azure.yaml` template.
+
+For example, create a working directory under your home directory and switch to it:
+
+```bash
+cd ~
+mkdir -p workshop/module-02
+cd workshop/module-02
+```
+
+## Step 2 — Bind the hosted agent to the module-01 Foundry project
 
 ### Get deployment suffix from module-01
 
@@ -60,15 +70,8 @@ echo "$PROJECT_ENDPOINT"
 ```
 
 ### Initialize the agent bound to Foundry project
-> [!CAUTION]
-> Create a working directory anywhere outside of your module-02 folder. Because you need to run the `azd ai agent init` from a directory outside the template file `azure.yaml` (in module-02 folder). 
-
-For example create a subfolder in your HOME folder, and switch into it:
 
 ```bash
-cd ~
-mkdir -p workshop/module-02
-cd workshop/module-02
 azd auth login
 # Or use: azd auth login --tenant-id <your_tenant_id>, if you have multiple tenants
 
@@ -152,9 +155,9 @@ Or use bash to replace automatically:
 sed -i "s/<SN>/$SN/g" <your module-02 folder path>/azure.yaml
 ```
 
-## Step 2 — Bind the azd environment (skip provision) and run locally
+## Step 3 — Bind the azd environment (skip provision)
 
-Point the azd environment at the existing project so `azd deploy` (Step 3) targets it directly:
+Point the azd environment at the existing project so `azd deploy` (Step 5) targets it directly:
 
 ```bash
 azd env set AZURE_TENANT_ID $(az account show --query tenantId -o tsv | tr -d "\r\n")
@@ -169,7 +172,7 @@ azd env get-values
 
 ```
 
-## Step 3 — Run the agent locally
+## Step 4 — Run the agent locally
 
 ```bash
 azd ai agent run
@@ -194,7 +197,7 @@ Stopping agent...
 ``` 
 Now we verified the agent can work through end-to-end. Next we will deploy the agent to Microsoft Foundry (Hosted Agent).
 
-## Step 4 — Deploy the hosted agent
+## Step 5 — Deploy the hosted agent
 
 ```bash
 azd deploy
@@ -211,7 +214,7 @@ In the Foundry portal, open your Foundry project and go to the **Agents** tab. Y
 
 Each deployment creates a new hosted-agent version in Foundry. 
 
-## Step 5 — Invoke the deployed agent
+## Step 6 — Invoke the deployed agent
 
 ```bash
 azd ai agent invoke "Hi"
