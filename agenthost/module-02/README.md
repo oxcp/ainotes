@@ -179,7 +179,7 @@ azd ai agent run
 ![azd_ai_agent_run](../pic/module-02-azd_ai_agent_run.png)
 If the command succeeds, you should see `Agent ready`, and the agent will be ready to receive requests on local port 8088.
 
-In a second terminal, switch to the same `maf-agent` folder, and invoke it:
+In another terminal, switch to the same `maf-agent` folder, and invoke it:
 
 ```bash
 azd ai agent invoke --local "Hi"
@@ -207,7 +207,7 @@ If the deployment succeeds, you should see:
 
 ![azd_deployed_CLI](../pic/module-02-azd_deployed_CLI.png)
 
-In the Foundry portal, open your Foundry project and go to the **Agents** tab. You should see that your agent has been deployed successfully and its type is `hosted`:
+In the Foundry portal, open your Foundry project and go to the **Build → Agents** tab. You should see that your agent has been deployed successfully and its type is `hosted`:
 
 ![azd_deployed_portal](../pic/module-02-azd_deployed_portal.png)
 
@@ -223,12 +223,12 @@ If the command succeeds, this time you should see the response from the **remote
 
 
 Try the agent in Playground; it should work there as well:
-![azd_deployed_playground](../pic/module-02-azd_deployed_playground.png)
+![module-02-hosted-agent-playground](../pic/module-02-hosted-agent-playground.png)
 
 
 ## Step 7 — Switch the routing mode in the hosted agent playground
 
-You can create a new version of the hosted agent in the Foundry portal and change its environment variables without modifying the previously deployed version. Use this step to test the routing mode that you did not select earlier.
+You can create a new version of the hosted agent in the Foundry portal and change its environment variables without modifying the previously deployed version. Use this step to test the routing mode that you did not select earlier (for example if you use `direct` mode when use `azd deploy`, you can test `gateway` mode below, or vice versa).
 
 1. In the Foundry portal, open the `maf-agent-prj` project and select **Agents**.
 2. Open the deployed `maf-agent` hosted agent.
@@ -237,26 +237,28 @@ You can create a new version of the hosted agent in the Foundry portal and chang
 
   | Routing mode | Environment variables |
   |---|---|
-  | `direct` | `MODEL_ROUTING=direct`<br>`FOUNDRY_PROJECT_ENDPOINT=https://foundry-agenthost-<SN>.services.ai.azure.com/api/projects/maf-agent-prj` <br>`APIM_GATEWAY_URL` is not used |
-  | `gateway` | `MODEL_ROUTING=gateway`<br>`APIM_GATEWAY_URL=https://apim-agenthost-<SN>.azure-api.net/foundry`<br>`FOUNDRY_PROJECT_ENDPOINT` is not used  |
+  | `direct` | `MODEL_ROUTING=direct`<br>`FOUNDRY_PROJECT_ENDPOINT=https://foundry-agenthost-<SN>.services.ai.azure.com/api/projects/maf-agent-prj` |
+  | `gateway` | `MODEL_ROUTING=gateway`<br>`APIM_GATEWAY_URL=https://apim-agenthost-<SN>.azure-api.net/foundry` |
 
   > [!IMPORTANT]
   > For `direct` mode, use the **FOUNDRY_PROJECT_ENDPOINT**. `FoundryChatClient` uses this project endpoint to call the model through the Responses protocol.
   >
-  > For `gateway` mode, use the base APIM gateway URL ending in `/foundry`. Do not append `/openai/v1` or `/responses`; the agent code adds the required API path.
+  > For `gateway` mode, use the base APIM gateway URL ending in `/foundry`. Do not append `/openai/v1` or `/responses`; The APIM will handle the API path when works as standalone gateway.
 
 4. Keep `AI_MODEL_DEPLOYMENT_NAME=gpt-5.4-mini`, save the configuration, and it will create a new agent version.
+
+5. Active the new version in the Playground. The Playground will start a new session.
 ![module-02-hosted-agent-edit-envvars-new-version](../pic/module-02-hosted-agent-edit-envvars-new-version.png)
 
-5. Active the new version in the Playground and send test messages.
-6. Review the hosted-agent logs to confirm the selected routing path:
+6. Send test messages to try the new version. Review the hosted-agent log stream to confirm the selected routing path:
   - `direct`: Agent → Foundry project endpoint → Foundry native AI gateway (APIM) → model deployment
   - `gateway`: Agent → standalone APIM gateway → Foundry project endpoint → model deployment
 
 If you are using `direct` mode, the Playground log stream shows that model calls are routed through the PROJECT endpoint:
+![module-02-hosted-agent-direct-via-project-endpoint](../pic/module-02-hosted-agent-direct-via-project-endpoint.png)
 
 If you are using `gateway` mode, the Playground log stream shows that model calls are routed through the APIM URL:
-![azd_deployed_playground_aigw](../pic/module-02-azd_deployed_playground_aigw.png)
+![module-02-hosted-agent-gateway-via-apim-url](../pic/module-02-hosted-agent-gateway-via-apim-url.png)
 
 The previous agent version remains available, allowing you to switch between versions and compare the two routing modes.
 
