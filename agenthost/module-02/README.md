@@ -129,13 +129,15 @@ For gateway mode:
 >| Cons | No central throttling/observability; every caller needs direct Foundry RBAC; endpoint exposed to each client | Extra hop → added latency + APIM cost; requires the token authentication; more moving parts to operate |
 >| Best for | Simple, low-scale agents | Enterprise gateways, many consumers, policy enforcement |
 
-**Replace the `<SN>` placeholder (no need for `direct` mode; REQUIRED for `gateway` mode)**:
+**Replace the `<SN>` placeholder**:
 
 If you chose `"gateway"` mode above, you must update the APIM gateway URL with your deployment suffix. Find the line:
 
 ```yaml
       - name: APIM_GATEWAY_URL
         value: "https://apim-agenthost-<SN>.azure-api.net/foundry"
+      - name: FOUNDRY_PROJECT_ENDPOINT
+        value: "https://foundry-agenthost-<SN>.services.ai.azure.com/api/projects/maf-agent-prj"        
 ```
 
 Replace `<SN>` with your deployment suffix. For example, if `SN = "abc123"`, change it to:
@@ -143,7 +145,8 @@ Replace `<SN>` with your deployment suffix. For example, if `SN = "abc123"`, cha
 ```yaml
       - name: APIM_GATEWAY_URL
         value: "https://apim-agenthost-abc123.azure-api.net/foundry"
-```
+      - name: FOUNDRY_PROJECT_ENDPOINT
+        value: "https://foundry-agenthost-abc123.services.ai.azure.com/api/projects/maf-agent-prj"```
 
 Or use bash to replace automatically:
 
