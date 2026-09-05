@@ -23,8 +23,8 @@ The agent's model client is selected at startup by `MODEL_ROUTING` (see [agent-s
 | Aspect | `direct` (default) | `gateway` |
 |---|---|---|
 | Client | `FoundryChatClient` → project endpoint | `OpenAIChatClient` → `<gateway>/responses` |
-| Network path | Agent → Foundry | Agent → APIM → Foundry |
-| Auth to model | Agent identity holds **Azure AI User** on the Foundry account (module-01 RBAC) | Agent presents an Entra ID token; the **gateway's** UAMI holds the Foundry RBAC |
+| Call flows | Agent → Foundry project endpoint → Foundry native AI gateway (APIM) → Foundry project models | Agent → APIM → Foundry project endpoint → Foundry project models |
+| Auth to model | Agent identity holds **Azure AI User** on the Foundry account (module-01 RBAC) | Agent presents an Entra ID token; the **gateway's** managed identity holds the Foundry RBAC |
 | Required env | `FOUNDRY_PROJECT_ENDPOINT` | `APIM_GATEWAY_URL` |
 | Pros | Fewer hops → lower latency; nothing extra to stand up; simplest RBAC | Central governance: rate-limiting, quotas, logging, caching, key rotation, per-caller JWT validation; hides the Foundry endpoint; one front door for many callers |
 | Cons | No central throttling/observability; every caller needs direct Foundry RBAC; endpoint exposed to each client | Extra hop → added latency + APIM cost; requires the `api://agenthost` Entra app to exist and callers to be granted; more moving parts to operate |
@@ -34,7 +34,8 @@ Both clients speak the **Responses** protocol, so the hosted agent (served by `R
 
 ## Prerequisites
 
-> **Note:** Run all commands in this README from this module's root directory (`agenthost/module-02/`).
+> [!CAUTION]
+> **Run all steps in this module from a working directory anywhere outside of your module-02 folder.**
 
 - Module 1 already deployed (Foundry account `foundry-agenthost-<deploymentSN>`, project `maf-agent-prj`, model `gpt-5.4-mini`)
 - The module-01 resource group still contains the `deploymentSN` tag
@@ -55,7 +56,7 @@ echo $SN
 ```
 
 ### Set Foundry project environment variables
-
+> [!NOTE]
 > The module-01 already created the Foundry account, the `maf-agent-prj` project, and the `gpt-5.4-mini` deployment. In this module-01, to **reuse** them instead of provisioning new ones, we initialize the agent with the existing project's **Endpoint** and **ARM resource ID** (`--project-id`). We can get the project endpoint and project ID from the Foundry portal.
 
 In the Foundry portal, in the top-left drop down menu, select **"View all resources"**, and then in the resources list enter your project `maf-agent-prj` whose Parent resource is `foundry-agenthost-<SN>`:
@@ -75,8 +76,8 @@ echo "$PROJECT_ENDPOINT"
 ```
 
 ### Initialize the agent bound to Foundry project
-
-> **Tip:** Create a working directory anywhere outside of your module-02 folder. Because you need to run the `azd ai agent init` from a directory outside the template file `azure.yaml` (in module-02 folder). 
+> [!CAUTION]
+> Create a working directory anywhere outside of your module-02 folder. Because you need to run the `azd ai agent init` from a directory outside the template file `azure.yaml` (in module-02 folder). 
 
 For example create a subfolder in your HOME folder, and switch into it:
 
@@ -95,6 +96,7 @@ After initialization succeeds, you should see a result similar to the following:
 
 `azd ai agent init` reads `azure.yaml` in module-02, whose `project: agent-src` points at the agent source under `module-02/agent-src/`. `--project-id` binds `azd` to module-01's existing project, so **no new resource group, Foundry account, or project provisioning is created**.
 
+> [!NOTE]
 > **Important:** module-02 **does not run `azd provision`**, so `azd` never creates or reconciles the model deployment. It deploys the agent against module-01's existing `gpt-5.4-mini`. In the `azure.yaml` `environmentVariables` map, make sure `AI_MODEL_DEPLOYMENT_NAME` resolves to `gpt-5.4-mini`.
 
 After you initialize the agent, you will see a new subfolder with the agent name. In this workshop, the default agent name is `maf-agent`. Enter that subfolder and run the remaining steps from there.
@@ -126,24 +128,23 @@ For gateway mode:
       - name: MODEL_ROUTING
         value: "gateway"
 ```
-
+> [!TIP]
 > **Tip:** `direct` and `gateway` represent two different request paths to the LLM:
 > - `direct`: Agent → Foundry project endpoint → APIM Foundry native AI gateway → LLM deployment
 > - `gateway`: Agent → APIM standalone AI gateway (`/foundry`) → Foundry project endpoint → LLM deployment
 >
-> Direct mode provides a simpler path with lower latency. Gateway mode adds a centralized layer for authentication, governance, policy enforcement, monitoring, and routing.
->
-> In `gateway` mode the Foundry hosted agent calls APIM explicitly, and then the APIM route the calls to Foundry. In the `gateway` mode, you have the APIM as the central governance point for all LLM calls.
->
-> In module-01 we have already configured the APIM to support both request paths.
->
-> The two modes also work in different ways on calls authentication:
->
->| | Who authenticates the **caller** | What APIM sees inbound |
+> Comparison for the two paths:
+>| Aspect | `direct` (default) | `gateway` |
 >|---|---|---|
->| `gateway` | **APIM** (`validate-jwt` on the `foundry-ai-gateway` API) | the **end-caller** Entra token sent in HTTP header such as `Authorization: Bearer eyJ0eXAiOiJ...`The APIM then re-authenticates to Foundry with its own managed identity |
->| `direct` + AI Gateway | **Foundry project RBAC** (`Azure AI User`) | the **Foundry project managed identity** token which is automatically trusted internal of Foundry project |
-
+>| Client | `FoundryChatClient` → project endpoint | `OpenAIChatClient` → `<gateway>/responses` |
+>| Call flows | Agent → Foundry project endpoint → Foundry native AI gateway (APIM) → Foundry project models | Agent → APIM → Foundry project endpoint → Foundry project models |
+>| Auth to model | Agent identity holds **Azure AI User** on the Foundry account (module-01 RBAC). It automatically gets the trust internal of Foundry project | The **end-caller** Entra token sent in HTTP header such as `Authorization: Bearer eyJ0eXAiOiJ...`. **APIM** validates the call via `validate-jwt` policy, and then the APIM re-authenticates to Foundry with its own managed identity which holds the Foundry RBAC |
+>| Required env | `FOUNDRY_PROJECT_ENDPOINT` | `APIM_GATEWAY_URL` |
+>| Pros | Fewer hops → lower latency; nothing extra to stand up; simplest RBAC | Central governance: rate-limiting, quotas, logging, caching, key rotation, per-caller JWT validation; hides the Foundry endpoint; one front door for many callers |
+>| Cons | No central throttling/observability; every caller needs direct Foundry RBAC; endpoint exposed to each client | Extra hop → added latency + APIM cost; requires the `api://agenthost` Entra app to exist and callers to be granted; more moving parts to operate |
+>| Best for | Simple, low-scale, single-consumer agents | Shared/enterprise gateways, many consumers, policy enforcement |
+>
+> Both clients speak the **Responses** protocol, so the hosted agent (served by `ResponsesHostServer`) behaves identically to callers regardless of the mode.
 
 **Replace the `<SN>` placeholder (no need for `direct` mode; REQUIRED for `gateway` mode)**:
 
@@ -241,16 +242,6 @@ Try the agent in Playground; it should work there as well:
 If you are using APIM as the AI gateway (`"gateway"` mode in `azure.yaml`), the Playground log stream shows that model calls are routed through the APIM URL:
 ![azd_deployed_playground_aigw](../pic/module-02-azd_deployed_playground_aigw.png)
 
-
-## Files in This Module
-
-| File | Description |
-|---|---|
-| `azure.yaml` | Foundry agent manifest used by `azd ai agent init` (references `agent-src`) |
-| `agent-src/main.py` | Agent, served with `ResponsesHostServer`; `build_client()` selects `FoundryChatClient` (direct) or `OpenAIChatClient` → APIM gateway based on `MODEL_ROUTING` |
-| `agent-src/requirements.txt` | Python dependencies for the hosted agent (both `agent-framework-foundry` and `agent-framework-openai`) |
-| `agent-src/Dockerfile` | Container build for the hosted agent runtime |
-| `ai-gateway-inbound-policy.xml` | `validate-jwt` fragment to paste into the auto-created AI-Gateway API (locks it to the Foundry project managed identity — see the optional section above) |
 
 ## Next Step
 
