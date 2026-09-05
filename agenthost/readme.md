@@ -43,7 +43,7 @@ The checker groups the results by module, clearly identifies passed and failed r
 
 The output will look similar to the following:
 > [!TIP]
-> The example below has unmeet prerequisites.
+> The example below shows how the checker identifies unmet prerequisites and recommends next steps.
 
 ```text
 Agent Hosting on Azure Workshop - Prerequisite Check
