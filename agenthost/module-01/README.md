@@ -264,7 +264,15 @@ To configure APIM as the Foundry project's native AI gateway, complete the follo
 ![module-01-AIGW-added-APIM-API-added](../pic/module-01-AIGW-added-APIM-API-added.png)
 
 ---
+## Files in This Module
 
+| File | Description |
+|---|---|
+| `setup.sh` | One-step wrapper that runs the `main.bicep` subscription deployment (`az deployment sub create`) and prints the outputs |
+| `main.bicep` | Bicep subscription-scoped entry point (creates Resource Group, calls core.bicep) |
+| `core.bicep` | Bicep IaC template for all shared Azure resources (Storage, APIM Basic v2, Key Vault, ACR, UAMI) **and** the Foundry stack (account, project, `gpt-5.4-mini`, Defender for AI, APIM AI gateway) |
+
+---
 ## Next Step
 
 Proceed to [Module 2 — Solution A: Foundry Hosted Agent](../module-02/README.md) to deploy the hosted agent with `azd` against the Foundry project provisioned here.

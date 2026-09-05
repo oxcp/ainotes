@@ -16,22 +16,6 @@ https://github.com/microsoft-foundry/foundry-samples/tree/main/samples/python/ho
   - `direct` — the agent calls the Foundry project endpoint directly
   - `gateway` — the agent calls the model through the module-01 APIM AI gateway
 
-## Two model-routing modes
-
-The agent's model client is selected at startup by `MODEL_ROUTING` (see [agent-src/main.py](agent-src/main.py)). In this workshop, the **default mode is `direct`** — the agent calls the Foundry project endpoint directly (simpler for concept understanding).
-
-| Aspect | `direct` (default) | `gateway` |
-|---|---|---|
-| Client | `FoundryChatClient` → project endpoint | `OpenAIChatClient` → `<gateway>/responses` |
-| Call flows | Agent → Foundry project endpoint → Foundry native AI gateway (APIM) → Foundry project models | Agent → APIM → Foundry project endpoint → Foundry project models |
-| Auth to model | Agent identity holds **Azure AI User** on the Foundry account (module-01 RBAC) | Agent presents an Entra ID token; the **gateway's** managed identity holds the Foundry RBAC |
-| Required env | `FOUNDRY_PROJECT_ENDPOINT` | `APIM_GATEWAY_URL` |
-| Pros | Fewer hops → lower latency; nothing extra to stand up; simplest RBAC | Central governance: rate-limiting, quotas, logging, caching, key rotation, per-caller JWT validation; hides the Foundry endpoint; one front door for many callers |
-| Cons | No central throttling/observability; every caller needs direct Foundry RBAC; endpoint exposed to each client | Extra hop → added latency + APIM cost; requires the `api://agenthost` Entra app to exist and callers to be granted; more moving parts to operate |
-| Best for | Simple, low-scale, single-consumer agents | Shared/enterprise gateways, many consumers, policy enforcement |
-
-Both clients speak the **Responses** protocol, so the hosted agent (served by `ResponsesHostServer`) behaves identically to callers regardless of the mode.
-
 ## Prerequisites
 
 > [!CAUTION]
@@ -242,7 +226,17 @@ Try the agent in Playground; it should work there as well:
 If you are using APIM as the AI gateway (`"gateway"` mode in `azure.yaml`), the Playground log stream shows that model calls are routed through the APIM URL:
 ![azd_deployed_playground_aigw](../pic/module-02-azd_deployed_playground_aigw.png)
 
+---
+## Files in This Module
 
+| File | Description |
+|---|---|
+| `azure.yaml` | Foundry agent manifest used by `azd ai agent init` (references `agent-src`) |
+| `agent-src/main.py` | Agent, served with `ResponsesHostServer`; `build_client()` selects `FoundryChatClient` (direct) or `OpenAIChatClient` → APIM gateway based on `MODEL_ROUTING` |
+| `agent-src/requirements.txt` | Python dependencies for the hosted agent (both `agent-framework-foundry` and `agent-framework-openai`) |
+| `agent-src/Dockerfile` | Container build for the hosted agent runtime |
+| `ai-gateway-inbound-policy.xml` | `validate-jwt` fragment to paste into the auto-created AI-Gateway API (locks it to the Foundry project managed identity — see the optional section above) |
+---
 ## Next Step
 
 Proceed to [Module 3 — Solution B: AKS + agent-sandbox](../module-03/README.md).
