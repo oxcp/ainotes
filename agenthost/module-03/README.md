@@ -128,6 +128,12 @@ APIM_NAME="apim-agenthost-${SN}"
 AKS_NAME="aks-agenthost-${SN}"
 NAMESPACE="agent"
 SERVICE_ACCOUNT="agent-sa"
+IMAGE_TAG="latest"
+
+LLM_MODEL="gpt-5.4-mini"
+FOUNDRY_ACCOUNT="foundry-agenthost-${SN}"
+FOUNDRY_PROJECT_NAME="maf-agent-prj"
+FOUNDRY_PROJECT_ENDPOINT="https://${FOUNDRY_ACCOUNT}.services.ai.azure.com/api/projects/${FOUNDRY_PROJECT_NAME}"
 ```
 
 ### Step 2 — Build and push the image to the existing ACR
@@ -158,7 +164,7 @@ az deployment group create \
   --resource-group "$RESOURCE_GROUP" \
   --template-file aks.bicep \
   --parameters \
-      location="$(az group show -g "$RESOURCE_GROUP" --query location -o tsv)" \
+      location="$(az group show -g "$RESOURCE_GROUP" --query location -o tsv | tr -d "\r\n")" \
       deploymentSN="$SN" \
       aksName="$AKS_NAME" \
       acrName="$ACR_NAME" \
@@ -215,6 +221,8 @@ kubectl create secret generic agent-config -n "$NAMESPACE" \
   --from-literal=storage-account="$STORAGE_ACCOUNT" \
   --from-literal=blob-container="agent-state" \
   --from-literal=apim-endpoint="https://${APIM_NAME}.azure-api.net/foundry" \
+  --from-literal=llm-model="$LLM_MODEL" \
+  --from-literal=foundry-project-endpoint="$FOUNDRY_PROJECT_ENDPOINT" \  
   --dry-run=client -o yaml | kubectl apply -f -
 ```
 
