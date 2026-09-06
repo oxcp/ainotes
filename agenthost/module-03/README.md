@@ -32,7 +32,7 @@ This module **reuses the resources created by Module 1** instead of recreating t
 ---
 
 ## Prerequisites
-> [!IMPORTANT]
+> [!CAUTION]
 > **Run all commands in this README from the module root directory (`agenthost/module-03/`).**
 
 - **Module 1 deployed** (Blob, APIM, ACR, UAMI) — `deploymentSN` tag present on the RG
@@ -45,7 +45,7 @@ This module **reuses the resources created by Module 1** instead of recreating t
 
 ## One-Command Deployment
 
-> [!warning]
+> [!CAUTION]
 > **Choose one deployment path:** use this one-command flow **or** the [Manual Steps](#manual-steps-equivalent-to-deploysh) below. 
 >
 > They are equivalent; **DO NOT** run both.

@@ -592,11 +592,11 @@ async def main():
                 f"(portal / · /health /ready /state /reflect)")
 
     # Optional self-demo on startup (disabled by default in-cluster).
-    if os.environ.get("AGENT_RUN_DEMO", "false").lower() == "true":
-        logger.info("[Demo] Running startup chat cycles...")
-        for q in ["What is the capital of France?", "Explain photosynthesis briefly."]:
-            logger.info(json.dumps(await agent.reflect(q), indent=2))
-            await asyncio.sleep(1)
+    # if os.environ.get("AGENT_RUN_DEMO", "false").lower() == "true":
+    #     logger.info("[Demo] Running startup chat cycles...")
+    #     for q in ["What is the capital of France?", "Explain photosynthesis briefly."]:
+    #         logger.info(json.dumps(await agent.reflect(q), indent=2))
+    #         await asyncio.sleep(1)
 
     logger.info("[Agent] Ready. Serving HTTP requests...")
     try:
