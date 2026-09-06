@@ -62,18 +62,19 @@ In the Azure portal, open your resource group to confirm the SandboxGroup was cr
 
 ## Optional — Connect the SandboxGroup to Blob through Private Link
 
-> **If the Module-01 Storage account has public network access disabled, or if Azure Policy disables public network access for Storage in your environment, the ACA SandboxGroup must have private network connectivity to the Blob endpoint before the agent can read or write its persisted state.**
+> [!important]
+> **If the Module-01 Storage account has public network access disabled, the ACA SandboxGroup must have private network connectivity to the Blob endpoint before the agent can read or write its persisted state.**
 
 For workshop convenience, reuse the AKS-managed VNet discovered in Module-03.
-Module-03 already linked this VNet to the Blob Private DNS zone and created the
-Blob Private Endpoint. Do not create another Blob Private Endpoint for Module-04.
-Instead, create a dedicated subnet for ACA Sandboxes in the same VNet and connect
+Module-03 already linked AKS managed VNet to the Blob Private DNS zone and created the
+Blob Private Endpoint. We do not create another Blob Private Endpoint for Module-04.
+Instead, create a new, dedicated subnet for ACA Sandboxes in the AKS managed VNet and connect
 the SandboxGroup to that subnet:
 
-1. In the Azure portal, open the AKS node resource group and select the
+1. In the Azure portal, open the **AKS node resource group** and select the
 	AKS-managed VNet used in Module-03.
 2. Create a new subnet named `aca-subnet`. Use a free, non-overlapping address
-	range and keep it separate from both the AKS node subnet and
+	range and keep it separated from both the AKS node subnet and
 	`snet-private-endpoints`.
 
 ![module-04-ACA-add-aca-subnet](../pic/module-04-ACA-add-aca-subnet.png)
