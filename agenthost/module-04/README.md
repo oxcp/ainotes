@@ -10,14 +10,20 @@ micro-VM-based isolation and full lifecycle control
 (create, suspend, resume, delete), with memory or disk suspend modes for
 state continuity.
 
+> [!important]
 > **Primary workshop path:** ACA Sandboxes.
+>
 > An optional learning track, [ACA Dynamic Sessions](./dynamic-sessions.md), is
 > documented separately for those who wish to explore an alternative execution model.
+
+> [!caution]
+> The optional learning track for **ACA Dynamic Sessions** has not been ready yet.
 
 ---
 
 ## Prerequisites
 
+> [! caution]
 > **Note:** Run all commands in this README from this module's root directory (`agenthost/module-04/`).
 
 1. Module-01 is deployed and the `deploymentSN` tag is present on the resource group.
@@ -34,37 +40,27 @@ az extension add --name containerapp --upgrade --allow-preview true -y
 
 ---
 
-## Workshop Path — ACA Sandboxes
-
-### Files
-
-- `sandbox.bicep`
-- `sandbox-deploy.sh`
-
-### What It Deploys
-
-- A `Microsoft.App/SandboxGroups` resource (preview)
-- SandboxGroup identity and registry bindings (assign the Module-01 UAMI to the SandboxGroup)
-- The `AcrPull` role assignment for the Module-01 UAMI to pull container images from the ACR (declared in `sandbox.bicep`)
-- Optional references to Module-01 storage for state workflows
-
-### Deploy Steps
+## Deploy ACA Sandboxes
 
 ```bash
 cd agenthost/module-04
 ./sandbox-deploy.sh
 ```
 
-On completion, the script has provisioned:
+> [!note]
+> On completion, `sandbox-deploy.sh` has applied the required Sandbox resources and permissions:
+> 
+> - Creates the Azure Container Apps SandboxGroup (`Microsoft.App/SandboxGroups`, preview).
+> - Assigns the Module-01 user-assigned managed identity to the SandboxGroup for workload identity.
+> - Configures the SandboxGroup registry binding so sandboxes can use the existing ACR image.
+> - Grants `AcrPull` on the ACR to the Module-01 managed identity through `sandbox.bicep`.
 
-- An Azure Container Apps SandboxGroup
-- The `AcrPull` role assignment granting the UAMI pull access to the ACR (granted declaratively via `sandbox.bicep`)
 
 In the Azure portal, open your resource group to confirm the SandboxGroup was created:
 
 ![module-04-ACA-sandboxgroup-in-RG](../pic/module-04-ACA-sandboxgroup-in-RG.png)
 
-### Optional — Connect the SandboxGroup to Blob through Private Link
+## Optional — Connect the SandboxGroup to Blob through Private Link
 
 > **If the Module-01 Storage account has public network access disabled, or if Azure Policy disables public network access for Storage in your environment, the ACA SandboxGroup must have private network connectivity to the Blob endpoint before the agent can read or write its persisted state.**
 
@@ -193,15 +189,15 @@ After the connection is created, you should see:
 
 ![module-04-ACA-vnet-connection-created](../pic/module-04-ACA-vnet-connection-created.png)
 
-
-> **Note:** The Private Endpoint remains in `snet-private-endpoints`; ACA
+> [!note]
+> - The Private Endpoint remains in `snet-private-endpoints`; ACA
 > Sandboxes run in `aca-subnet` and reach that Private Endpoint over the shared
 > VNet. The existing `privatelink.blob.core.windows.net` Private DNS zone link
-> makes the standard Blob hostname resolve to the private IP. The Module-01 UAMI
-> still needs `Storage Blob Data Contributor` for Blob data-plane authorization.
+> makes the standard Blob hostname resolve to the private IP.
+> - The Module-01 UAMI still needs `Storage Blob Data Contributor` for Blob data-plane authorization.
 
 
-### Deploy your agent
+## Deploy your agent
 
 You build a disk image from the container image produced in Module-03. You can find your container image in the Azure Container Registry portal:
 ![module-04-ACA-find-your-container-image](../pic/module-04-ACA-find-your-container-image.png)
@@ -246,29 +242,31 @@ Scroll down to configure lifecycle policy:
 
 ![module-04-Create-Sandbox-Advanced-lifecycle-policy](../pic/module-04-Create-Sandbox-Advanced-lifecycle-policy.png)
 
-> **Tip:** Choose **Memory** as the suspend mode to preserve everything in memory and on disk, and to restore the runtime state quickly from memory. In this workshop, you will use it to verify chat-history persistence and fast restore from memory.
->
-> Configure the **Idle timeout** as 900 seconds, which matches the workshop design of a 15-minute idle timeout.
-
-#### Memory vs. disk suspend mode
-
-The lifecycle policy offers two suspend modes. Both stop CPU and memory billing
-while the sandbox is stopped, but they preserve different runtime state:
-
-| Aspect | Memory mode | Disk mode |
-|---|---|---|
-| Preserved state | Sandbox memory and disk | Sandbox disk only |
-| Running processes | Restored with their in-memory context | Not restored; processes and the application start again from disk |
-| Resume experience | Continues from the captured runtime state | Includes application startup and state reload |
-| Best fit | Short interruptions, interactive sessions, and the fastest continuity | Longer idle periods or workloads that already persist state externally |
-| Workshop chat history | Available immediately with the resumed process | Reloaded by the restarted agent from `agent-state/agent-host.json` in Blob |
+> [!tip]
+> - Choose **Memory** as the suspend mode to preserve everything in memory and on disk, and to restore the runtime state quickly from memory. In this workshop, you will use it to verify chat-history persistence and fast restore from memory.
+> - Configure the **Idle timeout** as 900 seconds, which matches the workshop design of a 15-minute idle timeout.
 
 Use **Memory** mode in this workshop to demonstrate full process and disk
 continuity. Choose **Disk** mode to demonstrate that the agent can restart and
 recover its conversation history from Blob without relying on preserved memory.
 In either mode, keep the auto-suspend timeout at **15 minutes**.
 
-> **Note:** Suspend mode controls the ACA Sandbox snapshot. It is independent of
+> [!tip]
+> **Memory vs. disk suspend mode**
+>
+> The lifecycle policy offers two suspend modes. Both stop CPU and memory billing
+> while the sandbox is stopped, but they preserve different runtime state:
+>
+> | Aspect | Memory mode | Disk mode |
+> |---|---|---|
+> | Preserved state | Sandbox memory and disk | Sandbox disk only |
+> | Running processes | Restored with their in-memory context | Not restored; processes and the application start again from disk |
+> | Resume experience | Continues from the captured runtime state | Includes application startup and state reload |
+> | Best fit | Short interruptions, interactive sessions, and the fastest continuity | Longer idle periods or workloads that already persist state externally |
+> | Workshop chat history | Available immediately with the resumed process | Reloaded by the restarted agent from `agent-state/agent-host.json` in Blob |
+
+> [!note]
+> Suspend mode controls the ACA Sandbox snapshot. It is independent of
 > the agent's Blob persistence: the application writes every completed chat turn
 > to Blob.
 
@@ -299,7 +297,8 @@ Open the storage account Blob container. You should see the chat-history persist
 Open the persistence file to view the chat history:
 ![module-04-agent-chat-history-store-in-blob-view-content](../pic/module-04-agent-chat-history-store-in-blob-view-content.png)
 
-> **Tip**: If public network access is disabled on your storage account, check the persistence file from a jumpbox that can reach the storage account through Private Link. The easiest approach is to reuse the jumpbox from module-03.
+> [!tip]
+> If public network access is disabled on your storage account, check the persistence file from a jumpbox that can reach the storage account through Private Link. The easiest approach is to reuse the jumpbox from module-03.
 
 To verify that ACA Sandbox helps preserve runtime state, wait for the idle timeout until the agent automatically enters the `Stopped` status:
 ![module-04-ACA-Sandbox-auto-suspend](../pic/module-04-ACA-Sandbox-auto-suspend.png)
@@ -310,14 +309,9 @@ After the agent stops, refresh the chat window in the browser. You should see:
 ```
 Click **Resume** in the Sandbox console, then refresh the chat window again. The previous chat history should be restored. This demonstrates the runtime-state persistence that ACA Sandbox provides, including in-memory state when Memory suspend mode is used.
 
+> [!tip]
 > If you do not want to wait for the idle timeout, which is 15 minutes in this workshop, you can manually stop and resume the agent to simulate the process. In the Sandbox console, click **Stop** in the upper-right corner, then click **Resume**. Refresh your browser to view the chat connection status and chat-history recovery.
 
-### Characteristics
-
-- Strong isolation for risky or untrusted workloads
-- Full lifecycle control (create, suspend, resume, delete)
-- Snapshot-based state continuity
-- Preferred when safety and resumability outweigh the simplicity of API pooling
 
 ---
 
@@ -365,10 +359,20 @@ Check the Dynamic Sessions content:
 
 ---
 
+## Files in This Module
+
+| File | Description |
+|---|---|
+| `README.md` | Instructions for deploying and running the agent runtime on ACA Sandboxes. |
+| `sandbox-deploy.sh` | Deploys the ACA SandboxGroup and required role assignments. |
+| `sandbox.bicep` | Bicep template that defines the ACA SandboxGroup and its configuration. |
+| `dynamic-sessions.md` | Optional learning track for ACA Dynamic Sessions. |
+
+---
+
 ## Notes
 
 - `container-app.yaml` is a legacy standard ACA manifest and is not used by the current scripts.
-- Both the Sandbox workshop path and the optional Dynamic Sessions track reuse the agent container image built in Module-03 (which already contains its own `lifecycle-hook.sh`, invoked via a Kubernetes `preStop` hook in Module-03). This module no longer contains its own `Dockerfile`.
 
 ---
 
