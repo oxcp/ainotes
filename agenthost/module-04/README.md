@@ -23,7 +23,7 @@ state continuity.
 
 ## Prerequisites
 
-> [! caution]
+> [!caution]
 > **Note:** Run all commands in this README from this module's root directory (`agenthost/module-04/`).
 
 1. Module-01 is deployed and the `deploymentSN` tag is present on the resource group.

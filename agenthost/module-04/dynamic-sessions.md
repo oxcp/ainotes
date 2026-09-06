@@ -2,7 +2,7 @@
 
 [Back to Module 4](./README.md)
 
-> [!IMPORTANT]
+> [!caution]
 > **This learning track is still under development and will be updated soon.**
 
 This section is optional. It is intended for learners who complete the main
