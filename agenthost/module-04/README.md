@@ -55,6 +55,27 @@ cd agenthost/module-04
 > - Configures the SandboxGroup registry binding so sandboxes can use the existing ACR image.
 > - Grants `AcrPull` on the ACR to the Module-01 managed identity through `sandbox.bicep`.
 
+After the `sandbox-depoy.sh` completes, you should see output like below:
+```text
+==========================================================================
+✓ SandboxGroup deployed successfully!
+==========================================================================
+
+SandboxGroup Details:
+  Name: sandbox-group-agenthost-acf0a3
+  Resource Group: rg-agenthost-workshop
+  Container Image: acragenthostacf0a3.azurecr.io/agent-host:latest
+
+Next Steps:
+  1. Create disk image (if not already done)
+  2. Launch individual sandbox instances using CLI commands (shown above)
+  3. Manage sandbox lifecycle: suspend, resume, delete
+  4. Monitor sandbox performance and resource usage
+
+Documentation:
+  https://learn.microsoft.com/en-us/azure/container-apps/sandboxes-overview
+  https://learn.microsoft.com/en-us/cli/azure/containerapp/sandbox
+```
 
 In the Azure portal, open your resource group to confirm the SandboxGroup was created:
 
@@ -84,7 +105,7 @@ After creating the subnet, you should see `aca-subnet` in the subnet list:
 
 Now delegate the subnet `aca-subnet` to Azure Container Apps so it can be used by a Container Apps environment.
 
-**Run:**
+**Run (replace the `--resource-group` and `--vnet-name` value with your ones):**
 
 ```bash
 az network vnet subnet update \
@@ -105,34 +126,38 @@ az network vnet subnet update \
       "actions": [
         "Microsoft.Network/virtualNetworks/subnets/join/action"
       ],
-      "etag": "W/\"f2437ea5-8a14-4088-ada3-e8f6f61756ff\"",
-      "id": "/subscriptions/8bef68e4-9675-47c4-b4cd-272dea5455a3/resourceGroups/rg-aks-agenthost-f28a14-nodes/providers/Microsoft.Network/virtualNetworks/aks-vnet-39023097/subnets/aca-subnet/delegations/0",
+      "etag": "<etag>",
+      "id": "/subscriptions/<subscription-id>/resourceGroups/<node-resource-group>/providers/Microsoft.Network/virtualNetworks/<vnet-name>/subnets/aca-subnet/delegations/0",
       "name": "0",
       "provisioningState": "Succeeded",
-      "resourceGroup": "rg-aks-agenthost-f28a14-nodes",
+      "resourceGroup": "<node-resource-group>",
       "serviceName": "Microsoft.App/environments",
       "type": "Microsoft.Network/virtualNetworks/subnets/delegations"
     }
   ],
-  "etag": "W/\"f2437ea5-8a14-4088-ada3-e8f6f61756ff\"",
-  "id": "/subscriptions/8bef68e4-9675-47c4-b4cd-272dea5455a3/resourceGroups/rg-aks-agenthost-f28a14-nodes/providers/Microsoft.Network/virtualNetworks/aks-vnet-39023097/subnets/aca-subnet",
+  "etag": "<etag>",
+  "id": "/subscriptions/<subscription-id>/resourceGroups/<node-resource-group>/providers/Microsoft.Network/virtualNetworks/<vnet-name>/subnets/aca-subnet",
   "name": "aca-subnet",
   "privateEndpointNetworkPolicies": "Disabled",
   "privateLinkServiceNetworkPolicies": "Enabled",
   "provisioningState": "Succeeded",
-  "resourceGroup": "rg-aks-agenthost-f28a14-nodes",
+  "resourceGroup": "<node-resource-group>",
   "type": "Microsoft.Network/virtualNetworks/subnets"
 }
 
 ```
 
-Verify that the `Microsoft.App/environments` service delegation was added.
+Verify that the `Microsoft.App/environments` service delegation was added. In the output you should see:
+```
+"serviceName": "Microsoft.App/environments"
+```
 
-**Run:**
+
+**Run (replace the `--resource-group` and `--vnet-name` value with your ones):**
 
 ```bash
 az network vnet subnet show \
-  -g rg-aks-agenthost-f28a14-nodes \
+  --resource-group rg-aks-agenthost-f28a14-nodes \
   --vnet-name aks-vnet-39023097 \
   -n aca-subnet \
   --query delegations
@@ -146,11 +171,11 @@ az network vnet subnet show \
     "actions": [
       "Microsoft.Network/virtualNetworks/subnets/join/action"
     ],
-    "etag": "W/\"f2437ea5-8a14-4088-ada3-e8f6f61756ff\"",
-    "id": "/subscriptions/8bef68e4-9675-47c4-b4cd-272dea5455a3/resourceGroups/rg-aks-agenthost-f28a14-nodes/providers/Microsoft.Network/virtualNetworks/aks-vnet-39023097/subnets/aca-subnet/delegations/0",
+    "etag": "<etag>",
+    "id": "/subscriptions/<subscription-id>/resourceGroups/<node-resource-group>/providers/Microsoft.Network/virtualNetworks/<vnet-name>/subnets/aca-subnet/delegations/0",
     "name": "0",
     "provisioningState": "Succeeded",
-    "resourceGroup": "rg-aks-agenthost-f28a14-nodes",
+    "resourceGroup": "<node-resource-group>",
     "serviceName": "Microsoft.App/environments",
     "type": "Microsoft.Network/virtualNetworks/subnets/delegations"
   }
