@@ -115,7 +115,7 @@ Next:
 >
 > **Do not run them after `./deploy.sh`**.
 
-### Step 1 — Get the deployment suffix (SN)
+### Step 1 — Retrieve the deployment serial number (SN) and construct related environment variables
 
 ```bash
 RESOURCE_GROUP="rg-agenthost-workshop"
@@ -222,7 +222,7 @@ kubectl create secret generic agent-config -n "$NAMESPACE" \
   --from-literal=blob-container="agent-state" \
   --from-literal=apim-endpoint="https://${APIM_NAME}.azure-api.net/foundry" \
   --from-literal=llm-model="$LLM_MODEL" \
-  --from-literal=foundry-project-endpoint="$FOUNDRY_PROJECT_ENDPOINT" \  
+  --from-literal=foundry-project-endpoint="$FOUNDRY_PROJECT_ENDPOINT" \
   --dry-run=client -o yaml | kubectl apply -f -
 ```
 
