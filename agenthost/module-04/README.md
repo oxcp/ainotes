@@ -236,7 +236,7 @@ Once the build completes, the disk image appears in the list:
 
 ![module-04-DiskImages](../pic/module-04-DiskImages.png)
 
-On the **Sandbox** tab, create a new standard sandbox from the disk image you just built. Switch to the **Advanced** tab for configuration:
+On the **Sandbox** tab, create a new **Standard Sandbox** from the disk image you just built. Switch to the **Advanced** tab for configuration:
 
 ![module-04-Create-Sandbox-Advanced-diskImage](../pic/module-04-Create-Sandbox-Advanced-diskImage.png)
 
@@ -300,7 +300,7 @@ Scroll down to configure the VNET connection (**required only if your storage ac
 
 ![module-04-Create-Sandbox-Advanced-vnet-connection](../pic/module-04-Create-Sandbox-Advanced-vnet-connection.png)
 
-After the configuration above, you will have a **Review** step before creation:
+After the configuration above, press **Create** and you will have a **Review** step before creation:
 
 ![module-04-Create-Sandbox-Advanced-review-before-create](../pic/module-04-Create-Sandbox-Advanced-review-before-create.png)
 
