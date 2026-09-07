@@ -43,7 +43,7 @@ Recap the three solutions, provide decision guidance, and share cost-optimizatio
 │    → ACA Dynamic Sessions (not covered in depth, see note)      │
 └─────────────────────────────────────────────────────────────────┘
 ```
-
+> [!important]
 > **ACA Dynamic Sessions** is designed for **one-time or short-lived code execution** (e.g. sandboxed code interpreter tasks). Its aggressive session eviction makes it unsuitable for long-running stateful agents. Use **ACA Sandbox** for persistent agent workloads.
 
 ---

@@ -77,10 +77,11 @@ Three complementary solutions are recommended, each optimised for a distinct ope
 | **B** | AKS + agent-sandbox | ToB / ToC | High customisation is the core value. **ToB:** customise to meet enterprise-specific technical requirements (Micro-VM isolation via Kata Containers, custom networking, compliance); **ToC:** customise for cost/performance tuning (Spot node pools, right-sized SKUs, hibernate/scale-to-zero); `Sandbox` CRD lifecycle across both |
 | **C** | ACA Sandbox *(Public Preview)* | ToC / ToB long-running agents | Service-managed sandbox isolation (micro-VM boundary); long-running agent support; lifecycle control; true scale-to-zero |
 
+> [!important]
 > **Why ACA Sandbox instead of ACA Dynamic Sessions for Solution C?**  
 > ACA Dynamic Sessions is optimised for **one-time or short-lived code execution** (e.g. code interpreter tasks, ephemeral sandboxes). It evicts sessions aggressively and is not designed for long-running stateful agents. **ACA Sandbox** provides strong, service-managed sandbox isolation with lifecycle control (create/suspend/resume/delete), making it a better fit for persistent, long-running agent workloads. Note that ACA Sandbox is currently in **public preview** — evaluate feature availability and SLA before adopting for production.  
 > ACA Dynamic Sessions is retained in the comparison tables (Sections 2.1 and 2.2) as a valid option for short-lived execution scenarios.
-
+>
 > **Why not Azure Functions or App Service?**  
 > Functions are stateless by design and do not support persistent session contexts without external state management complexity. App Service does not natively scale to zero and carries higher idle cost.
 
@@ -114,7 +115,7 @@ Active conversation   →  Persist state to Azure Blob on every change
 Scale-to-zero trigger →  No flush needed — latest state is already durable in Blob
 New request arrives   →  Restore from Azure Blob
 ```
-
+> [!note]
 > **Single source of truth: Azure Blob Storage.** Each agent stores its state as
 > `<AGENT_ID>.json` in the `agent-state` container. There is no separate hot cache
 > (no Redis): the agent writes to Blob on every state change, so the latest state
@@ -129,6 +130,7 @@ New request arrives   →  Restore from Azure Blob
 
 ### 5.3 Entra ID Auth Architecture
 
+> [!note]
 > **User → agent authentication is out of scope for this workshop.** Identity is
 > only enforced on the hops **between the agent and the model**, described as two
 > paths (see [6.0 Two Access Paths](#60-two-access-paths-shared-model)):
@@ -199,6 +201,7 @@ only enforced on the hops between the agent and the model:
 | B — AKS + agent-sandbox | ✅ | — |
 | C — ACA Sandbox | ✅ | — |
 
+> [!note]
 > Path 2 is available **only to the Foundry hosted agent in Solution A**, because
 > only a hosted agent runs inside a Foundry project and receives a
 > Foundry-assigned identity. Solutions B and C run the agent outside Foundry, so
@@ -246,6 +249,7 @@ flowchart TD
 
 Solution B uses **Path 1 only**.
 
+> [!tip]
 > **Positioning:** The same AKS + agent-sandbox stack serves both audiences through
 > its **high customisability**:
 > - **ToB** — customise to satisfy enterprise-specific technical requirements
@@ -283,8 +287,9 @@ flowchart TD
 
 Solution C uses **Path 1 only**.
 
+> [!important]
 > **Note:** Azure Container Apps Sandbox is currently in **public preview**. Review the [feature documentation](https://learn.microsoft.com/en-us/azure/container-apps/sandboxes-overview) for current limitations and SLA before adopting for production workloads.
-
+>
 > **ACA Dynamic Sessions vs ACA Sandbox:** ACA Dynamic Sessions is designed for **short-lived, one-time code execution** (e.g. ephemeral code interpreter tasks). Its aggressive session eviction makes it unsuitable for long-running stateful agents. ACA Sandbox provides service-managed sandbox isolation with lifecycle control and persistent state semantics, making it a better fit for long-running agent workloads.
 
 ```mermaid
