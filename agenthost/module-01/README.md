@@ -67,7 +67,7 @@ chmod +x setup.sh
 > [!TIP]
 > Before running `setup.sh`, you can optionally override parameters in `main.bicep` as needed.
 
-Or run the equivalent Bicep deployment manually:
+<!-- Or run the equivalent Bicep deployment manually:
 
 ```bash
 export SN=$(openssl rand -hex 3); echo $SN
@@ -81,7 +81,8 @@ az deployment sub create \
       location="$LOCATION" \
       deploymentSN="$SN"
 
-```
+``` -->
+
 > [!NOTE]
 > The Bicep deployment, whether run directly or through `setup.sh`, may take several minutes (ususally 3~4 minutes) to complete. After a successful deployment, you will see output similar to the following:
 ```
