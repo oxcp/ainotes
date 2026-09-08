@@ -251,14 +251,14 @@ Scroll down to "Additional Details" to configure environment variables. Configur
 |---|---|---|
 | AGENT_STORAGE_ACCOUNT | stcagenthostf28a14 | Module-01 Storage account name used by the agent to persist chat state in Blob. |
 | AGENT_ID | agent-host-on-aca | Logical agent identifier. Also determines the Blob state file name as `<AGENT_ID>.json`. |
-| FOUNDRY_PROJECT_ENDPOINT | `https://foundry-agenthost-f28a14.services.ai.azure.com/api/projects/maf-agent-prj` | Foundry project endpoint used for catalog registration and project-scoped agent operations. Find the project endpoint value in your Microsoft Foundry project Home page. |
-| FOUNDRY_AGENT_NAME | agenthost-reflection-agent-on-aca | Agent name shown in the Foundry catalog. |
+<!-- | FOUNDRY_PROJECT_ENDPOINT | `https://foundry-agenthost-f28a14.services.ai.azure.com/api/projects/maf-agent-prj` | Foundry project endpoint used for catalog registration and project-scoped agent operations. Find the project endpoint value in your Microsoft Foundry project Home page. |
+| FOUNDRY_AGENT_NAME | agenthost-reflection-agent-on-aca | Agent name shown in the Foundry catalog. | -->
 
 For example, configure the `AGENT_STORAGE_ACCOUNT` variable as shown below:
 ![module-04-ACA-Create-Sandbox-Advanced-add-envvar-storage-account](../pic/module-04-ACA-Create-Sandbox-Advanced-add-envvar-storage-account.png)
 
-After configuring the environment variables, you should see a list similar to the following:
-![module-04-ACA-Create-Sandbox-Advanced-add-envvar-list](../pic/module-04-ACA-Create-Sandbox-Advanced-add-envvar-list.png)
+<!-- After configuring the environment variables, you should see a list similar to the following:
+![module-04-ACA-Create-Sandbox-Advanced-add-envvar-list](../pic/module-04-ACA-Create-Sandbox-Advanced-add-envvar-list.png) -->
 
 Scroll down to configure port:
 
@@ -315,8 +315,8 @@ A hyperlink appears at the top of the UI. Click it to open the agent chat UI in 
 
 ![module-04-agent-chat-portal](../pic/module-04-agent-chat-portal.png)
 
-In your Microsoft Foundry project portal, open the Agent catalog. You should see that the agent running on ACA Sandbox is registered and appears with type `Prompt`:
-![module-04-agent-in-foundry-portal](../pic/module-04-agent-in-foundry-portal.png)
+<!-- In your Microsoft Foundry project portal, open the Agent catalog. You should see that the agent running on ACA Sandbox is registered and appears with type `Prompt`:
+![module-04-agent-in-foundry-portal](../pic/module-04-agent-in-foundry-portal.png) -->
 
 Open the storage account Blob container. You should see the chat-history persistence file:
 ![module-04-agent-chat-history-store-in-blob](../pic/module-04-agent-chat-history-store-in-blob.png)
