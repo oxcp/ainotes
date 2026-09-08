@@ -83,8 +83,7 @@ az deployment sub create \
 
 ``` -->
 
-> [!NOTE]
-> The Bicep deployment, whether run directly or through `setup.sh`, may take several minutes (ususally 3~4 minutes) to complete. After a successful deployment, you will see output similar to the following:
+The deployment may take several minutes (ususally 3~4 minutes) to complete. After a successful deployment, you will see output similar to the following:
 ```
 ==> Deployment 'main-<deploymentSN>' complete. Outputs:
 {
@@ -187,14 +186,15 @@ After the template deployed, you have a resource group created with below resour
 > 12. **APIM API** `workshop-ai-gateway` at path `/foundry`, with subscription keys disabled and two operations: `responses` (`POST /openai/v1/responses`) and `get-response` (`GET /responses/{response-id}`).
 > 13. **APIM API policy** that validates the caller's Entra ID token with `validate-jwt`, selects `foundry-backend`, and authenticates to Foundry as the APIM system-assigned managed identity through `authentication-managed-identity` using the `https://ai.azure.com` resource.
 
-After the template deployment, you can retrieve the property values you need with commands as below:
-```bash
-export SN=$(az group show --resource-group "$RESOURCE_GROUP" --query "tags.deploymentSN" --output tsv 2>/dev/null | tr -d "\r\n" || echo "")
-
-az deployment sub show \
-  --name main-$SN \
-  --query "properties.outputs.{endpoint:foundryProjectEndpoint.value, model:modelDeploymentName.value, gateway:apimFoundryGatewayUrl.value, backend:apimFoundryBackendName.value}"
-```
+> [!note]
+> After the template deployment, you can retrieve the property values you need with commands as below:
+> ```bash
+> export SN=$(az group show --resource-group "$RESOURCE_GROUP" --query "tags.deploymentSN" --output tsv 2>/dev/null | tr -d "\r\n" || echo "")
+>
+> az deployment sub show \
+>   --name main-$SN \
+>   --query "properties.outputs.{endpoint:foundryProjectEndpoint.value, model:modelDeploymentName.value, gateway:apimFoundryGatewayUrl.value, backend:apimFoundryBackendName.value}"
+> ```
 
 ---
 
@@ -203,7 +203,8 @@ az deployment sub show \
 In the resource group, click the APIM and enter the APIM portal, you will see an API `workshop-ai-gateway` is added with pointing to the Foundry project endpoint:
 ![module-01-standalone-gw](../pic/module-01-standalone-gw.png)
 
-Go to the **Backends**, you will see a backend called `foundry-backend` is also added.
+Go to the **Backends**, you will see a backend called `foundry-backend` is also added:
+![module-01-standalone-gw-backend](../pic/module-01-standalone-gw-backend.png)
 
 There are 2 operations are automatically defined ( /responses, /get-response), with the inbound processing policies like `validate-jwt` we defined in the template:
 ![module-01-standalone-gw-ops+policies](../pic/module-01-standalone-gw-ops+policies.png)
@@ -273,20 +274,22 @@ In module-02, agents run as Foundry hosted agents. They can access the Foundry p
 
 To configure APIM as the Foundry project's native AI gateway, complete the following steps manually:
 
-1. Go to the Microsoft Foundry portal, in the top-left drop down menu, select "View all resources", and then in the resources list enter your project maf-agent-prj whose Parent resource is `foundry-agenthost-<deploymentSN>`.
+1. Go to the Microsoft Foundry portal, in the top-left drop down menu, select "View all resources":
+![module-01-foundry-view-all-resources](../pic/module-01-foundry-view-all-resources.png)
 
+2. In the resources list enter your project maf-agent-prj whose Parent resource is `foundry-agenthost-<deploymentSN>`.
 ![module-02-resource_list_in_foundry](../pic/module-02-resource_list_in_foundry.png)
 
-2. In the `maf-agent-prj` project panel, go to **"Manage"** in the top meanu bar. In the left panel, open **AI Gateway**.
-3. Select **Add AI Gateway**.
-4. Under **AI Foundry resource**, select the Foundry project created in the previous step, `foundry-agenthost-<deploymentSN>`, from the drop-down list.
-5. Choose **Use existing**.
-6. Select the deployed APIM `apim-agenthost-<deploymentSN>` instance, then click **Add**.
+3. In the `maf-agent-prj` project panel, go to **"Manage"** in the top meanu bar. In the left panel, open **AI Gateway**.
+4. Select **Add AI Gateway**.
+5. Under **AI Foundry resource**, select the Foundry project created in the previous step, `foundry-agenthost-<deploymentSN>`, from the drop-down list.
+6. Choose **Use existing**.
+7. Select the deployed APIM `apim-agenthost-<deploymentSN>` instance, then click **Add**.
 
-7. In the result **"Gateway name"** list, open the gateway entry and verify that the Foundry project is automatically added to the gateway.
+8. In the result **"Gateway name"** list, open the gateway entry and verify that the Foundry project is automatically added to the gateway.
 ![module-01-AIGW-added](../pic/module-01-AIGW-added.png)
 
-8. Open the APIM instance in the Azure portal and verify that a new API was added automatically. This API will only be used when the APIM works as Foundry native AI gateway in module-02:
+9. Open the APIM instance in the Azure portal and verify that a new API was added automatically. This API will only be used when the APIM works as Foundry native AI gateway in module-02:
 ![module-01-AIGW-added-APIM-API-added](../pic/module-01-AIGW-added-APIM-API-added.png)
 
 ---
