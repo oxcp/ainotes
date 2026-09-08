@@ -379,6 +379,8 @@ Open `http://<EXTERNAL-IP>` in your browser. The chat window should appear. Ask 
 > 2. Create a jumpbox VM in that subnet. The jumpbox will have a NIC and private IP in the subnet.
 > 3. Use the jumpbox to access the storage account through the private endpoint.
 
+> [!tip]
+> If you do not have a jumpbox that meets these network requirements and do not want to create one, you can **skip** this direct Blob inspection. The later [Verify that the agent reloads its state after resuming](#verify-that-the-agent-reloads-its-state-after-resuming) test provides sufficient behavioral evidence that the agent state was persisted when the chat history returns after a restart. However, only the direct inspection in this section confirms that Blob Storage is the persistence backend.
 
 After several rounds of chat, verify that the conversation state is persisted in the
 `agent-state` container as `agent-host.json`. From the jumpbox browser, open the Blob container in the portal and view `agent-host.json`. The `history` field should contain your chat turns and grow after each interaction.
