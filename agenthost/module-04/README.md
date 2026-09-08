@@ -325,6 +325,8 @@ Open the persistence file to view the chat history:
 
 > [!tip]
 > If public network access is disabled on your storage account, check the persistence file from a jumpbox that can reach the storage account through Private Link. The easiest approach is to reuse the jumpbox from module-03.
+>
+> As in module-03, if you do not have a jumpbox that meets these network requirements and do not want to create one, you can skip the direct Blob inspection. Instead, use the stop/resume verification below: if the previous chat history is restored after the agent resumes, the agent state was successfully preserved. This behavioral check does not prove that Blob Storage is the persistence backend; only direct inspection of the persistence file confirms that detail. In Memory suspend mode, the restored history may also come from the preserved in-memory runtime state.
 
 To verify that ACA Sandbox helps preserve runtime state, wait for the idle timeout until the agent automatically enters the `Stopped` status:
 ![module-04-ACA-Sandbox-auto-suspend](../pic/module-04-ACA-Sandbox-auto-suspend.png)
