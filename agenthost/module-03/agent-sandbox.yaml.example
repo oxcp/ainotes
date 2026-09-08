@@ -92,6 +92,7 @@ spec:
                 secretKeyRef:
                   name: agent-config
                   key: foundry-project-endpoint
+                  optional: true
             - name: FOUNDRY_AGENT_NAME
               value: "agenthost-reflection-agent"
             - name: AGENT_APIM_ENDPOINT

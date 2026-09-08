@@ -131,9 +131,6 @@ SERVICE_ACCOUNT="agent-sa"
 IMAGE_TAG="latest"
 
 LLM_MODEL="gpt-5.4-mini"
-FOUNDRY_ACCOUNT="foundry-agenthost-${SN}"
-FOUNDRY_PROJECT_NAME="maf-agent-prj"
-FOUNDRY_PROJECT_ENDPOINT="https://${FOUNDRY_ACCOUNT}.services.ai.azure.com/api/projects/${FOUNDRY_PROJECT_NAME}"
 ```
 
 ### Step 2 — Build and push the image to the existing ACR
@@ -222,7 +219,6 @@ kubectl create secret generic agent-config -n "$NAMESPACE" \
   --from-literal=blob-container="agent-state" \
   --from-literal=apim-endpoint="https://${APIM_NAME}.azure-api.net/foundry" \
   --from-literal=llm-model="$LLM_MODEL" \
-  --from-literal=foundry-project-endpoint="$FOUNDRY_PROJECT_ENDPOINT" \
   --dry-run=client -o yaml | kubectl apply -f -
 ```
 
@@ -493,14 +489,6 @@ kubectl delete pod normal-pod -n "$NAMESPACE"
 ```
 > [!tip]
 > If the agent pod reports a different kernel from the normal pod and uses `runtimeClassName: kata-vm-isolation`, it confirms that the workload is running inside AKS Pod Sandboxing.
-
-### Verify that the agent is registered in Foundry as a "prompt" agent
-
-In the Foundry portal, open your Foundry project and go to the **Agents** tab. The agent
-`agenthost-reflection-agent` (defined in `.env`) should be registered successfully with
-the type `prompt`:
-
-![module-03-agent-in-foundry-portal](../pic/module-03-agent-in-foundry-portal.png)
 
 ### Verify that the agent reloads its state after resuming
 
