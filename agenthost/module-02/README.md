@@ -202,6 +202,11 @@ If the deployment succeeds, you should see:
 
 ![azd_deployed_CLI](../pic/module-02-azd_deployed_CLI.png)
 
+> [!tip]
+> `azd deploy` deploys the agent to Foundry, where it runs as a Hosted Agent, and checks whether the deployment succeeds. If you see `agent deployment timed out (last status: creating); check agent status manually`, open the Foundry portal and check the agent's status：
+> - If the agent is already **Running**, you can safely ignore this error
+> - If the agent is not **Running**, then remove the agent from the agent list, and re-run the `azd deploy`
+
 In the Foundry portal, open your Foundry project and go to the **Build → Agents** tab. You should see that your agent has been deployed successfully and its type is `hosted`:
 
 ![azd_deployed_portal](../pic/module-02-azd_deployed_portal.png)
@@ -242,7 +247,7 @@ You can create a new version of the hosted agent in the Foundry portal and chang
 
 4. Keep `AI_MODEL_DEPLOYMENT_NAME=gpt-5.4-mini`, save the configuration, and it will create a new agent version.
 
-5. Active the new version in the Playground. The Playground will start a new session.
+5. Active the new version in the Playground and wait for the new version agent to be activated.
 ![module-02-hosted-agent-edit-envvars-new-version](../pic/module-02-hosted-agent-edit-envvars-new-version.png)
 
 6. Send test messages to try the new version. Review the hosted-agent log stream to confirm the selected routing path:

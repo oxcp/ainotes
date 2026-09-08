@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>倒计时</title>
+	<style>
+		:root {
+			color-scheme: light;
+			--ink: #172033;
+			--muted: #667085;
+			--line: #d9e1ec;
+			--surface: rgba(255, 255, 255, 0.92);
+			--blue: #1261a6;
+			--blue-dark: #0b467a;
+			--red: #d1242f;
+			--shadow: 0 24px 70px rgba(34, 56, 82, 0.18);
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			min-height: 100vh;
+			margin: 0;
+			display: grid;
+			place-items: center;
+			padding: 24px;
+			color: var(--ink);
+			font-family: "Segoe UI Variable", "Microsoft YaHei UI", sans-serif;
+			background:
+				linear-gradient(rgba(255, 255, 255, 0.58), rgba(242, 247, 252, 0.82)),
+				repeating-linear-gradient(90deg, transparent 0 39px, rgba(18, 97, 166, 0.07) 40px),
+				repeating-linear-gradient(0deg, transparent 0 39px, rgba(18, 97, 166, 0.07) 40px),
+				#eaf2f8;
+		}
+
+		.timer {
+			width: min(680px, 100%);
+			padding: clamp(28px, 6vw, 56px);
+			border: 1px solid rgba(255, 255, 255, 0.9);
+			border-radius: 8px;
+			background: var(--surface);
+			box-shadow: var(--shadow);
+			backdrop-filter: blur(14px);
+		}
+
+		.eyebrow {
+			margin: 0 0 8px;
+			color: var(--blue);
+			font-size: 0.78rem;
+			font-weight: 700;
+			text-transform: uppercase;
+		}
+
+		h1 {
+			margin: 0;
+			font-family: Georgia, "Microsoft YaHei UI", serif;
+			font-size: clamp(2rem, 6vw, 3.6rem);
+			font-weight: 600;
+			line-height: 1.05;
+		}
+
+		.subtitle {
+			margin: 12px 0 34px;
+			color: var(--muted);
+			line-height: 1.6;
+		}
+
+		.time-inputs {
+			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			gap: 12px;
+		}
+
+		label {
+			display: grid;
+			gap: 7px;
+			color: var(--muted);
+			font-size: 0.82rem;
+			font-weight: 650;
+		}
+
+		input {
+			width: 100%;
+			height: 50px;
+			border: 1px solid var(--line);
+			border-radius: 6px;
+			padding: 0 12px;
+			color: var(--ink);
+			background: #fff;
+			font: inherit;
+			font-size: 1.1rem;
+			font-variant-numeric: tabular-nums;
+			outline: none;
+			transition: border-color 160ms ease, box-shadow 160ms ease;
+		}
+
+		input:focus {
+			border-color: var(--blue);
+			box-shadow: 0 0 0 3px rgba(18, 97, 166, 0.12);
+		}
+
+		.display-wrap {
+			margin: 34px 0 30px;
+			padding: 28px 16px;
+			border-block: 1px solid var(--line);
+			text-align: center;
+		}
+
+		.display {
+			min-height: 1.15em;
+			color: var(--blue);
+			font-family: "Cascadia Mono", Consolas, monospace;
+			font-size: clamp(3rem, 12vw, 6.4rem);
+			font-weight: 700;
+			line-height: 1;
+			font-variant-numeric: tabular-nums;
+			letter-spacing: 0;
+		}
+
+		.display.warning,
+		.display.expired {
+			color: var(--red);
+		}
+
+		.display.expired {
+			animation: flash 800ms steps(2, end) infinite;
+		}
+
+		.status {
+			min-height: 1.5em;
+			margin: 12px 0 0;
+			color: var(--muted);
+			font-size: 0.9rem;
+		}
+
+		.actions {
+			display: grid;
+			grid-template-columns: 1.4fr repeat(3, 1fr);
+			gap: 10px;
+		}
+
+		button {
+			min-height: 46px;
+			border: 1px solid var(--line);
+			border-radius: 6px;
+			padding: 10px 14px;
+			color: var(--ink);
+			background: #fff;
+			font: inherit;
+			font-weight: 700;
+			cursor: pointer;
+			transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+		}
+
+		button:hover:not(:disabled) {
+			border-color: #aab8c8;
+			background: #f7fafc;
+			transform: translateY(-1px);
+		}
+
+		button:focus-visible {
+			outline: 3px solid rgba(18, 97, 166, 0.22);
+			outline-offset: 2px;
+		}
+
+		button:disabled {
+			cursor: not-allowed;
+			opacity: 0.45;
+		}
+
+		.primary {
+			border-color: var(--blue);
+			color: #fff;
+			background: var(--blue);
+		}
+
+		.primary:hover:not(:disabled) {
+			border-color: var(--blue-dark);
+			background: var(--blue-dark);
+		}
+
+		@keyframes flash {
+			50% {
+				opacity: 0.18;
+			}
+		}
+
+		@media (max-width: 580px) {
+			body {
+				padding: 14px;
+			}
+
+			.timer {
+				padding: 26px 18px;
+			}
+
+			.actions {
+				grid-template-columns: repeat(2, 1fr);
+			}
+		}
+
+		@media (prefers-reduced-motion: reduce) {
+			.display.expired {
+				animation-duration: 1.6s;
+			}
+		}
+	</style>
+</head>
+<body>
+	<main class="timer" aria-labelledby="page-title">
+		<p class="eyebrow">Countdown timer</p>
+		<h1 id="page-title">倒计时</h1>
+		<p class="subtitle">设置时长后开始计时。剩余五分钟时，时间将以红色提示。</p>
+
+		<section class="time-inputs" aria-label="设置倒计时时长">
+			<label>
+				小时
+				<input id="hours" type="number" min="0" max="999" value="0" inputmode="numeric">
+			</label>
+			<label>
+				分钟
+				<input id="minutes" type="number" min="0" max="59" value="5" inputmode="numeric">
+			</label>
+			<label>
+				秒
+				<input id="seconds" type="number" min="0" max="59" value="0" inputmode="numeric">
+			</label>
+		</section>
+
+		<section class="display-wrap" aria-live="polite" aria-atomic="true">
+			<div id="display" class="display">00:05:00</div>
+			<p id="status" class="status">准备就绪</p>
+		</section>
+
+		<section class="actions" aria-label="计时控制">
+			<button id="start" class="primary" type="button">开始计时</button>
+			<button id="pause" type="button" disabled>暂停</button>
+			<button id="stop" type="button" disabled>停止</button>
+			<button id="restart" type="button">重新开始</button>
+		</section>
+	</main>
+
+	<script>
+		const inputs = {
+			hours: document.getElementById("hours"),
+			minutes: document.getElementById("minutes"),
+			seconds: document.getElementById("seconds")
+		};
+		const display = document.getElementById("display");
+		const status = document.getElementById("status");
+		const startButton = document.getElementById("start");
+		const pauseButton = document.getElementById("pause");
+		const stopButton = document.getElementById("stop");
+		const restartButton = document.getElementById("restart");
+
+		let intervalId = null;
+		let endTime = 0;
+		let remainingSeconds = readDuration();
+		let state = "idle";
+
+		function clampInput(input) {
+			const min = Number(input.min) || 0;
+			const max = Number(input.max) || Number.MAX_SAFE_INTEGER;
+			const value = Number.parseInt(input.value, 10);
+			input.value = Math.min(max, Math.max(min, Number.isFinite(value) ? value : 0));
+		}
+
+		function readDuration() {
+			Object.values(inputs).forEach(clampInput);
+			return Number(inputs.hours.value) * 3600
+				+ Number(inputs.minutes.value) * 60
+				+ Number(inputs.seconds.value);
+		}
+
+		function formatTime(totalSeconds) {
+			const safeSeconds = Math.max(0, totalSeconds);
+			const hours = Math.floor(safeSeconds / 3600);
+			const minutes = Math.floor((safeSeconds % 3600) / 60);
+			const seconds = safeSeconds % 60;
+			return [hours, minutes, seconds]
+				.map((part) => String(part).padStart(2, "0"))
+				.join(":");
+		}
+
+		function render() {
+			display.textContent = formatTime(remainingSeconds);
+			display.classList.toggle("warning", remainingSeconds > 0 && remainingSeconds <= 300);
+			display.classList.toggle("expired", state === "expired");
+			startButton.disabled = state === "running";
+			pauseButton.disabled = state !== "running";
+			stopButton.disabled = state === "idle" || state === "stopped";
+
+			const messages = {
+				idle: "准备就绪",
+				running: "正在计时",
+				paused: "已暂停",
+				stopped: "已停止",
+				expired: "时间到"
+			};
+			status.textContent = messages[state];
+		}
+
+		function clearTimer() {
+			if (intervalId !== null) {
+				window.clearInterval(intervalId);
+				intervalId = null;
+			}
+		}
+
+		function tick() {
+			remainingSeconds = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+			if (remainingSeconds === 0) {
+				clearTimer();
+				state = "expired";
+			}
+			render();
+		}
+
+		function runTimer() {
+			endTime = Date.now() + remainingSeconds * 1000;
+			state = "running";
+			clearTimer();
+			intervalId = window.setInterval(tick, 250);
+			render();
+		}
+
+		function start() {
+			if (state !== "paused") {
+				remainingSeconds = readDuration();
+			}
+			if (remainingSeconds <= 0) {
+				state = "expired";
+				render();
+				return;
+			}
+			runTimer();
+		}
+
+		function pause() {
+			if (state !== "running") return;
+			tick();
+			clearTimer();
+			state = "paused";
+			render();
+		}
+
+		function stop() {
+			clearTimer();
+			remainingSeconds = readDuration();
+			state = "stopped";
+			render();
+		}
+
+		function restart() {
+			clearTimer();
+			remainingSeconds = readDuration();
+			if (remainingSeconds <= 0) {
+				state = "expired";
+				render();
+				return;
+			}
+			runTimer();
+		}
+
+		Object.values(inputs).forEach((input) => {
+			input.addEventListener("change", () => {
+				clampInput(input);
+				if (state !== "running" && state !== "paused") {
+					remainingSeconds = readDuration();
+					state = "idle";
+					render();
+				}
+			});
+		});
+
+		startButton.addEventListener("click", start);
+		pauseButton.addEventListener("click", pause);
+		stopButton.addEventListener("click", stop);
+		restartButton.addEventListener("click", restart);
+		render();
+	</script>
+</body>
+</html>
