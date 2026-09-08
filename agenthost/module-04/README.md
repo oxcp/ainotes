@@ -301,7 +301,7 @@ Scroll down to configure the VNET connection (**required only if your storage ac
 
 ![module-04-Create-Sandbox-Advanced-vnet-connection](../pic/module-04-Create-Sandbox-Advanced-vnet-connection.png)
 
-After the configuration above, press **Create** and you will have a **Review** step before creation:
+After the configuration above, press **Create** in the top right corner, and you will have a **Review** step before creation:
 
 ![module-04-Create-Sandbox-Advanced-review-before-create](../pic/module-04-Create-Sandbox-Advanced-review-before-create.png)
 
