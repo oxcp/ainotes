@@ -129,11 +129,7 @@ AKS_NAME="aks-agenthost-${SN}"
 NAMESPACE="agent"
 SERVICE_ACCOUNT="agent-sa"
 IMAGE_TAG="latest"
-
 LLM_MODEL="gpt-5.4-mini"
-FOUNDRY_ACCOUNT="foundry-agenthost-${SN}"
-FOUNDRY_PROJECT_NAME="maf-agent-prj"
-FOUNDRY_PROJECT_ENDPOINT="https://${FOUNDRY_ACCOUNT}.services.ai.azure.com/api/projects/${FOUNDRY_PROJECT_NAME}"
 ```
 
 ### Step 2 — Build and push the image to the existing ACR
@@ -198,8 +194,28 @@ az aks nodepool add \
   --labels "kata-containers=true"
 
 az aks update -g "$RESOURCE_GROUP" -n "$AKS_NAME"
+```
+> [!important]
+> During deployment, the `aks-preview` extension may ask whether to reconcile the AKS cluster with its current settings. Enter `y` and press Enter to continue:
+>
+> ```text
+The behavior of this command has been altered by the following extension: aks-preview
+no argument specified to update would you like to reconcile to current settings? (y/N): y
+> ```
+
+After the Kata node pool is added, run the following command to verify that the runtime class is available:
+
+```bash
 kubectl get runtimeclass kata-vm-isolation
 ```
+
+If AKS Pod Sandboxing is enabled correctly, you should see output similar to the following:
+
+```text
+NAME                HANDLER   AGE
+kata-vm-isolation   kata      7m21s
+```
+
 
 ### Step 5 — Install the agent-sandbox controller (release manifest)
 
@@ -210,6 +226,26 @@ kubectl apply -f \
 
 kubectl wait --for=condition=Established crd/sandboxes.agents.x-k8s.io --timeout=2m
 kubectl wait --for=condition=Ready pod -l app=agent-sandbox-controller -n agent-sandbox-system --timeout=5m
+```
+You should see output similar to the following:
+```text
+namespace/agent-sandbox-system created
+customresourcedefinition.apiextensions.k8s.io/sandboxclaims.extensions.agents.x-k8s.io created
+customresourcedefinition.apiextensions.k8s.io/sandboxes.agents.x-k8s.io created
+customresourcedefinition.apiextensions.k8s.io/sandboxtemplates.extensions.agents.x-k8s.io created
+customresourcedefinition.apiextensions.k8s.io/sandboxwarmpools.extensions.agents.x-k8s.io created
+serviceaccount/agent-sandbox-controller created
+role.rbac.authorization.k8s.io/agent-sandbox-controller created
+clusterrole.rbac.authorization.k8s.io/agent-sandbox-controller created
+clusterrole.rbac.authorization.k8s.io/agent-sandbox-controller-extensions created
+rolebinding.rbac.authorization.k8s.io/agent-sandbox-controller created
+clusterrolebinding.rbac.authorization.k8s.io/agent-sandbox-controller created
+clusterrolebinding.rbac.authorization.k8s.io/agent-sandbox-controller-extensions created
+service/agent-sandbox-controller created
+service/agent-sandbox-webhook-service created
+deployment.apps/agent-sandbox-controller created
+customresourcedefinition.apiextensions.k8s.io/sandboxes.agents.x-k8s.io condition met
+pod/agent-sandbox-controller-76885c8b6c-cmgpp condition met
 ```
 
 ### Step 6 — Create secrets from Module 1 Storage / APIM
@@ -222,7 +258,6 @@ kubectl create secret generic agent-config -n "$NAMESPACE" \
   --from-literal=blob-container="agent-state" \
   --from-literal=apim-endpoint="https://${APIM_NAME}.azure-api.net/foundry" \
   --from-literal=llm-model="$LLM_MODEL" \
-  --from-literal=foundry-project-endpoint="$FOUNDRY_PROJECT_ENDPOINT" \
   --dry-run=client -o yaml | kubectl apply -f -
 ```
 
@@ -257,6 +292,7 @@ If your storage account has public network access disabled, the AKS-managed VNet
 Run the following script to establish private connectivity between the AKS-managed VNet and the storage account:
 
 ```bash
+chmod +x deploy-storage-private-link.sh
 ./deploy-storage-private-link.sh
 ```
 

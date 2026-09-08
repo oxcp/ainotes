@@ -47,8 +47,8 @@ APIM_NAME="apim-agenthost-${SN}"
 AKS_NAME="aks-agenthost-${SN}"
 # Foundry account/project from Module 1. The project endpoint (same format as the
 # Module 1 output) is where the persistent agent is created -> Foundry catalog.
-FOUNDRY_ACCOUNT="foundry-agenthost-${SN}"
-FOUNDRY_PROJECT_ENDPOINT="${FOUNDRY_PROJECT_ENDPOINT:-https://${FOUNDRY_ACCOUNT}.services.ai.azure.com/api/projects/${FOUNDRY_PROJECT_NAME}}"
+# FOUNDRY_ACCOUNT="foundry-agenthost-${SN}"
+# FOUNDRY_PROJECT_ENDPOINT="${FOUNDRY_PROJECT_ENDPOINT:-https://${FOUNDRY_ACCOUNT}.services.ai.azure.com/api/projects/${FOUNDRY_PROJECT_NAME}}"
 LOCATION="${LOCATION:-$(az group show -g "$RESOURCE_GROUP" --query location -o tsv | tr -d "\r\n")}"
 # Region for the AKS cluster + its node resource group. The AKS resource is still
 # created INTO the Module 1 resource group ($RESOURCE_GROUP); only its region
@@ -126,9 +126,9 @@ kubectl create secret generic agent-config \
   --from-literal=blob-container="agent-state" \
   --from-literal=apim-endpoint="$APIM_GATEWAY_URL" \
   --from-literal=llm-model="$LLM_MODEL" \
-  --from-literal=foundry-project-endpoint="$FOUNDRY_PROJECT_ENDPOINT" \
   --dry-run=client -o yaml | kubectl apply -f -
-
+# --from-literal=foundry-project-endpoint="$FOUNDRY_PROJECT_ENDPOINT" \
+  
 echo "==> [8/9] Deploying the agent as a Sandbox custom resource"
 # replace the placeholders in the example manifest with the actual values for this deployment
 IDENTITY_CLIENT_ID=$(az identity show -g "$RESOURCE_GROUP" -n "$IDENTITY_NAME" --query clientId -o tsv | tr -d "\r\n")

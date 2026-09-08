@@ -82,18 +82,7 @@ spec:
                 secretKeyRef:
                   name: agent-config
                   key: blob-container
-            # ── Mode: foundry (persistent agent, visible in Foundry catalog) ──
-            # Model calls route through APIM via the Module 1 Foundry AI Gateway
-            # connection (registered on the project) — no direct APIM call here.
-            - name: AGENT_MODE
-              value: "foundry"
-            - name: FOUNDRY_PROJECT_ENDPOINT
-              valueFrom:
-                secretKeyRef:
-                  name: agent-config
-                  key: foundry-project-endpoint
-            - name: FOUNDRY_AGENT_NAME
-              value: "agenthost-reflection-agent"
+            # Model calls route through APIM via the Module 1 standalone AI Gateway
             - name: AGENT_APIM_ENDPOINT
               valueFrom:
                 secretKeyRef:
