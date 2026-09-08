@@ -44,6 +44,7 @@ az extension add --name containerapp --upgrade --allow-preview true -y
 
 ```bash
 cd agenthost/module-04
+chmod +x sandbox-deploy.sh
 ./sandbox-deploy.sh
 ```
 
