@@ -494,13 +494,13 @@ kubectl delete pod normal-pod -n "$NAMESPACE"
 > [!tip]
 > If the agent pod reports a different kernel from the normal pod and uses `runtimeClassName: kata-vm-isolation`, it confirms that the workload is running inside AKS Pod Sandboxing.
 
-### Verify that the agent is registered in Foundry as a "prompt" agent
+<!-- ### Verify that the agent is registered in Foundry as a "prompt" agent
 
 In the Foundry portal, open your Foundry project and go to the **Agents** tab. The agent
 `agenthost-reflection-agent` (defined in `.env`) should be registered successfully with
 the type `prompt`:
 
-![module-03-agent-in-foundry-portal](../pic/module-03-agent-in-foundry-portal.png)
+![module-03-agent-in-foundry-portal](../pic/module-03-agent-in-foundry-portal.png) -->
 
 ### Verify that the agent reloads its state after resuming
 
