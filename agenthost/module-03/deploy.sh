@@ -101,7 +101,8 @@ else
     --labels "kata-containers=true" \
     --output none
 fi
-az aks update --resource-group "$RESOURCE_GROUP" --name "$AKS_NAME" --output none
+# Reconcile the cluster after adding the Kata pool without an interactive prompt.
+az aks update --resource-group "$RESOURCE_GROUP" --name "$AKS_NAME" --yes --output none
 az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$AKS_NAME" --overwrite-existing
 kubectl get runtimeclass kata-vm-isolation >/dev/null
 

@@ -193,15 +193,8 @@ az aks nodepool add \
   --node-taints "kata=true:NoSchedule" \
   --labels "kata-containers=true"
 
-az aks update -g "$RESOURCE_GROUP" -n "$AKS_NAME"
+az aks update -g "$RESOURCE_GROUP" -n "$AKS_NAME" --yes
 ```
-> [!important]
-> During deployment, the `aks-preview` extension may ask whether to reconcile the AKS cluster with its current settings. Enter `y` and press Enter to continue:
->
-> ```text
-The behavior of this command has been altered by the following extension: aks-preview
-no argument specified to update would you like to reconcile to current settings? (y/N): y
-> ```
 
 After the Kata node pool is added, run the following command to verify that the runtime class is available:
 
