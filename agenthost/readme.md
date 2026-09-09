@@ -22,6 +22,36 @@ This workshop introduces a practical Azure agent-hosting journey. You start with
 - **Implemented Features**: state persistence, fast start, scale-to-zero, isolation, Entra ID authentication, and AI Gateway integration.
 - **Workshop Schedule**: A 120-minute hands-on workshop covering core infrastructure setup, the three solutions above, and a wrap-up with cost-optimization tips and a production-hardening checklist.
 
+## How to use this workshop
+
+1. Create a local directory to store the workshop files, for example, `myworkshop`, and enter it:
+
+  ```bash
+  mkdir myworkshop
+  cd myworkshop
+  ```
+
+2. Clone the repository using sparse checkout:
+
+  ```bash
+  git clone --depth 1 --filter=blob:none --sparse https://github.com/oxcp/ainotes/
+  ```
+
+3. Enter the generated `ainotes` subdirectory:
+
+  ```bash
+  cd ainotes
+  ```
+
+4. Check out the `agenthost` directory:
+
+  ```bash
+  git sparse-checkout set agenthost
+  ```
+
+This downloads the content required for the `agenthost` workshop instead of checking out the entire repository.
+
+---
 
 ## Prerequisites (before workshop)
 
@@ -128,36 +158,6 @@ Fix suggestion:
 
 ---
 
-## How to use this workshop
-
-1. Create a local directory to store the workshop files, for example, `myworkshop`, and enter it:
-
-  ```bash
-  mkdir myworkshop
-  cd myworkshop
-  ```
-
-2. Clone the repository using sparse checkout:
-
-  ```bash
-  git clone --depth 1 --filter=blob:none --sparse https://github.com/oxcp/ainotes/
-  ```
-
-3. Enter the generated `ainotes` subdirectory:
-
-  ```bash
-  cd ainotes
-  ```
-
-4. Check out the `agenthost` directory:
-
-  ```bash
-  git sparse-checkout set agenthost
-  ```
-
-This downloads the content required for the `agenthost` workshop instead of checking out the entire repository.
-
----
 
 ## Workshop Modules
 
