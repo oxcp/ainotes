@@ -1,0 +1,5 @@
+.azure/
+.env.local
+wheelhouse/
+agent-src/.venv/
+agent-src/__pycache__/

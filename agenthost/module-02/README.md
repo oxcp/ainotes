@@ -168,9 +168,79 @@ azd env get-values
 
 ## Step 4 — Run the agent locally
 
+Use the local launcher from the initialized `maf-agent` directory. It loads
+machine-specific package settings before `azd` installs the agent dependencies:
+
 ```bash
-azd ai agent run
+bash run-local.sh
 ```
+
+The launcher forwards arguments to `azd ai agent run`. On machines that can
+access PyPI, no additional configuration is needed. Existing `uv`, `pip`, proxy,
+and certificate settings remain in effect.
+
+### Corporate package mirrors, proxies, and offline packages
+
+Create a local configuration file in the initialized `maf-agent` directory:
+
+```bash
+cp .env.local.example .env.local
+```
+
+Edit `.env.local` for your environment. This is a shell configuration file;
+quote values containing spaces or shell metacharacters. The file is ignored by
+Git and lives outside `agent-src`, the source directory deployed to Foundry.
+
+| Setting | Purpose |
+|---|---|
+| `AGENT_PYTHON_INDEX_URL` | Sets the default package index for both `uv` and `pip`. Use your organization's approved mirror. |
+| `HTTPS_PROXY`, `HTTP_PROXY`, `NO_PROXY` | Configure network routing. Include `localhost,127.0.0.1,::1` in `NO_PROXY` when using a proxy. |
+| `SSL_CERT_FILE`, `PIP_CERT`, `REQUESTS_CA_BUNDLE` | Configure trusted CA bundles for the Python tools and agent. |
+| `AGENT_WHEELHOUSE` | Directory containing local Python wheels and their transitive dependencies. |
+| `AGENT_PACKAGES_OFFLINE=true` | Disables Python package-index access; `uv` also disables network access and Python downloads. Azure API access is still needed to run the agent. |
+
+For example, to use an approved Python package mirror:
+
+```bash
+# .env.local — replace this example URL with your organization's feed.
+AGENT_PYTHON_INDEX_URL="https://packages.example.com/pypi/simple/"
+```
+
+PyPI distributes wheels and wheel metadata through `files.pythonhosted.org`.
+If that host is blocked, the mirror must also serve the package files and
+metadata, rather than returning download links to that host. An error while
+fetching a `.whl.metadata` file happens during dependency installation, before
+`main.py` starts; changing the agent's Python code cannot fix the download.
+
+For a machine without package-registry access, provide a wheel directory:
+
+```bash
+# .env.local
+AGENT_WHEELHOUSE="./wheelhouse"
+AGENT_PACKAGES_OFFLINE=true
+```
+
+The wheels must cover all packages in `agent-src/requirements.txt`, including
+transitive dependencies, and match the local OS, CPU architecture, and Python
+version. Install Python 3.13 or later beforehand; when needed, create
+`agent-src/.venv` with the Python version matching your wheels. An offline
+setting does not supply missing packages. The mirror must also contain the
+prerelease package versions required by this sample.
+
+Keep machine-specific registry URLs and credentials in `.env.local`
+or your existing tool configuration, rather than in `main.py`, `requirements.txt`,
+or the deployment's `azure.yaml`.
+
+`azd ai agent run` installs dependencies **before** it runs `main.py` or loads the
+agent's environment from `azure.yaml` / `azd env`. Its Python installer prefers
+`uv`, which does not read `pip.conf` or `PIP_INDEX_URL`. The launcher maps the
+shared index setting to both installers and exports the local settings early
+enough for dependency installation. Calling `azd ai agent run` directly is also
+supported if you export the corresponding tool settings in your shell first.
+
+References: [uv's pip compatibility](https://docs.astral.sh/uv/pip/compatibility/),
+[uv environment variables](https://docs.astral.sh/uv/reference/environment/).
+
 ![azd_ai_agent_run](../pic/module-02-azd_ai_agent_run.png)
 If the command succeeds, you should see `Agent ready`, and the agent will be ready to receive requests on local port 8088.
 
@@ -268,6 +338,8 @@ The previous agent version remains available, allowing you to switch between ver
 | File | Description |
 |---|---|
 | `azure.yaml` | Foundry agent manifest used by `azd ai agent init` (references `agent-src`) |
+| `run-local.sh` | Starts `azd ai agent run` after loading local Python package settings |
+| `.env.local.example` | Example settings for a Python package mirror, proxy, CA bundle, or wheel directory |
 | `agent-src/main.py` | Agent, served with `ResponsesHostServer`; `build_client()` selects `FoundryChatClient` (direct) or `OpenAIChatClient` → APIM gateway based on `MODEL_ROUTING` |
 | `agent-src/requirements.txt` | Python dependencies for the hosted agent (both `agent-framework-foundry` and `agent-framework-openai`) |
 | `agent-src/Dockerfile` | Container build for the hosted agent runtime |
