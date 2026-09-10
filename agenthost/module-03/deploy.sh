@@ -57,8 +57,8 @@ AKS_LOCATION="$LOCATION"
 echo "    ACR=$ACR_NAME  UAMI=$IDENTITY_NAME  Storage=$STORAGE_ACCOUNT  APIM=$APIM_NAME"
 
 echo "==> [2/9] Building and pushing the agent image to the EXISTING ACR"
-cp agent-src/app/.env.example agent-src/app/.env
-sed -i "s|<SN>|${SN}|g" agent-src/app/.env
+# Render the template directly; sed -i has different syntax on GNU and BSD sed.
+sed "s|<SN>|${SN}|g" agent-src/app/.env.example > agent-src/app/.env
 # Build remotely in ACR so the deployment does not require a local Docker daemon.
 # The build context contains the app, Dockerfile, and lifecycle hook.
 az acr build \
