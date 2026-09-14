@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-POC Agent — Foundry catalog agent with volume-persisted chat history
-====================================================================
+POC Agent — Foundry catalog agent with Blob-persisted chat history
+==================================================================
 
 A small, clear agent for Module 3 (Solution B) that:
   1. Serves the existing single-page HTML chat portal at `/`.
   2. Talks to the backend model to answer chat messages.
   3. Registers a PERSISTENT agent in the Foundry project so it is visible and
      manageable in the Foundry agent catalog (via azure-ai-projects).
-    4. Persists conversation state to the mounted Blob volume.
-    5. Recovers previous conversation history from the volume on startup.
+  4. Persists conversation state to Azure Blob Storage.
+  5. Recovers previous conversation history from Blob on startup.
   6. Runs inference through the Module 1 APIM gateway using the model
      **Responses API** (Microsoft Agent Framework + Azure OpenAI SDK).
 
@@ -17,7 +17,8 @@ Auth is Azure Workload Identity (DefaultAzureCredential) — no static secrets.
 
 Environment Variables (aligned with agent-sandbox.yaml):
   AGENT_ID                 — Unique agent identifier (default: agent-poc-001)
-    STATE_MOUNT_PATH         — Mounted Blob volume path (default: /app/app/data)
+  AGENT_STORAGE_ACCOUNT    — Storage account for Blob state persistence
+  AGENT_BLOB_CONTAINER     — Blob container for state (default: agent-state)
   FOUNDRY_PROJECT_ENDPOINT — Foundry project endpoint, e.g.
                              https://<account>.services.ai.azure.com/api/projects/<project>
   FOUNDRY_AGENT_NAME       — Persistent agent name to create/reuse in the catalog
@@ -70,8 +71,9 @@ _load_dotenv_from_app_dir()
 # ── Configuration ──────────────────────────────────────────────────────────
 AGENT_ID = os.environ.get("AGENT_ID", "agent-poc-001")
 
-# Blob container mounted as a persistent volume by the pod.
-STATE_MOUNT_PATH = os.environ.get("STATE_MOUNT_PATH", "/app/app/data")
+# Blob state persistence (Module 1 storage account + container).
+STORAGE_ACCOUNT = os.environ.get("AGENT_STORAGE_ACCOUNT", "")
+BLOB_CONTAINER = os.environ.get("AGENT_BLOB_CONTAINER", "agent-state")
 
 # Foundry project (catalog visibility) — a persistent agent is created/reused here.
 FOUNDRY_PROJECT_ENDPOINT = os.environ.get("FOUNDRY_PROJECT_ENDPOINT", "").rstrip("/")
@@ -104,14 +106,21 @@ def _utcnow() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-# ── State Store (mounted volume) ──────────────────────────────────────────
-class FileStateStore:
-    """Persists agent conversation state as JSON on the mounted Blob volume."""
+# ── State Store (Azure Blob) ───────────────────────────────────────────────
+class BlobStateStore:
+    """Persists agent conversation state as a JSON blob (survives restarts).
 
-    def __init__(self, agent_id: str, mount_path: str):
+    Auth: DefaultAzureCredential (Azure Workload Identity in AKS). The Module 1
+    UAMI has \"Storage Blob Data Contributor\" on the storage account.
+    """
+
+    def __init__(self, agent_id: str, storage_account: str, container: str):
         self.agent_id = agent_id
-        self.mount_path = mount_path
-        self.state_path = os.path.join(mount_path, f"{agent_id}.json")
+        self.storage_account = storage_account
+        self.container = container
+        self.blob_name = f"{agent_id}.json"
+        self._service = None
+        self._credential = None
 
     def _default_state(self) -> Dict[str, Any]:
         return {
@@ -122,40 +131,67 @@ class FileStateStore:
             "history": [],  # list of {query, response, timestamp}
         }
 
+    async def _blob_client(self):
+        """Lazily create the blob client. Returns None if Blob is unavailable."""
+        if not self.storage_account:
+            return None
+        if self._service is None:
+            try:
+                from azure.storage.blob.aio import BlobServiceClient
+                from azure.identity.aio import DefaultAzureCredential
+
+                self._credential = DefaultAzureCredential()
+                self._service = BlobServiceClient(
+                    account_url=f"https://{self.storage_account}.blob.core.windows.net",
+                    credential=self._credential,
+                )
+                container = self._service.get_container_client(self.container)
+                try:
+                    await container.create_container()
+                except Exception:
+                    pass  # already exists
+            except Exception as e:
+                logger.warning(f"[Blob] Unavailable ({e}); state not persisted")
+                self._service = None
+                return None
+        return self._service.get_blob_client(
+            container=self.container, blob=self.blob_name
+        )
+
     async def save_state(self, state: Dict[str, Any]) -> None:
-        temporary_path = f"{self.state_path}.tmp"
+        blob = await self._blob_client()
+        if blob is None:
+            return
         try:
-            os.makedirs(self.mount_path, exist_ok=True)
-            with open(temporary_path, "w", encoding="utf-8") as state_file:
-                json.dump(state, state_file)
-                state_file.flush()
-                os.fsync(state_file.fileno())
-            os.replace(temporary_path, self.state_path)
-            logger.info(f"[Volume] State saved for {self.agent_id} "
+            await blob.upload_blob(json.dumps(state), overwrite=True)
+            logger.info(f"[Blob] State saved for {self.agent_id} "
                         f"({len(state.get('history', []))} turns)")
         except Exception as e:
-            logger.error(f"[Volume] Save failed: {e}")
-            try:
-                os.remove(temporary_path)
-            except FileNotFoundError:
-                pass
+            logger.error(f"[Blob] Save failed: {e}")
 
     async def load_state(self) -> Dict[str, Any]:
-        try:
-            with open(self.state_path, "r", encoding="utf-8") as state_file:
-                state = json.load(state_file)
-            state["resumed_at"] = _utcnow()
-            logger.info(f"[Volume] State recovered for {self.agent_id}: "
-                        f"{len(state.get('history', []))} turns")
-            return state
-        except FileNotFoundError:
-            logger.info(f"[Volume] No prior state for {self.agent_id}; starting fresh")
-        except (OSError, json.JSONDecodeError) as e:
-            logger.warning(f"[Volume] State load failed ({e}); starting fresh")
+        blob = await self._blob_client()
+        if blob is not None:
+            try:
+                stream = await blob.download_blob()
+                raw = await stream.readall()
+                state = json.loads(raw)
+                state["resumed_at"] = _utcnow()
+                logger.info(f"[Blob] State recovered for {self.agent_id}: "
+                            f"{len(state.get('history', []))} turns")
+                return state
+            except Exception as e:
+                logger.info(f"[Blob] No prior state ({e}); starting fresh")
         return self._default_state()
 
     async def close(self) -> None:
-        pass
+        try:
+            if self._service is not None:
+                await self._service.close()
+            if self._credential is not None:
+                await self._credential.close()
+        except Exception:
+            pass
 
 
 # ── AI Client (MAF + Azure OpenAI Responses API via APIM) ──────────────────
@@ -415,9 +451,9 @@ class FoundryResponsesClient:
 
 # ── Agent (Main Logic) ─────────────────────────────────────────────────────
 class ReflectionAgent:
-    """Loads state from the volume, calls AI, then persists it to the volume."""
+    """Loads state from Blob -> calls the AI client -> persists state to Blob."""
 
-    def __init__(self, state_store: "FileStateStore", llm_client: "FoundryResponsesClient"):
+    def __init__(self, state_store: "BlobStateStore", llm_client: "FoundryResponsesClient"):
         self.state_store = state_store
         self.llm_client = llm_client
         self.state: Dict[str, Any] = {}
@@ -528,14 +564,14 @@ class AgentHTTPHandler(BaseHTTPRequestHandler):
 async def main():
     logger.info("=" * 72)
     logger.info(f"Agent ID        : {AGENT_ID}")
-    logger.info(f"State volume    : {STATE_MOUNT_PATH}")
+    logger.info(f"Blob storage    : {STORAGE_ACCOUNT or '(unset)'} / {BLOB_CONTAINER}")
     logger.info(f"Foundry project : {FOUNDRY_PROJECT_ENDPOINT or '(unset)'}")
     logger.info(f"Foundry agent   : {FOUNDRY_AGENT_NAME}")
     logger.info(f"APIM base_url   : {LLM_BASE_URL or '(unset)'}")
     logger.info(f"Model           : {LLM_MODEL}")
     logger.info("=" * 72)
 
-    state_store = FileStateStore(AGENT_ID, STATE_MOUNT_PATH)
+    state_store = BlobStateStore(AGENT_ID, STORAGE_ACCOUNT, BLOB_CONTAINER)
     ai_client = FoundryResponsesClient(
         LLM_BASE_URL, LLM_MODEL, LLM_TOKEN_SCOPE, AGENT_INSTRUCTIONS,
         FOUNDRY_PROJECT_ENDPOINT, FOUNDRY_AGENT_NAME,

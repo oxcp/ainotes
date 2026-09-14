@@ -89,10 +89,10 @@ After `deploy.sh` completes, open the resource group in the Azure portal and con
 > `deploy.sh` makes the following key changes:
 >
 > 1. Build the agent image in the existing ACR and push it as `agent-host:<IMAGE_TAG>`. The build runs in ACR, so no local Docker daemon is required.
-> 2. Create the AKS cluster with OIDC and Workload Identity, connect it to the existing ACR and Storage account, and grant the identities the permissions required to pull images and persist agent state.
+> 2. Create the AKS cluster with OIDC, Workload Identity, and the Blob CSI driver. Grant AcrPull to the kubelet identity and grant its node-side CSI driver access to the existing Storage account.
 > 3. Add an autoscaling Azure Linux node pool with `KataVmIsolation`. This provides the `kata-vm-isolation` runtime used to isolate the agent pod in a lightweight VM.
 > 4. Install the `agent-sandbox` CRD and controller, which manage Sandbox creation and lifecycle transitions such as running and suspended states.
-> 5. Create the runtime configuration and deploy the `agent-host` Sandbox, its Workload Identity service account, and Services. The resulting pod runs on the Kata node pool and connects to the existing Blob Storage, APIM gateway, and Foundry project.
+> 5. Create a StorageClass, static PV, and PVC for the existing `agent-state` container, then deploy the `agent-host` Sandbox with that PVC mounted at `/app/app/data`.
 
 
 > [!IMPORTANT]
@@ -248,7 +248,7 @@ customresourcedefinition.apiextensions.k8s.io/sandboxes.agents.x-k8s.io conditio
 pod/agent-sandbox-controller-76885c8b6c-cmgpp condition met
 ```
 
-### Step 6 — Create secrets from Module 1 Storage / APIM
+### Step 6 — Create runtime secrets for APIM and the model
 
 ```bash
 kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
@@ -261,9 +261,19 @@ kubectl create secret generic agent-config -n "$NAMESPACE" \
   --dry-run=client -o yaml | kubectl apply -f -
 ```
 
-### Step 7 — Deploy the agent as a Sandbox
+### Step 7 — Configure Blob CSI persistence and deploy the Sandbox
 
 ```bash
+KUBELET_CLIENT_ID=$(az aks show -g "$RESOURCE_GROUP" -n "$AKS_NAME" \
+  --query identityProfile.kubeletidentity.clientId -o tsv | tr -d "\r\n")
+
+sed "s|<RESOURCE_GROUP>|${RESOURCE_GROUP}|g; s|<STORAGE_ACCOUNT>|${STORAGE_ACCOUNT}|g; s|<KUBELET_CLIENT_ID>|${KUBELET_CLIENT_ID}|g; s|<NAMESPACE>|${NAMESPACE}|g" \
+  agent-storage.yaml.example > agent-storage.yaml
+
+kubectl apply -f agent-storage.yaml
+kubectl wait --for=jsonpath='{.status.phase}'=Bound pvc/agent-state \
+  --namespace "$NAMESPACE" --timeout=2m
+
 IDENTITY_CLIENT_ID=$(az identity show -g "$RESOURCE_GROUP" -n "$IDENTITY_NAME" --query clientId -o tsv | tr -d "\r\n")
 
 cp agent-sandbox.yaml.example agent-sandbox.yaml
@@ -314,7 +324,7 @@ VNET_NAME=<aks-vnet-name> ./deploy-storage-private-link.sh
 >
 > 1. Create a dedicated Private Endpoint subnet in the AKS-managed VNet if it does not already exist. The script selects an available, non-overlapping `/24` address range and disables Private Endpoint network policies on the subnet.
 > 2. Create a Blob Private Endpoint for the existing Storage account, along with the `privatelink.blob.core.windows.net` Private DNS zone, VNet link, and DNS zone group.
-> 3. Route Blob access from the AKS VNet through the Private Endpoint. Applications continue using the standard `https://<storage-account>.blob.core.windows.net` hostname, which Private DNS resolves to the private IP.
+> 3. Route Blob CSI node traffic from the AKS VNet through the Private Endpoint. The CSI driver continues using the standard `https://<storage-account>.blob.core.windows.net` hostname, which Private DNS resolves to the private IP.
 >
 > The VNet and subnet remain in the **AKS node resource group**. The Private Endpoint and Private DNS resources are created in the **workshop resource group**.
 
@@ -343,7 +353,7 @@ In the Azure portal, open the storage account and confirm that the private endpo
 > deploys the Private Endpoint and Private DNS resources in the workshop
 > resource group `$RESOURCE_GROUP`.
 > 
-> The agent continues to use
+> The Blob CSI driver continues to use
 > `https://<storage-account>.blob.core.windows.net`; Private DNS resolves that
 > hostname to the Private Endpoint IP from inside the AKS VNet.
 >
@@ -726,9 +736,11 @@ kubectl describe sandbox agent-host -n "$NAMESPACE"
 | File | Description |
 |---|---|
 | `deploy.sh` | End-to-end deployment: reads SN, reuses the Module 1 ACR/UAMI/Storage/APIM resources, builds the `agent-src/` image, provisions the baseline AKS cluster, enables AKS Pod Sandboxing on an Azure Linux node pool, installs agent-sandbox, and deploys the Sandbox. |
-| `aks.bicep` | Baseline AKS cluster definition. It references the existing ACR, UAMI, and Storage account, and configures AcrPull, Storage RBAC, and the UAMI federated credential. The AKS Pod Sandboxing node pool is added by `deploy.sh`. |
+| `aks.bicep` | Baseline AKS cluster definition. It enables Blob CSI, configures AcrPull and Blob data access for the kubelet identity, and creates the application UAMI federated credential. The AKS Pod Sandboxing node pool is added by `deploy.sh`. |
 | `deploy-storage-private-link.sh` | Optional post-AKS wrapper that discovers the AKS-managed VNet, creates a dedicated Private Endpoint subnet, and deploys the Blob Private Link Bicep template. |
 | `storage-private-link.bicep` | Optional Blob Private Endpoint, Private DNS zone, VNet link, and DNS zone group in the workshop resource group. |
+| `agent-storage.yaml.example` | Template for the Blob CSI StorageClass, static PV, and namespace-scoped PVC backed by the existing `agent-state` container. |
+| `agent-storage.yaml` | Generated by `deploy.sh` with the Storage account, resource group, kubelet identity, and namespace values. |
 | `agent-sandbox.yaml.example` | Template manifest with placeholders for the ACR, image tag, namespace, and identity values. |
 | `agent-sandbox.yaml` | Generated from `agent-sandbox.yaml.example` during deployment, then applied to create the ServiceAccount, `Sandbox` CR, and Service using AKS `kata-vm-isolation`. |
 | `agent-src/` | POC agent source: `app/main.py` (the ReflectionAgent HTTP server), `Dockerfile`, `requirements.txt`, `lifecycle-hook.sh`, and a usage `README.md`. This is the image built and deployed as the Sandbox. |
@@ -738,10 +750,11 @@ kubectl describe sandbox agent-host -n "$NAMESPACE"
 ## Architecture Notes
 
 - **Reuse, not recreation**: `aks.bicep` references the Module 1 ACR, UAMI, and Storage account as `existing`; only the AKS cluster and role/federation wiring are new.
+- **Blob CSI persistence**: the AKS Blob CSI driver mounts the existing `agent-state` container through a static `ReadWriteMany` PV/PVC. The kubelet identity authenticates the node-side mount, while the application reads and writes ordinary files under `/app/app/data`.
 - **AKS Pod Sandboxing**: the sandbox node pool is created with `--os-sku AzureLinux --workload-runtime KataVmIsolation`, which provides the built-in `kata-vm-isolation` runtime class used by the agent workload.
 - **agent-sandbox**: the `Sandbox` CRD (`agents.x-k8s.io/v1beta1`) and controller manage the agent as an isolated, stateful, singleton pod with a stable identity and lifecycle.
 - **Workload Identity**: the Module 1 UAMI (`id-agenthost-<SN>`) receives a federated credential that trusts the AKS OIDC issuer for `system:serviceaccount:agent:agent-sa`. Pods can then obtain Azure AD tokens without storing secrets.
-- **Azure Blob Storage**: the agent persists conversation state directly to Blob as `<AGENT_ID>.json` in the `agent-state` container after every change, and the pod recovers it on startup. Blob Storage is the single source of truth; there is no Redis or hot cache.
+- **Azure Blob Storage**: the agent persists `<AGENT_ID>.json` through the mounted Blob volume after every change and recovers it on startup. Blob Storage remains the single source of truth; the Python process no longer calls the Blob SDK directly.
 - **AI Gateway**: model calls route through APIM at `https://apim-agenthost-<SN>.azure-api.net/foundry`, the Foundry Responses gateway from Module 1.
 - **Kata Containers**: the `kata` node pool is tainted and labelled, and the agent workload targets it with `runtimeClassName: kata-vm-isolation` plus a node selector and toleration.
 - **Scale-to-zero**: the Sandbox exposes `operatingMode` (`Running` / `Suspended`) as the suspend/resume control point. A gateway or idle sweeper should enforce the 15-minute idle policy and wake the Sandbox before proxying incoming traffic.

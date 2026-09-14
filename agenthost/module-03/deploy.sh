@@ -117,7 +117,7 @@ kubectl wait --for=condition=Ready pod -l app=agent-sandbox-controller -n agent-
 echo "==> [6/9] Creating namespace"
 kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
 
-echo "==> [7/9] Creating runtime secrets from Module 1 Storage / APIM"
+echo "==> [7/9] Creating runtime secrets for APIM and the model"
 APIM_GATEWAY_URL="https://${APIM_NAME}.azure-api.net/foundry"
 
 kubectl create secret generic agent-config \
@@ -129,8 +129,16 @@ kubectl create secret generic agent-config \
   --dry-run=client -o yaml | kubectl apply -f -
 # --from-literal=foundry-project-endpoint="$FOUNDRY_PROJECT_ENDPOINT" \
   
-echo "==> [8/9] Deploying the agent as a Sandbox custom resource"
-# replace the placeholders in the example manifest with the actual values for this deployment
+echo "==> [8/9] Configuring Blob CSI persistence and deploying the Sandbox"
+# The node-side Blob CSI driver authenticates with the kubelet identity. The
+# application UAMI remains dedicated to Foundry/APIM access inside the pod.
+KUBELET_CLIENT_ID=$(az aks show -g "$RESOURCE_GROUP" -n "$AKS_NAME" --query identityProfile.kubeletidentity.clientId -o tsv | tr -d "\r\n")
+sed "s|<RESOURCE_GROUP>|${RESOURCE_GROUP}|g; s|<STORAGE_ACCOUNT>|${STORAGE_ACCOUNT}|g; s|<KUBELET_CLIENT_ID>|${KUBELET_CLIENT_ID}|g; s|<NAMESPACE>|${NAMESPACE}|g" \
+  agent-storage.yaml.example > agent-storage.yaml
+kubectl apply -f agent-storage.yaml
+kubectl wait --for=jsonpath='{.status.phase}'=Bound pvc/agent-state --namespace "$NAMESPACE" --timeout=2m
+
+# Replace the workload placeholders with the actual values for this deployment.
 IDENTITY_CLIENT_ID=$(az identity show -g "$RESOURCE_GROUP" -n "$IDENTITY_NAME" --query clientId -o tsv | tr -d "\r\n")
 cp agent-sandbox.yaml.example agent-sandbox.yaml
 sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|${IMAGE_TAG}|g; s|<NAMESPACE>|${NAMESPACE}|g; s|<IDENTITY_CLIENT_ID>|${IDENTITY_CLIENT_ID}|g" \

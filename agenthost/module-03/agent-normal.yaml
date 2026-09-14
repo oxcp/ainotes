@@ -1,11 +1,11 @@
-# agent-sandbox.yaml — Module 3 (Solution B): agent runtime on Kubernetes via
-# kubernetes-sigs/agent-sandbox (https://github.com/kubernetes-sigs/agent-sandbox).
+# agent-normal.yaml — Module 3 (Solution B): agent runtime on Kubernetes via
+# standard Deployment (no kata runtime).
 #
-# The agent-sandbox *controller* is installed separately (release manifest — see deploy.sh);
-# this manifest declares the per-agent runtime as a `Sandbox` custom resource,
+# The agent-normal *controller* is installed separately (release manifest — see deploy.sh);
+# this manifest declares the per-agent runtime as a `Deployment` resource,
 # plus the Workload Identity service account and a Service.
 #
-# Replace <ACR_NAME>, <IMAGE_TAG>, <NAMESPACE>, and <IDENTITY_CLIENT_ID> before
+# Replace acragenthost35153d, latest, agent, and b7d427cc-960f-4060-9717-e0e7d5d4695e before
 # applying, or use deploy.sh which performs the sed substitution automatically.
 
 # ServiceAccount federated with the Module 1 UAMI (Azure AD Workload Identity)
@@ -13,56 +13,50 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: agent-sa
-  namespace: <NAMESPACE>
+  namespace: agent
   annotations:
-    azure.workload.identity/client-id: "<IDENTITY_CLIENT_ID>"
+    azure.workload.identity/client-id: "b7d427cc-960f-4060-9717-e0e7d5d4695e"
   labels:
     azure.workload.identity/use: "true"
 
 ---
-# Sandbox — a stateful, singleton, isolated agent runtime managed by the
-# agent-sandbox controller. `operatingMode` is the cost dial: an external
-# gateway/idle sweeper can patch it to Suspended after 15 minutes of idle time,
-# and back to Running when user traffic returns.
-apiVersion: agents.x-k8s.io/v1beta1
-kind: Sandbox
+# Normal Deployment — same container spec as Sandbox, but without kata runtime.
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: agent-host
-  namespace: <NAMESPACE>
+  name: agent-host-normal
+  namespace: agent
   labels:
-    app: agent-host
+    app: agent-host-normal
     component: agent-runtime
 spec:
-  operatingMode: Running
-  # Keep the per-sandbox service stable across suspend/resume. A fronting
-  # gateway should wake the Sandbox and proxy traffic to this stable service.
-  service: true
-  podTemplate:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agent-host-normal
+  template:
     metadata:
       labels:
-        app: agent-host
+        app: agent-host-normal
         component: agent-runtime
         azure.workload.identity/use: "true"
     spec:
       serviceAccountName: agent-sa
-      # AKS Pod Sandboxing runtime provided by the Azure Linux Kata node pool.
-      runtimeClassName: kata-vm-isolation
-      nodeSelector:
-        kata-containers: "true"
-      tolerations:
-        - key: kata
-          operator: Equal
-          value: "true"
-          effect: NoSchedule
       volumes:
         - name: agent-state
           persistentVolumeClaim:
             claimName: agent-state
-      # State is already durable on the mounted Blob volume before the pod stops.
+      # nodeSelector:
+      #   kata-containers: "true"
+      # tolerations:
+      #   - key: kata
+      #     operator: Equal
+      #     value: "true"
+      #     effect: NoSchedule
       terminationGracePeriodSeconds: 60
       containers:
-        - name: agent-host
-          image: <ACR_NAME>.azurecr.io/agent-host:<IMAGE_TAG>
+        - name: agent-host-normal
+          image: acragenthost35153d.azurecr.io/agent-host:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
@@ -81,7 +75,15 @@ spec:
                   fieldPath: metadata.name
             - name: STATE_MOUNT_PATH
               value: "/app/app/data"
-            # Model calls route through APIM via the Module 1 standalone AI Gateway
+            - name: AGENT_MODE
+              value: "foundry"
+            - name: FOUNDRY_PROJECT_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: agent-config
+                  key: foundry-project-endpoint
+            - name: FOUNDRY_AGENT_NAME
+              value: "agenthost-reflection-agent"
             - name: AGENT_APIM_ENDPOINT
               valueFrom:
                 secretKeyRef:
@@ -92,9 +94,6 @@ spec:
                 secretKeyRef:
                   name: agent-config
                   key: llm-model
-            # LLM_API_KEY intentionally unset: the app uses Workload Identity
-            # (DefaultAzureCredential). The UAMI has the "Azure AI User" role on
-            # the Foundry account (Module 1) to create/run agents.
             - name: LLM_TOKEN_SCOPE
               value: "https://ai.azure.com/.default"
           resources:
@@ -121,13 +120,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: agent-host-lb
-  namespace: <NAMESPACE>
+  name: agent-host-normal
+  namespace: agent
   labels:
-    app: agent-host
+    app: agent-host-normal
 spec:
   selector:
-    app: agent-host
+    app: agent-host-normal
   ports:
     - protocol: TCP
       port: 80

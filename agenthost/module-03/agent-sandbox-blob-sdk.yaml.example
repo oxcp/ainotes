@@ -54,10 +54,6 @@ spec:
           operator: Equal
           value: "true"
           effect: NoSchedule
-      volumes:
-        - name: agent-state
-          persistentVolumeClaim:
-            claimName: agent-state
       # State is already durable on the mounted Blob volume before the pod stops.
       terminationGracePeriodSeconds: 60
       containers:
@@ -67,9 +63,6 @@ spec:
           ports:
             - containerPort: 8080
               name: http
-          volumeMounts:
-            - name: agent-state
-              mountPath: /app/app/data
           lifecycle:
             preStop:
               exec:
