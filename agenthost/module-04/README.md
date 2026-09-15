@@ -40,7 +40,7 @@ az extension add --name containerapp --upgrade --allow-preview true -y
 
 ---
 
-## Deploy ACA Sandboxes
+## Deploy ACA Sandboxe Group
 
 ```bash
 cd agenthost/module-04
@@ -230,6 +230,13 @@ After the connection is created, you should see:
 > VNet. The existing `privatelink.blob.core.windows.net` Private DNS zone link
 > makes the standard Blob hostname resolve to the private IP.
 > - The Module-01 UAMI still needs `Storage Blob Data Contributor` for Blob data-plane authorization.
+
+## Configure Blob volumes for sandbox
+
+In the ACA Sandbox portal at `https://sandboxes.azure.com/`, go to your Sandbox Group and in the left panel, goto **Volumes** tab and use **Create** button to add your Blobl container as the Sandbox volumes:
+![module-04-Create-Volumes](../pic/module-04-Create-Volumes.png)
+After the Blob volume is created, you should see it in the available volume list:
+![module-04-Volumes-list](../pic/module-04-Volumes-list.png)
 
 
 ## Deploy your agent
