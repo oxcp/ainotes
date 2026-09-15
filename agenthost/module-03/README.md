@@ -46,7 +46,7 @@ This module **reuses the resources created by Module 1** instead of recreating t
 ## One-Command Environment Preparation
 
 > [!CAUTION]
-> **Choose one deployment path:** use this one-command flow **or** the [Manual Steps](#manual-steps-equivalent-to-deploysh) below. 
+> **Choose one preparation path:** use this one-command flow **or** the [Manual Steps](#manual-steps-equivalent-to-prepare-agent-sandboxsh) below. 
 >
 > They are equivalent; **DO NOT** run both.
 
