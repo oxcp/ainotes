@@ -164,7 +164,7 @@ docker push "${ACR_NAME}.azurecr.io/agent-host:poc-v1"
 
 ```bash
 cd module-03
-IMAGE_TAG=poc-v1 ./deploy.sh
+IMAGE_TAG=poc-v1 ./prepare-agent-sandbox.sh
 ```
 
 脚本会完成：

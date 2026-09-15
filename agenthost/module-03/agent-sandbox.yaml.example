@@ -1,12 +1,12 @@
 # agent-sandbox.yaml — Module 3 (Solution B): agent runtime on Kubernetes via
 # kubernetes-sigs/agent-sandbox (https://github.com/kubernetes-sigs/agent-sandbox).
 #
-# The agent-sandbox *controller* is installed separately (release manifest — see deploy.sh);
+# The agent-sandbox *controller* is installed separately (release manifest — see prepare-agent-sandbox.sh);
 # this manifest declares the per-agent runtime as a `Sandbox` custom resource,
 # plus the Workload Identity service account and a Service.
 #
 # Replace <ACR_NAME>, <IMAGE_TAG>, <NAMESPACE>, and <IDENTITY_CLIENT_ID> before
-# applying, or use deploy.sh which performs the sed substitution automatically.
+# applying, or use prepare-agent-sandbox.sh which performs the sed substitution automatically.
 
 # ServiceAccount federated with the Module 1 UAMI (Azure AD Workload Identity)
 apiVersion: v1

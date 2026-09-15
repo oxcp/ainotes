@@ -5,7 +5,7 @@
 //   - Azure Container Registry  : acragenthost<SN>      (image pull)
 //   - User-Assigned Managed Id  : id-agenthost-<SN>     (workload identity federation)
 //   - Azure Blob Storage        : stcagenthost<SN>      (cold state, container agent-state)
-//   (APIM is consumed at runtime via Kubernetes secrets created by deploy.sh.)
+//   (APIM is consumed at runtime via Kubernetes secrets created by prepare-agent-sandbox.sh.)
 //
 // Creates: a baseline AKS cluster (OIDC + Workload Identity + Blob CSI driver),
 // AcrPull and Storage Blob Data Contributor for the kubelet identity, Storage
@@ -13,7 +13,7 @@
 // a federated identity credential on that UAMI trusting the AKS OIDC issuer for
 // system:serviceaccount:<ns>:<sa>.
 //
-// The AKS Pod Sandboxing node pool is added by deploy.sh using `az aks nodepool add`
+// The AKS Pod Sandboxing node pool is added by prepare-agent-sandbox.sh using `az aks nodepool add`
 // with `--os-sku AzureLinux --workload-runtime KataVmIsolation`, because the ARM/Bicep
 // schema lags behind the CLI surface for that runtime value.
 
@@ -34,7 +34,7 @@ param identityName string
 @description('Existing Storage account name from Module 1 (e.g. stcagenthost<SN>)')
 param storageAccountName string
 
-@description('AKS cluster name passed by deploy.sh (e.g. aks-agenthost-<SN>)')
+@description('AKS cluster name passed by prepare-agent-sandbox.sh (e.g. aks-agenthost-<SN>)')
 param aksName string
 
 @description('Kubernetes namespace the agent workload runs in')

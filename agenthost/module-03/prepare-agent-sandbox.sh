@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# deploy.sh — Module 3 (Solution B): AKS + agent-sandbox, reusing Module 1 resources
+# prepare-agent-sandbox.sh — Prepare Module 3 AKS + agent-sandbox environment
 #
 # Retrieves the deployment suffix (SN) from the Module 1 resource group tag,
 # reuses the ACR / UAMI / Storage / APIM that Module 1 already created,
@@ -9,7 +9,7 @@
 # agent-sandbox: https://github.com/kubernetes-sigs/agent-sandbox
 #   (replaces the earlier self-built E2B Sandbox Manager, which does not run on Azure.)
 #
-# Usage: ./deploy.sh
+# Usage: ./prepare-agent-sandbox.sh
 # Env overrides: RESOURCE_GROUP, LOCATION, NAMESPACE, SERVICE_ACCOUNT, IMAGE_TAG,
 #                KATA_NODEPOOL_NAME, KATA_NODE_VM_SIZE, AGENT_SANDBOX_VERSION
 # Prerequisites: Module 1 deployed; kubectl and az installed.

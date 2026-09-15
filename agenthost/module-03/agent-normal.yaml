@@ -1,12 +1,12 @@
 # agent-normal.yaml — Module 3 (Solution B): agent runtime on Kubernetes via
 # standard Deployment (no kata runtime).
 #
-# The agent-normal *controller* is installed separately (release manifest — see deploy.sh);
+# The agent-normal *controller* is installed separately (release manifest — see prepare-agent-sandbox.sh);
 # this manifest declares the per-agent runtime as a `Deployment` resource,
 # plus the Workload Identity service account and a Service.
 #
 # Replace acragenthost35153d, latest, agent, and b7d427cc-960f-4060-9717-e0e7d5d4695e before
-# applying, or use deploy.sh which performs the sed substitution automatically.
+# applying, or use prepare-agent-sandbox.sh which performs the sed substitution automatically.
 
 # ServiceAccount federated with the Module 1 UAMI (Azure AD Workload Identity)
 apiVersion: v1

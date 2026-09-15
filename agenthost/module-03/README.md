@@ -20,7 +20,7 @@ This module **reuses the resources created by Module 1** instead of recreating t
 | Azure Blob Storage | `stcagenthost<SN>` | Agent state store (JSON per agent, container `agent-state`) |
 | API Management | `apim-agenthost-<SN>` | AI Gateway for model calls (`/foundry`) |
 
-`<SN>` is the deployment suffix stored in the `deploymentSN` tag on the Module 1 resource group. `deploy.sh` reads it automatically.
+`<SN>` is the deployment suffix stored in the `deploymentSN` tag on the Module 1 resource group. `prepare-agent-sandbox.sh` reads it automatically.
 
 ## Learning Objectives
 
@@ -52,11 +52,11 @@ This module **reuses the resources created by Module 1** instead of recreating t
 
 ```bash
 cd agenthost/module-03
-chmod +x deploy.sh
-./deploy.sh
+chmod +x prepare-agent-sandbox.sh
+./prepare-agent-sandbox.sh
 ```
 
-When the preparation succeeds, `deploy.sh` prints output similar to the following:
+When the preparation succeeds, `prepare-agent-sandbox.sh` prints output similar to the following:
 ```text
 ==> Solution B infrastructure prepared. Continue with README: Deploy agent in Sandbox.
     SN            : acf0a3
@@ -68,11 +68,11 @@ When the preparation succeeds, `deploy.sh` prints output similar to the followin
     APIM          : https://apim-agenthost-acf0a3.azure-api.net/foundry
 ```
 
-After `deploy.sh` completes, open the resource group in the Azure portal and confirm that the AKS cluster has been created:
+After `prepare-agent-sandbox.sh` completes, open the resource group in the Azure portal and confirm that the AKS cluster has been created:
 ![module-03-aks-created](../pic/module-03-aks-created.png)
 
 > [!note]
-> `deploy.sh` makes the following key changes:
+> `prepare-agent-sandbox.sh` makes the following key changes:
 >
 > 1. Build the agent image in the existing ACR and push it as `agent-host:<IMAGE_TAG>`. The build runs in ACR, so no local Docker daemon is required.
 > 2. Create the AKS cluster with OIDC, Workload Identity, and the Blob CSI driver. Grant AcrPull to the kubelet identity and grant its node-side CSI driver access to the existing Storage account.
@@ -82,7 +82,7 @@ After `deploy.sh` completes, open the resource group in the Azure portal and con
 
 
 > [!IMPORTANT]
-> To construct the agent-sandbox release manifest URL, the `deploy.sh` sets the `AGENT_SANDBOX_VERSION` to a 
+> To construct the agent-sandbox release manifest URL, `prepare-agent-sandbox.sh` sets `AGENT_SANDBOX_VERSION` to a 
 > default value which could not be the up-to-date version or fit for your needs.
 > You can override the `AGENT_SANDBOX_VERSION` value to a release tag. Check the available value from
 > https://github.com/kubernetes-sigs/agent-sandbox/releases.
@@ -94,12 +94,12 @@ Next:
 
 ---
 
-## Manual Steps (equivalent to deploy.sh)
+## Manual Steps (equivalent to prepare-agent-sandbox.sh)
 > [!warning]
 > **Alternative to One-Command Deployment:** follow these steps only if you chose
 > the manual deployment path.
 >
-> **Do not run them after `./deploy.sh`**.
+> **Do not run them after `./prepare-agent-sandbox.sh`**.
 
 ### Step 1 — Retrieve the deployment serial number (SN) and construct related environment variables
 
@@ -349,8 +349,11 @@ After the infrastructure, storage, networking, and Sandbox manifest are ready, d
 export NAMESPACE="${NAMESPACE:-agent}"
 
 kubectl apply -f agent-sandbox.yaml
-kubectl get sandbox,pods -n "$NAMESPACE"
+
 kubectl wait --for=condition=Ready pod -l app=agent-host -n "$NAMESPACE" --timeout=3m
+
+kubectl get sandbox,pods -n "$NAMESPACE"
+
 ```
 
 ---
@@ -411,39 +414,58 @@ Open `http://<EXTERNAL-IP>` in your browser. The chat window should appear. Ask 
 ![module-03-agent-chat-portal](../pic/module-03-agent-chat-portal.png)
 
 ### Verify chat history persisted to Blob
-> [!important]
-> If public network access is disabled on your storage account, run the verification below from a jumpbox that can reach the storage account through Private Link.
-> The easiest approach in this workshop is to reuse the private connectivity you just created:
-> 1. Create a separate subnet in the AKS-managed VNet.
-> 2. Create a jumpbox VM in that subnet. The jumpbox will have a NIC and private IP in the subnet.
-> 3. Use the jumpbox to access the storage account through the private endpoint.
-
-> [!tip]
-> If you do not have a jumpbox that meets these network requirements and do not want to create one, you can **skip** this direct Blob inspection. The later [Verify that the agent reloads its state after resuming](#verify-that-the-agent-reloads-its-state-after-resuming) test provides sufficient behavioral evidence that the agent state was persisted when the chat history returns after a restart. However, only the direct inspection in this section confirms that Blob Storage is the persistence backend.
 
 After several rounds of chat, verify that the conversation state is persisted in the
-`agent-state` container as `agent-host.json`. From the jumpbox browser, open the Blob container in the portal and view `agent-host.json`. The `history` field should contain your chat turns and grow after each interaction.
-![module-03-agent-chat-history-store-in-blob](../pic/module-03-agent-chat-history-store-in-blob.png)
+`agent-state` container as `agent-host.json`.
 
-If your jumpbox does not have a browser, you can download the blob to view it locally:
+The Blob container is mounted in the Sandbox pod at `/app/app/data`, so you can
+inspect the persisted state directly from the pod. First, identify the agent pod
+and list the files in the mounted volume:
+
 ```bash
-# List state blobs (should include agent-host.json)
-az storage blob list \
-  --account-name "$STORAGE_ACCOUNT" \
-  --container-name agent-state \
-  --auth-mode login \
-  --query "[].name" -o tsv
+AGENT_POD=$(kubectl get pod -n "$NAMESPACE" -l app=agent-host \
+  -o jsonpath='{.items[0].metadata.name}')
 
-# Inspect the saved chat history JSON
-az storage blob download \
-  --account-name "$STORAGE_ACCOUNT" \
-  --container-name agent-state \
-  --name agent-host.json \
-  --file /tmp/agent-host.json \
-  --auth-mode login \
-  --overwrite
+kubectl exec -n "$NAMESPACE" "$AGENT_POD" -- ls -l /app/app/data
+```
 
-cat /tmp/agent-host.json
+**Expected output:**
+
+```text
+total 0
+-rwxrwxrwx 1 root root 1970 Sep  8 17:53 agent-host.json
+```
+
+Next, inspect the complete persisted state:
+
+```bash
+kubectl exec -n "$NAMESPACE" "$AGENT_POD" -- \
+  cat /app/app/data/agent-host.json | \
+  jq .
+```
+
+**Expected output:**
+
+```json
+{
+  "agent_id": "agent-host",
+  "created_at": "2026-09-08T17:45:15.581359+00:00",
+  "resumed_at": "2026-09-08T17:45:15.581373+00:00",
+  "reflection_count": 2,
+  "history": [
+    {
+      "query": "where is Bangkok?",
+      "response": "Bangkok is the capital city of Thailand, in Southeast Asia.",
+      "timestamp": "2026-09-08T17:53:23.107278+00:00"
+    },
+    {
+      "query": "tell me a story about Thailand",
+      "response": "Long ago, in a land of golden temples and busy floating markets, there was a small village beside a wide river in Thailand. Every morning, the water sparkled like silver as boats drifted past carrying fruit, silk, and laughter.\n\nIn that village lived a curious girl named Mali. She loved listening to the old stories told by her grandmother about elephants in the forest, monks in orange robes, and kings who built great cities. But more than anything, Mali loved the old banyan tree at the edge of the river, because the villagers believed it was guarded by a kind spirit.\n\nOne rainy season, the river rose high and strong. The fields were wet, the path to the market was flooded, and many families worried they would have little food. Mali watched the water and had an idea. She asked the boat sellers, fishermen, and farmers to work together. They brought baskets of rice, bananas, and fish to the village center, and together they shared everything fairly.\n\nWhen the rain finally stopped, the village had not only survived-it had grown closer. The people said the spirit of the banyan tree had blessed them, but Mali's grandmother smiled and said, \"Sometimes the greatest magic is simply kindness and cooperation.\"\n\nAnd so, in that little corner of Thailand, the river kept flowing, the temple bells kept ringing, and the story of Mali was told for many years as a reminder that even in hard times, people can help one another and shine like gold in the sun.",
+      "timestamp": "2026-09-08T17:53:37.655865+00:00"
+    }
+  ],
+  "last_updated": "2026-09-08T17:53:37.655888+00:00"
+}
 ```
 
 ### Verify the agent runs in a sandbox
@@ -728,12 +750,12 @@ kubectl describe sandbox agent-host -n "$NAMESPACE"
 
 | File | Description |
 |---|---|
-| `deploy.sh` | Environment preparation: reads SN, reuses the Module 1 ACR/UAMI/Storage/APIM resources, builds the `agent-src/` image, provisions the baseline AKS cluster, enables AKS Pod Sandboxing, installs agent-sandbox, configures Blob CSI persistence, and renders the Sandbox manifest without deploying it. |
-| `aks.bicep` | Baseline AKS cluster definition. It enables Blob CSI, configures AcrPull and Blob data access for the kubelet identity, and creates the application UAMI federated credential. The AKS Pod Sandboxing node pool is added by `deploy.sh`. |
+| `prepare-agent-sandbox.sh` | Environment preparation: reads SN, reuses the Module 1 ACR/UAMI/Storage/APIM resources, builds the `agent-src/` image, provisions the baseline AKS cluster, enables AKS Pod Sandboxing, installs agent-sandbox, configures Blob CSI persistence, and renders the Sandbox manifest without deploying it. |
+| `aks.bicep` | Baseline AKS cluster definition. It enables Blob CSI, configures AcrPull and Blob data access for the kubelet identity, and creates the application UAMI federated credential. The AKS Pod Sandboxing node pool is added by `prepare-agent-sandbox.sh`. |
 | `deploy-storage-private-link.sh` | Optional post-AKS wrapper that discovers the AKS-managed VNet, creates a dedicated Private Endpoint subnet, and deploys the Blob Private Link Bicep template. |
 | `storage-private-link.bicep` | Optional Blob Private Endpoint, Private DNS zone, VNet link, and DNS zone group in the workshop resource group. |
 | `agent-storage.yaml.example` | Template for the Blob CSI StorageClass, static PV, and namespace-scoped PVC backed by the existing `agent-state` container. |
-| `agent-storage.yaml` | Generated by `deploy.sh` with the Storage account, resource group, kubelet identity, and namespace values. |
+| `agent-storage.yaml` | Generated by `prepare-agent-sandbox.sh` with the Storage account, resource group, kubelet identity, and namespace values. |
 | `agent-sandbox.yaml.example` | Template manifest with placeholders for the ACR, image tag, namespace, and identity values. |
 | `agent-sandbox.yaml` | Generated from `agent-sandbox.yaml.example` during deployment, then applied to create the ServiceAccount, `Sandbox` CR, and Service using AKS `kata-vm-isolation`. |
 | `agent-src/` | POC agent source: `app/main.py` (the ReflectionAgent HTTP server), `Dockerfile`, `requirements.txt`, `lifecycle-hook.sh`, and a usage `README.md`. This is the image built and deployed as the Sandbox. |
