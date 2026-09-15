@@ -23,10 +23,10 @@ set -euo pipefail
 
 # ── Configuration ────────────────────────────────────────────────────────────
 RESOURCE_GROUP="${RESOURCE_GROUP:-rg-agenthost-workshop}"
-LOCATION="${LOCATION:-eastus2}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 SANDBOX_COUNT="${SANDBOX_COUNT:-1}"
 AUTO_SUSPEND_MINS="${AUTO_SUSPEND_MINS:-15}"
+LOCATION="${LOCATION:-$(az group show -g "$RESOURCE_GROUP" --query location -o tsv | tr -d "\r\n")}"
 
 echo "==> Module 4: Azure Container Apps Sandboxes Deployment (workshop path)"
 echo "Resource Group: $RESOURCE_GROUP"

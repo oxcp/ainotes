@@ -109,9 +109,13 @@ Now delegate the subnet `aca-subnet` to Azure Container Apps so it can be used b
 **Run (replace the `--resource-group` and `--vnet-name` value with your ones):**
 
 ```bash
+NODE_RESOURCE_GROUP=$(az aks show --resource-group "$RESOURCE_GROUP" --name "$AKS_NAME" --query nodeResourceGroup --output tsv | tr -d "\r\n")
+
+VNET_NAME=$(az network vnet list --resource-group "$NODE_RESOURCE_GROUP" --query "[0].name" --output tsv | tr -d "\r\n")
+
 az network vnet subnet update \
-  --resource-group rg-aks-agenthost-f28a14-nodes \
-  --vnet-name aks-vnet-39023097 \
+  --resource-group $NODE_RESOURCE_GROUP \
+  --vnet-name $VNET_NAME \
   --name aca-subnet \
   --delegations Microsoft.App/environments
 ```
@@ -157,9 +161,13 @@ Verify that the `Microsoft.App/environments` service delegation was added. In th
 **Run (replace the `--resource-group` and `--vnet-name` value with your ones):**
 
 ```bash
+NODE_RESOURCE_GROUP=$(az aks show --resource-group "$RESOURCE_GROUP" --name "$AKS_NAME" --query nodeResourceGroup --output tsv | tr -d "\r\n")
+
+VNET_NAME=$(az network vnet list --resource-group "$NODE_RESOURCE_GROUP" --query "[0].name" --output tsv | tr -d "\r\n")
+
 az network vnet subnet show \
-  --resource-group rg-aks-agenthost-f28a14-nodes \
-  --vnet-name aks-vnet-39023097 \
+  --resource-group $NODE_RESOURCE_GROUP \
+  --vnet-name $VNET_NAME \
   -n aca-subnet \
   --query delegations
 ```
