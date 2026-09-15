@@ -43,7 +43,7 @@ This module **reuses the resources created by Module 1** instead of recreating t
 
 ---
 
-## One-Command Deployment
+## One-Command Environment Preparation
 
 > [!CAUTION]
 > **Choose one deployment path:** use this one-command flow **or** the [Manual Steps](#manual-steps-equivalent-to-deploysh) below. 
@@ -55,18 +55,10 @@ cd agenthost/module-03
 chmod +x deploy.sh
 ./deploy.sh
 ```
-> [!important]
-> During deployment, the `aks-preview` extension may ask whether to reconcile the AKS cluster with its current settings. Enter `y` and press Enter to continue:
->
-> ```text
-> ==> [4/9] Enabling AKS Pod Sandboxing on an Azure Linux node pool
-> The behavior of this command has been altered by the following extension: aks-preview
-> no argument specified to update would you like to reconcile to current settings? (y/N): y
-> ```
 
-When the deployment succeeds, `deploy.sh` prints output similar to the following:
+When the preparation succeeds, `deploy.sh` prints output similar to the following:
 ```text
-==> Solution B (AKS + agent-sandbox) deployed, reusing Module 1 resources.
+==> Solution B infrastructure prepared. Continue with README: Deploy agent in Sandbox.
     SN            : acf0a3
     AKS           : aks-agenthost-acf0a3
     Namespace     : agent
@@ -74,12 +66,6 @@ When the deployment succeeds, `deploy.sh` prints output similar to the following
     agent-sandbox : v0.5.2 (ns agent-sandbox-system)
     ACR           : acragenthostacf0a3.azurecr.io
     APIM          : https://apim-agenthost-acf0a3.azure-api.net/foundry
-
-NAME                                 READY   REASON              AGE
-sandbox.agents.x-k8s.io/agent-host   True    DependenciesReady   30s
-
-NAME             READY   STATUS    RESTARTS   AGE
-pod/agent-host   1/1     Running   0          31s
 ```
 
 After `deploy.sh` completes, open the resource group in the Azure portal and confirm that the AKS cluster has been created:
@@ -92,7 +78,7 @@ After `deploy.sh` completes, open the resource group in the Azure portal and con
 > 2. Create the AKS cluster with OIDC, Workload Identity, and the Blob CSI driver. Grant AcrPull to the kubelet identity and grant its node-side CSI driver access to the existing Storage account.
 > 3. Add an autoscaling Azure Linux node pool with `KataVmIsolation`. This provides the `kata-vm-isolation` runtime used to isolate the agent pod in a lightweight VM.
 > 4. Install the `agent-sandbox` CRD and controller, which manage Sandbox creation and lifecycle transitions such as running and suspended states.
-> 5. Create a StorageClass, static PV, and PVC for the existing `agent-state` container, then deploy the `agent-host` Sandbox with that PVC mounted at `/app/app/data`.
+> 5. Create a StorageClass, static PV, and PVC for the existing `agent-state` container, then render `agent-sandbox.yaml` with the PVC mounted at `/app/app/data`. The script does not deploy the Sandbox.
 
 
 > [!IMPORTANT]
@@ -104,7 +90,7 @@ After `deploy.sh` completes, open the resource group in the Azure portal and con
 Next:
 
 - If your Storage account has public network access disabled, continue to [Configure Blob Private Link](#configure-blob-private-link).
-- Otherwise, go directly to [Verify](#verify).
+- Otherwise, go directly to [Deploy agent in Sandbox](#deploy-agent-in-sandbox).
 
 ---
 
@@ -193,15 +179,7 @@ az aks nodepool add \
   --node-taints "kata=true:NoSchedule" \
   --labels "kata-containers=true"
 
-az aks update -g "$RESOURCE_GROUP" -n "$AKS_NAME"
 ```
-> [!important]
-> During deployment, the `aks-preview` extension may ask whether to reconcile the AKS cluster with its current settings. Enter `y` and press Enter to continue:
->
-> ```text
-The behavior of this command has been altered by the following extension: aks-preview
-no argument specified to update would you like to reconcile to current settings? (y/N): y
-> ```
 
 After the Kata node pool is added, run the following command to verify that the runtime class is available:
 
@@ -261,7 +239,7 @@ kubectl create secret generic agent-config -n "$NAMESPACE" \
   --dry-run=client -o yaml | kubectl apply -f -
 ```
 
-### Step 7 — Configure Blob CSI persistence and deploy the Sandbox
+### Step 7 — Configure Blob CSI persistence and prepare the Sandbox manifest
 
 ```bash
 KUBELET_CLIENT_ID=$(az aks show -g "$RESOURCE_GROUP" -n "$AKS_NAME" \
@@ -280,9 +258,9 @@ cp agent-sandbox.yaml.example agent-sandbox.yaml
 
 sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|latest|g; s|<NAMESPACE>|${NAMESPACE}|g; s|<IDENTITY_CLIENT_ID>|${IDENTITY_CLIENT_ID}|g" \
   agent-sandbox.yaml > agent-sandbox.yaml.tmp && mv agent-sandbox.yaml.tmp agent-sandbox.yaml
-
-kubectl apply -f agent-sandbox.yaml
 ```
+
+Continue to [Deploy agent in Sandbox](#deploy-agent-in-sandbox).
 
 ---
 <a id="configure-blob-private-link"></a>
@@ -359,6 +337,21 @@ In the Azure portal, open the storage account and confirm that the private endpo
 >
 > The script automatically selects an available `/24` CIDR block from the VNet address
 > space and creates a subnet for the private endpoint.
+
+---
+<a id="deploy-agent-in-sandbox"></a>
+
+## Deploy agent in Sandbox
+
+After the infrastructure, storage, networking, and Sandbox manifest are ready, deploy the agent and inspect the resulting Sandbox and pod:
+
+```bash
+export NAMESPACE="${NAMESPACE:-agent}"
+
+kubectl apply -f agent-sandbox.yaml
+kubectl get sandbox,pods -n "$NAMESPACE"
+kubectl wait --for=condition=Ready pod -l app=agent-host -n "$NAMESPACE" --timeout=3m
+```
 
 ---
 <a id="verify"></a>
@@ -735,7 +728,7 @@ kubectl describe sandbox agent-host -n "$NAMESPACE"
 
 | File | Description |
 |---|---|
-| `deploy.sh` | End-to-end deployment: reads SN, reuses the Module 1 ACR/UAMI/Storage/APIM resources, builds the `agent-src/` image, provisions the baseline AKS cluster, enables AKS Pod Sandboxing on an Azure Linux node pool, installs agent-sandbox, and deploys the Sandbox. |
+| `deploy.sh` | Environment preparation: reads SN, reuses the Module 1 ACR/UAMI/Storage/APIM resources, builds the `agent-src/` image, provisions the baseline AKS cluster, enables AKS Pod Sandboxing, installs agent-sandbox, configures Blob CSI persistence, and renders the Sandbox manifest without deploying it. |
 | `aks.bicep` | Baseline AKS cluster definition. It enables Blob CSI, configures AcrPull and Blob data access for the kubelet identity, and creates the application UAMI federated credential. The AKS Pod Sandboxing node pool is added by `deploy.sh`. |
 | `deploy-storage-private-link.sh` | Optional post-AKS wrapper that discovers the AKS-managed VNet, creates a dedicated Private Endpoint subnet, and deploys the Blob Private Link Bicep template. |
 | `storage-private-link.bicep` | Optional Blob Private Endpoint, Private DNS zone, VNet link, and DNS zone group in the workshop resource group. |

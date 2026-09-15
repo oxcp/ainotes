@@ -1,6 +1,6 @@
 # Azure Blob CSI persistence for the Module 3 agent runtime.
-# deploy.sh replaces <RESOURCE_GROUP>, <STORAGE_ACCOUNT>,
-# <KUBELET_CLIENT_ID>, and <NAMESPACE>.
+# deploy.sh replaces <RESOURCE_GROUP >, <STORAGE_ACCOUNT >,
+# <KUBELET_CLIENT_ID >, and <NAMESPACE >.
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:

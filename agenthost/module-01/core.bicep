@@ -305,7 +305,6 @@ resource storageBlobRbacUami 'Microsoft.Authorization/roleAssignments@2022-04-01
   }
 }
 
-
 // ── APIM Backend — Foundry hosted-agent inference ────────────────────────────
 // The gateway policy routes to this backend via <set-backend-service
 // backend-id="foundry-backend" />, making APIM the AI gateway for the

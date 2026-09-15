@@ -53,8 +53,7 @@ param systemNodeVmSize string = 'standard_d4ads_v7'
 @description('System node pool OS SKU. Only the sandbox (kata) node pool needs Azure Linux; the system pool can remain Ubuntu.')
 param systemNodeOsSku string = 'Ubuntu'
 
-var acrPullRoleId = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
-var storageBlobDataContributorRoleId = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+// var storageBlobDataContributorRoleId = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
 
 resource acr 'Microsoft.ContainerRegistry/registries@2023-07-01' existing = {
   name: acrName
@@ -122,40 +121,30 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
   }
 }
 
-resource acrPullRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(acr.id, aks.id, acrPullRoleId)
-  scope: acr
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', acrPullRoleId)
-    principalId: aks.properties.identityProfile.kubeletidentity.objectId
-    principalType: 'ServicePrincipal'
-  }
-}
-
 // Blob CSI mounts are performed by the node-side driver before the application
 // starts, so storage access belongs to the AKS kubelet identity rather than the
-// pod's federated Workload Identity.
-resource storageBlobCsiRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(storage.id, aks.id, storageBlobDataContributorRoleId)
-  scope: storage
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataContributorRoleId)
-    principalId: aks.properties.identityProfile.kubeletidentity.objectId
-    principalType: 'ServicePrincipal'
+// pod's federated Workload Identity. The nested deployment can safely key each
+// role-assignment name by the runtime principal, including after AKS recreation.
+module kubeletRbac 'aks-kubelet-rbac.bicep' = {
+  name: 'kubelet-rbac-${deploymentSN}'
+  params: {
+    acrName: acrName
+    storageAccountName: storageAccountName
+    kubeletPrincipalId: aks.properties.identityProfile.kubeletidentity.objectId
   }
 }
 
 // Retain application-level Blob access for workloads that use the Blob SDK
 // directly through the federated Workload Identity instead of the CSI volume.
-resource storageBlobAppRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(storage.id, identity.id, storageBlobDataContributorRoleId)
-  scope: storage
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataContributorRoleId)
-    principalId: identity.properties.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
+// resource storageBlobAppRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+//   name: guid(storage.id, identity.id, storageBlobDataContributorRoleId)
+//   scope: storage
+//   properties: {
+//     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataContributorRoleId)
+//     principalId: identity.properties.principalId
+//     principalType: 'ServicePrincipal'
+//   }
+// }
 
 resource federatedCredential 'Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials@2023-01-31' = {
   parent: identity

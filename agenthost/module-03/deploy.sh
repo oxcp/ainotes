@@ -4,7 +4,7 @@
 # Retrieves the deployment suffix (SN) from the Module 1 resource group tag,
 # reuses the ACR / UAMI / Storage / APIM that Module 1 already created,
 # provisions AKS (aks.bicep), installs the kubernetes-sigs/agent-sandbox
-# controller (release manifest), then deploys the agent as a Sandbox custom resource.
+# controller (release manifest), and prepares the agent Sandbox manifest.
 #
 # agent-sandbox: https://github.com/kubernetes-sigs/agent-sandbox
 #   (replaces the earlier self-built E2B Sandbox Manager, which does not run on Azure.)
@@ -31,7 +31,7 @@ FOUNDRY_PROJECT_NAME="${FOUNDRY_PROJECT_NAME:-maf-agent-prj}"
 # Pick a released version from https://github.com/kubernetes-sigs/agent-sandbox/releases
 AGENT_SANDBOX_VERSION="${AGENT_SANDBOX_VERSION:-v0.5.2}"
 
-echo "==> [1/9] Retrieving deployment suffix (SN) from Module 1 resource group"
+echo "==> [1/8] Retrieving deployment suffix (SN) from Module 1 resource group"
 SN=$(az group show --resource-group "$RESOURCE_GROUP" --query "tags.deploymentSN" --output tsv 2>/dev/null | tr -d "\r\n" || echo "")
 if [ -z "$SN" ]; then
   echo "ERROR: deploymentSN tag not found on $RESOURCE_GROUP. Deploy Module 1 first."
@@ -56,7 +56,7 @@ LOCATION="${LOCATION:-$(az group show -g "$RESOURCE_GROUP" --query location -o t
 AKS_LOCATION="$LOCATION"
 echo "    ACR=$ACR_NAME  UAMI=$IDENTITY_NAME  Storage=$STORAGE_ACCOUNT  APIM=$APIM_NAME"
 
-echo "==> [2/9] Building and pushing the agent image to the EXISTING ACR"
+echo "==> [2/8] Building and pushing the agent image to the EXISTING ACR"
 cp agent-src/app/.env.example agent-src/app/.env
 sed -i "s|<SN>|${SN}|g" agent-src/app/.env
 # Build remotely in ACR so the deployment does not require a local Docker daemon.
@@ -66,7 +66,7 @@ az acr build \
   --image "agent-host:${IMAGE_TAG}" \
   agent-src/
 
-echo "==> [3/9] Deploying baseline AKS (reusing ACR/UAMI/Storage) via Bicep"
+echo "==> [3/8] Deploying baseline AKS (reusing ACR/UAMI/Storage) via Bicep"
 az deployment group create \
   --resource-group "$RESOURCE_GROUP" \
   --template-file aks.bicep \
@@ -81,7 +81,7 @@ az deployment group create \
       serviceAccountName="$SERVICE_ACCOUNT" \
   --output none
 
-echo "==> [4/9] Enabling AKS Pod Sandboxing on an Azure Linux node pool"
+echo "==> [4/8] Enabling AKS Pod Sandboxing on an Azure Linux node pool"
 if az aks nodepool show --resource-group "$RESOURCE_GROUP" --cluster-name "$AKS_NAME" --name "$KATA_NODEPOOL_NAME" --output none 2>/dev/null; then
   echo "    Node pool $KATA_NODEPOOL_NAME already exists; reusing it"
 else
@@ -101,11 +101,11 @@ else
     --labels "kata-containers=true" \
     --output none
 fi
-az aks update --resource-group "$RESOURCE_GROUP" --name "$AKS_NAME" --output none
+# az aks update --resource-group "$RESOURCE_GROUP" --name "$AKS_NAME" --output none
 az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$AKS_NAME" --overwrite-existing
-kubectl get runtimeclass kata-vm-isolation >/dev/null
+# kubectl get runtimeclass kata-vm-isolation >/dev/null
 
-echo "==> [5/9] Installing the agent-sandbox controller from release manifest ($AGENT_SANDBOX_VERSION)"
+echo "==> [5/8] Installing the agent-sandbox controller from release manifest ($AGENT_SANDBOX_VERSION)"
 # Install core + extensions in one collision-free manifest, as recommended by
 # the upstream project README/docs.
 AGENT_SANDBOX_MANIFEST_URL="https://github.com/kubernetes-sigs/agent-sandbox/releases/download/${AGENT_SANDBOX_VERSION}/sandbox-with-extensions.yaml"
@@ -114,10 +114,10 @@ kubectl apply -f "$AGENT_SANDBOX_MANIFEST_URL"
 kubectl wait --for=condition=Established crd/sandboxes.agents.x-k8s.io --timeout=2m
 kubectl wait --for=condition=Ready pod -l app=agent-sandbox-controller -n agent-sandbox-system --timeout=5m
 
-echo "==> [6/9] Creating namespace"
+echo "==> [6/8] Creating namespace"
 kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
 
-echo "==> [7/9] Creating runtime secrets for APIM and the model"
+echo "==> [7/8] Creating runtime secrets for APIM and the model"
 APIM_GATEWAY_URL="https://${APIM_NAME}.azure-api.net/foundry"
 
 kubectl create secret generic agent-config \
@@ -129,7 +129,7 @@ kubectl create secret generic agent-config \
   --dry-run=client -o yaml | kubectl apply -f -
 # --from-literal=foundry-project-endpoint="$FOUNDRY_PROJECT_ENDPOINT" \
   
-echo "==> [8/9] Configuring Blob CSI persistence and deploying the Sandbox"
+echo "==> [8/8] Configuring Blob CSI persistence and preparing the Sandbox manifest"
 # The node-side Blob CSI driver authenticates with the kubelet identity. The
 # application UAMI remains dedicated to Foundry/APIM access inside the pod.
 KUBELET_CLIENT_ID=$(az aks show -g "$RESOURCE_GROUP" -n "$AKS_NAME" --query identityProfile.kubeletidentity.clientId -o tsv | tr -d "\r\n")
@@ -143,13 +143,9 @@ IDENTITY_CLIENT_ID=$(az identity show -g "$RESOURCE_GROUP" -n "$IDENTITY_NAME" -
 cp agent-sandbox.yaml.example agent-sandbox.yaml
 sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|${IMAGE_TAG}|g; s|<NAMESPACE>|${NAMESPACE}|g; s|<IDENTITY_CLIENT_ID>|${IDENTITY_CLIENT_ID}|g" \
   agent-sandbox.yaml > agent-sandbox.yaml.tmp && mv agent-sandbox.yaml.tmp agent-sandbox.yaml
-kubectl apply -f agent-sandbox.yaml
-
-echo "==> [9/9] Waiting for the Sandbox pod to become ready"
-kubectl wait --for=condition=Ready pod -l app=agent-host --namespace "$NAMESPACE" --timeout=3m || true
 
 echo ""
-echo "==> Solution B (AKS + agent-sandbox) deployed, reusing Module 1 resources."
+echo "==> Solution B infrastructure prepared. Continue with README: Deploy agent in Sandbox."
 echo "    SN            : $SN"
 echo "    AKS           : $AKS_NAME"
 echo "    Namespace     : $NAMESPACE"
@@ -157,5 +153,3 @@ echo "    Kata pool     : $KATA_NODEPOOL_NAME ($KATA_NODE_VM_SIZE, AzureLinux, K
 echo "    agent-sandbox : $AGENT_SANDBOX_VERSION (ns agent-sandbox-system)"
 echo "    ACR           : ${ACR_NAME}.azurecr.io"
 echo "    APIM          : $APIM_GATEWAY_URL"
-echo ""
-kubectl get sandbox,pods -n "$NAMESPACE"
