@@ -87,14 +87,14 @@ After `prepare-agent-sandbox.sh` completes, open the resource group in the Azure
 > You can override the `AGENT_SANDBOX_VERSION` value to a release tag. Check the available value from
 > https://github.com/kubernetes-sigs/agent-sandbox/releases.
 
-Next:
+**Next:**
 
 - If your Storage account has public network access disabled, continue to [Configure Blob Private Link](#configure-blob-private-link).
 - Otherwise, go directly to [Deploy agent in Sandbox](#deploy-agent-in-sandbox).
 
 ---
 
-## Manual Steps (equivalent to prepare-agent-sandbox.sh)
+## Manual Steps Preparation (equivalent to prepare-agent-sandbox.sh)
 > [!warning]
 > **Alternative to One-Command Deployment:** follow these steps only if you chose
 > the manual deployment path.
@@ -260,19 +260,24 @@ sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|latest|g; s|<NAMESPACE>|${NAMESPA
   agent-sandbox.yaml > agent-sandbox.yaml.tmp && mv agent-sandbox.yaml.tmp agent-sandbox.yaml
 ```
 
-Continue to [Deploy agent in Sandbox](#deploy-agent-in-sandbox).
+**Next:**
+
+- If your Storage account has public network access disabled, continue to [Configure Blob Private Link](#configure-blob-private-link).
+- Otherwise, go directly to [Deploy agent in Sandbox](#deploy-agent-in-sandbox).
 
 ---
 <a id="configure-blob-private-link"></a>
 
 ## Configure Blob Private Link (required when your Storage account public network access is disabled)
 
-Complete this section only when the Module 1 Storage account has public network access disabled.
+**This section is only required when the Module 1 Storage account has public network access disabled.**
+**Azure Policy may enforce this Storage account setting in your environment.**
 
 > [!tip]
-> **Azure Policy may enforce this Storage account setting in your environment.**
 >
->You can check it in your storage account portal, go to the **Networking** tab, you will see if your storage account public network access is disabled or not:
+> To check whether public network access is disabled for your storage account, open the
+> storage account in the Azure portal and select **Networking**. The **Public network access**
+> setting shows its current status:
 >![module-03-storageaccount-disable-public-network-access](../pic/module-03-storageaccount-disable-public-network-access.png)
 
 If your storage account has public network access disabled, the AKS-managed VNet needs private connectivity to the Blob endpoint before the agent can read or write its persisted state. 
@@ -351,9 +356,6 @@ export NAMESPACE="${NAMESPACE:-agent}"
 kubectl apply -f agent-sandbox.yaml
 
 kubectl wait --for=condition=Ready pod -l app=agent-host -n "$NAMESPACE" --timeout=3m
-
-kubectl get sandbox,pods -n "$NAMESPACE"
-
 ```
 
 ---
@@ -416,7 +418,7 @@ Open `http://<EXTERNAL-IP>` in your browser. The chat window should appear. Ask 
 ### Verify chat history persisted to Blob
 
 After several rounds of chat, verify that the conversation state is persisted in the
-`agent-state` container as `agent-host.json`.
+`agent-state` Blob container as `agent-host.json`.
 
 The Blob container is mounted in the Sandbox pod at `/app/app/data`, so you can
 inspect the persisted state directly from the pod. First, identify the agent pod

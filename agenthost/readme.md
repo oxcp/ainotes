@@ -217,15 +217,3 @@ agenthost/
 ```
 
 ---
-
-> [!NOTE]
->
->- **Bicep IaC** — module-01 uses a subscription-scoped `main.bicep` that delegates to `core.bicep` (resource group scope); modules 02–04 each have self-contained deployment Bicep files targeting their respective Azure resources.
->
->- **agent-sandbox** (module-03) provides the `Sandbox` CRD + controller (kubernetes-sigs) for isolated, stateful, singleton agent pods with stable identity and lifecycle (pause / resume / hibernate) — the scale-to-zero mechanism, replacing the earlier E2B Manager + KEDA.
->
->- **Kata Container RuntimeClass** is defined in `agent-sandbox.yaml` and applied to the Sandbox pod on the tainted `kata=true:NoSchedule` node pool.
->
->- **Module-04 Solutions**:
->  - **Workshop path (ACA Sandboxes)**: Use `sandbox-deploy.sh` for service-managed sandbox isolation (micro-VM boundary) and suspend/resume.
->  - **Optional learning track (Dynamic Sessions)**: Use `dynamic-session-deploy.sh` for low-latency ephemeral session pools — not required to complete the workshop.
