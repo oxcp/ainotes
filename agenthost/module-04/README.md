@@ -271,7 +271,7 @@ Scroll down to "Additional Details" to configure environment variables. Configur
 <!-- | FOUNDRY_PROJECT_ENDPOINT | `https://foundry-agenthost-f28a14.services.ai.azure.com/api/projects/maf-agent-prj` | Foundry project endpoint used for catalog registration and project-scoped agent operations. Find the project endpoint value in your Microsoft Foundry project Home page. |
 | FOUNDRY_AGENT_NAME | agenthost-reflection-agent-on-aca | Agent name shown in the Foundry catalog. | -->
 
-For example, configure the `AGENT_STORAGE_ACCOUNT` variable as shown below:
+For example, configure the `AGENT_ID` variable as shown below:
 ![module-04-ACA-Create-Sandbox-Advanced-add-envvar-list](../pic/module-04-ACA-Create-Sandbox-Advanced-add-envvar-list.png)
 
 <!-- After configuring the environment variables, you should see a list similar to the following:
@@ -281,9 +281,9 @@ Scroll down to configure port:
 
 ![module-04-Create-Sandbox-Advanced-port](../pic/module-04-Create-Sandbox-Advanced-port.png)
 
-Scroll down to "Volumes" to configure Blob volume to be mount into agent sandbox for agent status persistence:
+Scroll down to **Volumes** to configure a Blob volume to be mounted in the agent sandbox for status persistence:
 ![module-04-ACA-Create-Sandbox-Advanced-add-volumes](../pic/module-04-ACA-Create-Sandbox-Advanced-add-volumes.png)
-After fill in the volume and the mount path, click **Add** button in the right side. Make sure to see the volume is added into the volumes list:
+After filling in the volume and mount path, click the **+Add** button on the right. Make sure that the volume appears in the volume list:
 ![module-04-Create-Sandbox-Advanced-volumes-list](../pic/module-04-Create-Sandbox-Advanced-volumes-list.png)
 
 
@@ -330,36 +330,36 @@ After the configuration above, press **Create** in the top right corner, and you
 If everything is configured correctly, click **Create** to create your agent.
 
 
-The sandbox launches within seconds. Try several commands in the console to verify that it is alive. The example below checks the environment variables and the agent execution files and folders:
+The sandbox launches within seconds. Run several commands in the console to verify that it is working. The example below inspects the environment variables and the files and folders used by the agent:
 
 ![module-04-Sandbox-running](../pic/module-04-Sandbox-running.png)
 
-A hyperlink appears at the top of the UI. Click it to open the agent chat UI in your browser. Submit a few messages to verify that the agent is running correctly. In the backend, all LLM calls go through the APIM AI gateway:
+A hyperlink appears at the top of the UI. Click it to open the agent chat interface in your browser. Send a few messages to verify that the agent is running correctly. In the backend, all LLM calls are routed through the APIM AI gateway:
 
 ![module-04-agent-chat-portal](../pic/module-04-agent-chat-portal.png)
 
 <!-- In your Microsoft Foundry project portal, open the Agent catalog. You should see that the agent running on ACA Sandbox is registered and appears with type `Prompt`:
 ![module-04-agent-in-foundry-portal](../pic/module-04-agent-in-foundry-portal.png) -->
 
-After several round of chat, go back to the agent sandbox console, check if the chat history is correctly saved. 
-In the agent bash window, use command:
+After several rounds of conversation, return to the agent sandbox console and verify that the chat history has been saved correctly.
+In the agent Bash window, run the following command:
 ```bash
 cat /app/app/data/agent-host-on-aca.json
 ```
-You will see the chat history as below:
+The chat history should appear as shown below:
 ![module-04-Sandbox-agent-chat-history](../pic/module-04-Sandbox-agent-chat-history.png)
 
-To verify that ACA Sandbox helps preserve runtime state, wait for the idle timeout until the agent automatically enters the `Stopped` status:
+The example above shows that the agent stores its state in the Blob volume. Azure Container Apps Sandbox provides two convenient suspend modes for preserving agent state: Memory and Disk. In this configuration, we selected Memory mode, which preserves both disk and in-memory state by using a snapshot. To verify this behavior, wait for the idle timeout, after which the agent automatically enters the `Stopped` state:
 ![module-04-ACA-Sandbox-auto-suspend](../pic/module-04-ACA-Sandbox-auto-suspend.png)
 
 After the agent stops, refresh the chat window in the browser. You should see:
 ```json
 {"error":"Sandbox is not running"}
 ```
-Click **Resume** in the Sandbox console, then refresh the chat window again. The previous chat history should be restored. This demonstrates the runtime-state persistence that ACA Sandbox provides, including in-memory state when Memory suspend mode is used.
+Click **Resume** in the Sandbox console, and then refresh the chat window. The previous chat history should be restored. This demonstrates the runtime-state persistence provided by ACA Sandbox, including the preservation of in-memory state when Memory suspend mode is used.
 
 > [!tip]
-> If you do not want to wait for the idle timeout, which is 15 minutes in this workshop, you can manually stop and resume the agent to simulate the process. In the Sandbox console, click **Stop** in the upper-right corner, then click **Resume**. Refresh your browser to view the chat connection status and chat-history recovery.
+> If you do not want to wait for the idle timeout, which is set to 15 minutes in this workshop, you can manually stop and resume the agent to simulate the process. In the Sandbox console, click **Stop** in the upper-right corner, and then click **Resume**. Refresh your browser to check the chat connection and verify that the chat history has been restored.
 
 ---
 
