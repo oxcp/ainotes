@@ -234,7 +234,7 @@ After the connection is created, you should see:
 
 ## Deploy your agent
 
-You build a disk image from the container image produced in Module-03. You can find your container image in the Azure Container Registry portal:
+You need to build a disk image from the container image produced in Module-03. You can find your container image in the Azure Container Registry portal:
 ![module-04-ACA-find-your-container-image](../pic/module-04-ACA-find-your-container-image.png)
 
 In the ACA Sandbox portal at `https://sandboxes.azure.com/`, go to the **Disk Images** tab.
@@ -258,13 +258,13 @@ Scroll down to "Additional Details" to configure environment variables. Configur
 
 | Key | Sample value | Description |
 |---|---|---|
-| AGENT_STORAGE_ACCOUNT | stcagenthostf28a14 | Module-01 Storage account name used by the agent to persist chat state in Blob. |
+<!-- | AGENT_STORAGE_ACCOUNT | stcagenthostf28a14 | Module-01 Storage account name used by the agent to persist chat state in Blob. | -->
 | AGENT_ID | agent-host-on-aca | Logical agent identifier. Also determines the Blob state file name as `<AGENT_ID>.json`. |
 <!-- | FOUNDRY_PROJECT_ENDPOINT | `https://foundry-agenthost-f28a14.services.ai.azure.com/api/projects/maf-agent-prj` | Foundry project endpoint used for catalog registration and project-scoped agent operations. Find the project endpoint value in your Microsoft Foundry project Home page. |
 | FOUNDRY_AGENT_NAME | agenthost-reflection-agent-on-aca | Agent name shown in the Foundry catalog. | -->
 
 For example, configure the `AGENT_STORAGE_ACCOUNT` variable as shown below:
-![module-04-ACA-Create-Sandbox-Advanced-add-envvar-storage-account](../pic/module-04-ACA-Create-Sandbox-Advanced-add-envvar-storage-account.png)
+![module-04-ACA-Create-Sandbox-Advanced-add-envvar-list](../pic/module-04-ACA-Create-Sandbox-Advanced-add-envvar-list.png)
 
 <!-- After configuring the environment variables, you should see a list similar to the following:
 ![module-04-ACA-Create-Sandbox-Advanced-add-envvar-list](../pic/module-04-ACA-Create-Sandbox-Advanced-add-envvar-list.png) -->
@@ -272,6 +272,12 @@ For example, configure the `AGENT_STORAGE_ACCOUNT` variable as shown below:
 Scroll down to configure port:
 
 ![module-04-Create-Sandbox-Advanced-port](../pic/module-04-Create-Sandbox-Advanced-port.png)
+
+Scroll down to "Volumes" to configure Blob volume to be mount into agent sandbox for agent status persistence:
+![module-04-ACA-Create-Sandbox-Advanced-add-volumes](../pic/module-04-ACA-Create-Sandbox-Advanced-add-volumes.png)
+After fill in the volume and the mount path, click **Add** button in the right side. Make sure to see the volume is added into the volumes list:
+![module-04-Create-Sandbox-Advanced-volumes-list](../pic/module-04-Create-Sandbox-Advanced-volumes-list.png)
+
 
 Scroll down to configure lifecycle policy:
 
@@ -327,15 +333,13 @@ A hyperlink appears at the top of the UI. Click it to open the agent chat UI in 
 <!-- In your Microsoft Foundry project portal, open the Agent catalog. You should see that the agent running on ACA Sandbox is registered and appears with type `Prompt`:
 ![module-04-agent-in-foundry-portal](../pic/module-04-agent-in-foundry-portal.png) -->
 
-Open the storage account Blob container. You should see the chat-history persistence file:
-![module-04-agent-chat-history-store-in-blob](../pic/module-04-agent-chat-history-store-in-blob.png)
-Open the persistence file to view the chat history:
-![module-04-agent-chat-history-store-in-blob-view-content](../pic/module-04-agent-chat-history-store-in-blob-view-content.png)
-
-> [!tip]
-> If public network access is disabled on your storage account, check the persistence file from a jumpbox that can reach the storage account through Private Link. The easiest approach is to reuse the jumpbox from module-03.
->
-> As in module-03, if you do not have a jumpbox that meets these network requirements and do not want to create one, you can skip the direct Blob inspection. Instead, use the stop/resume verification below: if the previous chat history is restored after the agent resumes, the agent state was successfully preserved. This behavioral check does not prove that Blob Storage is the persistence backend; only direct inspection of the persistence file confirms that detail. In Memory suspend mode, the restored history may also come from the preserved in-memory runtime state.
+After several round of chat, go back to the agent sandbox console, check if the chat history is correctly saved. 
+In the agent bash window, use command:
+```bash
+cat /app/app/data/agent-host-on-aca.json
+```
+You will see the chat history as below:
+![module-04-Sandbox-agent-chat-history](../pic/module-04-Sandbox-agent-chat-history.png)
 
 To verify that ACA Sandbox helps preserve runtime state, wait for the idle timeout until the agent automatically enters the `Stopped` status:
 ![module-04-ACA-Sandbox-auto-suspend](../pic/module-04-ACA-Sandbox-auto-suspend.png)
@@ -348,7 +352,6 @@ Click **Resume** in the Sandbox console, then refresh the chat window again. The
 
 > [!tip]
 > If you do not want to wait for the idle timeout, which is 15 minutes in this workshop, you can manually stop and resume the agent to simulate the process. In the Sandbox console, click **Stop** in the upper-right corner, then click **Resume**. Refresh your browser to view the chat connection status and chat-history recovery.
-
 
 ---
 
