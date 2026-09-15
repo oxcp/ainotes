@@ -231,10 +231,11 @@ After the connection is created, you should see:
 > makes the standard Blob hostname resolve to the private IP.
 > - The Module-01 UAMI still needs `Storage Blob Data Contributor` for Blob data-plane authorization.
 
-## Configure Blob volumes for sandbox
+## Configure Blob volumes for the sandbox
 
-In the ACA Sandbox portal at `https://sandboxes.azure.com/`, go to your Sandbox Group and in the left panel, goto **Volumes** tab and use **Create** button to add your Blobl container as the Sandbox volumes:
+In the ACA Sandbox portal at `https://sandboxes.azure.com/`, go to your Sandbox Group. In the left panel, select the **Volumes** tab and use the **Create** button to add your Blob container as a sandbox volume:
 ![module-04-Create-Volumes](../pic/module-04-Create-Volumes.png)
+
 After the Blob volume is created, you should see it in the available volume list:
 ![module-04-Volumes-list](../pic/module-04-Volumes-list.png)
 
