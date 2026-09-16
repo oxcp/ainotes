@@ -138,7 +138,8 @@ class FileStateStore:
             try:
                 os.remove(temporary_path)
             except FileNotFoundError:
-                pass
+                # Temp file may not exist if creation/write failed earlier; ignore cleanup miss.
+                logger.debug("[Volume] No temporary state file to remove after save failure")
 
     async def load_state(self) -> Dict[str, Any]:
         try:
