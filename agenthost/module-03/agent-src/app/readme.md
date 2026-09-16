@@ -2,7 +2,7 @@
 
 第一部分是启动配置与环境变量加载，位于 main.py 开头。`_load_dotenv_from_app_dir()` 会先读取同级 `.env`，但只在环境变量尚未存在时填充默认值，因此 AKS 中由 Pod 注入的变量优先级更高。随后，文件把运行所需配置拆成几组：`AGENT_ID`、`STATE_MOUNT_PATH`、Foundry project / agent 名称、APIM 网关地址、模型名、token scope、HTTP 端口和日志级别。这一层的作用是把部署环境和代码逻辑解耦。
 
-第二部分实现状态持久化，在 main.py 里的 `FileStateStore`。Blob container 由 AKS Blob CSI 挂载到 `/app/app/data`，应用只使用普通文件操作：
+第二部分是状态持久化，在 main.py 里的 `FileStateStore`。Blob container 由 AKS Blob CSI 挂载到 `/app/app/data`，应用只使用普通文件操作：
 - `_default_state()` 定义默认状态结构，核心字段是 `history` 和 `reflection_count`
 - `save_state()` 把完整状态序列化成 JSON，并原子替换 `<STATE_MOUNT_PATH>/<AGENT_ID>.json`
 - `load_state()` 启动时从挂载目录读回历史并更新 `resumed_at`
