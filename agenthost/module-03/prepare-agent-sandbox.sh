@@ -27,7 +27,7 @@ KATA_NODE_VM_SIZE="${KATA_NODE_VM_SIZE:-Standard_D4s_v3}"
 LLM_MODEL="${LLM_MODEL:-gpt-5.4-mini}"
 # Foundry project (Module 1) — the persistent agent is created here, so it shows
 # up in the Foundry catalog. Endpoint format matches Module 1's output.
-FOUNDRY_PROJECT_NAME="${FOUNDRY_PROJECT_NAME:-maf-agent-prj}"
+# FOUNDRY_PROJECT_NAME="${FOUNDRY_PROJECT_NAME:-maf-agent-prj}"
 # Pick a released version from https://github.com/kubernetes-sigs/agent-sandbox/releases
 AGENT_SANDBOX_VERSION="${AGENT_SANDBOX_VERSION:-v0.5.2}"
 

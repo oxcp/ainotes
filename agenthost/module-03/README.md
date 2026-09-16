@@ -128,7 +128,7 @@ sed -i "s|<SN>|${SN}|g" agent-src/app/.env
 # ACR builds the image remotely and pushes it to this registry.
 az acr build \
   --registry "$ACR_NAME" \
-  --image "agent-host:latest" \
+  --image "agent-host:${IMAGE_TAG}" \
   agent-src/
 ```
 > [!tip]
@@ -164,21 +164,24 @@ az aks get-credentials -g "$RESOURCE_GROUP" -n "$AKS_NAME" --overwrite-existing
 KATA_NODEPOOL_NAME="kata"
 KATA_NODE_VM_SIZE="Standard_D4s_v3"
 
-az aks nodepool add \
-  --resource-group "$RESOURCE_GROUP" \
-  --cluster-name "$AKS_NAME" \
-  --name "$KATA_NODEPOOL_NAME" \
-  --mode User \
-  --node-vm-size "$KATA_NODE_VM_SIZE" \
-  --node-count 1 \
-  --enable-cluster-autoscaler \
-  --min-count 1 \
-  --max-count 10 \
-  --os-sku AzureLinux \
-  --workload-runtime KataVmIsolation \
-  --node-taints "kata=true:NoSchedule" \
-  --labels "kata-containers=true"
-
+if az aks nodepool show --resource-group "$RESOURCE_GROUP" --cluster-name "$AKS_NAME" --name "$KATA_NODEPOOL_NAME" --output none 2>/dev/null; then
+  echo "    Node pool $KATA_NODEPOOL_NAME already exists; reusing it"
+else
+  az aks nodepool add \
+    --resource-group "$RESOURCE_GROUP" \
+    --cluster-name "$AKS_NAME" \
+    --name "$KATA_NODEPOOL_NAME" \
+    --mode User \
+    --node-vm-size "$KATA_NODE_VM_SIZE" \
+    --node-count 1 \
+    --enable-cluster-autoscaler \
+    --min-count 1 \
+    --max-count 10 \
+    --os-sku AzureLinux \
+    --workload-runtime KataVmIsolation \
+    --node-taints "kata=true:NoSchedule" \
+    --labels "kata-containers=true"
+fi
 ```
 
 After the Kata node pool is added, run the following command to verify that the runtime class is available:
@@ -197,10 +200,13 @@ kata-vm-isolation   kata      7m21s
 
 ### Step 5 — Install the agent-sandbox controller (release manifest)
 
+> [!tip]
+> Pick a released version from https://github.com/kubernetes-sigs/agent-sandbox/releases, and use the selected version to install the agent-sandbox in AKS.
+
 ```bash
-VERSION="v0.5.2"   # pick a real release tag
+AGENT_SANDBOX_VERSION="v0.5.2"   # pick a real release tag
 kubectl apply -f \
-  "https://github.com/kubernetes-sigs/agent-sandbox/releases/download/${VERSION}/sandbox-with-extensions.yaml"
+  "https://github.com/kubernetes-sigs/agent-sandbox/releases/download/${AGENT_SANDBOX_VERSION}/sandbox-with-extensions.yaml"
 
 kubectl wait --for=condition=Established crd/sandboxes.agents.x-k8s.io --timeout=2m
 kubectl wait --for=condition=Ready pod -l app=agent-sandbox-controller -n agent-sandbox-system --timeout=5m
@@ -256,7 +262,7 @@ IDENTITY_CLIENT_ID=$(az identity show -g "$RESOURCE_GROUP" -n "$IDENTITY_NAME" -
 
 cp agent-sandbox.yaml.example agent-sandbox.yaml
 
-sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|latest|g; s|<NAMESPACE>|${NAMESPACE}|g; s|<IDENTITY_CLIENT_ID>|${IDENTITY_CLIENT_ID}|g" \
+sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|${IMAGE_TAG}|g; s|<NAMESPACE>|${NAMESPACE}|g; s|<IDENTITY_CLIENT_ID>|${IDENTITY_CLIENT_ID}|g" \
   agent-sandbox.yaml > agent-sandbox.yaml.tmp && mv agent-sandbox.yaml.tmp agent-sandbox.yaml
 ```
 
