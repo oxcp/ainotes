@@ -1,6 +1,7 @@
 # Build-context excludes for agent-src image
 !.env.example
 __pycache__/
+app/data/
 obsoleted/
 *.pyc
 *.pyo

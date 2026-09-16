@@ -18,12 +18,6 @@ RUN pip install --no-cache-dir --upgrade pip \
 # ── Stage 2: runtime ───────────────────────────────────────────────────────
 FROM python:3.12-slim AS runtime
 
-# Azure CLI is required by the preStop lifecycle hook (blob upload via az login).
-# RUN apt-get update \
-#  && apt-get install -y --no-install-recommends curl ca-certificates \
-#  && curl -sL https://aka.ms/InstallAzureCLIDeb | bash \
-#  && apt-get clean && rm -rf /var/lib/apt/lists/*
-
 # Non-root user
 RUN groupadd -r agent && useradd -r -g agent agent
 

@@ -40,7 +40,7 @@ az extension add --name containerapp --upgrade --allow-preview true -y
 
 ---
 
-## Deploy ACA Sandboxes
+## Deploy ACA Sandboxe Group
 
 ```bash
 cd agenthost/module-04
@@ -109,9 +109,13 @@ Now delegate the subnet `aca-subnet` to Azure Container Apps so it can be used b
 **Run (replace the `--resource-group` and `--vnet-name` value with your ones):**
 
 ```bash
+NODE_RESOURCE_GROUP=$(az aks show --resource-group "$RESOURCE_GROUP" --name "$AKS_NAME" --query nodeResourceGroup --output tsv | tr -d "\r\n")
+
+VNET_NAME=$(az network vnet list --resource-group "$NODE_RESOURCE_GROUP" --query "[0].name" --output tsv | tr -d "\r\n")
+
 az network vnet subnet update \
-  --resource-group rg-aks-agenthost-f28a14-nodes \
-  --vnet-name aks-vnet-39023097 \
+  --resource-group $NODE_RESOURCE_GROUP \
+  --vnet-name $VNET_NAME \
   --name aca-subnet \
   --delegations Microsoft.App/environments
 ```
@@ -157,9 +161,13 @@ Verify that the `Microsoft.App/environments` service delegation was added. In th
 **Run (replace the `--resource-group` and `--vnet-name` value with your ones):**
 
 ```bash
+NODE_RESOURCE_GROUP=$(az aks show --resource-group "$RESOURCE_GROUP" --name "$AKS_NAME" --query nodeResourceGroup --output tsv | tr -d "\r\n")
+
+VNET_NAME=$(az network vnet list --resource-group "$NODE_RESOURCE_GROUP" --query "[0].name" --output tsv | tr -d "\r\n")
+
 az network vnet subnet show \
-  --resource-group rg-aks-agenthost-f28a14-nodes \
-  --vnet-name aks-vnet-39023097 \
+  --resource-group $NODE_RESOURCE_GROUP \
+  --vnet-name $VNET_NAME \
   -n aca-subnet \
   --query delegations
 ```
@@ -223,10 +231,18 @@ After the connection is created, you should see:
 > makes the standard Blob hostname resolve to the private IP.
 > - The Module-01 UAMI still needs `Storage Blob Data Contributor` for Blob data-plane authorization.
 
+## Configure Blob volumes for the sandbox
+
+In the ACA Sandbox portal at `https://sandboxes.azure.com/`, go to your Sandbox Group. In the left panel, select the **Volumes** tab and use the **Create** button to add your Blob container as a sandbox volume:
+![module-04-Create-Volumes](../pic/module-04-Create-Volumes.png)
+
+After the Blob volume is created, you should see it in the available volume list:
+![module-04-Volumes-list](../pic/module-04-Volumes-list.png)
+
 
 ## Deploy your agent
 
-You build a disk image from the container image produced in Module-03. You can find your container image in the Azure Container Registry portal:
+You need to build a disk image from the container image produced in Module-03. You can find your container image in the Azure Container Registry portal:
 ![module-04-ACA-find-your-container-image](../pic/module-04-ACA-find-your-container-image.png)
 
 In the ACA Sandbox portal at `https://sandboxes.azure.com/`, go to the **Disk Images** tab.
@@ -250,13 +266,13 @@ Scroll down to "Additional Details" to configure environment variables. Configur
 
 | Key | Sample value | Description |
 |---|---|---|
-| AGENT_STORAGE_ACCOUNT | stcagenthostf28a14 | Module-01 Storage account name used by the agent to persist chat state in Blob. |
 | AGENT_ID | agent-host-on-aca | Logical agent identifier. Also determines the Blob state file name as `<AGENT_ID>.json`. |
+<!-- | AGENT_STORAGE_ACCOUNT | stcagenthostf28a14 | Module-01 Storage account name used by the agent to persist chat state in Blob. | -->
 <!-- | FOUNDRY_PROJECT_ENDPOINT | `https://foundry-agenthost-f28a14.services.ai.azure.com/api/projects/maf-agent-prj` | Foundry project endpoint used for catalog registration and project-scoped agent operations. Find the project endpoint value in your Microsoft Foundry project Home page. |
 | FOUNDRY_AGENT_NAME | agenthost-reflection-agent-on-aca | Agent name shown in the Foundry catalog. | -->
 
-For example, configure the `AGENT_STORAGE_ACCOUNT` variable as shown below:
-![module-04-ACA-Create-Sandbox-Advanced-add-envvar-storage-account](../pic/module-04-ACA-Create-Sandbox-Advanced-add-envvar-storage-account.png)
+For example, configure the `AGENT_ID` variable as shown below:
+![module-04-ACA-Create-Sandbox-Advanced-add-envvar-list](../pic/module-04-ACA-Create-Sandbox-Advanced-add-envvar-list.png)
 
 <!-- After configuring the environment variables, you should see a list similar to the following:
 ![module-04-ACA-Create-Sandbox-Advanced-add-envvar-list](../pic/module-04-ACA-Create-Sandbox-Advanced-add-envvar-list.png) -->
@@ -264,6 +280,12 @@ For example, configure the `AGENT_STORAGE_ACCOUNT` variable as shown below:
 Scroll down to configure port:
 
 ![module-04-Create-Sandbox-Advanced-port](../pic/module-04-Create-Sandbox-Advanced-port.png)
+
+Scroll down to **Volumes** to configure a Blob volume to be mounted in the agent sandbox for status persistence:
+![module-04-ACA-Create-Sandbox-Advanced-add-volumes](../pic/module-04-ACA-Create-Sandbox-Advanced-add-volumes.png)
+After filling in the volume and mount path, click the **+Add** button on the right. Make sure that the volume appears in the volume list:
+![module-04-Create-Sandbox-Advanced-volumes-list](../pic/module-04-Create-Sandbox-Advanced-volumes-list.png)
+
 
 Scroll down to configure lifecycle policy:
 
@@ -308,39 +330,36 @@ After the configuration above, press **Create** in the top right corner, and you
 If everything is configured correctly, click **Create** to create your agent.
 
 
-The sandbox launches within seconds. Try several commands in the console to verify that it is alive. The example below checks the environment variables and the agent execution files and folders:
+The sandbox launches within seconds. Run several commands in the console to verify that it is working. The example below inspects the environment variables and the files and folders used by the agent:
 
 ![module-04-Sandbox-running](../pic/module-04-Sandbox-running.png)
 
-A hyperlink appears at the top of the UI. Click it to open the agent chat UI in your browser. Submit a few messages to verify that the agent is running correctly. In the backend, all LLM calls go through the APIM AI gateway:
+A hyperlink appears at the top of the UI. Click it to open the agent chat interface in your browser. Send a few messages to verify that the agent is running correctly. In the backend, all LLM calls are routed through the APIM AI gateway:
 
 ![module-04-agent-chat-portal](../pic/module-04-agent-chat-portal.png)
 
 <!-- In your Microsoft Foundry project portal, open the Agent catalog. You should see that the agent running on ACA Sandbox is registered and appears with type `Prompt`:
 ![module-04-agent-in-foundry-portal](../pic/module-04-agent-in-foundry-portal.png) -->
 
-Open the storage account Blob container. You should see the chat-history persistence file:
-![module-04-agent-chat-history-store-in-blob](../pic/module-04-agent-chat-history-store-in-blob.png)
-Open the persistence file to view the chat history:
-![module-04-agent-chat-history-store-in-blob-view-content](../pic/module-04-agent-chat-history-store-in-blob-view-content.png)
+After several rounds of conversation, return to the agent sandbox console and verify that the chat history has been saved correctly.
+In the agent Bash window, run the following command:
+```bash
+cat /app/app/data/agent-host-on-aca.json
+```
+The chat history should appear as shown below:
+![module-04-Sandbox-agent-chat-history](../pic/module-04-Sandbox-agent-chat-history.png)
 
-> [!tip]
-> If public network access is disabled on your storage account, check the persistence file from a jumpbox that can reach the storage account through Private Link. The easiest approach is to reuse the jumpbox from module-03.
->
-> As in module-03, if you do not have a jumpbox that meets these network requirements and do not want to create one, you can skip the direct Blob inspection. Instead, use the stop/resume verification below: if the previous chat history is restored after the agent resumes, the agent state was successfully preserved. This behavioral check does not prove that Blob Storage is the persistence backend; only direct inspection of the persistence file confirms that detail. In Memory suspend mode, the restored history may also come from the preserved in-memory runtime state.
-
-To verify that ACA Sandbox helps preserve runtime state, wait for the idle timeout until the agent automatically enters the `Stopped` status:
+The example above shows that the agent stores its state in the Blob volume. Azure Container Apps Sandbox provides two convenient suspend modes for preserving agent state: Memory and Disk. In this configuration, we selected Memory mode, which preserves both disk and in-memory state by using a snapshot. To verify this behavior, wait for the idle timeout, after which the agent automatically enters the `Stopped` state:
 ![module-04-ACA-Sandbox-auto-suspend](../pic/module-04-ACA-Sandbox-auto-suspend.png)
 
 After the agent stops, refresh the chat window in the browser. You should see:
 ```json
 {"error":"Sandbox is not running"}
 ```
-Click **Resume** in the Sandbox console, then refresh the chat window again. The previous chat history should be restored. This demonstrates the runtime-state persistence that ACA Sandbox provides, including in-memory state when Memory suspend mode is used.
+Click **Resume** in the Sandbox console, and then refresh the chat window. The previous chat history should be restored. This demonstrates the runtime-state persistence provided by ACA Sandbox, including the preservation of in-memory state when Memory suspend mode is used.
 
 > [!tip]
-> If you do not want to wait for the idle timeout, which is 15 minutes in this workshop, you can manually stop and resume the agent to simulate the process. In the Sandbox console, click **Stop** in the upper-right corner, then click **Resume**. Refresh your browser to view the chat connection status and chat-history recovery.
-
+> If you do not want to wait for the idle timeout, which is set to 15 minutes in this workshop, you can manually stop and resume the agent to simulate the process. In the Sandbox console, click **Stop** in the upper-right corner, and then click **Resume**. Refresh your browser to check the chat connection and verify that the chat history has been restored.
 
 ---
 

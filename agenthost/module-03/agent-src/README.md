@@ -7,7 +7,7 @@
 
 1. 提供一个简单的网页聊天入口
 2. 通过 APIM 暴露的 `/openai/v1` Responses API 与后端模型对话
-3. 把对话状态持久化到 Blob，并在重启后恢复历史
+3. 通过挂载的 Blob volume 持久化对话状态，并在重启后恢复历史
 
 同时，应用会在 Foundry project 中创建或复用一个**持久 agent**，因此该 agent 可以在 Foundry catalog 中被看到和管理。
 
@@ -22,8 +22,8 @@
 | **Microsoft Agent Framework** | `agent_framework.Agent` + `OpenAIChatClient`（Responses API 路径） |
 | **Azure OpenAI SDK** | `AsyncOpenAI` 作为底层客户端，通过 APIM 调用 OpenAI-compatible 接口 |
 | **Workload Identity** | `DefaultAzureCredential` + `get_bearer_token_provider(...)` |
-| **状态持久化** | Azure Blob Storage，按 `<AGENT_ID>.json` 保存 |
-| **状态恢复** | 启动时从 Blob 读取 `history` 和 `reflection_count` |
+| **状态持久化** | 在 Blob CSI 挂载目录中按 `<AGENT_ID>.json` 保存 |
+| **状态恢复** | 启动时从挂载目录读取 `history` 和 `reflection_count` |
 | **K8s 探针** | `/health`（liveness）、`/ready`（readiness） |
 
 ## 工作方式
@@ -31,10 +31,10 @@
 ### 1. 启动时
 
 - 读取 `app/.env`（仅在环境变量未设置时作为默认值）
-- 初始化 Blob 状态存储
+- 初始化挂载目录上的文件状态存储
 - 连接 Foundry project，创建或复用一个持久 agent
 - 构建指向 APIM `/openai/v1` 的 Responses client
-- 从 Blob 恢复此前的聊天历史
+- 从挂载目录恢复此前的聊天历史
 - 启动 HTTP 服务和网页聊天界面
 
 ### 2. 每次聊天请求
@@ -43,12 +43,12 @@
 - 服务读取当前内存中的历史记录
 - 取最近几轮上下文，调用 Responses API
 - 将 `{query, response, timestamp}` 追加到 `history`
-- 把更新后的状态写回 Blob
+- 把更新后的状态原子写回挂载目录
 - 将结果返回给前端页面
 
 ### 3. Pod 重启后
 
-- 应用再次启动时从 Blob 读取 `<AGENT_ID>.json`
+- 应用再次启动时从 `<STATE_MOUNT_PATH>/<AGENT_ID>.json` 读取状态
 - 恢复此前的 `history` 和 `reflection_count`
 - 前端打开 `/` 时会调用 `/state`，把历史消息重新渲染出来
 
@@ -57,12 +57,12 @@
 ```text
 agent-src/
 ├── app/
-│   ├── main.py          # 应用入口（BlobStateStore + FoundryResponsesClient + HTTP server）
+│   ├── main.py          # 应用入口（FileStateStore + FoundryResponsesClient + HTTP server）
 │   ├── portal.html      # 聊天网页 UI
 │   ├── .env             # 本地运行配置
 │   └── .env.example     # 配置模板
 ├── Dockerfile           # 构建容器镜像（build context = agent-src/）
-├── requirements.txt     # agent-framework-openai + azure-ai-projects + azure-storage-blob
+├── requirements.txt     # agent-framework-openai + azure-ai-projects
 ├── lifecycle-hook.sh    # 预留的 preStop 钩子
 ├── .dockerignore
 └── README.md            # 本文档
@@ -88,7 +88,8 @@ python -m venv .venv
 . .venv/Scripts/Activate.ps1
 pip install -r requirements.txt
 
-# 不配置 AGENT_STORAGE_ACCOUNT / FOUNDRY_PROJECT_ENDPOINT / AGENT_APIM_ENDPOINT
+# 使用本地可写目录保存状态；不配置 Foundry/APIM 时模型响应会被模拟
+$env:STATE_MOUNT_PATH="$PWD/data"
 # 应用会降级为模拟响应，便于本地验证 UI 与 API。
 $env:AGENT_RUN_DEMO="true"
 python -m app.main
@@ -105,24 +106,23 @@ curl.exe -X POST http://localhost:8080/reflect `
 
 浏览器访问：http://localhost:8080/
 
-如果未配置 APIM、Foundry 或 Blob，返回结果可能是模拟响应；这是预期行为。
+如果未配置 APIM 或 Foundry，返回结果可能是模拟响应；这是预期行为。
 
 ---
 
-## 场景 2 — 本地连 Azure（Blob + Foundry + APIM）
+## 场景 2 — 本地连接 Foundry 与 APIM
 
 如果要在本地走真实 Azure 路径，需要满足以下条件：
 
 1. 已执行 `az login`
 2. 当前身份对 Foundry project 有权限（至少能列出 / 创建 agent）
-3. 当前身份对 Blob Storage 有写权限
+3. `STATE_MOUNT_PATH` 指向本地可写目录
 4. APIM 网关允许该身份的 Bearer token 通过
 
 建议直接编辑 `app/.env`：
 
 ```env
-AGENT_STORAGE_ACCOUNT=stcagenthost<SN>
-AGENT_BLOB_CONTAINER=agent-state
+STATE_MOUNT_PATH=./data
 FOUNDRY_PROJECT_ENDPOINT=https://foundry-agenthost-<SN>.services.ai.azure.com/api/projects/maf-agent-prj
 FOUNDRY_AGENT_NAME=agenthost-reflection-agent
 AGENT_APIM_ENDPOINT=https://apim-agenthost-<SN>.azure-api.net/foundry
@@ -139,7 +139,7 @@ python -m app.main
 启动成功后：
 
 - Foundry catalog 中可以看到 `FOUNDRY_AGENT_NAME`
-- 聊天历史会写入 Blob：`<AGENT_ID>.json`
+- 聊天历史会写入 `<STATE_MOUNT_PATH>/<AGENT_ID>.json`
 - 再次启动时会自动恢复历史
 
 ---
@@ -164,7 +164,7 @@ docker push "${ACR_NAME}.azurecr.io/agent-host:poc-v1"
 
 ```bash
 cd module-03
-IMAGE_TAG=poc-v1 ./deploy.sh
+IMAGE_TAG=poc-v1 ./prepare-agent-sandbox.sh
 ```
 
 脚本会完成：
@@ -221,11 +221,10 @@ curl -X POST http://localhost:8080/reflect \
 
 因此，恢复历史的关键是：
 
-- `AGENT_STORAGE_ACCOUNT` 正确
-- `AGENT_BLOB_CONTAINER` 正确
+- `STATE_MOUNT_PATH` 指向同一个可写持久卷
 - `AGENT_ID` 稳定不变
 
-如果 `AGENT_ID` 发生变化，应用会读写另一份 Blob 文件，看起来就像“历史丢失”。
+如果 `AGENT_ID` 发生变化，应用会读写另一份 JSON 文件，看起来就像“历史丢失”。
 
 ---
 
@@ -233,15 +232,10 @@ curl -X POST http://localhost:8080/reflect \
 
 应用使用 `DefaultAzureCredential`。
 
-### 对 Blob Storage
+### 对状态卷
 
-用于：
-
-- 创建容器（若不存在）
-- 读取状态 Blob
-- 写入状态 Blob
-
-需要对存储账号具备适当的 Blob 数据权限。
+应用本身不再调用 Blob SDK，也不需要 Blob 数据面凭据。AKS Blob CSI
+配置负责挂载和身份验证；容器内运行用户需要对 `STATE_MOUNT_PATH` 具备读写权限。
 
 ### 对 Foundry project
 
@@ -275,9 +269,8 @@ https://ai.azure.com/.default
 
 | 变量 | 默认值 | 说明 |
 |---|---|---|
-| `AGENT_ID` | `agent-poc-001` | Agent 唯一标识，也决定 Blob 文件名 |
-| `AGENT_STORAGE_ACCOUNT` | 空 | Blob 存储账号名 |
-| `AGENT_BLOB_CONTAINER` | `agent-state` | Blob 容器名 |
+| `AGENT_ID` | `agent-poc-001` | Agent 唯一标识，也决定状态文件名 |
+| `STATE_MOUNT_PATH` | `/app/app/data` | Blob volume 在容器内的挂载路径 |
 | `FOUNDRY_PROJECT_ENDPOINT` | 空 | Foundry project endpoint |
 | `FOUNDRY_AGENT_NAME` | `agenthost-reflection-agent` | Foundry catalog 中创建 / 复用的 agent 名称 |
 | `AGENT_APIM_ENDPOINT` | 空 | APIM 基础地址；代码自动追加 `/openai/v1` |
@@ -294,10 +287,10 @@ https://ai.azure.com/.default
 
 | 症状 | 说明 / 处理 |
 |---|---|
-| `[Blob] Unavailable ...` | Blob SDK 不可用、身份无权限、或存储账号名错误 |
-| `[Blob] No prior state ...` | 这是首次运行或对应的 `<AGENT_ID>.json` 还不存在 |
+| `[Volume] Save failed ...` | 挂载目录不存在、只读或容器用户没有写权限 |
+| `[Volume] No prior state ...` | 这是首次运行或对应的 `<AGENT_ID>.json` 还不存在 |
 | `[Foundry] Catalog registration failed ...` | Foundry project endpoint 错误，或身份无 agent 管理权限 |
 | `[AI] No APIM base_url` | 未设置 `AGENT_APIM_ENDPOINT`，会降级为模拟响应 |
 | `[AI] Request failed: 401 ...` | APIM 鉴权失败；检查 token scope、UAMI 权限、APIM validate-jwt 配置 |
-| 重启后历史未恢复 | 检查 `AGENT_STORAGE_ACCOUNT`、`AGENT_BLOB_CONTAINER`、`AGENT_ID` 是否稳定一致 |
+| 重启后历史未恢复 | 检查 `STATE_MOUNT_PATH`、volume mount 和 `AGENT_ID` 是否稳定一致 |
 | 返回 `[Simulated] ...` | 说明 AI client 未成功初始化，通常是 APIM / SDK / 身份配置未就绪 |

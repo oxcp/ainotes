@@ -11,10 +11,10 @@ azure-ai-projects>=2.2.0
 
 # Azure Workload Identity (Bearer token without static secrets)
 azure-identity>=1.19.0
-
+#
 # Azure Blob Storage (async) — conversation state persistence/recovery
-azure-storage-blob>=12.24.0
-# Async HTTP transport required by the azure *.aio clients (Blob / Identity / Projects)
+#azure-storage-blob>=12.24.0
+# Async HTTP transport required by the Azure Identity and Projects clients
 aiohttp
 
 # OpenAI SDK + httpx — directly used to build the APIM-routed Responses client
