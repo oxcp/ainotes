@@ -754,6 +754,23 @@ kubectl describe sandbox agent-host -n "$NAMESPACE"
 
 ---
 
+## Architecture
+
+- AKS runs the agent on an Azure Linux Kata node pool, providing pod-level micro-VM isolation through `kata-vm-isolation`.
+- The `agent-sandbox` controller manages the stateful agent pod, stable service identity, and suspend/resume lifecycle.
+- Workload Identity provides passwordless access, while Blob CSI mounts persistent state and APIM routes model requests to Foundry.
+- Module 01 resources, including ACR, managed identity, Blob Storage, APIM, and the Foundry model, are reused.
+
+![Solution B - AKS agent-sandbox architecture](../pic/solution-B-aks-agent-sandbox.png)
+
+---
+
+## Demo
+
+https://github.com/user-attachments/assets/2647e8c1-bdae-42f9-ba8b-6aae7d3e6592
+
+---
+
 ## Files in This Module
 
 | File | Description |
@@ -767,20 +784,6 @@ kubectl describe sandbox agent-host -n "$NAMESPACE"
 | `agent-sandbox.yaml.example` | Template manifest with placeholders for the ACR, image tag, namespace, and identity values. |
 | `agent-sandbox.yaml` | Generated from `agent-sandbox.yaml.example` during deployment, then applied to create the ServiceAccount, `Sandbox` CR, and Service using AKS `kata-vm-isolation`. |
 | `agent-src/` | POC agent source: `app/main.py` (the ReflectionAgent HTTP server), `Dockerfile`, `requirements.txt`, `lifecycle-hook.sh`, and a usage `README.md`. This is the image built and deployed as the Sandbox. |
-
----
-
-## Architecture Notes
-
-- **Reuse, not recreation**: `aks.bicep` references the Module 1 ACR, UAMI, and Storage account as `existing`; only the AKS cluster and role/federation wiring are new.
-- **Blob CSI persistence**: the AKS Blob CSI driver mounts the existing `agent-state` container through a static `ReadWriteMany` PV/PVC. The kubelet identity authenticates the node-side mount, while the application reads and writes ordinary files under `/app/app/data`.
-- **AKS Pod Sandboxing**: the sandbox node pool is created with `--os-sku AzureLinux --workload-runtime KataVmIsolation`, which provides the built-in `kata-vm-isolation` runtime class used by the agent workload.
-- **agent-sandbox**: the `Sandbox` CRD (`agents.x-k8s.io/v1beta1`) and controller manage the agent as an isolated, stateful, singleton pod with a stable identity and lifecycle.
-- **Workload Identity**: the Module 1 UAMI (`id-agenthost-<SN>`) receives a federated credential that trusts the AKS OIDC issuer for `system:serviceaccount:agent:agent-sa`. Pods can then obtain Azure AD tokens without storing secrets.
-- **Azure Blob Storage**: the agent persists `<AGENT_ID>.json` through the mounted Blob volume after every change and recovers it on startup. Blob Storage remains the single source of truth; the Python process no longer calls the Blob SDK directly.
-- **AI Gateway**: model calls route through APIM at `https://apim-agenthost-<SN>.azure-api.net/foundry`, the Foundry Responses gateway from Module 1.
-- **Kata Containers**: the `kata` node pool is tainted and labelled, and the agent workload targets it with `runtimeClassName: kata-vm-isolation` plus a node selector and toleration.
-- **Scale-to-zero**: the Sandbox exposes `operatingMode` (`Running` / `Suspended`) as the suspend/resume control point. A gateway or idle sweeper should enforce the 15-minute idle policy and wake the Sandbox before proxying incoming traffic.
 
 ---
 

@@ -407,6 +407,23 @@ Check the Dynamic Sessions content:
 
 ---
 
+## Architecture
+
+- Azure Container Apps SandboxGroup hosts isolated agent instances in service-managed micro-VM sandboxes.
+- The agent reuses the Module 03 container image from ACR and the Module 01 managed identity, APIM gateway, Blob Storage, and Foundry model.
+- A mounted Blob volume persists conversation state, while memory or disk suspend modes control runtime continuity and resume behavior.
+- An optional VNet connection provides private access to Blob Storage when public network access is disabled.
+
+![Solution C - ACA Sandbox architecture](../pic/solution-C-aca-sandbox.png)
+
+---
+
+## Demo
+
+https://github.com/user-attachments/assets/35d74a64-f960-4e20-93c1-63d318f947fe
+
+---
+
 ## Files in This Module
 
 | File | Description |

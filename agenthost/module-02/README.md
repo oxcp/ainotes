@@ -263,6 +263,22 @@ If you are using `gateway` mode, the Playground log stream shows that model call
 The previous agent version remains available, allowing you to switch between versions and compare the two routing modes.
 
 ---
+## Architecture
+
+- The agent runs as a Microsoft Foundry Hosted Agent and uses the project and model deployment created in Module 01.
+- `MODEL_ROUTING` selects either direct access through the Foundry project endpoint or centralized access through the APIM AI gateway.
+- Managed identity and Foundry RBAC provide passwordless access to Azure resources.
+
+![Solution A - Foundry Hosted Agent architecture](../pic/solution-A-foundry-host-agent.png)
+
+---
+
+## Demo
+
+https://github.com/user-attachments/assets/5cf37256-1fc1-43e4-bf64-5d1108b893a0
+
+---
+
 ## Files in This Module
 
 | File | Description |

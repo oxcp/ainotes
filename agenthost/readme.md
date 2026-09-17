@@ -55,6 +55,7 @@ This downloads the content required for the `agenthost` workshop.
 Before starting the workshop, run the prerequisite checker from the `agenthost` directory:
 
 ```bash
+cd agenthost
 chmod +x check-prerequisites.sh
 bash check-prerequisites.sh
 ```
