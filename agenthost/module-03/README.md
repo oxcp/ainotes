@@ -767,7 +767,7 @@ kubectl describe sandbox agent-host -n "$NAMESPACE"
 
 ## Demo
 
-https://github.com/user-attachments/assets/2647e8c1-bdae-42f9-ba8b-6aae7d3e6592
+https://github.com/user-attachments/assets/7dd698c4-7eb4-49f6-afea-3b413d69d991
 
 ---
 
