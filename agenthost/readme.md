@@ -31,25 +31,15 @@ This workshop introduces a practical Azure agent-hosting journey. You start with
   cd myworkshop
   ```
 
-2. Clone the repository using sparse checkout:
+2. Clone the repository using sparse checkout, enter the generated `ainotes` directory, and check out the `agenthost` directory:
 
   ```bash
   git clone --depth 1 --filter=blob:none --sparse https://github.com/oxcp/ainotes/
-  ```
-
-3. Enter the generated `ainotes` subdirectory:
-
-  ```bash
   cd ainotes
-  ```
-
-4. Check out the `agenthost` directory:
-
-  ```bash
   git sparse-checkout set agenthost
   ```
 
-This downloads the content required for the `agenthost` workshop instead of checking out the entire repository.
+This downloads the content required for the `agenthost` workshop.
 
 ---
 
