@@ -9,7 +9,7 @@ In this guide, we take Azure Container Apps (ACA) running metrics as example, ex
 ---
 
 ## Architecture
-![Azure Metrics Exporter Architecture](prometheus/azmetricsexporter.png)
+![Azure Metrics Exporter Architecture](azmetricsexporter.png)
 
 - The "Azure Metrics Exporter" comes from project [webdevops/azure-metrics-exporter](https://github.com/webdevops/azure-metrics-exporter).
 - It connects to Azure Monitor using a service principal, retrieves metrics for specified Azure resources, and exposes them in a Prometheus-compatible format. Prometheus then scrapes these metrics at regular intervals, storing them for querying and analysis. Grafana is used to create dashboards and visualize the collected metrics.
@@ -22,9 +22,9 @@ In this guide, we take Azure Container Apps (ACA) running metrics as example, ex
 - Clone the [azure-metrics-exporter repository](https://github.com/webdevops/azure-metrics-exporter) and use the provided Dockerfile to create a Docker image. Attention the ```docker buildx``` command is required.
 
 _**Tips for quick verification on AKS:**_<br>
-_**Tip 1**: Use the [all-in-one Kubernetes yaml sample](https://github.com/oxcp/ainotes/blob/main/azmetricsexp-k8s.yml.sample), replacing the environment variables with your actual values. This creates the Azure Monitor Exporter, Prometheus, and Grafana services in your Kubernetes cluster with ```kubectl apply -f ``` command. After the deployment, use command ```kubectl get services -n exporter``` to get the **EXTERNAL-IP** and **PORT(S)** to access the services via Internet. With this quick deployment, you can simply jump to step 9 below for "Grafana Configuration"._<br>
+_**Tip 1**: Use the [all-in-one Kubernetes yaml sample](https://github.com/oxcp/ainotes/blob/main/prometheus/azmetricsexp-k8s.yml.sample), replacing the environment variables with your actual values. This creates the Azure Monitor Exporter, Prometheus, and Grafana services in your Kubernetes cluster with ```kubectl apply -f ``` command. After the deployment, use command ```kubectl get services -n exporter``` to get the **EXTERNAL-IP** and **PORT(S)** to access the services via Internet. With this quick deployment, you can simply jump to step 9 below for "Grafana Configuration"._<br>
 
-_**Tip 2**: If needs ingress, run command ```kubectl apply -f ``` with [azmetricexp-ingress-k8s.yml](https://github.com/oxcp/ainotes/blob/main/azmetricexp-ingress-k8s.yml). After that, use command ```kubectl get ingress -n exporter``` to get the **ADDRESS** and use below URIs to access each service:_<br>
+_**Tip 2**: If needs ingress, run command ```kubectl apply -f ``` with [azmetricexp-ingress-k8s.yml](https://github.com/oxcp/ainotes/blob/main/prometheus/azmetricexp-ingress-k8s.yml). After that, use command ```kubectl get ingress -n exporter``` to get the **ADDRESS** and use below URIs to access each service:_<br>
 - **Exporter:** "/exporter/query"
 - **Prometheus:** "/prom/query"
 - **Grafana:** "/"
@@ -61,7 +61,7 @@ Visit: `http://<host-ip>:8080/query`
 ### 4. Query ACA Metrics
 
 Fill in the form as shown below:
-![Azure Metrics Exporter Query](prometheus/azure-metrics-exporter-query-tester.png)
+![Azure Metrics Exporter Query](azure-metrics-exporter-query-tester.png)
 
 - **Endpoint:** `/probe/metrics/list`
 - **Resource Type:** `Microsoft.App/containerapps`
@@ -73,7 +73,7 @@ Fill in the form as shown below:
 ### 5. Execute Query
 
 Click **Execute Query**. If successful, you will see a response like below:
-![Azure Metrics Exporter Response](prometheus/azure-metrics-exporter-query-tester-return-metrics.png)
+![Azure Metrics Exporter Response](azure-metrics-exporter-query-tester-return-metrics.png)
 
 ---
 
@@ -83,13 +83,13 @@ Click **Execute Query**. If successful, you will see a response like below:
 
 Copy the generated Prometheus scrape config for ACA metrics at the bottom of the page. Add it to your `prometheus.yml` file. Replace the `targets` line with your Azure Metrics Exporter endpoint, e.g. `<host-ip>:8080`:
 
-![Azure Metrics Exporter Prometheus Config](prometheus/azure-metrics-exporter-query-tester-return-promconfig.png)
+![Azure Metrics Exporter Prometheus Config](azure-metrics-exporter-query-tester-return-promconfig.png)
 
 ### 7. Restart Prometheus
 
 Restart Prometheus to apply the changes. <br>
 In the Prometheus UI, go to **Status → Target health** to verify the ACA metrics endpoint is up:
-![Azure Metrics Exporter Targets Health](prometheus/prometheus-target-health.png)
+![Azure Metrics Exporter Targets Health](prometheus-target-health.png)
 
 ### 8. Query in Prometheus
 
@@ -98,7 +98,7 @@ Go to the **Query** page in Prometheus UI and run queries like:
 ```promql
 {__name__=~".*containerapps.*",timespan="PT24H"}
 ```
-![Azure Metrics Exporter Prometheus Query](prometheus/prometheus-query-metrics.png)
+![Azure Metrics Exporter Prometheus Query](prometheus-query-metrics.png)
 
 
 If you see metrics data, Prometheus is successfully collecting ACA metrics from Azure Metrics Exporter.
@@ -110,7 +110,7 @@ If you see metrics data, Prometheus is successfully collecting ACA metrics from 
 ### 9. Add Prometheus as Data Source
 
 In Grafana, add Prometheus as a data source. Enter the correct Prometheus server URL and configure authentication as needed:
-![Grafana Add Data Source](prometheus/grafana-prom-datasource.png)
+![Grafana Add Data Source](grafana-prom-datasource.png)
 
 
 ### 10. Create Dashboards
@@ -123,4 +123,4 @@ https://github.com/user-attachments/assets/fa1f0a71-106a-41ac-8039-dc66cc11deca
 ### 11. View ACA Apps in Grafana
 
 You can now view multiple ACA apps in your Grafana dashboard:
-![Grafana ACA Dashboard](prometheus/aca-azmon-prom-grafana.png)
+![Grafana ACA Dashboard](aca-azmon-prom-grafana.png)

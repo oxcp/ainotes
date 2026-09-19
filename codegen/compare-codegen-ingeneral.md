@@ -71,10 +71,10 @@
 <br>
 
 **Benchmarks from OpenAI**
-<img src="./OpenAI-comparison.png" alt="GPT5" width="1000" height="450"><br>
-<img src="./GPT5-SWE-bench.png" alt="GPT5" width="500" height="400">
-<img src="./GPT5-Tau2-bench.png" alt="GPT5" width="500" height="400">
+<img src="./assets/OpenAI-comparison.png" alt="GPT5" width="1000" height="450"><br>
+<img src="./assets/GPT5-SWE-bench.png" alt="GPT5" width="500" height="400">
+<img src="./assets/GPT5-Tau2-bench.png" alt="GPT5" width="500" height="400">
 <br>
 
 **Reference: benchmarks from Claude Opus 4.1**
-<img src="./Claude-comparison.png" alt="Claude" width="1000" height="700">
+<img src="./assets/Claude-comparison.png" alt="Claude" width="1000" height="700">
