@@ -1,0 +1,431 @@
+Duration: 140.26 seconds.
+
+Code generated:
+## 什么是 DAO？
+
+**DAO (Data Access Object)** 是一种设计模式，用于将数据访问逻辑与业务逻辑分离。它提供了一个抽象接口，用于对数据源进行 CRUD（创建、读取、更新、删除）操作。
+
+### DAO 的主要优点：
+- **解耦性**：业务逻辑与数据访问逻辑分离
+- **可维护性**：集中管理数据访问代码
+- **可测试性**：易于模拟和测试
+- **灵活性**：可以轻松切换不同的数据源
+
+## 示例代码
+
+### 1. 实体类 (Entity)
+
+```java
+// User.java
+public class User {
+    private Long id;
+    private String username;
+    private String email;
+    private Integer age;
+    private Date createTime;
+
+    // 构造函数
+    public User() {}
+
+    public User(String username, String email, Integer age) {
+        this.username = username;
+        this.email = email;
+        this.age = age;
+        this.createTime = new Date();
+    }
+
+    // Getter 和 Setter 方法
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public Integer getAge() { return age; }
+    public void setAge(Integer age) { this.age = age; }
+
+    public Date getCreateTime() { return createTime; }
+    public void setCreateTime(Date createTime) { this.createTime = createTime; }
+}
+```
+
+### 2. DAO 接口
+
+```java
+// UserDao.java
+import java.util.List;
+import java.util.Optional;
+
+public interface UserDao {
+    // 创建用户
+    Long save(User user);
+
+    // 根据ID查询用户
+    Optional<User> findById(Long id);
+
+    // 查询所有用户
+    List<User> findAll();
+
+    // 根据用户名查询
+    Optional<User> findByUsername(String username);
+
+    // 更新用户
+    boolean update(User user);
+
+    // 删除用户
+    boolean delete(Long id);
+
+    // 分页查询
+    List<User> findByPage(int page, int pageSize);
+
+    // 统计用户数量
+    long count();
+}
+```
+
+### 3. DAO 实现类（JDBC 实现）
+
+```java
+// UserDaoImpl.java
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+public class UserDaoImpl implements UserDao {
+    private Connection connection;
+
+    public UserDaoImpl(Connection connection) {
+        this.connection = connection;
+    }
+
+    @Override
+    public Long save(User user) {
+        String sql = "INSERT INTO users (username, email, age, create_time) VALUES (?, ?, ?, ?)";
+
+        try (PreparedStatement stmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            stmt.setString(1, user.getUsername());
+            stmt.setString(2, user.getEmail());
+            stmt.setInt(3, user.getAge());
+            stmt.setTimestamp(4, new Timestamp(user.getCreateTime().getTime()));
+
+            int affectedRows = stmt.executeUpdate();
+
+            if (affectedRows > 0) {
+                try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        return generatedKeys.getLong(1);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
+    public Optional<User> findById(Long id) {
+        String sql = "SELECT * FROM users WHERE id = ?";
+
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setLong(1, id);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(extractUserFromResultSet(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public List<User> findAll() {
+        String sql = "SELECT * FROM users";
+        List<User> users = new ArrayList<>();
+
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                users.add(extractUserFromResultSet(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return users;
+    }
+
+    @Override
+    public Optional<User> findByUsername(String username) {
+        String sql = "SELECT * FROM users WHERE username = ?";
+
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, username);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(extractUserFromResultSet(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public boolean update(User user) {
+        String sql = "UPDATE users SET username = ?, email = ?, age = ? WHERE id = ?";
+
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, user.getUsername());
+            stmt.setString(2, user.getEmail());
+            stmt.setInt(3, user.getAge());
+            stmt.setLong(4, user.getId());
+
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    @Override
+    public boolean delete(Long id) {
+        String sql = "DELETE FROM users WHERE id = ?";
+
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setLong(1, id);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    @Override
+    public List<User> findByPage(int page, int pageSize) {
+        String sql = "SELECT * FROM users LIMIT ? OFFSET ?";
+        List<User> users = new ArrayList<>();
+
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, pageSize);
+            stmt.setInt(2, (page - 1) * pageSize);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    users.add(extractUserFromResultSet(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return users;
+    }
+
+    @Override
+    public long count() {
+        String sql = "SELECT COUNT(*) FROM users";
+
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            if (rs.next()) {
+                return rs.getLong(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    // 辅助方法：从 ResultSet 中提取 User 对象
+    private User extractUserFromResultSet(ResultSet rs) throws SQLException {
+        User user = new User();
+        user.setId(rs.getLong("id"));
+        user.setUsername(rs.getString("username"));
+        user.setEmail(rs.getString("email"));
+        user.setAge(rs.getInt("age"));
+        user.setCreateTime(rs.getTimestamp("create_time"));
+        return user;
+    }
+}
+```
+
+### 4. 数据库连接管理
+
+```java
+// DatabaseConnection.java
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class DatabaseConnection {
+    private static final String URL = "jdbc:mysql://localhost:3306/testdb";
+    private static final String USER = "root";
+    private static final String PASSWORD = "password";
+
+    private static Connection connection = null;
+
+    public static Connection getConnection() {
+        if (connection == null) {
+            try {
+                Class.forName("com.mysql.cj.jdbc.Driver");
+                connection = DriverManager.getConnection(URL, USER, PASSWORD);
+            } catch (ClassNotFoundException | SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return connection;
+    }
+
+    public static void closeConnection() {
+        if (connection != null) {
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+```
+
+### 5. Service 层使用 DAO
+
+```java
+// UserService.java
+import java.util.List;
+import java.util.Optional;
+
+public class UserService {
+    private UserDao userDao;
+
+    public UserService() {
+        this.userDao = new UserDaoImpl(DatabaseConnection.getConnection());
+    }
+
+    // 注册新用户
+    public boolean registerUser(String username, String email, Integer age) {
+        // 检查用户名是否已存在
+        Optional<User> existingUser = userDao.findByUsername(username);
+        if (existingUser.isPresent()) {
+            System.out.println("用户名已存在！");
+            return false;
+        }
+
+        // 创建新用户
+        User newUser = new User(username, email, age);
+        Long userId = userDao.save(newUser);
+
+        if (userId != null) {
+            System.out.println("用户注册成功，ID: " + userId);
+            return true;
+        }
+        return false;
+    }
+
+    // 获取用户信息
+    public User getUserInfo(Long userId) {
+        Optional<User> user = userDao.findById(userId);
+        return user.orElse(null);
+    }
+
+    // 更新用户信息
+    public boolean updateUserInfo(Long userId, String newEmail, Integer newAge) {
+        Optional<User> userOpt = userDao.findById(userId);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            user.setEmail(newEmail);
+            user.setAge(newAge);
+            return userDao.update(user);
+        }
+        return false;
+    }
+
+    // 获取用户列表（分页）
+    public List<User> getUserList(int page, int pageSize) {
+        return userDao.findByPage(page, pageSize);
+    }
+
+    // 删除用户
+    public boolean deleteUser(Long userId) {
+        return userDao.delete(userId);
+    }
+}
+```
+
+### 6. 使用示例
+
+```java
+// Main.java
+public class Main {
+    public static void main(String[] args) {
+        UserService userService = new UserService();
+
+        // 1. 注册新用户
+        System.out.println("=== 注册新用户 ===");
+        userService.registerUser("alice", "alice@example.com", 25);
+        userService.registerUser("bob", "bob@example.com", 30);
+
+        // 2. 查询用户
+        System.out.println("\n=== 查询用户 ===");
+        User user = userService.getUserInfo(1L);
+        if (user != null) {
+            System.out.println("用户名: " + user.getUsername());
+            System.out.println("邮箱: " + user.getEmail());
+            System.out.println("年龄: " + user.getAge());
+        }
+
+        // 3. 更新用户信息
+        System.out.println("\n=== 更新用户信息 ===");
+        boolean updated = userService.updateUserInfo(1L, "alice_new@example.com", 26);
+        System.out.println("更新结果: " + updated);
+
+        // 4. 获取用户列表（分页）
+        System.out.println("\n=== 用户列表（第1页） ===");
+        List<User> users = userService.getUserList(1, 10);
+        for (User u : users) {
+            System.out.println("ID: " + u.getId() + ", 用户名: " + u.getUsername());
+        }
+
+        // 5. 删除用户
+        System.out.println("\n=== 删除用户 ===");
+        boolean deleted = userService.deleteUser(2L);
+        System.out.println("删除结果: " + deleted);
+
+        // 关闭数据库连接
+        DatabaseConnection.closeConnection();
+    }
+}
+```
+
+### 7. SQL 建表语句
+
+```sql
+CREATE TABLE users (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    age INT,
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+## 总结
+
+DAO 模式的核心思想是：
+1. **分离关注点**：数据访问逻辑独立于业务逻辑
+2. **提高可维护性**：所有数据库操作集中在 DAO 层
+3. **便于测试**：可以轻松创建 Mock DAO 进行单元测试
+4. **灵活切换数据源**：通过接口可以轻松切换不同的实现（如从 JDBC 切换到 MyBatis）
+
+这种模式在企业级应用中非常常见，是构建可维护、可扩展应用的重要设计模式。
+

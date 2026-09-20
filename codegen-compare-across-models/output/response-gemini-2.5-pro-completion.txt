@@ -1,0 +1,290 @@
+Duration: 49.052 seconds.
+Output:
+Of course! Here is a complete, single-file HTML implementation of a scalable calculator app. It includes HTML for the structure, CSS for styling (responsive design, "nice buttons", light theme), and JavaScript for the calculator logic, all within one file.
+
+You can copy this code, save it as an `index.html` file, and open it in any modern web browser.
+
+### Features Included:
+-   **Single HTML File**: No external CSS or JS files needed.
+-   **Core Operations**: Addition, Subtraction, Multiplication, Division.
+-   **Responsive Design**: The calculator scales gracefully with the browser window size.
+-   **Modern UI**: Clean, light theme with interactive buttons that have hover and active states.
+-   **Functionality**: Includes standard features like decimal point, clear (C), and chained operations.
+-   **Error Handling**: Displays an "Error" message for division by zero.
+
+---
+
+### Calculator.html
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator</title>
+    
+    <style>
+        /* Basic Reset and Global Styles */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 16px; /* Base font size */
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #f0f2f5; /* Light background theme */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Calculator Container */
+        .calculator {
+            width: 90vw; /* Scalable width */
+            max-width: 400px; /* Max size for larger screens */
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+            overflow: hidden; /* Ensures child elements conform to border-radius */
+        }
+
+        /* Calculator Display Screen */
+        .calculator-display {
+            background-color: #222;
+            color: #fff;
+            padding: 20px;
+            text-align: right;
+            font-size: clamp(2rem, 8vw, 3.5rem); /* Scalable font size */
+            font-weight: 300;
+            min-height: 1.5em; /* Ensures consistent height */
+            word-wrap: break-word; /* Prevents overflow */
+            word-break: break-all;
+        }
+
+        /* Grid for Calculator Buttons */
+        .calculator-keys {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px; /* Creates thin lines between buttons */
+            background-color: #ccc; /* Color for the gaps */
+        }
+
+        /* General Button Styling */
+        button {
+            padding: 20px;
+            font-size: clamp(1.2rem, 5vw, 1.8rem); /* Scalable font size */
+            border: none;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+            outline: none;
+        }
+
+        button:hover {
+            background-color: #ededed;
+        }
+
+        button:active {
+            background-color: #dcdcdc;
+            transform: scale(0.98);
+        }
+
+        /* Specific Button Styling */
+        .operator {
+            background-color: #ff9500; /* Orange for operators */
+            color: white;
+        }
+
+        .operator:hover {
+            background-color: #ffad33;
+        }
+
+        .operator:active {
+            background-color: #e68600;
+        }
+
+        .clear {
+            background-color: #d4d4d2;
+        }
+        
+        .clear:hover {
+            background-color: #e0e0de;
+        }
+
+        .equal-sign {
+            background-color: #4cd964; /* Green for equals */
+            color: white;
+            grid-column: span 2; /* Make the equals button wider */
+        }
+
+        .equal-sign:hover {
+            background-color: #5ee070;
+        }
+        
+        .equal-sign:active {
+            background-color: #45c45a;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="calculator">
+        <div class="calculator-display">0</div>
+
+        <div class="calculator-keys">
+            <!-- Row 1 -->
+            <button class="clear" value="clear">C</button>
+            <button class="operator" value="/">&divide;</button>
+            <button class="operator" value="*">&times;</button>
+            <button class="operator" value="-">&minus;</button>
+
+            <!-- Row 2 -->
+            <button value="7">7</button>
+            <button value="8">8</button>
+            <button value="9">9</button>
+            <button class="operator" value="+">+</button>
+
+            <!-- Row 3 -->
+            <button value="4">4</button>
+            <button value="5">5</button>
+            <button value="6">6</button>
+
+            <!-- Row 4 -->
+            <button value="1">1</button>
+            <button value="2">2</button>
+            <button value="3">3</button>
+
+            <!-- Row 5 -->
+            <button value="0">0</button>
+            <button value=".">.</button>
+            <button class="equal-sign" value="=">=</button>
+        </div>
+    </div>
+
+    <script>
+        const calculator = {
+            displayValue: '0',
+            firstOperand: null,
+            waitingForSecondOperand: false,
+            operator: null,
+        };
+
+        function updateDisplay() {
+            const display = document.querySelector('.calculator-display');
+            display.textContent = calculator.displayValue;
+        }
+
+        updateDisplay();
+
+        const keys = document.querySelector('.calculator-keys');
+        keys.addEventListener('click', (event) => {
+            const { target } = event;
+            if (!target.matches('button')) {
+                return;
+            }
+
+            const { value } = target;
+            
+            switch (value) {
+                case '+':
+                case '-':
+                case '*':
+                case '/':
+                case '=':
+                    handleOperator(value);
+                    break;
+                case '.':
+                    inputDecimal(value);
+                    break;
+                case 'clear':
+                    resetCalculator();
+                    break;
+                default:
+                    // Check if the key is a number
+                    if (Number.isInteger(parseFloat(value))) {
+                        inputDigit(value);
+                    }
+            }
+
+            updateDisplay();
+        });
+
+        function inputDigit(digit) {
+            const { displayValue, waitingForSecondOperand } = calculator;
+
+            if (waitingForSecondOperand === true) {
+                calculator.displayValue = digit;
+                calculator.waitingForSecondOperand = false;
+            } else {
+                calculator.displayValue = displayValue === '0' ? digit : displayValue + digit;
+            }
+        }
+
+        function inputDecimal(dot) {
+            // If the `displayValue` does not contain a decimal point
+            if (!calculator.displayValue.includes(dot)) {
+                // Append the decimal point
+                calculator.displayValue += dot;
+            }
+        }
+
+        function handleOperator(nextOperator) {
+            const { firstOperand, displayValue, operator } = calculator;
+            const inputValue = parseFloat(displayValue);
+
+            if (operator && calculator.waitingForSecondOperand) {
+                calculator.operator = nextOperator;
+                return;
+            }
+
+            if (firstOperand == null && !isNaN(inputValue)) {
+                calculator.firstOperand = inputValue;
+            } else if (operator) {
+                const result = calculate(firstOperand, inputValue, operator);
+                
+                if (result === 'Error') {
+                    calculator.displayValue = 'Error';
+                    // Delay reset to show the error message
+                    setTimeout(() => resetCalculator(), 1500);
+                    return;
+                }
+
+                calculator.displayValue = `${parseFloat(result.toFixed(7))}`;
+                calculator.firstOperand = result;
+            }
+
+            calculator.waitingForSecondOperand = true;
+            calculator.operator = nextOperator;
+        }
+
+        function calculate(firstOperand, secondOperand, operator) {
+            if (operator === '+') {
+                return firstOperand + secondOperand;
+            } else if (operator === '-') {
+                return firstOperand - secondOperand;
+            } else if (operator === '*') {
+                return firstOperand * secondOperand;
+            } else if (operator === '/') {
+                if (secondOperand === 0) return 'Error'; // Handle division by zero
+                return firstOperand / secondOperand;
+            }
+            return secondOperand;
+        }
+
+        function resetCalculator() {
+            calculator.displayValue = '0';
+            calculator.firstOperand = null;
+            calculator.waitingForSecondOperand = false;
+            calculator.operator = null;
+            updateDisplay(); // Explicitly call updateDisplay after resetting
+        }
+    </script>
+</body>
+</html>
+```

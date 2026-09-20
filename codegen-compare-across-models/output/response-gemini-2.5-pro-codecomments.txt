@@ -1,0 +1,84 @@
+Duration: 101.168 seconds.
+Output:
+好的，这是为您添加了中文注释说明的代码。
+
+注释遵循 Javadoc 格式，解释了接口、每个方法的功能、参数和返回值。我还特别指出了 `updateEmployeeSalary` 方法中可能存在的参数错误。
+
+```java
+package com.employee.app.dao;
+
+import java.sql.SQLException;
+import java.util.List;
+import com.employee.app.entity.Employee;
+
+/**
+ * 员工数据访问对象 (DAO) 接口。
+ * <p>
+ * 该接口定义了对数据库中员工 (Employee) 对象进行操作的各种标准方法，
+ * 如增、删、改、查 (CRUD) 等。
+ */
+public interface EmployeeDao {
+
+  /**
+   * 向数据库中添加一个新的员工记录。
+   *
+   * @param newEmployee 包含新员工信息的 Employee 对象。
+   * @return 如果添加成功，返回 true；否则返回 false。
+   * @throws SQLException 如果在数据库操作过程中发生 SQL 异常。
+   */
+  Boolean addEmployee(Employee newEmployee) throws SQLException;
+
+  /**
+   * 根据员工 ID 从数据库中检索单个员工信息。
+   *
+   * @param employeeId 要检索的员工的唯一标识符。
+   * @return 如果找到，则返回对应的 Employee 对象；如果未找到，则可能返回 null。
+   */
+  Employee getEmployee(Integer employeeId);
+
+  /**
+   * 更新数据库中现有员工的全部信息。
+   *
+   * @param updateEmployee 包含更新后员工信息的 Employee 对象。该对象的 ID 用于定位要更新的记录。
+   * @return 如果更新成功，返回 true；否则返回 false。
+   */
+  Boolean updateEmployee(Employee updateEmployee);
+
+  /**
+   * 根据员工 ID 更新指定员工的姓名。
+   *
+   * @param employeeId 要更新姓名的员工的 ID。
+   * @param name       员工的新姓名。
+   * @return 如果更新成功，返回 true；否则返回 false。
+   */
+  Boolean updateEmployeeName(Integer employeeId, String name);
+
+  /**
+   * 根据员工 ID 从数据库中删除一个员工记录。
+   *
+   * @param employeeId 要删除的员工的 ID。
+   * @return 如果删除成功，返回 true；否则返回 false。
+   */
+  Boolean deleteEmployee(Integer employeeId);
+
+  /**
+   * 从数据库中检索所有员工的记录。
+   *
+   * @return 包含所有员工对象的列表 (List)。如果数据库中没有员工，则返回一个空列表。
+   */
+  List<Employee> getAllEmployees();
+
+  /**
+   * 根据员工 ID 更新指定员工的薪水。
+   * <p>
+   * <b>注意：</b> 此方法的第二个参数当前为 {@code String name}，这似乎与方法名 {@code updateEmployeeSalary} 不匹配。
+   * 该参数可能应该是一个表示薪水的数值类型（如 {@code Double} 或 {@code BigDecimal}），并且参数名应为 {@code salary}。
+   *
+   * @param employeeId 要更新薪水的员工的 ID。
+   * @param name       (疑似错误) 员工的新薪水。请注意此参数的名称和类型可能不正确。
+   * @return 如果更新成功，返回 true；否则返回 false。
+   */
+  Boolean updateEmployeeSalary(Integer employeeId, String name);
+
+}
+```

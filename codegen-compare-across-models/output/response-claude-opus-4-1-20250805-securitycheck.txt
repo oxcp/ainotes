@@ -1,0 +1,105 @@
+Duration: 49.819 seconds.
+
+Code generated:
+这段代码存在以下几个主要漏洞和问题：
+
+## 主要漏洞：
+
+1. **SQL注入漏洞** - 直接拼接SQL字符串，容易受到SQL注入攻击
+2. **资源泄露** - 没有正确关闭数据库连接、PreparedStatement和ResultSet
+3. **异常处理不当** - 只是打印堆栈信息，没有适当的错误处理
+4. **没有使用参数化查询** - PreparedStatement的优势没有被利用
+
+## 修复后的代码：
+
+```java
+public List<Manager> getManagersByLevel(int level) {
+    List<Manager> managers = new ArrayList<>();
+
+    // SQL使用参数占位符
+    String sql = "SELECT id, name, salary, level, department FROM employee WHERE level = ?";
+
+    // 使用try-with-resources自动关闭资源
+    try (Connection connection = this.getConnection();
+         PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+        // 使用参数化查询，防止SQL注入
+        preparedStatement.setInt(1, level);
+
+        try (ResultSet resultSet = preparedStatement.executeQuery()) {
+            while (resultSet.next()) {
+                Manager manager = new Manager();
+                manager.setId(resultSet.getInt("id"));
+                manager.setName(resultSet.getString("name"));
+                manager.setSalary(resultSet.getDouble("salary"));
+                manager.setLevel(resultSet.getInt("level"));
+                manager.setDepartment(resultSet.getString("department"));
+                managers.add(manager);
+            }
+        }
+    } catch (SQLException e) {
+        // 更好的异常处理：记录日志并抛出运行时异常或自定义异常
+        // 使用日志框架而不是printStackTrace()
+        logger.error("Error fetching managers by level: " + level, e);
+        throw new DataAccessException("Failed to fetch managers by level: " + level, e);
+    }
+
+    return managers;
+}
+```
+
+## 进一步的改进建议：
+
+```java
+public List<Manager> getManagersByLevel(int level) {
+    // 输入验证
+    if (level < 0) {
+        throw new IllegalArgumentException("Level cannot be negative");
+    }
+
+    List<Manager> managers = new ArrayList<>();
+
+    // 明确列出需要的字段，避免使用SELECT *
+    String sql = "SELECT id, name, salary, level, department FROM employee WHERE level = ?";
+
+    try (Connection connection = this.getConnection();
+         PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+        preparedStatement.setInt(1, level);
+
+        try (ResultSet resultSet = preparedStatement.executeQuery()) {
+            while (resultSet.next()) {
+                managers.add(mapResultSetToManager(resultSet));
+            }
+        }
+    } catch (SQLException e) {
+        logger.error("Database error while fetching managers with level: {}", level, e);
+        throw new DataAccessException("Unable to fetch managers", e);
+    }
+
+    return managers;
+}
+
+// 将ResultSet映射抽取为独立方法，提高代码复用性
+private Manager mapResultSetToManager(ResultSet resultSet) throws SQLException {
+    Manager manager = new Manager();
+    manager.setId(resultSet.getInt("id"));
+    manager.setName(resultSet.getString("name"));
+    manager.setSalary(resultSet.getDouble("salary"));
+    manager.setLevel(resultSet.getInt("level"));
+    manager.setDepartment(resultSet.getString("department"));
+    return manager;
+}
+```
+
+## 关键改进点：
+
+1. **使用参数化查询** - 通过`?`占位符和`setInt()`方法防止SQL注入
+2. **try-with-resources** - 自动关闭资源，避免资源泄露
+3. **明确的字段列表** - 使用具体字段名代替`SELECT *`
+4. **适当的异常处理** - 记录日志并抛出有意义的异常
+5. **输入验证** - 检查输入参数的有效性
+6. **代码组织** - 将ResultSet映射逻辑抽取为独立方法
+
+这样修复后的代码更安全、更健壮、更易维护。
+

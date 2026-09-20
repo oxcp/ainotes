@@ -1,0 +1,89 @@
+Duration: 17.621 seconds.
+Output:
+# Verifier 程序文档
+
+## 用途
+
+Verifier 是一个用于验证和测试不同AI模型代码生成能力的工具。它可以读取结构化的提示文件，将提示发送给指定的AI模型（目前支持GPT），并获取模型的代码生成结果。
+
+## 工作原理
+
+### 核心组件
+
+1. **Verifier 类**：主要的验证器类，包含静态方法用于执行验证任务
+2. **外部依赖**：
+   - `prompts.Prompt`：用于解析提示文件
+   - `gpt.GPT`：用于与GPT模型交互
+   - 标准库：`os`, `json`, `time`, `sys`
+
+### 工作流程
+
+1. **参数解析**：程序从命令行参数获取模型名称和提示文件路径
+2. **提示解析**：使用 `Prompt.parse_structured_prompts_file()` 解析结构化提示文件
+3. **模型调用**：根据指定的模型类型调用相应的API：
+   - `gpt`：调用 `GPT.code_completion()` 方法
+   - `claude`：目前为占位符，未实现
+4. **结果输出**：显示生成的代码内容和执行时间
+
+### 主要方法
+
+- `verify_with_prompt_file(model: str, prompt_file: str) -> str`
+  - 解析提示文件
+  - 遍历每个提示并发送给指定模型
+  - 记录执行时间
+  - 返回生成的代码内容
+
+## 使用方法
+
+### 命令行语法
+
+```bash
+python verifier.py <model> <prompt_file>
+```
+
+### 参数说明
+
+- `<model>`：指定使用的AI模型
+  - `gpt`：使用GPT模型
+  - `claude`：Claude模型（暂未实现）
+- `<prompt_file>`：包含结构化提示的文件路径
+
+### 使用示例
+
+```bash
+# 使用GPT模型验证prompts.json文件中的提示
+python verifier.py gpt prompts.json
+
+# 使用Claude模型（当前会返回未实现的消息）
+python verifier.py claude my_prompts.json
+```
+
+### 输出示例
+
+```
+Verifying prompt: 
+Write a Python function to calculate factorial
+
+Duration: 2.341 seconds.
+
+Code generated:
+def factorial(n):
+    if n == 0 or n == 1:
+        return 1
+    return n * factorial(n - 1)
+```
+
+## 注意事项
+
+1. **依赖要求**：确保已安装并正确配置 `prompts` 和 `gpt` 模块
+2. **文件格式**：提示文件需要符合 `Prompt.parse_structured_prompts_file()` 所期望的结构化格式
+3. **模型限制**：目前只完全支持GPT模型，Claude模型支持待实现
+4. **错误处理**：程序包含基本的参数验证，但可能需要更完善的错误处理机制
+
+## 扩展建议
+
+1. 实现Claude模型支持
+2. 添加更多AI模型选项
+3. 增强错误处理和日志记录
+4. 支持批量处理多个提示文件
+5. 添加结果保存和比较功能

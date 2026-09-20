@@ -1,0 +1,30 @@
+id: codetranslation
+prompt: |
+  请将以下代码翻译成Python实现:
+#include <stdio.h>
+
+int findMax(int n);
+
+int main() {
+    int n, max;
+    scanf("%d", &n);
+    max = findMax(n);
+    printf("%d\n" , max);
+    return 0;
+}
+
+int findMax(int n) {
+    int a,max;
+        if(n==1) {
+        //getchar();
+        scanf("%d", &a);
+        return a;
+    }
+    else {
+        max=findMax(n-1);
+        scanf("%d",&a);
+        return a>max?a:max;
+    }
+}
+
+

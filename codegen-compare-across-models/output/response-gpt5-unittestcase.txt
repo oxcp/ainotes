@@ -1,0 +1,174 @@
+Duration: 22.982 seconds.
+
+Code generated:
+下面给出使用 JUnit 5 与 Mockito 的单元测试示例，覆盖 EmployeeServiceImpl 的主要分支与异常场景。测试中通过 Mock EmployeeDao 来隔离持久层依赖。
+
+代码文件：src/test/java/com/employee/app/service/EmployeeServiceImplTest.java
+
+package com.employee.app.service;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.sql.SQLException;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.employee.app.dao.EmployeeDao;
+import com.employee.app.entity.Employee;
+import com.employee.app.exception.EmployeeException;
+
+@ExtendWith(MockitoExtension.class)
+class EmployeeServiceImplTest {
+
+    @Mock
+    private EmployeeDao employeeDao;
+
+    @InjectMocks
+    private EmployeeServiceImpl employeeService;
+
+    @Test
+    void registerEmployee_success() throws Exception {
+        Employee toRegister = new Employee();
+        toRegister.setId(1);
+
+        Employee fromRepo = new Employee();
+        fromRepo.setId(1);
+
+        // addEmployee 正常
+        doNothing().when(employeeDao).addEmployee(toRegister);
+        // 注册后根据 id 查询返回新增结果
+        when(employeeDao.getEmployee(1)).thenReturn(fromRepo);
+
+        Employee result = employeeService.registerEmployee(toRegister);
+
+        assertNotNull(result);
+        assertEquals(1, result.getId());
+        verify(employeeDao, times(1)).addEmployee(toRegister);
+        verify(employeeDao, times(1)).getEmployee(1);
+    }
+
+    @Test
+    void registerEmployee_sqlExceptionWrappedAsEmployeeException() throws Exception {
+        Employee toRegister = new Employee();
+        toRegister.setId(2);
+
+        doThrow(new SQLException("DB down")).when(employeeDao).addEmployee(toRegister);
+
+        EmployeeException ex = assertThrows(EmployeeException.class,
+                () -> employeeService.registerEmployee(toRegister));
+
+        // 实现拼接的信息为 "Employee could not be added." + e.getMessage()
+        assertTrue(ex.getMessage().contains("Employee could not be added."));
+        assertTrue(ex.getMessage().contains("DB down"));
+
+        verify(employeeDao, times(1)).addEmployee(toRegister);
+        verify(employeeDao, never()).getEmployee(anyInt());
+    }
+
+    @Test
+    void getEmployeeByID_found() throws Exception {
+        Employee emp = new Employee();
+        emp.setId(10);
+
+        when(employeeDao.getEmployee(10)).thenReturn(emp);
+
+        Employee result = employeeService.getEmployeeByID(10);
+
+        assertNotNull(result);
+        assertEquals(10, result.getId());
+        verify(employeeDao, times(1)).getEmployee(10);
+    }
+
+    @Test
+    void getEmployeeByID_notFound_throwsEmployeeException() {
+        when(employeeDao.getEmployee(11)).thenReturn(null);
+
+        EmployeeException ex = assertThrows(EmployeeException.class,
+                () -> employeeService.getEmployeeByID(11));
+
+        assertEquals("Employee not found.", ex.getMessage());
+        verify(employeeDao, times(1)).getEmployee(11);
+    }
+
+    @Test
+    void updateEmployee_success() throws Exception {
+        Employee existing = new Employee();
+        existing.setId(20);
+
+        Employee toUpdate = new Employee();
+        toUpdate.setId(20);
+        // 可选：设置其他属性
+
+        Employee updated = new Employee();
+        updated.setId(20);
+        // 可选：设置被更新后的属性
+
+        // 第一次 getEmployee 用于存在性校验，第二次用于返回更新后的数据
+        when(employeeDao.getEmployee(20)).thenReturn(existing, updated);
+        doNothing().when(employeeDao).updateEmployee(toUpdate);
+
+        Employee result = employeeService.updateEmployee(toUpdate);
+
+        assertNotNull(result);
+        assertEquals(20, result.getId());
+        verify(employeeDao, times(2)).getEmployee(20);
+        verify(employeeDao, times(1)).updateEmployee(toUpdate);
+    }
+
+    @Test
+    void updateEmployee_notFound_throwsEmployeeException() {
+        Employee toUpdate = new Employee();
+        toUpdate.setId(21);
+
+        when(employeeDao.getEmployee(21)).thenReturn(null);
+
+        EmployeeException ex = assertThrows(EmployeeException.class,
+                () -> employeeService.updateEmployee(toUpdate));
+
+        assertEquals("Employee id not found to update", ex.getMessage());
+        verify(employeeDao, times(1)).getEmployee(21);
+        verify(employeeDao, never()).updateEmployee(any());
+    }
+
+    @Test
+    void deleteEmmployeeById_success_callsDeleteTwiceAndReturnsFound() throws Exception {
+        // 注意：被测代码中 deleteEmployee(id) 被调用了两次
+        Employee existing = new Employee();
+        existing.setId(30);
+
+        when(employeeDao.getEmployee(30)).thenReturn(existing);
+        doNothing().when(employeeDao).deleteEmployee(30);
+
+        Employee result = employeeService.deleteEmmployeeById(30);
+
+        assertNotNull(result);
+        assertEquals(30, result.getId());
+        verify(employeeDao, times(1)).getEmployee(30);
+        verify(employeeDao, times(2)).deleteEmployee(30); // 反映实现中的双删
+    }
+
+    @Test
+    void deleteEmmployeeById_notFound_throwsEmployeeException() {
+        when(employeeDao.getEmployee(31)).thenReturn(null);
+
+        EmployeeException ex = assertThrows(EmployeeException.class,
+                () -> employeeService.deleteEmmployeeById(31));
+
+        assertEquals("Employee id not found to delete.", ex.getMessage());
+        verify(employeeDao, times(1)).getEmployee(31);
+        verify(employeeDao, never()).deleteEmployee(anyInt());
+    }
+}
+
+说明与注意事项：
+- 测试使用 JUnit 5 与 Mockito，需要在项目中引入相应依赖（junit-jupiter、mockito-junit-jupiter）。
+- 为了与当前实现保持一致，deleteEmmployeeById 的成功用例断言 deleteEmployee 被调用两次。若修复实现中重复删除的逻辑，需同步更新该用例期望为 times(1)。
+- 测试假设 Employee 至少包含 getId/setId 方法；如果实体结构不同，请按实际字段调整。
+
+
+

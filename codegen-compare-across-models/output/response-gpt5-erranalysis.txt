@@ -1,0 +1,38 @@
+Duration: 18.333 seconds.
+
+Code generated:
+问题与原因:
+- bisectLeft 内部把形参 lo 误写成了 low，low 未定义会导致 ReferenceError，从而 lo 的默认值无法被设置，二分查找逻辑异常。
+
+可选改进:
+- ascending 的最后一支写成 a === b ? 0 : NaN 更直观（功能等价，遇到 NaN 时返回 NaN 以保持不可比较）。
+
+修正后的代码（最小改动）:
+function ascending(a, b) {
+  return a == null || b == null ? NaN
+    : a < b ? -1
+    : a > b ? 1
+    : a >= b ? 0 : NaN;
+}
+
+function bisectLeft(a, x, lo, hi) {
+  if (lo == null) lo = 0;       // 修正：low -> lo
+  if (hi == null) hi = a.length;
+  while (lo < hi) {
+    var mid = (lo + hi) >>> 1;  // 加括号更清晰
+    if (ascending(a[mid], x) < 0) {
+      lo = mid + 1;
+    } else {
+      hi = mid;
+    }
+  }
+  return lo;
+}
+
+可读性增强版 ascending（可选）:
+function ascending(a, b) {
+  return a == null || b == null ? NaN
+    : a < b ? -1
+    : a > b ? 1
+    : a === b ? 0 : NaN;
+}

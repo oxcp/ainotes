@@ -1,0 +1,509 @@
+Duration: 42.959 seconds.
+Output:
+# DAO (Data Access Object) 模式介绍
+
+DAO（Data Access Object）是一种软件设计模式，用于将数据访问逻辑与业务逻辑分离。它提供了一个抽象接口来访问数据库或其他持久化存储，使得应用程序代码不直接依赖于具体的数据访问实现。
+
+## DAO 模式的优点
+
+1. **分离关注点**：将数据访问逻辑与业务逻辑分离
+2. **可测试性**：便于单元测试和模拟
+3. **可维护性**：数据访问代码集中管理
+4. **灵活性**：可以轻松切换不同的数据源
+
+## 示例代码实现
+
+### 1. 定义实体类
+
+```java
+// User.java
+public class User {
+    private Long id;
+    private String username;
+    private String email;
+    private String password;
+    
+    // 构造函数
+    public User() {}
+    
+    public User(String username, String email, String password) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+    }
+    
+    // Getter 和 Setter 方法
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+    
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+    
+    @Override
+    public String toString() {
+        return "User{id=" + id + ", username='" + username + "', email='" + email + "'}";
+    }
+}
+```
+
+### 2. 定义 DAO 接口
+
+```java
+// UserDao.java
+import java.util.List;
+import java.util.Optional;
+
+public interface UserDao {
+    // 创建用户
+    User save(User user);
+    
+    // 根据ID查找用户
+    Optional<User> findById(Long id);
+    
+    // 根据用户名查找用户
+    Optional<User> findByUsername(String username);
+    
+    // 查找所有用户
+    List<User> findAll();
+    
+    // 更新用户
+    User update(User user);
+    
+    // 删除用户
+    boolean deleteById(Long id);
+    
+    // 检查用户是否存在
+    boolean existsById(Long id);
+}
+```
+
+### 3. 实现 DAO 接口
+
+#### 基于内存的实现（用于测试）
+
+```java
+// InMemoryUserDao.java
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+
+public class InMemoryUserDao implements UserDao {
+    private final Map<Long, User> users = new ConcurrentHashMap<>();
+    private final AtomicLong idGenerator = new AtomicLong(1);
+    
+    @Override
+    public User save(User user) {
+        if (user.getId() == null) {
+            user.setId(idGenerator.getAndIncrement());
+        }
+        users.put(user.getId(), user);
+        return user;
+    }
+    
+    @Override
+    public Optional<User> findById(Long id) {
+        return Optional.ofNullable(users.get(id));
+    }
+    
+    @Override
+    public Optional<User> findByUsername(String username) {
+        return users.values().stream()
+                .filter(user -> user.getUsername().equals(username))
+                .findFirst();
+    }
+    
+    @Override
+    public List<User> findAll() {
+        return new ArrayList<>(users.values());
+    }
+    
+    @Override
+    public User update(User user) {
+        if (user.getId() != null && users.containsKey(user.getId())) {
+            users.put(user.getId(), user);
+            return user;
+        }
+        throw new IllegalArgumentException("User not found");
+    }
+    
+    @Override
+    public boolean deleteById(Long id) {
+        return users.remove(id) != null;
+    }
+    
+    @Override
+    public boolean existsById(Long id) {
+        return users.containsKey(id);
+    }
+}
+```
+
+#### 基于 JDBC 的实现
+
+```java
+// JdbcUserDao.java
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+public class JdbcUserDao implements UserDao {
+    private final String url;
+    private final String username;
+    private final String password;
+    
+    public JdbcUserDao(String url, String username, String password) {
+        this.url = url;
+        this.username = username;
+        this.password = password;
+    }
+    
+    private Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(url, username, password);
+    }
+    
+    @Override
+    public User save(User user) {
+        String sql = "INSERT INTO users (username, email, password) VALUES (?, ?, ?)";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            
+            stmt.setString(1, user.getUsername());
+            stmt.setString(2, user.getEmail());
+            stmt.setString(3, user.getPassword());
+            
+            int affected = stmt.executeUpdate();
+            if (affected > 0) {
+                try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        user.setId(generatedKeys.getLong(1));
+                    }
+                }
+            }
+            return user;
+        } catch (SQLException e) {
+            throw new RuntimeException("Error saving user", e);
+        }
+    }
+    
+    @Override
+    public Optional<User> findById(Long id) {
+        String sql = "SELECT * FROM users WHERE id = ?";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setLong(1, id);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(mapRowToUser(rs));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error finding user by id", e);
+        }
+        
+        return Optional.empty();
+    }
+    
+    @Override
+    public Optional<User> findByUsername(String username) {
+        String sql = "SELECT * FROM users WHERE username = ?";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, username);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(mapRowToUser(rs));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error finding user by username", e);
+        }
+        
+        return Optional.empty();
+    }
+    
+    @Override
+    public List<User> findAll() {
+        String sql = "SELECT * FROM users";
+        List<User> users = new ArrayList<>();
+        
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            
+            while (rs.next()) {
+                users.add(mapRowToUser(rs));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error finding all users", e);
+        }
+        
+        return users;
+    }
+    
+    @Override
+    public User update(User user) {
+        String sql = "UPDATE users SET username = ?, email = ?, password = ? WHERE id = ?";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, user.getUsername());
+            stmt.setString(2, user.getEmail());
+            stmt.setString(3, user.getPassword());
+            stmt.setLong(4, user.getId());
+            
+            int affected = stmt.executeUpdate();
+            if (affected == 0) {
+                throw new IllegalArgumentException("User not found");
+            }
+            
+            return user;
+        } catch (SQLException e) {
+            throw new RuntimeException("Error updating user", e);
+        }
+    }
+    
+    @Override
+    public boolean deleteById(Long id) {
+        String sql = "DELETE FROM users WHERE id = ?";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setLong(1, id);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new RuntimeException("Error deleting user", e);
+        }
+    }
+    
+    @Override
+    public boolean existsById(Long id) {
+        String sql = "SELECT 1 FROM users WHERE id = ?";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setLong(1, id);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error checking user existence", e);
+        }
+    }
+    
+    private User mapRowToUser(ResultSet rs) throws SQLException {
+        User user = new User();
+        user.setId(rs.getLong("id"));
+        user.setUsername(rs.getString("username"));
+        user.setEmail(rs.getString("email"));
+        user.setPassword(rs.getString("password"));
+        return user;
+    }
+}
+```
+
+### 4. 服务层使用 DAO
+
+```java
+// UserService.java
+import java.util.List;
+import java.util.Optional;
+
+public class UserService {
+    private final UserDao userDao;
+    
+    public UserService(UserDao userDao) {
+        this.userDao = userDao;
+    }
+    
+    public User createUser(String username, String email, String password) {
+        // 检查用户名是否已存在
+        if (userDao.findByUsername(username).isPresent()) {
+            throw new IllegalArgumentException("Username already exists: " + username);
+        }
+        
+        // 创建新用户
+        User user = new User(username, email, password);
+        return userDao.save(user);
+    }
+    
+    public Optional<User> getUserById(Long id) {
+        return userDao.findById(id);
+    }
+    
+    public Optional<User> getUserByUsername(String username) {
+        return userDao.findByUsername(username);
+    }
+    
+    public List<User> getAllUsers() {
+        return userDao.findAll();
+    }
+    
+    public User updateUser(User user) {
+        if (!userDao.existsById(user.getId())) {
+            throw new IllegalArgumentException("User not found: " + user.getId());
+        }
+        return userDao.update(user);
+    }
+    
+    public boolean deleteUser(Long id) {
+        return userDao.deleteById(id);
+    }
+    
+    public boolean authenticate(String username, String password) {
+        Optional<User> user = userDao.findByUsername(username);
+        return user.isPresent() && user.get().getPassword().equals(password);
+    }
+}
+```
+
+### 5. 使用示例
+
+```java
+// Main.java
+public class Main {
+    public static void main(String[] args) {
+        // 使用内存实现进行演示
+        UserDao userDao = new InMemoryUserDao();
+        UserService userService = new UserService(userDao);
+        
+        // 创建用户
+        User user1 = userService.createUser("alice", "alice@example.com", "password123");
+        User user2 = userService.createUser("bob", "bob@example.com", "password456");
+        
+        System.out.println("Created users:");
+        System.out.println(user1);
+        System.out.println(user2);
+        
+        // 查找用户
+        System.out.println("\nFinding user by ID:");
+        userService.getUserById(1L).ifPresent(System.out::println);
+        
+        System.out.println("\nFinding user by username:");
+        userService.getUserByUsername("alice").ifPresent(System.out::println);
+        
+        // 获取所有用户
+        System.out.println("\nAll users:");
+        userService.getAllUsers().forEach(System.out::println);
+        
+        // 更新用户
+        user1.setEmail("alice.updated@example.com");
+        User updatedUser = userService.updateUser(user1);
+        System.out.println("\nUpdated user:");
+        System.out.println(updatedUser);
+        
+        // 身份验证
+        System.out.println("\nAuthentication test:");
+        System.out.println("alice with correct password: " + 
+                         userService.authenticate("alice", "password123"));
+        System.out.println("alice with wrong password: " + 
+                         userService.authenticate("alice", "wrongpassword"));
+        
+        // 删除用户
+        System.out.println("\nDeleting user:");
+        boolean deleted = userService.deleteUser(2L);
+        System.out.println("User deleted: " + deleted);
+        
+        System.out.println("\nRemaining users:");
+        userService.getAllUsers().forEach(System.out::println);
+    }
+}
+```
+
+### 6. 单元测试示例
+
+```java
+// UserServiceTest.java
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class UserServiceTest {
+    private UserService userService;
+    private UserDao userDao;
+    
+    @BeforeEach
+    void setUp() {
+        userDao = new InMemoryUserDao();
+        userService = new UserService(userDao);
+    }
+    
+    @Test
+    void testCreateUser() {
+        User user = userService.createUser("testuser", "test@example.com", "password");
+        
+        assertNotNull(user.getId());
+        assertEquals("testuser", user.getUsername());
+        assertEquals("test@example.com", user.getEmail());
+    }
+    
+    @Test
+    void testCreateUserWithDuplicateUsername() {
+        userService.createUser("testuser", "test1@example.com", "password1");
+        
+        assertThrows(IllegalArgumentException.class, () -> {
+            userService.createUser("testuser", "test2@example.com", "password2");
+        });
+    }
+    
+    @Test
+    void testGetUserById() {
+        User created = userService.createUser("testuser", "test@example.com", "password");
+        
+        Optional<User> found = userService.getUserById(created.getId());
+        
+        assertTrue(found.isPresent());
+        assertEquals("testuser", found.get().getUsername());
+    }
+    
+    @Test
+    void testAuthentication() {
+        userService.createUser("testuser", "test@example.com", "password123");
+        
+        assertTrue(userService.authenticate("testuser", "password123"));
+        assertFalse(userService.authenticate("testuser", "wrongpassword"));
+        assertFalse(userService.authenticate("nonexistent", "password123"));
+    }
+}
+```
+
+## 数据库表结构
+
+```sql
+-- 创建用户表
+CREATE TABLE users (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+```
+
+这个完整的 DAO 模式示例展示了：
+
+1. **清晰的分层结构**：实体 → DAO 接口 → DAO 实现 → 服务层
+2. **多种实现方式**：内存实现和 JDBC 实现
+3. **完整的 CRUD 操作**：创建、读取、更新、删除
+4. **异常处理**：适当的错误处理机制
+5. **单元测试**：可测试的代码结构
+
+DAO 模式是企业级应用开发中的重要设计模式，它使代码更加模块化、可维护和可测试。

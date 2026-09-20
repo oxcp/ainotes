@@ -1,0 +1,3276 @@
+Microsoft Windows [Version 10.0.26100.4946]
+(c) Microsoft Corporation. All rights reserved.
+
+C:\Users\kacai>where python
+C:\Users\kacai\AppData\Local\Programs\Python\Python313-arm64\python.exe
+
+C:\Users\kacai>
+C:\Users\kacai>
+C:\Users\kacai>
+C:\Users\kacai>python --version
+Python 3.13.7
+
+C:\Users\kacai>
+C:\Users\kacai>
+C:\Users\kacai>
+C:\Users\kacai>pip install openai
+Collecting openai
+  Using cached openai-1.100.2-py3-none-any.whl.metadata (29 kB)
+Requirement already satisfied: anyio<5,>=3.5.0 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from openai) (4.10.0)
+Collecting distro<2,>=1.7.0 (from openai)
+  Using cached distro-1.9.0-py3-none-any.whl.metadata (6.8 kB)
+Requirement already satisfied: httpx<1,>=0.23.0 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from openai) (0.28.1)
+Collecting jiter<1,>=0.4.0 (from openai)
+  Using cached jiter-0.10.0-cp313-cp313-win_arm64.whl
+Requirement already satisfied: pydantic<3,>=1.9.0 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from openai) (2.11.7)
+Requirement already satisfied: sniffio in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from openai) (1.3.1)
+Collecting tqdm>4 (from openai)
+  Using cached tqdm-4.67.1-py3-none-any.whl.metadata (57 kB)
+Requirement already satisfied: typing-extensions<5,>=4.11 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from openai) (4.14.1)
+Requirement already satisfied: idna>=2.8 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from anyio<5,>=3.5.0->openai) (3.10)
+Requirement already satisfied: certifi in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from httpx<1,>=0.23.0->openai) (2025.8.3)
+Requirement already satisfied: httpcore==1.* in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from httpx<1,>=0.23.0->openai) (1.0.9)
+Requirement already satisfied: h11>=0.16 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from httpcore==1.*->httpx<1,>=0.23.0->openai) (0.16.0)
+Requirement already satisfied: annotated-types>=0.6.0 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from pydantic<3,>=1.9.0->openai) (0.7.0)
+Requirement already satisfied: pydantic-core==2.33.2 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from pydantic<3,>=1.9.0->openai) (2.33.2)
+Requirement already satisfied: typing-inspection>=0.4.0 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from pydantic<3,>=1.9.0->openai) (0.4.1)
+Requirement already satisfied: colorama in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from tqdm>4->openai) (0.4.6)
+Using cached openai-1.100.2-py3-none-any.whl (787 kB)
+Using cached distro-1.9.0-py3-none-any.whl (20 kB)
+Using cached tqdm-4.67.1-py3-none-any.whl (78 kB)
+Installing collected packages: tqdm, jiter, distro, openai
+Successfully installed distro-1.9.0 jiter-0.10.0 openai-1.100.2 tqdm-4.67.1
+
+C:\Users\kacai>pip install mcp
+Requirement already satisfied: mcp in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (1.13.0)
+Requirement already satisfied: anyio>=4.5 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from mcp) (4.10.0)
+Requirement already satisfied: httpx-sse>=0.4 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from mcp) (0.4.1)
+Requirement already satisfied: httpx>=0.27.1 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from mcp) (0.28.1)
+Requirement already satisfied: jsonschema>=4.20.0 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from mcp) (4.25.1)
+Requirement already satisfied: pydantic-settings>=2.5.2 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from mcp) (2.10.1)
+Requirement already satisfied: pydantic<3.0.0,>=2.11.0 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from mcp) (2.11.7)
+Requirement already satisfied: python-multipart>=0.0.9 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from mcp) (0.0.20)
+Requirement already satisfied: pywin32>=310 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from mcp) (311)
+Requirement already satisfied: sse-starlette>=1.6.1 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from mcp) (3.0.2)
+Requirement already satisfied: starlette>=0.27 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from mcp) (0.47.2)
+Requirement already satisfied: uvicorn>=0.31.1 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from mcp) (0.35.0)
+Requirement already satisfied: annotated-types>=0.6.0 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from pydantic<3.0.0,>=2.11.0->mcp) (0.7.0)
+Requirement already satisfied: pydantic-core==2.33.2 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from pydantic<3.0.0,>=2.11.0->mcp) (2.33.2)
+Requirement already satisfied: typing-extensions>=4.12.2 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from pydantic<3.0.0,>=2.11.0->mcp) (4.14.1)
+Requirement already satisfied: typing-inspection>=0.4.0 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from pydantic<3.0.0,>=2.11.0->mcp) (0.4.1)
+Requirement already satisfied: idna>=2.8 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from anyio>=4.5->mcp) (3.10)
+Requirement already satisfied: sniffio>=1.1 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from anyio>=4.5->mcp) (1.3.1)
+Requirement already satisfied: certifi in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from httpx>=0.27.1->mcp) (2025.8.3)
+Requirement already satisfied: httpcore==1.* in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from httpx>=0.27.1->mcp) (1.0.9)
+Requirement already satisfied: h11>=0.16 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from httpcore==1.*->httpx>=0.27.1->mcp) (0.16.0)
+Requirement already satisfied: attrs>=22.2.0 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from jsonschema>=4.20.0->mcp) (25.3.0)
+Requirement already satisfied: jsonschema-specifications>=2023.03.6 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from jsonschema>=4.20.0->mcp) (2025.4.1)
+Requirement already satisfied: referencing>=0.28.4 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from jsonschema>=4.20.0->mcp) (0.36.2)
+Requirement already satisfied: rpds-py>=0.7.1 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from jsonschema>=4.20.0->mcp) (0.27.0)
+Requirement already satisfied: python-dotenv>=0.21.0 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from pydantic-settings>=2.5.2->mcp) (1.1.1)
+Requirement already satisfied: click>=7.0 in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from uvicorn>=0.31.1->mcp) (8.2.1)
+Requirement already satisfied: colorama in c:\users\kacai\appdata\local\programs\python\python313-arm64\lib\site-packages (from click>=7.0->uvicorn>=0.31.1->mcp) (0.4.6)
+
+C:\Users\kacai>d:
+
+D:\>cd Learning\codegen2
+
+D:\Learning\codegen2>ll
+ Volume in drive D is Data
+ Volume Serial Number is 0ED1-D86B
+
+ Directory of D:\Learning\codegen2
+
+08/20/2025  04:46 PM    <DIR>          .
+08/19/2025  06:53 PM    <DIR>          ..
+08/20/2025  11:58 AM    <DIR>          .git
+08/20/2025  11:58 AM               109 .gitignore
+08/20/2025  11:58 AM                 5 .python-version
+08/20/2025  04:46 PM    <DIR>          .venv
+08/20/2025  03:40 PM    <DIR>          .vscode
+08/20/2025  04:35 PM            10,567 1st.html
+08/20/2025  09:09 AM             1,559 apitry.py
+08/20/2025  08:50 AM             2,340 apitryweb.py
+08/20/2025  08:18 AM             2,179 calculator.py
+08/20/2025  03:31 PM               689 codehelper.py
+08/20/2025  04:46 PM             2,380 gpt.py
+08/20/2025  11:58 AM                86 main.py
+08/20/2025  12:11 AM             1,889 mcpserver.py
+08/20/2025  02:26 PM             2,592 prompts.py
+08/20/2025  04:45 PM               299 prompts.txt
+08/20/2025  01:16 PM               197 pyproject.toml
+08/20/2025  11:58 AM                 0 README.md
+08/20/2025  01:16 PM            72,506 uv.lock
+08/20/2025  04:46 PM    <DIR>          __pycache__
+              15 File(s)         97,397 bytes
+               6 Dir(s)  217,245,515,776 bytes free
+
+D:\Learning\codegen2>uv run codehelper.py
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <title>Calculator</title>
+  <style>
+    :root{
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --text: #1a1f2b;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+
+      --btn: #ffffff;
+      --btn-text: #1f2937;
+      --btn-border: #e5e7eb;
+      --btn-hover: #f3f4f6;
+
+      --op: #eef2ff;
+      --op-text: #1e3a8a;
+      --op-hover: #e0e7ff;
+
+      --danger: #fee2e2;
+      --danger-text: #991b1b;
+      --danger-hover: #fecaca;
+
+      --accent: #2563eb;
+      --accent-2: #7c3aed;
+      --equal-text: #ffffff;
+
+      --radius: 16px;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
+      --shadow-inset: inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -1px 0 rgba(0,0,0,0.05);
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+    }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 0% 0%, #ffffff 0%, var(--bg) 100%),
+        radial-gradient(800px 400px at 100% 100%, #ffffff 0%, var(--bg) 100%),
+        var(--bg);
+      display: grid;
+      place-items: center;
+      padding: 2vh 2vw;
+    }
+
+    .app {
+      width: min(92vw, 480px);
+      display: grid;
+      gap: 1rem;
+    }
+
+    .title {
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      color: var(--text);
+      margin: 0;
+      text-align: center;
+      font-size: clamp(1.1rem, 1.5vw + 0.8rem, 1.6rem);
+    }
+
+    .calc {
+      background: var(--panel);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
+      padding: clamp(14px, 2.2vw, 20px);
+      display: grid;
+      gap: clamp(10px, 1.5vw, 14px);
+      border: 1px solid var(--border);
+    }
+
+    .display {
+      border-radius: 14px;
+      background: linear-gradient(180deg, #fafafa, #f7f9fd);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-inset), var(--shadow-sm);
+      padding: clamp(12px, 2vw, 16px);
+      min-height: clamp(68px, 10vw, 88px);
+      display: grid;
+      align-content: center;
+      gap: 6px;
+      overflow: hidden;
+    }
+
+    .history {
+      color: var(--muted);
+      font-size: clamp(0.8rem, 1.3vw, 0.95rem);
+      text-align: right;
+      min-height: 1.25em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      user-select: none;
+    }
+
+    .current {
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      font-weight: 700;
+      font-size: clamp(1.6rem, 5vw, 2.4rem);
+      line-height: 1.15;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .keys {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: clamp(8px, 1.2vw, 12px);
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid var(--btn-border);
+      background: var(--btn);
+      color: var(--btn-text);
+      border-radius: 14px;
+      padding: 0;
+      box-shadow: var(--shadow-sm);
+      font: inherit;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      cursor: pointer;
+      transition: transform 120ms ease, background 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+      /* Scalable square buttons */
+      aspect-ratio: 1 / 1;
+      min-height: clamp(52px, 10vw, 76px);
+      font-size: clamp(1rem, 2.6vw, 1.3rem);
+      user-select: none;
+    }
+    button:hover { background: var(--btn-hover); }
+    button:active { transform: scale(0.985); }
+    button:focus-visible {
+      outline: 3px solid rgba(37, 99, 235, 0.35);
+      outline-offset: 2px;
+    }
+
+    .key-op {
+      background: var(--op);
+      color: var(--op-text);
+      border-color: #dbeafe;
+    }
+    .key-op:hover { background: var(--op-hover); }
+
+    .key-ac {
+      background: var(--danger);
+      color: var(--danger-text);
+      border-color: #fca5a5;
+    }
+    .key-ac:hover { background: var(--danger-hover); }
+
+    .key-eq {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: var(--equal-text);
+      border-color: transparent;
+      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
+    }
+    .key-eq:hover {
+      filter: brightness(1.03);
+    }
+
+    .span-2 {
+      grid-column: span 2;
+      aspect-ratio: auto; /* Let width control height for the double-wide key */
+      min-height: clamp(52px, 10vw, 76px);
+      height: 100%;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" role="application" aria-label="Calculator">
+    <h1 class="title">Calculator</h1>
+
+    <section class="calc" aria-describedby="calc-instructions">
+      <p id="calc-instructions" style="position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden;">
+        Use number buttons or your keyboard to enter numbers. Use plus, minus, multiply, and divide. Press equals to compute, AC to clear, and DEL to delete a digit.
+      </p>
+
+      <div class="display" aria-live="polite" aria-atomic="true">
+        <div class="history" id="history" aria-hidden="true"></div>
+        <div class="current" id="current">0</div>
+      </div>
+
+      <div class="keys">
+        <button class="key-ac" data-action="clear" aria-label="All clear">AC</button>
+        <button data-action="delete" aria-label="Delete">DEL</button>
+        <button data-action="negate" aria-label="Toggle sign">±</button>
+        <button class="key-op" data-action="op" data-op="÷" aria-label="Divide">÷</button>
+
+        <button data-action="digit" data-digit="7">7</button>
+        <button data-action="digit" data-digit="8">8</button>
+        <button data-action="digit" data-digit="9">9</button>
+        <button class="key-op" data-action="op" data-op="×" aria-label="Multiply">×</button>
+
+        <button data-action="digit" data-digit="4">4</button>
+        <button data-action="digit" data-digit="5">5</button>
+        <button data-action="digit" data-digit="6">6</button>
+        <button class="key-op" data-action="op" data-op="−" aria-label="Subtract">−</button>
+
+        <button data-action="digit" data-digit="1">1</button>
+        <button data-action="digit" data-digit="2">2</button>
+        <button data-action="digit" data-digit="3">3</button>
+        <button class="key-op" data-action="op" data-op="+" aria-label="Add">+</button>
+
+        <button class="span-2" data-action="digit" data-digit="0" aria-label="Zero">0</button>
+        <button data-action="dot" aria-label="Decimal point">.</button>
+        <button class="key-eq" data-action="equals" aria-label="Equals">=</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    (function(){
+      const historyEl = document.getElementById('history');
+      const currentEl = document.getElementById('current');
+      const keys = document.querySelector('.keys');
+
+      let current = '0';
+      let previous = '';
+      let operator = null; // '+', '−', '×', '÷'
+      let overwrite = false;
+
+      function updateDisplay() {
+        currentEl.textContent = formatDisplay(current);
+        const hist = previous && operator ? `${formatDisplay(previous)} ${operator}` : '';
+        historyEl.textContent = hist;
+      }
+
+      function formatDisplay(value) {
+        if (value === 'Error') return 'Error';
+        if (value === '' || value === null || value === undefined) return '0';
+        const num = Number(value);
+        if (!Number.isFinite(num)) return 'Error';
+        const parts = value.toString().split('.');
+        const intPart = parts[0];
+        const decPart = parts[1];
+        const intFormatted = Number(intPart).toLocaleString(undefined, { maximumFractionDigits: 0 });
+        if (decPart !== undefined) {
+          return `${intFormatted}.${decPart}`;
+        }
+        return intFormatted;
+      }
+
+      function appendDigit(d) {
+        if (overwrite) {
+          current = d;
+          overwrite = false;
+          updateDisplay();
+          return;
+        }
+        if (current === '0') {
+          current = d;
+        } else {
+          current += d;
+        }
+        updateDisplay();
+      }
+
+      function appendDot() {
+        if (overwrite) {
+          current = '0.';
+          overwrite = false;
+          updateDisplay();
+          return;
+        }
+        if (!current.includes('.')) {
+          current += current === '' ? '0.' : '.';
+          updateDisplay();
+        }
+      }
+
+      function negate() {
+        if (current === '0' || current === 'Error') return;
+        if (current.startsWith('-')) current = current.slice(1);
+        else current = '-' + current;
+        updateDisplay();
+      }
+
+      function chooseOperation(op) {
+        if (current === 'Error') return;
+        if (operator && previous !== '' && current !== '') {
+          const res = compute(previous, current, operator);
+          current = res;
+          previous = '';
+          operator = null;
+          overwrite = true;
+          updateDisplay();
+        }
+        if (current !== '') {
+          previous = current;
+          operator = op;
+          overwrite = true; // next digit overwrites
+          updateDisplay();
+        }
+      }
+
+      function clearAll() {
+        current = '0';
+        previous = '';
+        operator = null;
+        overwrite = false;
+        updateDisplay();
+      }
+
+      function deleteDigit() {
+        if (overwrite) {
+          // if we just computed, deleting should clear to 0
+          current = '0';
+          overwrite = false;
+          updateDisplay();
+          return;
+        }
+        if (current.length <= 1 || (current.length === 2 && current.startsWith('-'))) {
+          current = '0';
+        } else {
+          current = current.slice(0, -1);
+        }
+        updateDisplay();
+      }
+
+      function compute(aStr, bStr, op) {
+        const a = parseFloat(aStr);
+        const b = parseFloat(bStr);
+        if (!Number.isFinite(a) || !Number.isFinite(b)) return 'Error';
+        let result;
+        switch(op) {
+          case '+': result = a + b; break;
+          case '−': result = a - b; break;
+          case '×': result = a * b; break;
+          case '÷':
+            if (b === 0) return 'Error';
+            result = a / b; break;
+          default: return bStr;
+        }
+        return normalizeNumber(result);
+      }
+
+      function equals() {
+        if (!operator || previous === '' || current === '' || current === 'Error') return;
+        const res = compute(previous, current, operator);
+        current = res;
+        previous = '';
+        operator = null;
+        overwrite = true;
+        updateDisplay();
+      }
+
+      function normalizeNumber(num) {
+        // Round to 12 significant digits to tame floating point noise
+        if (!Number.isFinite(num)) return 'Error';
+        const rounded = Number.parseFloat(Number(num).toPrecision(12));
+        // Convert to string without scientific notation when reasonable
+        let str = String(rounded);
+        if (Math.abs(rounded) < 1e12 && Math.abs(rounded) >= 1e-6) {
+          str = rounded.toString();
+        }
+        // Trim trailing zeros after decimal
+        if (str.includes('.')) {
+          str = str.replace(/\.?0+$/, '');
+        }
+        return str;
+      }
+
+      function onButtonClick(e) {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        const action = btn.dataset.action;
+
+        switch(action) {
+          case 'digit': appendDigit(btn.dataset.digit); break;
+          case 'dot': appendDot(); break;
+          case 'op': chooseOperation(btn.dataset.op); break;
+          case 'equals': equals(); break;
+          case 'clear': clearAll(); break;
+          case 'delete': deleteDigit(); break;
+          case 'negate': negate(); break;
+        }
+      }
+
+      function onKeyDown(e) {
+        const key = e.key;
+        // Digits
+        if (/^\d$/.test(key)) { appendDigit(key); return; }
+        // Decimal
+        if (key === '.' || key === ',') { e.preventDefault(); appendDot(); return; }
+        // Operators
+        if (key === '+' || key === '-' || key === '*' || key === '/') {
+          e.preventDefault();
+          const map = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+          chooseOperation(map[key]);
+          return;
+        }
+        // Enter/Equal
+        if (key === 'Enter' || key === '=') { e.preventDefault(); equals(); return; }
+        // Backspace/Delete
+        if (key === 'Backspace') { e.preventDefault(); deleteDigit(); return; }
+        if (key === 'Delete') { e.preventDefault(); clearAll(); return; }
+        // c to clear
+        if (key.toLowerCase() === 'c') { e.preventDefault(); clearAll(); return; }
+        // n to negate
+        if (key.toLowerCase() === 'n') { e.preventDefault(); negate(); return; }
+      }
+
+      keys.addEventListener('click', onButtonClick);
+      window.addEventListener('keydown', onKeyDown);
+
+      updateDisplay();
+    })();
+  </script>
+</body>
+</html>
+
+D:\Learning\codegen2>ll
+ Volume in drive D is Data
+ Volume Serial Number is 0ED1-D86B
+
+ Directory of D:\Learning\codegen2
+
+08/20/2025  05:10 PM    <DIR>          .
+08/19/2025  06:53 PM    <DIR>          ..
+08/20/2025  11:58 AM    <DIR>          .git
+08/20/2025  11:58 AM               109 .gitignore
+08/20/2025  11:58 AM                 5 .python-version
+08/20/2025  04:46 PM    <DIR>          .venv
+08/20/2025  03:40 PM    <DIR>          .vscode
+08/20/2025  04:58 PM            14,739 1st.html
+08/20/2025  09:09 AM             1,559 apitry.py
+08/20/2025  08:50 AM             2,340 apitryweb.py
+08/20/2025  08:18 AM             2,179 calculator.py
+08/20/2025  05:10 PM               603 code-mcpsvr.py
+08/20/2025  05:08 PM             1,134 gpt.py
+08/20/2025  11:58 AM                86 main.py
+08/20/2025  12:11 AM             1,889 mcpserver.py
+08/20/2025  02:26 PM             2,592 prompts.py
+08/20/2025  04:45 PM               299 prompts.txt
+08/20/2025  01:16 PM               197 pyproject.toml
+08/20/2025  11:58 AM                 0 README.md
+08/20/2025  01:16 PM            72,506 uv.lock
+08/20/2025  05:20 PM             1,357 verifier.py
+08/20/2025  04:46 PM    <DIR>          __pycache__
+              16 File(s)        101,594 bytes
+               6 Dir(s)  217,245,351,936 bytes free
+
+D:\Learning\codegen2>python verifier.py gpt ./prompts.txt
+Verifying prompt: Create a single-page app for calculator in a single HTML file with the following requirements:
+- Name: Calculator
+- Goal: Support operations for add/substract/Multiple/Divide.
+- Features: Nice button. Scalable with window size
+- Background theme is light
+Duration: 35.616 seconds
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f5f7fb" />
+  <style>
+    :root{
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --shadow: 0 10px 25px rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.06);
+      --radius: 16px;
+      --accent: #3b82f6;         /* operator buttons */
+      --accent-2: #22c55e;       /* equals button */
+      --operator-fg: #ffffff;
+      --btn-bg: #ffffff;
+      --btn-hover: #f3f4f6;
+      --btn-active: #e5e7eb;
+      --focus: 0 0 0 3px rgba(59,130,246,.3);
+    }
+
+    /* Page and container */
+    html, body {
+      height: 100%;
+      background: radial-gradient(1100px 600px at 15% 10%, #ffffff, transparent 60%),
+                  radial-gradient(900px 700px at 85% 30%, #eef2ff, transparent 60%),
+                  var(--bg);
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      margin: 0;
+    }
+    .wrap {
+      min-height: 100%;
+      display: grid;
+      place-items: center;
+      padding: 4vmin;
+    }
+
+    /* Responsive calculator sizing: scales with window */
+    .calculator {
+      width: clamp(280px, 70vmin, 520px);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-rows: auto 1fr;
+      overflow: hidden;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, #ffffff, #fafafa);
+    }
+    .title {
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+    .brand {
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+
+    .display {
+      padding: 1.25rem 1.25rem 0.75rem 1.25rem;
+      min-height: clamp(64px, 14vmin, 120px);
+      display: grid;
+      align-items: end;
+      background: linear-gradient(180deg, #fafafa 0%, #ffffff 100%);
+      border-bottom: 1px solid var(--border);
+    }
+    .display .value {
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      text-align: right;
+      color: var(--text);
+      line-height: 1.15;
+      /* Scale digits with container size */
+      font-size: clamp(1.8rem, 7.5vmin, 3.2rem);
+      word-break: break-all;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .keys {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      padding: 12px;
+      background: linear-gradient(180deg, #ffffff, #fbfbfb);
+    }
+
+    button.key {
+      appearance: none;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--btn-bg);
+      color: var(--text);
+      font-weight: 600;
+      font-size: clamp(1rem, 3.5vmin, 1.25rem);
+      padding: clamp(0.8rem, 2.2vmin, 1.05rem);
+      cursor: pointer;
+      box-shadow: 0 1px 0 rgba(0,0,0,.02);
+      transition: transform .06s ease, background-color .12s ease, box-shadow .12s ease, border-color .12s ease, color .12s ease;
+      user-select: none;
+    }
+    button.key:hover { background: var(--btn-hover); }
+    button.key:active { transform: translateY(1px); background: var(--btn-active); }
+    button.key:focus-visible { outline: none; box-shadow: var(--focus); }
+
+    /* Operator buttons */
+    button.key.op {
+      background: linear-gradient(180deg, color-mix(in oklab, var(--accent) 92%, white), var(--accent));
+      color: var(--operator-fg);
+      border-color: color-mix(in oklab, var(--accent) 60%, white);
+    }
+    button.key.op:hover {
+      filter: brightness(1.03);
+    }
+
+    /* Equals button */
+    button.key.equals {
+      background: linear-gradient(180deg, color-mix(in oklab, var(--accent-2) 92%, white), var(--accent-2));
+      color: #ffffff;
+      border-color: color-mix(in oklab, var(--accent-2) 60%, white);
+    }
+
+    /* Muted/utility buttons */
+    button.key.muted {
+      color: var(--muted);
+      background: #fafafa;
+    }
+
+    .span-2 { grid-column: span 2; }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <main class="calculator" role="application" aria-label="Calculator">
+      <div class="header">
+        <div class="title">Calculator</div>
+        <div class="brand">Light Theme</div>
+      </div>
+
+      <section class="display" aria-live="polite" aria-atomic="true">
+        <div id="display" class="value">0</div>
+      </section>
+
+      <section class="keys" aria-label="Calculator keypad">
+        <!-- Row 1 -->
+        <button class="key muted" data-action="clear" aria-label="All clear">AC</button>
+        <button class="key muted" data-action="backspace" aria-label="Backspace">⌫</button>
+        <button class="key muted" data-action="negate" aria-label="Toggle sign">±</button>
+        <button class="key op" data-action="operator" data-value="/" aria-label="Divide">÷</button>
+
+        <!-- Row 2 -->
+        <button class="key" data-action="digit" data-value="7">7</button>
+        <button class="key" data-action="digit" data-value="8">8</button>
+        <button class="key" data-action="digit" data-value="9">9</button>
+        <button class="key op" data-action="operator" data-value="*" aria-label="Multiply">×</button>
+
+        <!-- Row 3 -->
+        <button class="key" data-action="digit" data-value="4">4</button>
+        <button class="key" data-action="digit" data-value="5">5</button>
+        <button class="key" data-action="digit" data-value="6">6</button>
+        <button class="key op" data-action="operator" data-value="-" aria-label="Subtract">−</button>
+
+        <!-- Row 4 -->
+        <button class="key" data-action="digit" data-value="1">1</button>
+        <button class="key" data-action="digit" data-value="2">2</button>
+        <button class="key" data-action="digit" data-value="3">3</button>
+        <button class="key op" data-action="operator" data-value="+" aria-label="Add">+</button>
+
+        <!-- Row 5 -->
+        <button class="key span-2" data-action="digit" data-value="0" aria-label="Zero">0</button>
+        <button class="key" data-action="decimal" data-value=".">.</button>
+        <button class="key equals" data-action="equals" aria-label="Equals">=</button>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (function(){
+      const displayEl = document.getElementById('display');
+      const keys = document.querySelector('.keys');
+
+      const state = {
+        display: '0',
+        firstOperand: null,
+        operator: null,
+        waitingForSecondOperand: false,
+        justEvaluated: false
+      };
+
+      function setDisplay(v){
+        state.display = v;
+        displayEl.textContent = v;
+      }
+
+      function reset(){
+        state.firstOperand = null;
+        state.operator = null;
+        state.waitingForSecondOperand = false;
+        state.justEvaluated = false;
+        setDisplay('0');
+      }
+
+      function inputDigit(d){
+        if (state.justEvaluated && !state.waitingForSecondOperand) {
+          // Starting a new entry after equals
+          setDisplay(d === '.' ? '0.' : d);
+          state.justEvaluated = false;
+          return;
+        }
+
+        if (state.waitingForSecondOperand) {
+          // Start fresh for the next operand
+          setDisplay(d === '.' ? '0.' : d);
+          state.waitingForSecondOperand = false;
+          return;
+        }
+
+        if (d === '.') {
+          if (!state.display.includes('.')) {
+            setDisplay(state.display + '.');
+          }
+          return;
+        }
+
+        if (state.display === '0') {
+          setDisplay(d);
+        } else {
+          setDisplay(state.display + d);
+        }
+      }
+
+      function handleOperator(op){
+        if (state.display === 'Error') {
+          return; // ignore until cleared
+        }
+
+        const inputValue = Number(state.display);
+
+        if (state.operator && state.waitingForSecondOperand) {
+          // Replace operator if user is changing their mind
+          state.operator = op;
+          return;
+        }
+
+        if (state.firstOperand == null) {
+          state.firstOperand = inputValue;
+        } else if (state.operator) {
+          const result = compute(state.firstOperand, inputValue, state.operator);
+          setDisplay(formatNumber(result));
+          state.firstOperand = result;
+        }
+
+        state.operator = op;
+        state.waitingForSecondOperand = true;
+        state.justEvaluated = false;
+      }
+
+      function equals(){
+        if (state.operator == null || state.waitingForSecondOperand) {
+          return;
+        }
+        const second = Number(state.display);
+        const result = compute(state.firstOperand, second, state.operator);
+        setDisplay(formatNumber(result));
+        state.firstOperand = result;
+        state.operator = null;
+        state.justEvaluated = true;
+      }
+
+      function negate(){
+        if (state.display === '0' || state.display === 'Error') return;
+        if (state.waitingForSecondOperand) return;
+        const v = -Number(state.display);
+        setDisplay(formatNumber(v));
+      }
+
+      function backspace(){
+        if (state.justEvaluated || state.waitingForSecondOperand || state.display === 'Error') return;
+        if (state.display.length <= 1 || (state.display.length === 2 && state.display.startsWith('-'))) {
+          setDisplay('0');
+        } else {
+          setDisplay(state.display.slice(0, -1));
+        }
+      }
+
+      function compute(a, b, op){
+        let r;
+        switch(op){
+          case '+': r = a + b; break;
+          case '-': r = a - b; break;
+          case '*': r = a * b; break;
+          case '/':
+            if (b === 0) return Number.POSITIVE_INFINITY;
+            r = a / b; break;
+          default: r = b;
+        }
+        // mitigate floating errors
+        return Math.round(r * 1e12) / 1e12;
+      }
+
+      function formatNumber(n){
+        if (!isFinite(n)) return 'Error';
+        // Use standard string with up to 12 significant digits;
+        // switch to exponential for very large/small numbers
+        const abs = Math.abs(n);
+        if ((abs !== 0 && abs < 1e-9) || abs >= 1e12) {
+          return n.toExponential(9).replace(/(?:\.0+|(\.\d+?)0+)e/,'$1e');
+        }
+        // limit to 12 significant digits while keeping decimals
+        let s = n.toPrecision(12);
+        if (s.includes('e')) return s;
+        // strip trailing zeros
+        if (s.includes('.')) s = s.replace(/\.?0+$/,'');
+        return s;
+      }
+
+      keys.addEventListener('click', (e) => {
+        const btn = e.target.closest('button.key');
+        if (!btn) return;
+
+        const action = btn.dataset.action;
+        const value = btn.dataset.value;
+
+        switch(action){
+          case 'digit':
+            inputDigit(value);
+            break;
+          case 'decimal':
+            inputDigit('.');
+            break;
+          case 'operator':
+            handleOperator(value);
+            break;
+          case 'equals':
+            equals();
+            break;
+          case 'clear':
+            reset();
+            break;
+          case 'backspace':
+            backspace();
+            break;
+          case 'negate':
+            negate();
+            break;
+        }
+      });
+
+      // Keyboard support
+      window.addEventListener('keydown', (e) => {
+        const { key } = e;
+        if (/^\d$/.test(key)) {
+          inputDigit(key);
+          e.preventDefault();
+          return;
+        }
+        if (key === '.' || key === ',') {
+          inputDigit('.');
+          e.preventDefault();
+          return;
+        }
+        if (key === '+' || key === '-' || key === '*' || key === '/') {
+          handleOperator(key);
+          e.preventDefault();
+          return;
+        }
+        if (key === 'Enter' || key === '=') {
+          equals();
+          e.preventDefault();
+          return;
+        }
+        if (key === 'Backspace') {
+          backspace();
+          e.preventDefault();
+          return;
+        }
+        if (key === 'Escape') {
+          reset();
+          e.preventDefault();
+          return;
+        }
+      });
+
+      // Initialize
+      reset();
+    })();
+  </script>
+</body>
+</html>
+
+D:\Learning\codegen2>
+D:\Learning\codegen2>
+D:\Learning\codegen2>
+D:\Learning\codegen2>
+D:\Learning\codegen2>
+D:\Learning\codegen2>python verifier.py gpt ./prompts.txt
+Verifying prompt:
+Create a single-page app for calculator in a single HTML file with the following requirements:
+- Name: Calculator
+- Goal: Support operations for add/substract/Multiple/Divide.
+- Features: Nice button. Scalable with window size
+- Background theme is light
+
+Duration: 107.095 seconds.
+
+Code generated:
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Calculator</title>
+  <style>
+    :root{
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --fg: #0f172a;
+      --muted: #64748b;
+      --accent: #4f46e5;
+      --accent-2: #6366f1;
+      --btn-bg: #f8fafc;
+      --btn-border: #e2e8f0;
+      --btn-hover: #eef2ff;
+      --shadow: 0 10px 25px rgba(15, 23, 42, 0.08), 0 2px 8px rgba(15, 23, 42, 0.06);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body{
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      background: radial-gradient(1200px 800px at 20% -10%, #ffffff 0%, var(--bg) 60%), var(--bg);
+      color: var(--fg);
+      display: grid;
+      place-items: center;
+      padding: clamp(8px, 2vmin, 24px);
+    }
+    .app{
+      width: clamp(300px, 90vmin, 520px);
+      background: var(--panel);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      overflow: hidden;
+    }
+    .header{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: clamp(12px, 2.2vmin, 18px) clamp(14px, 2.8vmin, 22px);
+      border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+      background: linear-gradient(180deg, rgba(99,102,241,0.06), rgba(99,102,241,0.0));
+    }
+    .title{
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      color: var(--fg);
+      font-size: clamp(16px, 2.2vmin, 20px);
+    }
+    .display{
+      padding: clamp(12px, 2.2vmin, 16px) clamp(16px, 3.2vmin, 24px);
+      display: grid;
+      row-gap: 6px;
+      min-height: clamp(90px, 20vmin, 140px);
+      align-content: end;
+      background:
+        radial-gradient(600px 300px at 100% -40%, rgba(79,70,229,0.10), rgba(99,102,241,0.0)),
+        linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0));
+    }
+    .previous{
+      text-align: right;
+      color: var(--muted);
+      min-height: 1.2em;
+      user-select: none;
+      font-size: clamp(14px, 1.8vmin, 16px);
+      line-height: 1.2;
+    }
+    .current{
+      text-align: right;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      font-variant-numeric: tabular-nums lining-nums;
+      word-wrap: break-word;
+      overflow-wrap: anywhere;
+      max-width: 100%;
+      margin-left: auto;
+      color: var(--fg);
+      font-size: clamp(28px, 8vmin, 48px);
+      line-height: 1.1;
+    }
+    .keys{
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: clamp(8px, 1.8vmin, 12px);
+      padding: clamp(12px, 2.2vmin, 16px);
+      background: linear-gradient(180deg, rgba(15,23,42,0.02), rgba(15,23,42,0.00));
+    }
+    button.key{
+      appearance: none;
+      border: 1px solid var(--btn-border);
+      background: linear-gradient(180deg, var(--btn-bg), #ffffff);
+      color: var(--fg);
+      border-radius: 14px;
+      padding: 0;
+      font-weight: 600;
+      font-size: clamp(16px, 3.5vmin, 22px);
+      height: auto;
+      aspect-ratio: 1 / 1;
+      box-shadow:
+        0 1px 0 rgba(255,255,255,0.6) inset,
+        0 8px 16px rgba(15, 23, 42, 0.06);
+      transition: transform 0.06s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    button.key.op{
+      color: #ffffff;
+      background: linear-gradient(180deg, var(--accent), var(--accent-2));
+      border-color: rgba(79,70,229,0.6);
+      box-shadow:
+        0 1px 0 rgba(255,255,255,0.2) inset,
+        0 10px 18px rgba(99, 102, 241, 0.25);
+    }
+    button.key.equal{
+      color: #ffffff;
+      background: linear-gradient(180deg, #10b981, #059669);
+      border-color: rgba(5, 150, 105, 0.6);
+      box-shadow:
+        0 1px 0 rgba(255,255,255,0.25) inset,
+        0 10px 18px rgba(16, 185, 129, 0.25);
+    }
+    button.key.utility{
+      background: linear-gradient(180deg, #f1f5f9, #ffffff);
+      color: #0f172a;
+    }
+    button.key:hover{
+      border-color: #cbd5e1;
+      background: linear-gradient(180deg, var(--btn-hover), #ffffff);
+    }
+    button.key.op:hover{
+      filter: brightness(1.05);
+    }
+    button.key.equal:hover{
+      filter: brightness(1.05);
+    }
+    button.key:active{
+      transform: translateY(1px);
+      box-shadow:
+        0 1px 0 rgba(255,255,255,0.6) inset,
+        0 6px 12px rgba(15, 23, 42, 0.08);
+    }
+    button.key:focus-visible{
+      outline: 3px solid rgba(79, 70, 229, 0.4);
+      outline-offset: 2px;
+    }
+    button.key.zero{
+      grid-column: span 2;
+      aspect-ratio: 2 / 1;
+    }
+    .sr-only{
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0);
+      white-space: nowrap; border: 0;
+    }
+  </style>
+</head>
+<body>
+  <main class="app" role="application" aria-label="Calculator">
+    <div class="header">
+      <div class="title">Calculator</div>
+    </div>
+
+    <section class="display" aria-live="polite" aria-atomic="true">
+      <div class="previous" data-previous></div>
+      <div class="current" data-current>0</div>
+    </section>
+
+    <section class="keys">
+      <button class="key utility" data-action="clear" aria-label="All clear">AC</button>
+      <button class="key utility" data-action="backspace" aria-label="Backspace">⌫</button>
+      <button class="key utility" data-action="sign" aria-label="Toggle sign">±</button>
+      <button class="key op" data-action="op" data-op="÷" aria-label="Divide">÷</button>
+
+      <button class="key" data-action="number" data-digit="7">7</button>
+      <button class="key" data-action="number" data-digit="8">8</button>
+      <button class="key" data-action="number" data-digit="9">9</button>
+      <button class="key op" data-action="op" data-op="×" aria-label="Multiply">×</button>
+
+      <button class="key" data-action="number" data-digit="4">4</button>
+      <button class="key" data-action="number" data-digit="5">5</button>
+      <button class="key" data-action="number" data-digit="6">6</button>
+      <button class="key op" data-action="op" data-op="−" aria-label="Subtract">−</button>
+
+      <button class="key" data-action="number" data-digit="1">1</button>
+      <button class="key" data-action="number" data-digit="2">2</button>
+      <button class="key" data-action="number" data-digit="3">3</button>
+      <button class="key op" data-action="op" data-op="+" aria-label="Add">+</button>
+
+      <button class="key zero" data-action="number" data-digit="0" aria-label="Zero">0</button>
+      <button class="key" data-action="dot" aria-label="Decimal point">.</button>
+      <button class="key equal" data-action="equals" aria-label="Equals">=</button>
+    </section>
+  </main>
+
+  <script>
+    (function(){
+      const elPrev = document.querySelector('[data-previous]');
+      const elCurr = document.querySelector('[data-current]');
+      const keys = document.querySelector('.keys');
+
+      const state = {
+        current: '0',
+        previous: '',
+        operator: null,
+        overwrite: false,
+        error: false
+      };
+
+      function updateDisplay(){
+        if (state.error) {
+          elCurr.textContent = 'Error';
+          elPrev.textContent = '';
+          return;
+        }
+        elCurr.textContent = formatForDisplay(state.current);
+        elPrev.textContent = state.operator && state.previous !== ''
+          ? `${formatForDisplay(state.previous)} ${state.operator}`
+          : '';
+      }
+
+      function formatForDisplay(value){
+        if (value === '' || value === null || value === undefined) return '0';
+        if (value === 'Error') return 'Error';
+
+        let v = String(value);
+        let sign = '';
+        if (v.startsWith('-')) { sign = '-'; v = v.slice(1); }
+
+        const hasTrailingDot = v.endsWith('.');
+        const parts = v.split('.');
+        const intRaw = parts[0] || '0';
+        const dec = parts[1] ?? '';
+
+        // Format integer part with grouping
+        let intFormatted = '';
+        try {
+          intFormatted = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(Number(intRaw));
+        } catch {
+          intFormatted = intRaw;
+        }
+        let out = sign + intFormatted;
+        if (hasTrailingDot) {
+          out += '.';
+        } else if (dec !== '') {
+          out += '.' + dec;
+        }
+        return out;
+      }
+
+      function appendDigit(d){
+        if (state.error) return resetAll();
+        if (state.overwrite || state.current === '0') {
+          state.current = d;
+          state.overwrite = false;
+        } else {
+          if (state.current.replace('-', '').length >= 18) return; // limit digits
+          state.current += d;
+        }
+        updateDisplay();
+      }
+
+      function appendDot(){
+        if (state.error) return resetAll();
+        if (state.overwrite) {
+          state.current = '0.';
+          state.overwrite = false;
+          return updateDisplay();
+        }
+        if (!state.current.includes('.')) {
+          state.current += '.';
+          updateDisplay();
+        }
+      }
+
+      function toggleSign(){
+        if (state.error) return resetAll();
+        if (state.current === '0') return;
+        if (state.current.startsWith('-')) {
+          state.current = state.current.slice(1);
+        } else {
+          state.current = '-' + state.current;
+        }
+        updateDisplay();
+      }
+
+      function setOperator(op){
+        if (state.error) return resetAll();
+        if (state.operator && !state.overwrite && state.previous !== '' && state.current !== '') {
+          // chain computation
+          evaluate();
+        }
+        state.operator = op;
+        state.previous = state.current;
+        state.overwrite = true;
+        updateDisplay();
+      }
+
+      function backspace(){
+        if (state.error) return resetAll();
+        if (state.overwrite) {
+          state.current = '0';
+          state.overwrite = false;
+        } else if (state.current.length > 1) {
+          state.current = state.current.slice(0, -1);
+          if (state.current === '-' || state.current === '' || state.current === '-0') state.current = '0';
+        } else {
+          state.current = '0';
+        }
+        updateDisplay();
+      }
+
+      function resetAll(){
+        state.current = '0';
+        state.previous = '';
+        state.operator = null;
+        state.overwrite = false;
+        state.error = false;
+        updateDisplay();
+      }
+
+      function roundNum(n){
+        // Round to avoid floating point artifacts
+        return Math.round(n * 1e12) / 1e12;
+      }
+
+      function evaluate(){
+        if (state.error) return resetAll();
+        if (!state.operator || state.previous === '') return;
+
+        const a = parseFloat(state.previous);
+        const b = parseFloat(state.current);
+        if (Number.isNaN(a) || Number.isNaN(b)) return;
+
+        let result;
+        switch (state.operator) {
+          case '+': result = a + b; break;
+          case '−': result = a - b; break; // note: using Unicode minus for UI
+          case '×': result = a * b; break;
+          case '÷':
+            if (b === 0) {
+              state.error = true;
+              updateDisplay();
+              return;
+            }
+            result = a / b;
+            break;
+          default: return;
+        }
+        result = roundNum(result);
+        if (Object.is(result, -0)) result = 0;
+        state.current = String(result);
+        state.previous = '';
+        state.operator = null;
+        state.overwrite = true;
+        updateDisplay();
+      }
+
+      keys.addEventListener('click', (e) => {
+        const btn = e.target.closest('button.key');
+        if (!btn) return;
+        const action = btn.dataset.action;
+
+        switch (action) {
+          case 'number': appendDigit(btn.dataset.digit); break;
+          case 'dot': appendDot(); break;
+          case 'op': setOperator(btn.dataset.op); break;
+          case 'equals': evaluate(); break;
+          case 'clear': resetAll(); break;
+          case 'backspace': backspace(); break;
+          case 'sign': toggleSign(); break;
+        }
+      });
+
+      // Keyboard support
+      document.addEventListener('keydown', (e) => {
+        const k = e.key;
+        if (k >= '0' && k <= '9') {
+          appendDigit(k);
+          pulseButton(`[data-action="number"][data-digit="${k}"]`);
+          return;
+        }
+        if (k === '.' || k === ',') {
+          appendDot();
+          pulseButton(`[data-action="dot"]`);
+          return;
+        }
+        if (k === '+' || k === '-' || k === '*' || k === '/') {
+          e.preventDefault();
+          const map = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+          setOperator(map[k]);
+          pulseButton(`[data-action="op"][data-op="${map[k]}"]`);
+          return;
+        }
+        if (k === 'Enter' || k === '=') {
+          e.preventDefault();
+          evaluate();
+          pulseButton(`[data-action="equals"]`);
+          return;
+        }
+        if (k === 'Backspace') {
+          backspace();
+          pulseButton(`[data-action="backspace"]`);
+          return;
+        }
+        if (k === 'Escape' || k === 'Delete') {
+          resetAll();
+          pulseButton(`[data-action="clear"]`);
+          return;
+        }
+        if (k === '_') { // some keyboards produce '_' with shift for minus; ignore
+          return;
+        }
+      });
+
+      function pulseButton(selector){
+        const el = document.querySelector(selector);
+        if (!el) return;
+        el.classList.add('press');
+        el.style.transform = 'translateY(1px)';
+        setTimeout(() => { el.style.transform = ''; }, 90);
+      }
+
+      updateDisplay();
+    })();
+  </script>
+</body>
+</html>
+
+D:\Learning\codegen2>
+D:\Learning\codegen2>
+D:\Learning\codegen2>python verifier.py gpt ./prompts-securitycheck.txt
+Verifying prompt:
+检查以下代码有什么漏洞，帮助修复生成修复后的代码:
+public List<Manager> getManagersByLevel(int level) {
+  List<Manager> managers = new ArrayList<>();
+  try {
+      String sql = "SELECT * FROM employee WHERE level = ?";
+      PreparedStatement preparedStatement = this.getConnection().prepareStatement(sql);
+      preparedStatement.setInt(1, level);
+      ResultSet resultSet = preparedStatement.executeQuery();
+      while (resultSet.next()) {
+          Manager manager = new Manager();
+          manager.setId(resultSet.getInt("id"));
+          manager.setName(resultSet.getString("name"));
+          manager.setSalary(resultSet.getDouble("salary"));
+          manager.setLevel(resultSet.getInt("level"));
+          manager.setDepartment(resultSet.getString("department"));
+          managers.add(manager);
+      }
+  } catch (SQLException e) {
+      e.printStackTrace();
+  }
+  return managers;
+}
+
+Duration: 39.678 seconds.
+
+Code generated:
+主要问题与改进点
+- 资源泄露：未关闭 ResultSet、PreparedStatement（以及可能的 Connection），会导致连接池耗尽或内存泄漏。
+- 异常处理不当：e.printStackTrace() 会吞没异常且不利于生产环境定位问题，应记录日志并向上抛出或包装为运行时异常。
+- SELECT * 不必要：应显式列出需要的列，减少数据传输、避免列变更带来的隐患。
+- 参数校验缺失：level 未校验，负值或异常值可能导致无意义的全表扫描。
+- 潜在性能/可用性问题：未设置超时、fetch size 或最大行数，容易导致长时间阻塞或内存压力。
+- 可能的保留字冲突：某些数据库（如 Oracle）中 level 是保留字，需转义或更名。
+- 金额类型：salary 用 double 容易出现精度问题，建议使用 BigDecimal（如果模型允许）。
+
+修复后的代码示例（使用 try-with-resources，显式列、校验与超时）
+注：这里假设该方法自己管理 Connection。若你的项目由事务管理器/容器管理连接，请不要在此处关闭 Connection，仅对 PreparedStatement、ResultSet 使用 try-with-resources，并从外部传入 Connection。
+
+public List<Manager> getManagersByLevel(int level) {
+    if (level < 0) {
+        throw new IllegalArgumentException("level must be >= 0");
+    }
+
+    // 如果数据库将 level 视为保留字，请按你的数据库方言转义标识符
+    // 例如 Oracle: "LEVEL"；MySQL: `level`（或启用 ANSI_QUOTES 后使用 "level"）
+    String sql = "SELECT id, name, salary, level, department FROM employee WHERE level = ? ORDER BY id";
+
+    List<Manager> managers = new ArrayList<>();
+    try (Connection conn = this.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setInt(1, level);
+
+        // 可选的健壮性设置
+        ps.setQueryTimeout(30);   // 30 秒查询超时，驱动支持时生效
+        ps.setFetchSize(100);     // 适配你的场景/驱动
+
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Manager manager = new Manager();
+                manager.setId(rs.getInt("id"));
+                manager.setName(rs.getString("name"));
+
+                // 若模型允许，建议将 Manager#setSalary 改为接收 BigDecimal
+                // BigDecimal salary = rs.getBigDecimal("salary");
+                // manager.setSalary(salary);
+
+                // 若暂时仍为 double：
+                java.math.BigDecimal salary = rs.getBigDecimal("salary");
+                manager.setSalary(salary == null ? 0.0 : salary.doubleValue());
+
+                int lvl = rs.getInt("level");
+                if (rs.wasNull()) {
+                    // 依据业务决定如何处理 null（跳过、默认值、异常等）
+                    // 这里示例用默认 0 或者可以抛异常
+                }
+                manager.setLevel(lvl);
+
+                manager.setDepartment(rs.getString("department"));
+                managers.add(manager);
+            }
+        }
+    } catch (SQLException e) {
+        // 生产环境建议使用日志框架记录
+        throw new RuntimeException("Failed to query managers by level: " + level, e);
+    }
+    return managers;
+}
+
+可选增强
+- 分页与最大行数限制，避免一次性拉取过多数据：
+  - 使用 ps.setMaxRows(1000) 或在 SQL 中加 LIMIT/OFFSET（按数据库方言）。
+  - 提供重载方法 getManagersByLevel(int level, int limit, int offset)。
+- 如果使用 Spring/JPA/MyBatis 等框架，改用其模板/Mapper，减少手写 JDBC 易错点。
+- 如数据库将 level 视为保留字，请在 SQL 中正确转义或更改列名，避免语法冲突。
+
+D:\Learning\codegen2>
+D:\Learning\codegen2>
+D:\Learning\codegen2>
+D:\Learning\codegen2>
+D:\Learning\codegen2>python verifier.py gpt ./prompts-securitycheck.txt
+Verifying prompt:
+检查以下代码有什么漏洞，帮助修复生成修复后的代码:
+public List<Manager> getManagersByLevel(int level) {
+  List<Manager> managers = new ArrayList<>();
+  try {
+      String sql = "SELECT * FROM employee WHERE level = " + level;
+      PreparedStatement preparedStatement = this.getConnection().prepareStatement(sql);
+      ResultSet resultSet = preparedStatement.executeQuery();
+      while (resultSet.next()) {
+          Manager manager = new Manager();
+          manager.setId(resultSet.getInt("id"));
+          manager.setName(resultSet.getString("name"));
+          manager.setSalary(resultSet.getDouble("salary"));
+          manager.setLevel(resultSet.getInt("level"));
+          manager.setDepartment(resultSet.getString("department"));
+          managers.add(manager);
+      }
+  } catch (SQLException e) {
+      e.printStackTrace();
+  }
+  return managers;
+}
+
+Duration: 32.989 seconds.
+
+Code generated:
+主要问题与修复建议
+- SQL 注入风险：虽然参数是 int，但直接拼接进 SQL 字符串依然是不安全的做法，且为后续维护埋雷。应使用 PreparedStatement 的占位符参数。
+- 资源泄露：未关闭 ResultSet、PreparedStatement 和 Connection。应使用 try-with-resources 自动关闭。
+- 关键字冲突：“level”在部分数据库（如 Oracle）是保留字/伪列，直接使用可能报错。应对列名进行转义或改名。
+- 可维护性问题：SELECT * 不利于列变更与可读性；异常处理仅打印堆栈不利于排查。
+
+修复后的代码示例（通用版，注意列名 level 的占位符写法在不同数据库可能需转义）
+- 若数据库不把 level 当作保留字，可直接使用如下 SQL。
+- 若使用 Oracle，请参考下方“Oracle 兼容版”。
+
+通用版
+public List<Manager> getManagersByLevel(int level) {
+    List<Manager> managers = new ArrayList<>();
+    // 明确列清单，避免 SELECT *
+    String sql = "SELECT id, name, salary, level, department FROM employee WHERE level = ?";
+
+    try (Connection conn = this.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setInt(1, level);
+
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Manager manager = new Manager();
+                manager.setId(rs.getInt("id"));
+                manager.setName(rs.getString("name"));
+
+                // 如果 salary 允许为空，getDouble 遇到 NULL 会返回 0，需要用 wasNull 区分
+                double salary = rs.getDouble("salary");
+                if (rs.wasNull()) {
+                    // 视业务处理：例如设置为 0 或不设置/改用包装类型
+                    // manager.setSalary(null); // 若改为 Double 并允许 null
+                }
+                manager.setSalary(salary);
+
+                manager.setLevel(rs.getInt("level"));
+                manager.setDepartment(rs.getString("department"));
+                managers.add(manager);
+            }
+        }
+    } catch (SQLException e) {
+        // 替换为你的日志方案，或抛出自定义运行时异常
+        throw new RuntimeException("Failed to fetch managers by level: " + level, e);
+    }
+
+    return managers;
+}
+
+Oracle 兼容版（level 为保留字，需转义）
+public List<Manager> getManagersByLevel(int level) {
+    List<Manager> managers = new ArrayList<>();
+    // 用双引号转义保留字，并给出别名保证 ResultSet 可用 "level" 取值
+    String sql = "SELECT id, name, salary, \"LEVEL\" AS level, department FROM employee WHERE \"LEVEL\" = ?";
+
+    try (Connection conn = this.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setInt(1, level);
+
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Manager manager = new Manager();
+                manager.setId(rs.getInt("id"));
+                manager.setName(rs.getString("name"));
+
+                double salary = rs.getDouble("salary");
+                if (rs.wasNull()) {
+                    // 同上视业务处理
+                }
+                manager.setSalary(salary);
+
+                manager.setLevel(rs.getInt("level"));
+                manager.setDepartment(rs.getString("department"));
+                managers.add(manager);
+            }
+        }
+    } catch (SQLException e) {
+        throw new RuntimeException("Failed to fetch managers by level: " + level, e);
+    }
+
+    return managers;
+}
+
+补充建议
+- 如果 salary 是金额，建议数据库字段使用 DECIMAL/NUMERIC，并在 Java 里用 BigDecimal 映射，避免 double 精度问题。
+- 如果 this.getConnection() 返回连接池连接，try-with-resources 的 close 会安全地将连接归还到连接池。若是长连接共享，请改为在上层管理生命周期。
+
+D:\Learning\codegen2>
+D:\Learning\codegen2>
+D:\Learning\codegen2>
+D:\Learning\codegen2>
+D:\Learning\codegen2>python verifier.py gpt ./prompts-unittestcase.txt
+Verifying prompt:
+为以下code生成单元测试用例:
+package com.employee.app.service;
+
+Duration: 23.372 seconds.
+
+Code generated:
+你提供的代码只有包声明（package com.employee.app.service;），还缺少具体的类与方法，无法直接生成有意义的单元测试。请补充以下信息，我可以据此为你生成完整可运行的测试用例：
+
+- 需要测试的类源码（位于 com.employee.app.service 包下的类）
+- 关键方法的签名与行为说明（正常返回、异常、边界情况）
+- 使用的技术栈：
+  - JUnit 版本（4 还是 5/Jupiter）
+  - 是否使用 Mockito 或其他 Mock 框架
+  - 是否是 Spring/Spring Boot 项目（有无 @Service、@Repository 注解等）
+- 构建工具（Maven/Gradle）
+
+在你提供具体代码前，先给你一个常见的 Service 层单元测试模板示例（JUnit 5 + Mockito，典型的 Spring Service 场景）。你可以把类名、方法名、断言替换为你的实际实现。
+
+示例：待测类（EmployeeServiceImpl）典型结构
+package com.employee.app.service;
+
+import com.employee.app.model.Employee;
+import com.employee.app.repository.EmployeeRepository;
+import java.util.Optional;
+
+public class EmployeeServiceImpl {
+
+    private final EmployeeRepository repository;
+
+    public EmployeeServiceImpl(EmployeeRepository repository) {
+        this.repository = repository;
+    }
+
+    public Employee getById(long id) {
+        return repository.findById(id).orElseThrow(() -> new IllegalArgumentException("Not found: " + id));
+    }
+
+    public Employee create(Employee e) {
+        if (e == null || e.getName() == null || e.getName().isBlank()) {
+            throw new IllegalArgumentException("Invalid employee");
+        }
+        return repository.save(e);
+    }
+
+    public void delete(long id) {
+        if (!repository.existsById(id)) {
+            throw new IllegalArgumentException("Not found: " + id);
+        }
+        repository.deleteById(id);
+    }
+}
+
+对应的单元测试（JUnit 5 + Mockito）
+package com.employee.app.service;
+
+import com.employee.app.model.Employee;
+import com.employee.app.repository.EmployeeRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.*;
+
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(org.mockito.junit.jupiter.MockitoExtension.class)
+class EmployeeServiceImplTest {
+
+    @Mock
+    private EmployeeRepository repository;
+
+    @InjectMocks
+    private EmployeeServiceImpl service;
+
+    private Employee john;
+
+    @BeforeEach
+    void setUp() {
+        john = new Employee();
+        john.setId(1L);
+        john.setName("John");
+    }
+
+    @Test
+    void getById_found_returnsEmployee() {
+        when(repository.findById(1L)).thenReturn(Optional.of(john));
+
+        Employee result = service.getById(1L);
+
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertEquals("John", result.getName());
+        verify(repository).findById(1L);
+        verifyNoMoreInteractions(repository);
+    }
+
+    @Test
+    void getById_notFound_throws() {
+        when(repository.findById(99L)).thenReturn(Optional.empty());
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.getById(99L));
+        assertTrue(ex.getMessage().contains("Not found"));
+        verify(repository).findById(99L);
+        verifyNoMoreInteractions(repository);
+    }
+
+    @Test
+    void create_valid_savesAndReturns() {
+        when(repository.save(john)).thenReturn(john);
+
+        Employee saved = service.create(john);
+
+        assertEquals(john, saved);
+        verify(repository).save(john);
+        verifyNoMoreInteractions(repository);
+    }
+
+    @Test
+    void create_invalid_throws() {
+        IllegalArgumentException ex1 = assertThrows(IllegalArgumentException.class, () -> service.create(null));
+        assertTrue(ex1.getMessage().contains("Invalid"));
+
+        Employee bad = new Employee();
+        bad.setName("  ");
+        IllegalArgumentException ex2 = assertThrows(IllegalArgumentException.class, () -> service.create(bad));
+        assertTrue(ex2.getMessage().contains("Invalid"));
+
+        verifyNoInteractions(repository);
+    }
+
+    @Test
+    void delete_exists_deletes() {
+        when(repository.existsById(1L)).thenReturn(true);
+
+        service.delete(1L);
+
+        verify(repository).existsById(1L);
+        verify(repository).deleteById(1L);
+        verifyNoMoreInteractions(repository);
+    }
+
+    @Test
+    void delete_notExists_throws() {
+        when(repository.existsById(2L)).thenReturn(false);
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.delete(2L));
+        assertTrue(ex.getMessage().contains("Not found"));
+
+        verify(repository).existsById(2L);
+        verifyNoMoreInteractions(repository);
+    }
+}
+
+依赖（Maven）示例
+- JUnit 5:
+  <dependency>
+    <groupId>org.junit.jupiter</groupId>
+    <artifactId>junit-jupiter</artifactId>
+    <version>5.10.2</version>
+    <scope>test</scope>
+  </dependency>
+- Mockito:
+  <dependency>
+    <groupId>org.mockito</groupId>
+    <artifactId>mockito-junit-jupiter</artifactId>
+    <version>5.12.0</version>
+    <scope>test</scope>
+  </dependency>
+
+注意事项
+- 如果你的 Service 使用了 Spring 注解并依赖其他 Bean，但你只想做“单元测试”，优先用 Mockito 进行依赖注入（@InjectMocks + @Mock），避免 @SpringBootTest 带来的上下文启动开销。
+- 对每个公开方法编写：
+  - 正常路径测试
+  - 异常/边界条件测试（比如参数校验、找不到数据、重复数据等）
+  - 与依赖交互的验证（verify 调用次数、顺序、无多余交互）
+- 如果有时间相关、随机数或静态方法，考虑抽象或使用 Mockito 的 mockStatic 进行隔离。
+
+把你的实际类发过来，我会按你的代码和业务规则生成针对性的、可直接运行的单元测试用例。
+
+D:\Learning\codegen2>
+D:\Learning\codegen2>
+D:\Learning\codegen2>
+D:\Learning\codegen2>
+D:\Learning\codegen2>python verifier.py gpt ./prompts-unittestcase.txt
+Verifying prompt:
+为以下code生成单元测试用例:
+package com.employee.app.service;
+
+Duration: 23.781 seconds.
+
+Code generated:
+你只提供了包名，暂时无法直接为具体类和方法生成可运行的单元测试。请补充以下信息，我可以按你的实际代码精确生成测试：
+- 需要测试的类与方法源代码（public 方法尤为重要）
+- 使用的技术栈：是否是 Spring/Spring Boot 服务？是否有依赖 Repository/DAO？
+- 测试框架偏好：JUnit 4/5，是否使用 Mockito/AssertJ？
+- 构建工具：Maven 或 Gradle
+- 期望覆盖的边界与异常场景
+
+在你提供代码前，先给你一个可直接套用的示例模板（JUnit 5 + Mockito），你把类名、方法名、依赖按你的实际代码替换即可。
+
+示例场景假设
+- EmployeeServiceImpl 位于 package com.employee.app.service，依赖 EmployeeRepository
+- 方法：getById、create、update、delete
+- 不存在员工时抛出 ResourceNotFoundException
+
+示例测试类（可作为模板改名改包名）
+```java
+package com.employee.app.service;
+
+import com.employee.app.model.Employee;
+import com.employee.app.repository.EmployeeRepository;
+import com.employee.app.exception.ResourceNotFoundException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class EmployeeServiceImplTest {
+
+    @Mock
+    private EmployeeRepository employeeRepository;
+
+    @InjectMocks
+    private EmployeeServiceImpl employeeService; // 替换为你的实现类
+
+    private Employee existing;
+
+    @BeforeEach
+    void setUp() {
+        existing = new Employee();
+        existing.setId(1L);
+        existing.setName("Alice");
+        existing.setEmail("alice@example.com");
+    }
+
+    @Test
+    void getById_shouldReturnEmployee_whenExists() {
+        // given
+        given(employeeRepository.findById(1L)).willReturn(Optional.of(existing));
+
+        // when
+        Employee result = employeeService.getById(1L);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(1L);
+        assertThat(result.getName()).isEqualTo("Alice");
+        verify(employeeRepository).findById(1L);
+        verifyNoMoreInteractions(employeeRepository);
+    }
+
+    @Test
+    void getById_shouldThrow_whenNotExists() {
+        // given
+        given(employeeRepository.findById(99L)).willReturn(Optional.empty());
+
+        // expect
+        assertThatThrownBy(() -> employeeService.getById(99L))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("99");
+
+        verify(employeeRepository).findById(99L);
+        verifyNoMoreInteractions(employeeRepository);
+    }
+
+    @Test
+    void create_shouldPersistAndReturnSavedEntity() {
+        // given
+        Employee toCreate = new Employee();
+        toCreate.setName("Bob");
+        toCreate.setEmail("bob@example.com");
+
+        Employee saved = new Employee();
+        saved.setId(2L);
+        saved.setName("Bob");
+        saved.setEmail("bob@example.com");
+
+        given(employeeRepository.save(any(Employee.class))).willReturn(saved);
+
+        // when
+        Employee result = employeeService.create(toCreate);
+
+        // then
+        assertThat(result.getId()).isEqualTo(2L);
+        assertThat(result.getEmail()).isEqualTo("bob@example.com");
+        verify(employeeRepository).save(argThat(e ->
+                "Bob".equals(e.getName()) && "bob@example.com".equals(e.getEmail())));
+        verifyNoMoreInteractions(employeeRepository);
+    }
+
+    @Test
+    void update_shouldMergeFieldsAndSave_whenExists() {
+        // given
+        given(employeeRepository.findById(1L)).willReturn(Optional.of(existing));
+
+        Employee patch = new Employee();
+        patch.setName("Alice Chen"); // 模拟只修改 name
+
+        Employee merged = new Employee();
+        merged.setId(1L);
+        merged.setName("Alice Chen");
+        merged.setEmail(existing.getEmail());
+
+        given(employeeRepository.save(any(Employee.class))).willReturn(merged);
+
+        // when
+        Employee result = employeeService.update(1L, patch);
+
+        // then
+        assertThat(result.getName()).isEqualTo("Alice Chen");
+        assertThat(result.getEmail()).isEqualTo("alice@example.com");
+        verify(employeeRepository).findById(1L);
+        verify(employeeRepository).save(argThat(e ->
+                e.getId().equals(1L) &&
+                "Alice Chen".equals(e.getName()) &&
+                "alice@example.com".equals(e.getEmail())));
+        verifyNoMoreInteractions(employeeRepository);
+    }
+
+    @Test
+    void delete_shouldCallRepositoryDelete_whenExists() {
+        // given
+        given(employeeRepository.existsById(1L)).willReturn(true);
+        doNothing().when(employeeRepository).deleteById(1L);
+
+        // when
+        employeeService.delete(1L);
+
+        // then
+        verify(employeeRepository).existsById(1L);
+        verify(employeeRepository).deleteById(1L);
+        verifyNoMoreInteractions(employeeRepository);
+    }
+
+    @Test
+    void delete_shouldThrow_whenNotExists() {
+        // given
+        given(employeeRepository.existsById(88L)).willReturn(false);
+
+        // expect
+        assertThatThrownBy(() -> employeeService.delete(88L))
+                .isInstanceOf(ResourceNotFoundException.class);
+
+        verify(employeeRepository).existsById(88L);
+        verifyNoMoreInteractions(employeeRepository);
+    }
+}
+```
+
+如果你的服务是 Spring 组件且想用 SpringBootTest 测试上下文，也可以提供集成测试版本；如果你的方法包含事务、分页、筛选、校验或远程调用，我会为这些行为添加相应的 mock、参数化测试和边界用例。
+
+请把目标类的实际代码粘贴出来，我会基于你的真实实现生成精确的单元测试（含必要的依赖 mock、异常断言、边界与空值场景、覆盖率建议）。
+
+D:\Learning\codegen2>
+D:\Learning\codegen2>
+D:\Learning\codegen2>
+D:\Learning\codegen2>python verifier.py gpt ./prompts-unittestcase.txt
+Verifying prompt:
+为以下code生成单元测试用例:
+package com.employee.app.service;
+import java.sql.SQLException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+
+Duration: 32.099 seconds.
+
+Code generated:
+你提供的代码片段只有包名和import，缺少实际的类和方法实现，因此无法为具体逻辑编写有针对性的单元测试。请补充要测试的类（例如一个带有@Service/@Component的服务类）以及其公开方法的签名和行为说明。
+
+在你补充完整代码之前，下面给出一个可直接套用的 JUnit 5 + Mockito 单元测试模板。将占位符替换为你的实际类名、依赖和方法名即可使用；模板中也包含了对 SQLException 的异常路径测试示例。
+
+示例一：通用单元测试模板（纯 Mockito，无需启动 Spring 容器）
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.sql.SQLException;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class YourServiceClassTest {
+
+    // 如果你的服务通过 @Autowired/@Qualifier 注入依赖，在单元测试中直接 mock 这些依赖即可
+    @Mock
+    private YourDependencyType1 dependency1;
+
+    @Mock
+    private YourDependencyType2 dependency2;
+
+    // 将 mock 注入到待测服务
+    @InjectMocks
+    private YourServiceClass service;
+
+    @BeforeEach
+    void setUp() {
+        // 对于 @InjectMocks + @ExtendWith(MockitoExtension.class)，通常不需要显式初始化
+        MockitoAnnotations.openMocks(this);
+    }
+
+    @Test
+    void methodName_正常路径() throws Exception {
+        // given
+        // 替换为你的依赖调用与返回值
+        when(dependency1.someCall(any())).thenReturn(someExpectedValue());
+
+        // when
+        var result = service.methodName(yourInput());
+
+        // then
+        assertNotNull(result);
+        assertEquals(expected(), result);
+        verify(dependency1, times(1)).someCall(any());
+        verifyNoMoreInteractions(dependency1, dependency2);
+    }
+
+    @Test
+    void methodName_当底层抛出SQLException时向上抛出() throws Exception {
+        // given
+        when(dependency1.someCall(any())).thenThrow(new SQLException("DB error"));
+
+        // when & then
+        assertThrows(SQLException.class, () -> service.methodName(yourInput()));
+        verify(dependency1, times(1)).someCall(any());
+        verifyNoMoreInteractions(dependency1, dependency2);
+    }
+
+    @Test
+    void methodName_非法参数时抛出IllegalArgumentException() {
+        // 当你的方法需要对入参做校验时，放一个非法入参进行断言
+        assertThrows(IllegalArgumentException.class, () -> service.methodName(invalidInput()));
+        verifyNoInteractions(dependency1, dependency2);
+    }
+
+    // 你可以继续为不同分支、边界值编写更多测试...
+    // @Test
+    // void methodName_边界值场景() { ... }
+
+    // 下面这些辅助方法/变量请替换成你的实际对象
+    private Object yourInput() { return new Object(); }
+    private Object invalidInput() { return null; }
+    private Object expected() { return new Object(); }
+    private Object someExpectedValue() { return new Object(); }
+}
+
+关于 @Qualifier 的提示
+- 单元测试中使用 Mockito 时，不需要关心 @Qualifier 名称；你只需要 mock 正确类型的依赖并通过 @InjectMocks 或显式构造函数注入即可。
+- 如果你的服务构造函数有同类型的多个依赖（只能通过 @Qualifier 区分），建议在测试里手动通过构造函数传入正确的 mock，而不是依赖 @InjectMocks 的自动匹配。例如：
+  YourDependencyType repoA = mock(YourDependencyType.class);
+  YourDependencyType repoB = mock(YourDependencyType.class);
+  YourServiceClass service = new YourServiceClass(repoA, repoB); // 手动传入，避免同类型冲突
+
+如果你能提供实际的服务类代码（类名、构造方式、依赖、方法及期望行为），我可以基于你的真实逻辑输出完整、可运行、覆盖正常与异常路径的单元测试用例。
+
+D:\Learning\codegen2>
+D:\Learning\codegen2>
+D:\Learning\codegen2>python verifier.py gpt ./prompts-unittestcase.txt
+Verifying prompt:
+为以下code生成单元测试用例:
+package com.employee.app.service;
+import java.sql.SQLException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+
+import com.employee.app.dao.EmployeeDao;
+import com.employee.app.dao.EmployeeDaoImpl;
+import com.employee.app.entity.Employee;
+import com.employee.app.exception.EmployeeException;
+
+//@Component
+@Service("employeeService")
+public class EmployeeServiceImpl implements EmployeeService {
+
+        @Autowired
+        //@Qualifier("employeeDaoImpl")
+        private EmployeeDao employeeRespository;// = new EmployeeDaoImpl();
+
+        @Override
+        public Employee registerEmployee(Employee employee) throws EmployeeException {
+
+                try {
+                        this.employeeRespository.addEmployee(employee);
+                } catch (SQLException e) {
+                        throw new EmployeeException("Employee could not be added." + e.getMessage());
+                }
+
+                return this.employeeRespository.getEmployee(employee.getId());
+        }
+
+        @Override
+        public Employee getEmployeeByID(Integer id) throws EmployeeException {
+
+                Employee foundEmp =this.employeeRespository.getEmployee(id);
+                if(foundEmp == null)
+                        throw new EmployeeException("Employee not found.");
+                return foundEmp;
+        }
+
+        @Override
+        public Employee updateEmployee(Employee updateEmployee) throws EmployeeException {
+
+                Employee emp = this.employeeRespository.getEmployee(updateEmployee.getId());
+                if (emp == null)
+                        throw new EmployeeException("Employee id not found to update");
+
+                this.employeeRespository.updateEmployee(updateEmployee);
+
+                return this.employeeRespository.getEmployee(updateEmployee.getId());
+        }
+
+        @Override
+        public Employee deleteEmmployeeById(Integer id) throws EmployeeException {
+                Employee foundEmp = employeeRespository.getEmployee(id);
+                if (foundEmp == null)
+                        throw new EmployeeException("Employee id not found to delete.");
+
+                employeeRespository.deleteEmployee(id);
+
+                employeeRespository.deleteEmployee(id);
+                return foundEmp;
+        }
+
+}
+
+Duration: 22.982 seconds.
+
+Code generated:
+下面给出使用 JUnit 5 与 Mockito 的单元测试示例，覆盖 EmployeeServiceImpl 的主要分支与异常场景。测试中通过 Mock EmployeeDao 来隔离持久层依赖。
+
+代码文件：src/test/java/com/employee/app/service/EmployeeServiceImplTest.java
+
+package com.employee.app.service;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.sql.SQLException;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.employee.app.dao.EmployeeDao;
+import com.employee.app.entity.Employee;
+import com.employee.app.exception.EmployeeException;
+
+@ExtendWith(MockitoExtension.class)
+class EmployeeServiceImplTest {
+
+    @Mock
+    private EmployeeDao employeeDao;
+
+    @InjectMocks
+    private EmployeeServiceImpl employeeService;
+
+    @Test
+    void registerEmployee_success() throws Exception {
+        Employee toRegister = new Employee();
+        toRegister.setId(1);
+
+        Employee fromRepo = new Employee();
+        fromRepo.setId(1);
+
+        // addEmployee 正常
+        doNothing().when(employeeDao).addEmployee(toRegister);
+        // 注册后根据 id 查询返回新增结果
+        when(employeeDao.getEmployee(1)).thenReturn(fromRepo);
+
+        Employee result = employeeService.registerEmployee(toRegister);
+
+        assertNotNull(result);
+        assertEquals(1, result.getId());
+        verify(employeeDao, times(1)).addEmployee(toRegister);
+        verify(employeeDao, times(1)).getEmployee(1);
+    }
+
+    @Test
+    void registerEmployee_sqlExceptionWrappedAsEmployeeException() throws Exception {
+        Employee toRegister = new Employee();
+        toRegister.setId(2);
+
+        doThrow(new SQLException("DB down")).when(employeeDao).addEmployee(toRegister);
+
+        EmployeeException ex = assertThrows(EmployeeException.class,
+                () -> employeeService.registerEmployee(toRegister));
+
+        // 实现拼接的信息为 "Employee could not be added." + e.getMessage()
+        assertTrue(ex.getMessage().contains("Employee could not be added."));
+        assertTrue(ex.getMessage().contains("DB down"));
+
+        verify(employeeDao, times(1)).addEmployee(toRegister);
+        verify(employeeDao, never()).getEmployee(anyInt());
+    }
+
+    @Test
+    void getEmployeeByID_found() throws Exception {
+        Employee emp = new Employee();
+        emp.setId(10);
+
+        when(employeeDao.getEmployee(10)).thenReturn(emp);
+
+        Employee result = employeeService.getEmployeeByID(10);
+
+        assertNotNull(result);
+        assertEquals(10, result.getId());
+        verify(employeeDao, times(1)).getEmployee(10);
+    }
+
+    @Test
+    void getEmployeeByID_notFound_throwsEmployeeException() {
+        when(employeeDao.getEmployee(11)).thenReturn(null);
+
+        EmployeeException ex = assertThrows(EmployeeException.class,
+                () -> employeeService.getEmployeeByID(11));
+
+        assertEquals("Employee not found.", ex.getMessage());
+        verify(employeeDao, times(1)).getEmployee(11);
+    }
+
+    @Test
+    void updateEmployee_success() throws Exception {
+        Employee existing = new Employee();
+        existing.setId(20);
+
+        Employee toUpdate = new Employee();
+        toUpdate.setId(20);
+        // 可选：设置其他属性
+
+        Employee updated = new Employee();
+        updated.setId(20);
+        // 可选：设置被更新后的属性
+
+        // 第一次 getEmployee 用于存在性校验，第二次用于返回更新后的数据
+        when(employeeDao.getEmployee(20)).thenReturn(existing, updated);
+        doNothing().when(employeeDao).updateEmployee(toUpdate);
+
+        Employee result = employeeService.updateEmployee(toUpdate);
+
+        assertNotNull(result);
+        assertEquals(20, result.getId());
+        verify(employeeDao, times(2)).getEmployee(20);
+        verify(employeeDao, times(1)).updateEmployee(toUpdate);
+    }
+
+    @Test
+    void updateEmployee_notFound_throwsEmployeeException() {
+        Employee toUpdate = new Employee();
+        toUpdate.setId(21);
+
+        when(employeeDao.getEmployee(21)).thenReturn(null);
+
+        EmployeeException ex = assertThrows(EmployeeException.class,
+                () -> employeeService.updateEmployee(toUpdate));
+
+        assertEquals("Employee id not found to update", ex.getMessage());
+        verify(employeeDao, times(1)).getEmployee(21);
+        verify(employeeDao, never()).updateEmployee(any());
+    }
+
+    @Test
+    void deleteEmmployeeById_success_callsDeleteTwiceAndReturnsFound() throws Exception {
+        // 注意：被测代码中 deleteEmployee(id) 被调用了两次
+        Employee existing = new Employee();
+        existing.setId(30);
+
+        when(employeeDao.getEmployee(30)).thenReturn(existing);
+        doNothing().when(employeeDao).deleteEmployee(30);
+
+        Employee result = employeeService.deleteEmmployeeById(30);
+
+        assertNotNull(result);
+        assertEquals(30, result.getId());
+        verify(employeeDao, times(1)).getEmployee(30);
+        verify(employeeDao, times(2)).deleteEmployee(30); // 反映实现中的双删
+    }
+
+    @Test
+    void deleteEmmployeeById_notFound_throwsEmployeeException() {
+        when(employeeDao.getEmployee(31)).thenReturn(null);
+
+        EmployeeException ex = assertThrows(EmployeeException.class,
+                () -> employeeService.deleteEmmployeeById(31));
+
+        assertEquals("Employee id not found to delete.", ex.getMessage());
+        verify(employeeDao, times(1)).getEmployee(31);
+        verify(employeeDao, never()).deleteEmployee(anyInt());
+    }
+}
+
+说明与注意事项：
+- 测试使用 JUnit 5 与 Mockito，需要在项目中引入相应依赖（junit-jupiter、mockito-junit-jupiter）。
+- 为了与当前实现保持一致，deleteEmmployeeById 的成功用例断言 deleteEmployee 被调用两次。若修复实现中重复删除的逻辑，需同步更新该用例期望为 times(1)。
+- 测试假设 Employee 至少包含 getId/setId 方法；如果实体结构不同，请按实际字段调整。
+
+D:\Learning\codegen2>python verifier.py gpt ./prompts-codecomments.txt
+Verifying prompt:
+请给以下代码添加注释说明:
+package com.employee.app.dao;
+
+import java.sql.SQLException;
+import java.util.List;
+import com.employee.app.entity.Employee;
+
+/**
+ * This interface defines the operations that can be performed on Employee objects in the database.
+ */
+public interface EmployeeDao {
+
+  Boolean addEmployee(Employee newEmployee)throws SQLException;
+  Employee getEmployee(Integer employeeId);
+  Boolean updateEmployee(Employee updateEmployee);
+  Boolean updateEmployeeName(Integer employeeId,String name);
+  Boolean deleteEmployee(Integer employeeId);
+  List<Employee> getAllEmployees();
+  Boolean updateEmployeeSalary(Integer employeeId,String name);
+
+}
+
+Duration: 11.954 seconds.
+
+Code generated:
+package com.employee.app.dao;
+
+import java.sql.SQLException;
+import java.util.List;
+import com.employee.app.entity.Employee;
+
+/**
+ * 员工数据访问接口（DAO）。
+ * 定义了对数据库中 Employee 实体进行增删改查的基础操作。
+ * 具体的数据库访问细节（SQL、ORM 映射、事务控制等）由实现类负责。
+ */
+public interface EmployeeDao {
+
+  /**
+   * 新增一名员工记录。
+   *
+   * 参数：
+   * - newEmployee：待新增的员工对象，通常要求其必填字段（如姓名、职位等）已赋值。
+   *
+   * 返回：
+   * - true 表示插入成功，false 表示插入失败。
+   *
+   * 异常：
+   * - SQLException：插入过程中出现的数据库访问异常（如约束冲突、连接错误等）。
+   */
+  Boolean addEmployee(Employee newEmployee) throws SQLException;
+
+  /**
+   * 按员工主键 ID 查询员工信息。
+   *
+   * 参数：
+   * - employeeId：员工主键 ID（不可为空）。
+   *
+   * 返回：
+   * - 查询到则返回对应的 Employee 对象；未查询到则返回 null。
+   */
+  Employee getEmployee(Integer employeeId);
+
+  /**
+   * 更新一名员工的完整信息（通常是全量更新）。
+   *
+   * 参数：
+   * - updateEmployee：包含最新信息的 Employee 对象，必须包含可用于定位记录的主键 ID。
+   *
+   * 返回：
+   * - true 表示更新成功，false 表示更新失败（如未匹配到记录）。
+   */
+  Boolean updateEmployee(Employee updateEmployee);
+
+  /**
+   * 局部更新员工姓名。
+   *
+   * 参数：
+   * - employeeId：员工主键 ID。
+   * - name：新的姓名。
+   *
+   * 返回：
+   * - true 表示更新成功，false 表示更新失败。
+   */
+  Boolean updateEmployeeName(Integer employeeId, String name);
+
+  /**
+   * 根据员工主键 ID 删除员工记录（物理删除）。
+   *
+   * 参数：
+   * - employeeId：员工主键 ID。
+   *
+   * 返回：
+   * - true 表示删除成功，false 表示删除失败（如未匹配到记录）。
+   */
+  Boolean deleteEmployee(Integer employeeId);
+
+  /**
+   * 查询所有员工记录。
+   *
+   * 返回：
+   * - 员工列表。建议实现返回空列表而不是 null。
+   */
+  List<Employee> getAllEmployees();
+
+  /**
+   * 局部更新员工薪资。
+   *
+   * 参数：
+   * - employeeId：员工主键 ID。
+   * - name：方法名与参数名不一致。按方法名语义，此参数应代表“薪资”而非“name”。
+   *         建议将参数类型与名称调整为与薪资一致的类型与命名（例如 BigDecimal salary 或 Double salary）。
+   *
+   * 返回：
+   * - true 表示更新成功，false 表示更新失败。
+   */
+  Boolean updateEmployeeSalary(Integer employeeId, String name);
+}
+
+D:\Learning\codegen2>
+D:\Learning\codegen2>
+D:\Learning\codegen2>python verifier.py gpt ./"prompts-codetranslation.txt"
+Verifying prompt:
+请将以下代码翻译成Python实现:
+#include <stdio.h>
+
+int findMax(int n);
+
+int main() {
+  int n, max;
+  scanf("%d", &n);
+  max = findMax(n);
+  printf("%d\n" , max);
+  return 0;
+}
+
+int findMax(int n) {
+  int a,max;
+      if(n==1) {
+      //getchar();
+      scanf("%d", &a);
+      return a;
+  }
+  else {
+      max=findMax(n-1);
+      scanf("%d",&a);
+      return a>max?a:max;
+  }
+}
+
+Duration: 9.919 seconds.
+
+Code generated:
+import sys
+
+tokens = iter(sys.stdin.read().split())
+
+def find_max(n):
+    if n == 1:
+        return int(next(tokens))
+    else:
+        current_max = find_max(n - 1)
+        a = int(next(tokens))
+        return a if a > current_max else current_max
+
+def main():
+    n = int(next(tokens))
+    max_val = find_max(n)
+    print(max_val)
+
+if __name__ == "__main__":
+    main()
+
+D:\Learning\codegen2>
+D:\Learning\codegen2>
+D:\Learning\codegen2>
+D:\Learning\codegen2>python verifier.py gpt ./prompts-erranalysis.txt
+Verifying prompt:
+以下代码有错误，请找出并指出原因，给出修改后的代码:
+function ascending(a,b) {
+  return a == null || b == null ? NaN : a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN;
+}
+
+function bisectLeft(a, x, lo, hi) {
+  if (low == null) lo = 0;
+  if (hi == null) hi = a.length;
+  while (lo < hi) {
+      var mid = lo + hi >>> 1;
+      if (ascending(a[mid], x) < 0) {
+          lo = mid + 1;
+      } else {
+          hi = mid;
+      }
+  }
+  return lo;
+}
+
+Duration: 18.333 seconds.
+
+Code generated:
+问题与原因:
+- bisectLeft 内部把形参 lo 误写成了 low，low 未定义会导致 ReferenceError，从而 lo 的默认值无法被设置，二分查找逻辑异常。
+
+可选改进:
+- ascending 的最后一支写成 a === b ? 0 : NaN 更直观（功能等价，遇到 NaN 时返回 NaN 以保持不可比较）。
+
+修正后的代码（最小改动）:
+function ascending(a, b) {
+  return a == null || b == null ? NaN
+    : a < b ? -1
+    : a > b ? 1
+    : a >= b ? 0 : NaN;
+}
+
+function bisectLeft(a, x, lo, hi) {
+  if (lo == null) lo = 0;       // 修正：low -> lo
+  if (hi == null) hi = a.length;
+  while (lo < hi) {
+    var mid = (lo + hi) >>> 1;  // 加括号更清晰
+    if (ascending(a[mid], x) < 0) {
+      lo = mid + 1;
+    } else {
+      hi = mid;
+    }
+  }
+  return lo;
+}
+
+可读性增强版 ascending（可选）:
+function ascending(a, b) {
+  return a == null || b == null ? NaN
+    : a < b ? -1
+    : a > b ? 1
+    : a === b ? 0 : NaN;
+}
+
+D:\Learning\codegen2>
+D:\Learning\codegen2>
+D:\Learning\codegen2>
+D:\Learning\codegen2>python verifier.py gpt ./prompts-explain.txt
+Verifying prompt:
+以下代码的作用和逻辑是什么:
+function ascending(a,b) {
+  return a == null || b == null ? NaN : a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN;
+}
+
+function bisectLeft(a, x, lo, hi) {
+  if (lo == null) lo = 0;
+  if (hi == null) hi = a.length;
+  while (lo < hi) {
+      var mid = lo + hi >>> 1;
+      if (ascending(a[mid], x) < 0) {
+          lo = mid + 1;
+      } else {
+          hi = mid;
+      }
+  }
+  return lo;
+}
+
+Duration: 31.447 seconds.
+
+Code generated:
+这段代码实现了两个功能：
+
+1) ascending 比较函数
+- 作用：按“升序”比较两个值 a 和 b，并返回一个三态比较结果。
+- 返回值语义：
+  - -1：a < b
+  - 1：a > b
+  - 0：a 与 b 视为“相等或不小于”（覆盖了相等的情况，也会覆盖某些类型转换后相等的情况，如 "2" 与 2）
+  - NaN：无法比较的情况（如 a 或 b 为 null/undefined，或其中有 NaN）
+- 细节：
+  - 使用 a == null 或 b == null 来同时捕获 null 和 undefined。
+  - 当有 NaN 时，a < b、a > b、a >= b 都为 false，最终返回 NaN。
+  - 对字符串、数字、Date（可转为数值）都能工作；Symbol 会在比较阶段抛错（JS 规则）。
+
+2) bisectLeft 二分查找（左侧插入点）
+- 作用：在有序数组 a 中，用二分查找找到值 x 的“左侧插入位置”（leftmost insertion point），即保持升序的前提下，x 应该插在最靠左的哪个下标。
+- 参数：
+  - a：已按升序排列的数组
+  - x：要插入/查找的值
+  - lo：搜索起始下标，默认 0
+  - hi：搜索结束下标（开区间），默认 a.length
+- 返回：一个索引 i，使得
+  - 对所有 j < i，a[j] < x
+  - 对所有 j >= i，a[j] >= x
+  - 换言之，这是第一个使 a[i] 不小于 x 的位置（左侧插入点）。
+- 实现逻辑：
+  - 使用 while (lo < hi) 的标准二分模板。
+  - mid = (lo + hi) >>> 1 等价于向下取整的中点（利用无符号右移 1 位来快速 floor）。
+  - 若 ascending(a[mid], x) < 0（即 a[mid] < x），则 lo = mid + 1；否则 hi = mid。
+  - 循环结束返回 lo。
+- 复杂度：O(log n) 时间，O(1) 额外空间。
+- 关于 NaN/null 的处理：
+  - ascending 返回 NaN 时，判断 NaN < 0 为 false，所以会走 hi = mid 分支，将搜索区间往左收缩。
+  - 因此，数组中若存在 NaN、null、undefined 等不可比较项，插入位置会被放在这些项之前（更靠左）。
+
+示例
+- bisectLeft([1, 3, 3, 5], 3) -> 1（插在第一个 3 的左边）
+- bisectLeft([1, 2, 3], 4) -> 3（插到末尾）
+- bisectLeft([1, 2, 3], 0) -> 0（插到开头）
+- bisectLeft([1, 2, NaN, 4], 3) -> 2（插在 NaN 前）
+- bisectLeft(['a', 'b', 'b', 'c'], 'b') -> 1
+
+常见用途
+- 在有序数组中查找插入位置（保持有序）
+- 实现去重时的定位
+- 统计分位数、直方图分箱、时间序列插入等需要快速定位的场景
+
+备注
+- 这相当于“左侧二分”。若需要“右侧二分”（在相等元素之后插入），判断条件通常会改成 <= 0。
+
+D:\Learning\codegen2>python verifier.py gpt ./prompts-optimization.txt
+Verifying prompt:
+从安全，性能，资源使用效率等方面，优化以下代码，并给出优化的原因:
+public List<Manager> getManagersByLevel(int level) {
+  List<Manager> managers = new ArrayList<>();
+  try {
+      String sql = "SELECT * FROM employee WHERE level = " + level;
+      PreparedStatement preparedStatement = this.getConnection().prepareStatement(sql);
+      ResultSet resultSet = preparedStatement.executeQuery();
+      while (resultSet.next()) {
+          Manager manager = new Manager();
+          manager.setId(resultSet.getInt("id"));
+          manager.setName(resultSet.getString("name"));
+          manager.setSalary(resultSet.getDouble("salary"));
+          manager.setLevel(resultSet.getInt("level"));
+          manager.setDepartment(resultSet.getString("department"));
+          managers.add(manager);
+      }
+  } catch (SQLException e) {
+      e.printStackTrace();
+  }
+  return managers;
+}
+
+Duration: 46.881 seconds.
+
+Code generated:
+问题点与优化方向
+- 安全性
+  - 直接拼接 SQL 存在 SQL 注入风险。
+  - 使用 SELECT * 暴露不必要字段，增加数据泄露面。
+  - 异常处理使用 printStackTrace 不利于统一审计与告警。
+
+- 资源使用效率
+  - 未关闭 Connection、PreparedStatement、ResultSet，易造成连接泄漏（连接池资源耗尽）。
+  - 未显式设置只读、fetchSize 等参数，不利于流式读取与网络/内存占用控制。
+
+- 性能
+  - 未使用参数化查询，容易造成数据库无法有效利用执行计划缓存。
+  - 未限定列，增加 I/O 和反序列化成本。
+  - 未设置查询超时，异常情况下可能长时间占用资源。
+  - 可能使用了保留字 level（如 Oracle），导致潜在的解析开销或错误。
+  - 缺少分页/索引建议，面对大数据量查询可能性能不佳。
+
+优化后的代码示例（基于纯 JDBC）
+说明：保持方法签名不变，使用 try-with-resources 自动关闭资源；参数化查询；限定列；只读连接、fetchSize、超时控制；日志替代 printStackTrace。可根据实际日志框架替换 logger。
+
+public List<Manager> getManagersByLevel(int level) {
+    if (level < 0) {
+        throw new IllegalArgumentException("level must be >= 0");
+    }
+
+    // 避免 SELECT *，只取需要的列；如果 level 是保留字，建议重命名为 job_level 或使用转义
+    final String sql = "SELECT id, name, salary, level, department FROM employee WHERE level = ?";
+
+    List<Manager> managers = new ArrayList<>();
+    try (Connection conn = getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        boolean prevReadOnly = false;
+        try {
+            // 只读优化：部分驱动/数据库可更好地选择执行路径
+            prevReadOnly = conn.isReadOnly();
+            conn.setReadOnly(true);
+
+            // 参数化查询，防注入 + 利用执行计划缓存
+            ps.setInt(1, level);
+
+            // 流式读取相关优化（可按实际数据库/驱动调整）
+            ps.setFetchDirection(ResultSet.FETCH_FORWARD);
+            ps.setFetchSize(200);        // 结合业务数据量和驱动特性调优
+            ps.setQueryTimeout(5);       // 秒级超时，避免长时间卡死连接
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Manager m = new Manager();
+                    m.setId(rs.getInt("id"));
+                    m.setName(rs.getString("name"));
+
+                    // 金额字段建议 BigDecimal；此处保持原签名，读取后再转
+                    java.math.BigDecimal sal = rs.getBigDecimal("salary");
+                    m.setSalary(sal == null ? 0.0 : sal.doubleValue());
+
+                    // 若 level 允许 NULL，需使用 getObject 并判空；否则保持 getInt
+                    m.setLevel(rs.getInt("level"));
+
+                    m.setDepartment(rs.getString("department"));
+                    managers.add(m);
+                }
+            }
+        } finally {
+            // 归还连接前恢复只读标志（连接池通常会重置，但稳妥起见手动恢复）
+            try {
+                conn.setReadOnly(prevReadOnly);
+            } catch (SQLException ignore) {
+                // 可记录 debug 日志
+            }
+        }
+    } catch (SQLException e) {
+        // 使用统一日志并抛出业务/数据访问异常，避免悄悄吞异常
+        // logger.error("Query managers by level failed, level={}", level, e);
+        throw new RuntimeException("Query managers by level failed, level=" + level, e);
+    }
+    return managers;
+}
+
+各项优化的原因说明
+- 安全
+  - 使用参数占位符（?）代替字符串拼接，防止 SQL 注入。
+  - 仅选择必要列，减少敏感字段暴露风险。
+  - 统一日志并抛出异常，便于监控和审计，不吞异常。
+
+- 资源使用效率
+  - try-with-resources 保证 Connection/PreparedStatement/ResultSet 被及时关闭，避免连接泄漏，提升连接池利用率。
+  - 设置只读连接，数据库可以进行锁/缓存等方面的轻量化处理。
+  - fetchSize 合理设置可减少一次性将全部结果集加载到内存的风险，改善内存占用峰值。
+
+- 性能
+  - 参数化查询可复用执行计划，减少解析与优化成本。
+  - 避免 SELECT *，降低磁盘 I/O、网络传输以及 JDBC 反序列化成本。
+  - 设置查询超时，避免慢查询长时间占用核心资源。
+  - FETCH_FORWARD 提示驱动以顺序方式读取，提高顺序访问效率。
+  - 如果使用 MySQL 并希望流式返回，可根据驱动配置进行专门优化：
+    - 对 MySQL 5.x 驱动：ps.setFetchSize(Integer.MIN_VALUE) 并启用 useCursorFetch=false 或使用 server-side cursor 配置；
+    - 对 MySQL 8.x 驱动：启用 useCursorFetch=true 并设置合理 fetchSize。
+  - 列名 level 在部分数据库（如 Oracle）是保留字，建议更名为 job_level/grade，或使用转义（但转义会降低可移植性）。
+
+进一步可选的优化建议
+- 数据库层
+  - 为 employee(level) 建立索引；若此查询高频且访问列固定，可考虑覆盖索引（包含 id,name,salary,department）以减少回表。
+  - 如果结果集可能很大，增加分页参数（limit/offset 或 keyset pagination）并在应用侧提供分页接口。
+  - 确保该查询在合理事务隔离级别下执行，避免不必要的锁冲突。
+
+- 应用层
+  - Manager.salary 若代表货币金额，建议用 BigDecimal 全链路处理，避免 double 精度问题。
+  - 输入校验：限制 level 合法范围（如 0~10）。
+  - 统一的异常类型（如自定义 DataAccessException）与日志框架（slf4j/logback）。
+  - 使用连接池（HikariCP 等）并开启 preparedStatementCache，以降低准备语句开销。
+
+- 维护性
+  - 将结果集映射提取为私有方法或 RowMapper，便于复用与单元测试。
+  - 避免使用保留字作为列名，或在 ORM/DAO 层集中管理列名常量。
+
+D:\Learning\codegen2>
+D:\Learning\codegen2>
+D:\Learning\codegen2>python verifier.py gpt ./prompts-g
+Traceback (most recent call last):
+  File "D:\Learning\codegen2\verifier.py", line 36, in <module>
+    completion_content = Verifier.verify_with_prompt_file(model, prompt_file)
+  File "D:\Learning\codegen2\verifier.py", line 11, in verify_with_prompt_file
+    parsed_prompts = Prompt.parse_structured_prompts_file(prompt_file)
+  File "D:\Learning\codegen2\prompts.py", line 12, in parse_structured_prompts_file
+    with open(filepath, 'r', encoding='utf-8') as f:
+FileNotFoundError: [Errno 2] No such file or directory: './prompts-g'
+
+D:\Learning\codegen2>python verifier.py gpt ./prompts-generatedoc.txt
+Verifying prompt:
+为以下程序生成文档，说明用途，工作原理，使用方法:
+from prompts import Prompt
+import os
+import json
+import time
+from gpt import GPT
+import sys
+
+class Verifier:
+  @staticmethod
+  def verify_with_prompt_file(model: str, prompt_file: str) -> str:
+      parsed_prompts = Prompt.parse_structured_prompts_file(prompt_file)
+      for prompt in parsed_prompts:
+          prompt_json = json.dumps(prompt)
+          print(f"Verifying prompt: \n{json.loads(prompt_json).get('prompt')}\n")
+          starttime = time.time()
+
+          if (model == "gpt"):
+              completion = GPT.code_completion(json.loads(prompt_json).get("prompt"))
+          elif model == "claude":
+              # Placeholder for Claude model verification
+              completion = "Claude model verification not implemented yet."
+          else:
+              return "Unsupported model specified."
+
+          duration = round(time.time() - starttime, 3)
+          print(f"Duration: {duration} seconds.\n")
+          return completion.choices[0].message.content
+
+#code for main
+if __name__ == "__main__":
+  if len(sys.argv) != 3:
+      print("Usage: python verifier.py <model> <prompt_file>")
+      sys.exit(1)
+  model = sys.argv[1]
+  prompt_file = sys.argv[2]
+  completion_content = Verifier.verify_with_prompt_file(model, prompt_file)
+  print(f"Code generated:\n{completion_content}")
+
+Duration: 26.89 seconds.
+
+Code generated:
+文档：Verifier 程序说明
+
+一、用途
+- 该程序用于从一个“结构化提示文件”中读取提示（prompt），调用指定的大语言模型对提示进行代码补全（或其它生成），并输出模型返回的内容。
+- 当前仅实现了对名为 gpt 的模型调用，claude 留有占位逻辑但未实现。
+
+二、工作原理
+- 入口：命令行运行 verifier.py，传入两个参数：模型名 和 提示文件路径。
+- 解析提示文件：
+  - 通过 Prompt.parse_structured_prompts_file(prompt_file) 读取并解析结构化的提示列表。
+  - 程序期望每个提示项至少包含键 prompt，其值为要发送给模型的字符串。
+- 打印与计时：
+  - 对解析出的第一个提示，打印其内容 “Verifying prompt: …”。
+  - 记录开始时间，用于计算请求用时。
+- 模型调用：
+  - 如果 model == "gpt"，通过 GPT.code_completion(prompt) 发起请求，期望返回对象具有属性 choices[0].message.content（与 OpenAI Chat Completions 相似的响应结构）。
+  - 如果 model == "claude"，当前返回占位文本 “Claude model verification not implemented yet.”（未真正调用）。
+  - 对于其他模型名，返回 “Unsupported model specified.”。
+- 结果输出：
+  - 计算耗时并打印 “Duration: X seconds.”。
+  - 返回 completion.choices[0].message.content 作为本次验证结果。
+  - 主函数接收该返回值，并打印 “Code generated:” 后跟生成内容。
+- 重要注意：虽然代码对 parsed_prompts 使用了 for 循环，但函数在处理第一个提示后立即 return，导致只处理第一个提示。若提示文件中包含多个提示，当前实现不会逐一处理。
+
+三、依赖与环境
+- Python 3.8+（建议）
+- 项目内部依赖：
+  - prompts.Prompt：需要包含静态方法 parse_structured_prompts_file(path) 并返回可迭代的提示条目列表。
+  - gpt.GPT：需要包含静态方法 code_completion(prompt: str)，并返回含 choices[0].message.content 的响应对象。
+- 外部依赖：
+  - gpt.GPT 具体如何调用外部 API（如 OpenAI）在本文件之外，请确保其正确配置（例如 API Key、网络访问）。
+- 标准库：os、json、time、sys
+
+四、提示文件格式要求
+- 文件内容应能被 Prompt.parse_structured_prompts_file 正确解析为一组提示条目。
+- 每个条目至少应包含键：
+  - prompt: 字符串类型，表示要发送给模型的提示。
+- 示例（可能的结构，具体以 Prompt.parse_structured_prompts_file 实现为准）：
+  - 列表形式：[{ "prompt": "请生成一个快速排序的 Python 实现" }, { "prompt": "……" }]
+  - 或者其它结构化格式，只要 Prompt.parse_structured_prompts_file 能解析并返回含有 prompt 键的条目。
+
+五、使用方法
+- 命令行方式：
+  1) 准备好提示文件，例如 prompts.json。
+  2) 执行命令：
+     python verifier.py gpt prompts.json
+- 参数说明：
+  - 第一个参数 model：当前仅支持 gpt（claude 尚未实现）。
+  - 第二个参数 prompt_file：提示文件路径。
+- 运行结果：
+  - 控制台会打印：
+    - Verifying prompt: 以及提示内容
+    - Duration: X seconds.
+    - Code generated: 以及模型返回的内容
+- 错误用法：
+  - 若参数数量不为 2，会打印用法并退出：
+    Usage: python verifier.py <model> <prompt_file>
+
+六、返回值与输出
+- Verifier.verify_with_prompt_file 返回值：
+  - 成功调用 gpt 时：返回第一个提示的 completion.choices[0].message.content。
+  - 指定 claude 时：返回占位字符串 “Claude model verification not implemented yet.”。
+  - 指定其他模型名时：返回 “Unsupported model specified.”。
+- 控制台输出：
+  - 打印验证中的提示内容、耗时以及最终生成的内容。
+
+七、异常与边界情况
+- 提示文件不存在或格式不正确：Prompt.parse_structured_prompts_file 可能抛出异常，当前代码未捕获，程序会异常退出。
+- gpt.GPT.code_completion 失败或返回格式不符：
+  - 若返回对象不包含 choices[0].message.content，会导致 AttributeError 或 IndexError。
+  - 请确保 GPT.code_completion 的返回对象与期望结构一致，或添加防御性检查。
+- 多提示处理：
+  - 当前函数在处理第一个提示后返回，无法处理文件中的其他提示条目。若需要处理多个提示，应改为累积结果后统一返回或逐条输出。
+
+八、典型流程
+- 准备 prompts.json，包含至少一个键为 prompt 的条目。
+- 设置好 gpt.GPT 所需的环境（例如 OpenAI API Key）。
+- 运行 python verifier.py gpt prompts.json。
+- 查看控制台输出的生成代码或文本。
+
+九、扩展建议
+- 支持多提示处理：
+  - 将函数中的 return completion.choices[0].message.content 改为累积结果列表，循环结束后再返回。
+- 完善 Claude 支持：
+  - 在 elif model == "claude" 分支中接入相应的 API 并返回相同结构的结果。
+- 增强错误处理与日志：
+  - 捕获文件解析与 API 调用异常，给出更友好的错误信息。
+- 可配置输出：
+  - 增加参数以选择是否打印提示内容、是否显示耗时、是否将结果写入文件。
+- 响应结构适配：
+  - 增加一层响应适配器，统一不同模型返回结构，避免在业务代码中直接依赖特定字段路径。
+
+十、常见问题解答
+- 为什么只处理了一个提示？
+  - 因为函数内在第一次完成调用后立即 return。需要处理多个提示时请修改逻辑以累积所有结果。
+- 返回的对象为什么有 choices[0].message.content？
+  - 这是参考 OpenAI Chat Completions 的响应形式。如果你的 GPT 封装返回不同结构，请在 GPT.code_completion 内做适配，或在 Verifier 中做统一处理。
+- Claude 不工作怎么办？
+  - 代码中尚未实现 Claude 的真实调用。需要在该分支接入 Claude 的 API 并返回与 gpt 分支一致的响应结构。
+
+D:\Learning\codegen2>python verifier.py gpt ./prompts-QnA.txt
+Verifying prompt:
+请介绍什么是DAO，给出使用的示例代码
+
+Duration: 45.064 seconds.
+
+Code generated:
+“DAO”在开发领域里有两个常见含义：
+1) 软件工程中的 DAO（Data Access Object，数据访问对象）设计模式
+2) 区块链中的 DAO（Decentralized Autonomous Organization，去中心化自治组织）
+
+下面分别介绍并给出示例代码。
+
+一、软件工程中的 DAO 设计模式
+- 定义：DAO 是用于隔离业务逻辑与数据持久化细节的抽象层。业务层只依赖 DAO 接口，不关心底层使用的是哪种数据库、驱动或 ORM。
+- 优点：
+  - 解耦：更易替换存储实现（JDBC、JPA、Mongo、HTTP API 等）
+  - 可测试：业务层可通过模拟（mock）DAO 进行单元测试
+  - 单一职责：数据访问逻辑集中、可复用
+  - 维护性：统一处理事务、连接、异常
+
+Java 示例（JDBC 版本，最小可运行思路）
+实体类 User.java
+```java
+public class User {
+    private long id;
+    private String name;
+    private String email;
+
+    public User() {}
+    public User(long id, String name, String email) {
+        this.id = id; this.name = name; this.email = email;
+    }
+    public long getId() { return id; }
+    public void setId(long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+}
+```
+
+DAO 接口 UserDao.java
+```java
+import java.util.*;
+
+public interface UserDao {
+    Optional<User> findById(long id);
+    List<User> findAll();
+    long create(User user);
+    boolean update(User user);
+    boolean delete(long id);
+}
+```
+
+JDBC 实现 UserDaoJdbc.java（使用 DataSource）
+```java
+import javax.sql.DataSource;
+import java.sql.*;
+import java.util.*;
+
+public class UserDaoJdbc implements UserDao {
+    private final DataSource ds;
+
+    public UserDaoJdbc(DataSource ds) {
+        this.ds = ds;
+    }
+
+    @Override
+    public Optional<User> findById(long id) {
+        String sql = "SELECT id, name, email FROM users WHERE id = ?";
+        try (Connection c = ds.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setLong(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return Optional.of(mapRow(rs));
+            }
+            return Optional.empty();
+        } catch (SQLException e) {
+            throw new RuntimeException("findById failed", e);
+        }
+    }
+
+    @Override
+    public List<User> findAll() {
+        String sql = "SELECT id, name, email FROM users";
+        List<User> list = new ArrayList<>();
+        try (Connection c = ds.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) list.add(mapRow(rs));
+            return list;
+        } catch (SQLException e) {
+            throw new RuntimeException("findAll failed", e);
+        }
+    }
+
+    @Override
+    public long create(User user) {
+        String sql = "INSERT INTO users(name, email) VALUES(?, ?)";
+        try (Connection c = ds.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, user.getName());
+            ps.setString(2, user.getEmail());
+            ps.executeUpdate();
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next()) {
+                    long id = keys.getLong(1);
+                    user.setId(id);
+                    return id;
+                }
+            }
+            throw new RuntimeException("No generated key returned");
+        } catch (SQLException e) {
+            throw new RuntimeException("create failed", e);
+        }
+    }
+
+    @Override
+    public boolean update(User user) {
+        String sql = "UPDATE users SET name = ?, email = ? WHERE id = ?";
+        try (Connection c = ds.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, user.getName());
+            ps.setString(2, user.getEmail());
+            ps.setLong(3, user.getId());
+            return ps.executeUpdate() == 1;
+        } catch (SQLException e) {
+            throw new RuntimeException("update failed", e);
+        }
+    }
+
+    @Override
+    public boolean delete(long id) {
+        String sql = "DELETE FROM users WHERE id = ?";
+        try (Connection c = ds.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setLong(1, id);
+            return ps.executeUpdate() == 1;
+        } catch (SQLException e) {
+            throw new RuntimeException("delete failed", e);
+        }
+    }
+
+    private static User mapRow(ResultSet rs) throws SQLException {
+        return new User(
+            rs.getLong("id"),
+            rs.getString("name"),
+            rs.getString("email")
+        );
+    }
+}
+```
+
+业务层使用 UserService.java
+```java
+public class UserService {
+    private final UserDao userDao;
+    public UserService(UserDao userDao) { this.userDao = userDao; }
+
+    public User register(String name, String email) {
+        // 这里可以做校验、去重等业务逻辑
+        User u = new User(0, name, email);
+        userDao.create(u);
+        return u;
+    }
+}
+```
+
+简单演示（以 H2 内存库为例）
+```java
+import org.h2.jdbcx.JdbcDataSource;
+import java.sql.Connection;
+import java.sql.Statement;
+
+public class Demo {
+    public static void main(String[] args) throws Exception {
+        JdbcDataSource ds = new JdbcDataSource();
+        ds.setURL("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1");
+
+        try (Connection c = ds.getConnection(); Statement st = c.createStatement()) {
+            st.execute("CREATE TABLE users (id IDENTITY PRIMARY KEY, name VARCHAR(100), email VARCHAR(100))");
+        }
+
+        UserDao userDao = new UserDaoJdbc(ds);
+        UserService service = new UserService(userDao);
+
+        User alice = service.register("Alice", "alice@example.com");
+        System.out.println("Created: id=" + alice.getId());
+
+        userDao.findById(alice.getId()).ifPresent(u ->
+            System.out.println("Found: " + u.getName() + ", " + u.getEmail())
+        );
+    }
+}
+```
+
+要点
+- 业务层仅依赖 UserDao 接口，切换到 JPA、MyBatis、MongoDB 只需替换实现类
+- 便于单元测试：可用内存实现或 mock 实现注入 UserService
+- 统一处理数据库资源与异常，避免泄漏
+
+二、区块链中的 DAO（去中心化自治组织）
+- 定义：由智能合约驱动、由代币或 NFT 持有者治理的组织。成员通过提案和投票决定资金使用、协议参数等，执行由链上合约自动完成。
+- 典型组件：
+  - 治理代币（投票权）
+  - 提案与投票合约
+  - 执行延时与金库（Timelock/Treasury）
+
+Solidity 极简示例（教学用，未做安全/快照/代理升级等生产级处理）
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+interface IERC20 {
+    function balanceOf(address account) external view returns (uint256);
+}
+
+contract SimpleDAO {
+    IERC20 public token;
+
+    struct Proposal {
+        address payable to;
+        uint256 amount;
+        string description;
+        uint256 deadline;
+        uint256 forVotes;
+        uint256 againstVotes;
+        bool executed;
+        mapping(address => bool) voted;
+    }
+
+    mapping(uint256 => Proposal) public proposals;
+    uint256 public proposalCount;
+
+    event Proposed(uint256 id, address proposer, address to, uint256 amount, string description, uint256 deadline);
+    event Voted(uint256 id, address voter, bool support, uint256 weight);
+    event Executed(uint256 id);
+
+    constructor(IERC20 _token) {
+        token = _token;
+    }
+
+    function propose(address payable to, uint256 amount, string calldata description, uint256 votingPeriod)
+        external
+        returns (uint256 id)
+    {
+        id = ++proposalCount;
+        Proposal storage p = proposals[id];
+        p.to = to;
+        p.amount = amount;
+        p.description = description;
+        p.deadline = block.timestamp + votingPeriod;
+        emit Proposed(id, msg.sender, to, amount, description, p.deadline);
+    }
+
+    function vote(uint256 id, bool support) external {
+        Proposal storage p = proposals[id];
+        require(block.timestamp < p.deadline, "Voting ended");
+        require(!p.voted[msg.sender], "Already voted");
+        uint256 weight = token.balanceOf(msg.sender);
+        require(weight > 0, "No voting power");
+        p.voted[msg.sender] = true;
+        if (support) p.forVotes += weight;
+        else p.againstVotes += weight;
+        emit Voted(id, msg.sender, support, weight);
+    }
+
+    function execute(uint256 id) external {
+        Proposal storage p = proposals[id];
+        require(block.timestamp >= p.deadline, "Not ended");
+        require(!p.executed, "Executed");
+        require(p.forVotes > p.againstVotes, "Not passed");
+        p.executed = true;
+        (bool ok, ) = p.to.call{value: p.amount}("");
+        require(ok, "Transfer failed");
+        emit Executed(id);
+    }
+
+    // DAO 金库：向合约转入 ETH
+    receive() external payable {}
+}
+```
+
+说明与改进建议
+- 上例用的是“余额加权投票”，未做快照；真实治理建议使用 OpenZeppelin 的 ERC20Votes（快照+委托）、Governor、TimelockController 组件
+- 需要加入提案阈值、法定人数、执行延时、多签、可升级性、重入/溢出保护、治理攻击防护等
+- 治理代币可用 OpenZeppelin ERC20Votes 铸造，部署后把代币地址传给 SimpleDAO 构造器
+
+如果你明确只需要其中一种“DAO”的更深入示例（比如改成 JPA/SQLAlchemy，或者基于 OpenZeppelin Governor 的完整 DAO），告诉我你的技术栈与要求，我可以按需改写与补充。
+
+D:\Learning\codegen2>

@@ -1,0 +1,161 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: azurefiles-credentials
+  namespace: kube-system
+type: Opaque
+stringData:
+  STORAGE_ACCOUNT_NAME: "<your-storage-account-name>"
+  STORAGE_ACCOUNT_KEY:  "<your-storage-account-key>"
+  FILE_SHARE_NAME:      "<your-file-share-name>"
+  # 可选：自定义驱动器盘符（未占用）与输出文件名
+  DRIVE_LETTER: "Z"
+  OUTPUT_FILE:  "osinfo.json"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: win-hostprocess-os-script
+  namespace: kube-system
+data:
+  collect-os-to-azurefiles.ps1: |
+    Param(
+      [string]$StorageAccountName,
+      [string]$StorageAccountKey,
+      [string]$ShareName,
+      [string]$DriveLetter = "Z",
+      [string]$OutputFile  = "osinfo.json"
+    )
+
+    $unc = "\\$($StorageAccountName).file.core.windows.net\$($ShareName)"
+    # 1) 测试端口 445（SMB）
+    $t = Test-NetConnection -ComputerName "$($StorageAccountName).file.core.windows.net" -Port 445
+    if (-not $t.TcpTestSucceeded) {
+      Write-Error "Port 445 to $($StorageAccountName).file.core.windows.net is blocked."
+      exit 1
+    }
+
+    # 2) 写入凭据并持久化驱动器映射（HostProcess 以 SYSTEM 运行）
+    #    注意：cmdkey 的 /user 需为 'localhost\StorageAccountName'
+    cmd.exe /C "cmdkey /add:$($StorageAccountName).file.core.windows.net /user:localhost\$($StorageAccountName) /pass:$($StorageAccountKey)" | Out-Null
+
+    # 如果盘符已存在，先移除旧映射
+    Try { Remove-PSDrive -Name $DriveLetter -Force -ErrorAction SilentlyContinue } Catch {}
+
+    New-PSDrive -Name $DriveLetter -PSProvider FileSystem -Root $unc -Persist -Scope Global
+
+    # 3) 采集 Windows Server OS 信息
+    $sys = Get-ComputerInfo
+    $os = [PSCustomObject]@{
+      Timestamp   = (Get-Date).ToString("s")
+      Computer    = $sys.CsName
+      OsName      = $sys.OsName
+      OsVersion   = $sys.OsVersion
+      Architecture= $sys.OsArchitecture
+      Edition     = $sys.WindowsEditionId
+      ProductName = $sys.WindowsProductName
+      InstallDate = $sys.WindowsInstallDateFromRegistry
+    }
+
+    $json = $os | ConvertTo-Json -Depth 4
+
+    # 4) 写入到 Azure File Share
+    $target = Join-Path "$($DriveLetter):\" $OutputFile
+    $json | Out-File -FilePath $target -Encoding UTF8
+
+    Write-Output "==== Windows OS Info written to Azure Files ===="
+    Write-Output $json
+    Write-Output "Saved to: $target"
+
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: win-hostprocess-os-to-azurefiles
+  namespace: kube-system
+  labels:
+    app: win-hostprocess-os-to-azurefiles
+spec:
+  selector:
+    matchLabels:
+      app: win-hostprocess-os-to-azurefiles
+  template:
+    metadata:
+      labels:
+        app: win-hostprocess-os-to-azurefiles
+    spec:
+      # 仅调度到 Windows 节点
+      nodeSelector:
+        kubernetes.io/os: windows
+      # HostProcess 关键设置
+      securityContext:
+        windowsOptions:
+          hostProcess: true
+          runAsUserName: "NT AUTHORITY\\SYSTEM"
+      hostNetwork: true
+      restartPolicy: Always
+      containers:
+      - name: os-writer
+        image: mcr.microsoft.com/windows/nanoserver:ltsc2022
+        command:
+          - powershell
+          - -NoLogo
+          - -NoProfile
+          - -ExecutionPolicy
+          - Bypass
+          - -File
+          - C:\script\collect-os-to-azurefiles.ps1
+          - -StorageAccountName
+          - "$(STORAGE_ACCOUNT_NAME)"
+          - -StorageAccountKey
+          - "$(STORAGE_ACCOUNT_KEY)"
+          - -ShareName
+          - "$(FILE_SHARE_NAME)"
+          - -DriveLetter
+          - "$(DRIVE_LETTER)"
+          - -OutputFile
+          - "$(OUTPUT_FILE)"
+        env:
+        - name: STORAGE_ACCOUNT_NAME
+          valueFrom:
+            secretKeyRef:
+              name: azurefiles-credentials
+              key: STORAGE_ACCOUNT_NAME
+        - name: STORAGE_ACCOUNT_KEY
+          valueFrom:
+            secretKeyRef:
+              name: azurefiles-credentials
+              key: STORAGE_ACCOUNT_KEY
+        - name: FILE_SHARE_NAME
+          valueFrom:
+            secretKeyRef:
+              name: azurefiles-credentials
+              key: FILE_SHARE_NAME
+        - name: DRIVE_LETTER
+          valueFrom:
+            secretKeyRef:
+              name: azurefiles-credentials
+              key: DRIVE_LETTER
+        - name: OUTPUT_FILE
+          valueFrom:
+            secretKeyRef:
+              name: azurefiles-credentials
+              key: OUTPUT_FILE
+        volumeMounts:
+        - name: script
+          mountPath: C:\script
+        resources:
+          requests:
+            cpu: "0.1"
+            memory: "200Mi"
+          limits:
+            cpu: "1"
+            memory: "400Mi"
+      volumes:
+      - name: script
+        configMap:
+          name: win-hostprocess-os-script
+          items:
+          - key: collect-os-to-azurefiles.ps1
+            path: collect-os-to-azurefiles.ps1

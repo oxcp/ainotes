@@ -1,0 +1,23 @@
+Duration: 9.919 seconds.
+
+Code generated:
+import sys
+
+tokens = iter(sys.stdin.read().split())
+
+def find_max(n):
+    if n == 1:
+        return int(next(tokens))
+    else:
+        current_max = find_max(n - 1)
+        a = int(next(tokens))
+        return a if a > current_max else current_max
+
+def main():
+    n = int(next(tokens))
+    max_val = find_max(n)
+    print(max_val)
+
+if __name__ == "__main__":
+    main()
+

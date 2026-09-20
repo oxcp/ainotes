@@ -1,0 +1,274 @@
+Duration: 62.166 seconds.
+Output:
+当然可以。为 `EmployeeServiceImpl` 生成单元测试用例，我们主要的目标是：
+
+1.  **隔离性**：只测试 `EmployeeServiceImpl` 的业务逻辑，而不实际连接数据库。
+2.  **全面性**：覆盖每个方法的成功路径和异常路径。
+
+为了实现这个目标，我们将使用 **JUnit 5** 作为测试框架，并使用 **Mockito** 来模拟（Mock）`EmployeeDao` 依赖。这样，我们就可以完全控制 `EmployeeDao` 的行为，以测试 `EmployeeServiceImpl` 在各种情况下的反应。
+
+### 准备工作
+
+在你的 `pom.xml` (如果是 Maven 项目) 或 `build.gradle` (如果是 Gradle 项目) 文件中，确保包含以下依赖：
+
+**Maven (`pom.xml`)**
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-test</artifactId>
+    <scope>test</scope>
+</dependency>
+<!-- 如果你没有使用 spring-boot-starter-test，则需要单独添加 -->
+<dependency>
+    <groupId>org.junit.jupiter</groupId>
+    <artifactId>junit-jupiter-api</artifactId>
+    <version>5.8.2</version> <!-- 使用较新版本 -->
+    <scope>test</scope>
+</dependency>
+<dependency>
+    <groupId>org.mockito</groupId>
+    <artifactId>mockito-junit-jupiter</artifactId>
+    <version>4.5.1</version> <!-- 使用较新版本 -->
+    <scope>test</scope>
+</dependency>
+```
+
+### 单元测试代码
+
+下面是为 `EmployeeServiceImpl` 编写的单元测试用例。
+
+```java
+package com.employee.app.service;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.sql.SQLException;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.employee.app.dao.EmployeeDao;
+import com.employee.app.entity.Employee;
+import com.employee.app.exception.EmployeeException;
+
+/**
+ * EmployeeServiceImpl 的单元测试类
+ */
+@ExtendWith(MockitoExtension.class) // 启用 Mockito 扩展
+class EmployeeServiceImplTest {
+
+    // @Mock: 创建一个 EmployeeDao 的模拟对象。
+    // 在测试期间，所有对这个对象的调用都将被 Mockito 拦截。
+    @Mock
+    private EmployeeDao employeeRepository; // 修正了变量名拼写错误，原为 employeeRespository
+
+    // @InjectMocks: 创建 EmployeeServiceImpl 的一个实例，
+    // 并将上面用 @Mock 注解创建的模拟对象注入到这个实例中。
+    @InjectMocks
+    private EmployeeServiceImpl employeeService;
+
+    private Employee employee;
+
+    // @BeforeEach: 这个方法在每个测试方法执行之前都会运行一次。
+    // 非常适合用来准备通用的测试数据。
+    @BeforeEach
+    void setUp() {
+        // 初始化一个标准的 Employee 对象，用于各个测试用例
+        employee = new Employee();
+        employee.setId(1);
+        employee.setName("John Doe");
+        employee.setSalary(50000.0);
+    }
+
+    // --- registerEmployee 方法测试 ---
+
+    @Test
+    @DisplayName("注册员工 - 成功")
+    void testRegisterEmployee_Success() throws EmployeeException, SQLException {
+        // Arrange (准备)
+        // 当 employeeRepository.addEmployee(employee) 被调用时，什么都不做。
+        doNothing().when(employeeRepository).addEmployee(employee);
+        // 当 employeeRepository.getEmployee(1) 被调用时，返回我们准备好的 employee 对象。
+        when(employeeRepository.getEmployee(1)).thenReturn(employee);
+
+        // Act (执行)
+        Employee registeredEmployee = employeeService.registerEmployee(employee);
+
+        // Assert (断言)
+        assertNotNull(registeredEmployee); // 验证返回的对象不为空
+        assertEquals("John Doe", registeredEmployee.getName()); // 验证姓名是否正确
+        assertEquals(1, registeredEmployee.getId()); // 验证ID是否正确
+
+        // Verify (验证)
+        // 验证 employeeRepository.addEmployee 方法被调用了1次，并且参数是我们的 employee 对象
+        verify(employeeRepository, times(1)).addEmployee(employee);
+        // 验证 employeeRepository.getEmployee 方法被调用了1次，并且参数是 1
+        verify(employeeRepository, times(1)).getEmployee(1);
+    }
+
+    @Test
+    @DisplayName("注册员工 - 数据库异常时抛出EmployeeException")
+    void testRegisterEmployee_ThrowsExceptionOnSqlError() throws SQLException {
+        // Arrange (准备)
+        // 当 employeeRepository.addEmployee 方法被调用时，模拟抛出一个 SQLException
+        doThrow(new SQLException("Database connection failed")).when(employeeRepository).addEmployee(any(Employee.class));
+
+        // Act & Assert (执行与断言)
+        // 断言当调用 registerEmployee 时，会抛出 EmployeeException 异常
+        EmployeeException exception = assertThrows(EmployeeException.class, () -> {
+            employeeService.registerEmployee(employee);
+        });
+
+        // 验证异常信息是否符合预期
+        assertTrue(exception.getMessage().contains("Employee could not be added."));
+        assertTrue(exception.getMessage().contains("Database connection failed"));
+        
+        // 验证 getEmployee 方法在这种失败场景下没有被调用
+        verify(employeeRepository, never()).getEmployee(anyInt());
+    }
+
+    // --- getEmployeeByID 方法测试 ---
+
+    @Test
+    @DisplayName("通过ID获取员工 - 找到员工")
+    void testGetEmployeeByID_Found() throws EmployeeException {
+        // Arrange
+        when(employeeRepository.getEmployee(1)).thenReturn(employee);
+
+        // Act
+        Employee foundEmployee = employeeService.getEmployeeByID(1);
+
+        // Assert
+        assertNotNull(foundEmployee);
+        assertEquals(1, foundEmployee.getId());
+
+        // Verify
+        verify(employeeRepository, times(1)).getEmployee(1);
+    }
+
+    @Test
+    @DisplayName("通过ID获取员工 - 未找到员工时抛出异常")
+    void testGetEmployeeByID_NotFound_ThrowsException() {
+        // Arrange
+        // 模拟当用一个不存在的ID调用时，返回 null
+        when(employeeRepository.getEmployee(99)).thenReturn(null);
+
+        // Act & Assert
+        EmployeeException exception = assertThrows(EmployeeException.class, () -> {
+            employeeService.getEmployeeByID(99);
+        });
+
+        assertEquals("Employee not found.", exception.getMessage());
+    }
+
+    // --- updateEmployee 方法测试 ---
+
+    @Test
+    @DisplayName("更新员工 - 成功")
+    void testUpdateEmployee_Success() throws EmployeeException {
+        // Arrange
+        Employee updatedEmployeeInfo = new Employee(1, "John Smith", 60000.0);
+        // 第一次调用 getEmployee(1) 用于检查员工是否存在，返回旧的employee对象
+        // 第二次调用 getEmployee(1) 用于返回更新后的结果，返回新的updatedEmployeeInfo对象
+        when(employeeRepository.getEmployee(1)).thenReturn(employee).thenReturn(updatedEmployeeInfo);
+        doNothing().when(employeeRepository).updateEmployee(updatedEmployeeInfo);
+
+        // Act
+        Employee result = employeeService.updateEmployee(updatedEmployeeInfo);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals("John Smith", result.getName());
+        assertEquals(60000.0, result.getSalary());
+
+        // Verify
+        // 验证 getEmployee(1) 被调用了两次
+        verify(employeeRepository, times(2)).getEmployee(1);
+        verify(employeeRepository, times(1)).updateEmployee(updatedEmployeeInfo);
+    }
+
+
+
+    @Test
+    @DisplayName("更新员工 - ID不存在时抛出异常")
+    void testUpdateEmployee_NotFound_ThrowsException() {
+        // Arrange
+        Employee updatedEmployeeInfo = new Employee(99, "Non Existent", 60000.0);
+        // 模拟检查员工是否存在时返回 null
+        when(employeeRepository.getEmployee(99)).thenReturn(null);
+
+        // Act & Assert
+        EmployeeException exception = assertThrows(EmployeeException.class, () -> {
+            employeeService.updateEmployee(updatedEmployeeInfo);
+        });
+
+        assertEquals("Employee id not found to update", exception.getMessage());
+        
+        // 验证 updateEmployee 方法在这种情况下永远不会被调用
+        verify(employeeRepository, never()).updateEmployee(any(Employee.class));
+    }
+
+
+    // --- deleteEmmployeeById 方法测试 ---
+
+    @Test
+    @DisplayName("删除员工 - 成功")
+    void testDeleteEmployeeById_Success() throws EmployeeException {
+        // Arrange
+        // 模拟员工存在
+        when(employeeRepository.getEmployee(1)).thenReturn(employee);
+        // 模拟删除操作
+        doNothing().when(employeeRepository).deleteEmployee(1);
+
+        // Act
+        Employee deletedEmployee = employeeService.deleteEmmployeeById(1);
+
+        // Assert
+        assertNotNull(deletedEmployee);
+        assertEquals(1, deletedEmployee.getId());
+
+        // Verify
+        verify(employeeRepository, times(1)).getEmployee(1);
+        // 注意：根据原始代码，deleteEmployee 被错误地调用了两次。
+        // 这个测试会捕获到这个行为。如果这是个bug，修复代码后应将 times(2) 改为 times(1)。
+        verify(employeeRepository, times(2)).deleteEmployee(1);
+    }
+    
+    @Test
+    @DisplayName("删除员工 - ID不存在时抛出异常")
+    void testDeleteEmployeeById_NotFound_ThrowsException() {
+        // Arrange
+        when(employeeRepository.getEmployee(99)).thenReturn(null);
+
+        // Act & Assert
+        EmployeeException exception = assertThrows(EmployeeException.class, () -> {
+            employeeService.deleteEmmployeeById(99);
+        });
+
+        assertEquals("Employee id not found to delete.", exception.getMessage());
+        
+        // 验证 deleteEmployee 方法在这种情况下永远不会被调用
+        verify(employeeRepository, never()).deleteEmployee(anyInt());
+    }
+}
+```
+
+### 测试用例说明
+
+1.  **`@ExtendWith(MockitoExtension.class)`**：这个注解告诉 JUnit 5 使用 Mockito 扩展，它会自动初始化带有 `@Mock` 和 `@InjectMocks` 注解的字段。
+2.  **`@Mock`**：创建 `EmployeeDao` 的一个模拟（假）对象。我们之后可以定义这个假对象的行为（比如，当调用 `getEmployee(1)` 时应该返回什么）。
+3.  **`@InjectMocks`**：创建 `EmployeeServiceImpl` 的一个实例，并将标记为 `@Mock` 的 `employeeRepository` 自动注入进去。这样我们就得到了一个依赖被替换为模拟对象的服务实例。
+4.  **`@BeforeEach`**：这是一个设置方法，在每个 `@Test` 方法运行前都会执行。这里我们创建了一个通用的 `employee` 对象，以避免在每个测试中重复创建。
+5.  **测试方法命名**：采用了 `testMethodName_Condition_ExpectedResult` 的模式，例如 `testRegisterEmployee_Success`，这使得测试的目的非常清晰。
+6.  **Arrange-Act-Assert (3A) 模式**：
+    *   **Arrange（准备）**：设置测试的初始条件。在这里，我们使用 `when(...).thenReturn(...)` 或 `doThrow(...).when(...)` 来定义模拟对象的行为。
+    *   **Act（执行）**：调用被测试的方法。
+    *   **Assert（断言）**：检查结果是否符合预期。我们使用 `assertEquals`、`assertNotNull`、`assertThrows` 等 JUnit 的断言方法来验证。
+7.  **`verify()` 方法**：除了验证返回值，我们还使用 `Mockito.verify()` 来确保模拟对象的方法被正确地调用了（或者在某些情况下没有被调用，如 `never()`）。
+8.  **发现潜在问题**：在为 `deleteEmmployeeById` 编写测试时，我们注意到原始代码中 `employeeRepository.deleteEmployee(id)` 被调用了两次。我们的测试用例 `verify(employeeRepository, times(2)).deleteEmployee(1)` 明确地验证并暴露了这个问题。如果这是一个 bug，修复代码后，应将测试中的 `times(2)` 修改为 `times(1)`，以确保修复的正确性。

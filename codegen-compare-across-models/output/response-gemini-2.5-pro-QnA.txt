@@ -1,0 +1,356 @@
+Duration: 66.55 seconds.
+Output:
+好的，我们来详细介绍一下 DAO 设计模式，并提供一个完整的使用示例代码。
+
+### 什么是 DAO？
+
+**DAO** 是 **Data Access Object** 的缩写，中文意思是“数据访问对象”。它是一种广泛使用的**设计模式**，其核心思想是**将数据持久化逻辑（如何与数据库交互）与业务逻辑（应用程序做什么）分离开来**。
+
+想象一下你的应用程序是一个餐厅：
+
+*   **业务逻辑（Service层）**：像是餐厅的**经理**。他负责处理客人的点餐请求、安排座位、结账等业务流程。他不需要知道厨房具体是怎么做菜的。
+*   **DAO层**：像是餐厅的**厨师**。他专门负责与食材（数据）打交道。经理只需要告诉厨师“做一份宫保鸡丁”（保存一个用户），厨师就会处理所有与食材、锅具、火候相关的细节（执行 SQL 语句、处理数据库连接）。
+*   **数据源（Database）**：像是餐厅的**储藏室**，存放着所有食材。
+
+通过 DAO 模式，经理（业务逻辑）不需要关心厨师（DAO）是用电磁炉还是煤气灶（用的是 MySQL 还是 Oracle 数据库），也不需要关心他是先放油还是先放盐（具体的 SQL 实现）。他只需要下达命令，然后等待结果即可。
+
+#### DAO 模式的主要优点
+
+1.  **关注点分离 (Separation of Concerns)**：业务逻辑代码和数据访问代码分离开，使得代码结构更清晰、更易于理解。
+2.  **易于维护和切换数据源**：如果需要将数据库从 MySQL 更换为 PostgreSQL，你只需要修改 DAO 的具体实现类，而不需要改动任何业务逻辑代码。
+3.  **代码可重用性高**：多个业务逻辑模块可以共享同一个 DAO 来访问数据。
+4.  **易于测试**：你可以很容易地为业务逻辑层提供一个“模拟”的 DAO (Mock Object) 来进行单元测试，而无需连接真实的数据库。
+
+---
+
+### DAO 模式的组成部分
+
+一个典型的 DAO 模式实现通常包含以下几个部分：
+
+1.  **模型对象 (Model / POJO / Entity)**：一个简单的 Java 类，用于封装数据。例如，一个 `User` 类，包含 id, name, email 等属性。
+2.  **DAO 接口 (DAO Interface)**：定义了需要对模型对象执行的所有数据操作，如增、删、改、查 (CRUD)。例如 `UserDao` 接口，包含 `addUser(User user)`、`getUserById(int id)` 等方法。
+3.  **DAO 实现类 (DAO Implementation)**：实现了 DAO 接口的具体类。它包含了与数据库交互的实际代码，例如使用 JDBC、Hibernate 或 MyBatis 来执行 SQL。例如 `UserDaoImpl` 类。
+4.  **业务对象 (Business Object / Service)**：使用 DAO 接口来完成业务逻辑，它不直接与数据库交互。
+
+---
+
+### 使用示例代码 (基于原生 JDBC)
+
+下面我们用一个简单的用户管理系统来演示如何使用 DAO 模式。我们将实现对用户的增、删、改、查操作。
+
+#### 1. 准备工作：数据库表
+
+首先，在你的 MySQL 数据库中创建一个用户表。
+
+```sql
+CREATE DATABASE IF NOT EXISTS `demo_db`;
+
+USE `demo_db`;
+
+CREATE TABLE `users` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(50) NOT NULL,
+  `email` VARCHAR(100) NOT NULL UNIQUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 插入一些初始数据 (可选)
+INSERT INTO `users` (name, email) VALUES ('Alice', 'alice@example.com');
+INSERT INTO `users` (name, email) VALUES ('Bob', 'bob@example.com');
+```
+
+#### 2. 项目结构
+
+```
+src/main/java/
+└── com
+    └── example
+        └── dao
+            ├── model           // 模型对象
+            │   └── User.java
+            ├── dao             // DAO 接口和实现
+            │   ├── UserDao.java
+            │   └── UserDaoImpl.java
+            ├── util            // 工具类，如数据库连接
+            │   └── DatabaseConnection.java
+            └── Main.java       // 测试主程序
+```
+
+#### 3. 编写代码
+
+**Step 1: 创建模型对象 (`User.java`)**
+
+这是一个简单的 POJO (Plain Old Java Object)，用于映射 `users` 表的数据。
+
+```java
+// src/main/java/com/example/dao/model/User.java
+package com.example.dao.model;
+
+public class User {
+    private int id;
+    private String name;
+    private String email;
+
+    // 构造函数、Getter 和 Setter
+    public User() {}
+
+    public User(String name, String email) {
+        this.name = name;
+        this.email = email;
+    }
+
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    @Override
+    public String toString() {
+        return "User{" +
+               "id=" + id +
+               ", name='" + name + '\'' +
+               ", email='" + email + '\'' +
+               '}';
+    }
+}
+```
+
+**Step 2: 创建数据库连接工具类 (`DatabaseConnection.java`)**
+
+这个类负责管理数据库连接。在实际项目中，通常会使用连接池（如 HikariCP, Druid）。
+
+```java
+// src/main/java/com/example/dao/util/DatabaseConnection.java
+package com.example.dao.util;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class DatabaseConnection {
+    // 替换成你自己的数据库信息
+    private static final String URL = "jdbc:mysql://localhost:3306/demo_db?useSSL=false&serverTimezone=UTC";
+    private static final String USER = "root";
+    private static final String PASSWORD = "your_password"; // 替换成你的密码
+
+    public static Connection getConnection() {
+        Connection connection = null;
+        try {
+            // 加载驱动（对于新的JDBC驱动，这一步是可选的）
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            connection = DriverManager.getConnection(URL, USER, PASSWORD);
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+        }
+        return connection;
+    }
+}
+```
+
+**Step 3: 定义 DAO 接口 (`UserDao.java`)**
+
+这个接口定义了所有我们能对 `User` 对象进行的操作。
+
+```java
+// src/main/java/com/example/dao/dao/UserDao.java
+package com.example.dao.dao;
+
+import com.example.dao.model.User;
+import java.util.List;
+import java.util.Optional;
+
+public interface UserDao {
+    void addUser(User user);
+    Optional<User> getUserById(int id);
+    List<User> getAllUsers();
+    void updateUser(User user);
+    void deleteUser(int id);
+}
+```
+*Tips: 使用 `Optional<User>` 是一个很好的实践，可以避免返回 `null`，从而减少空指针异常的风险。*
+
+**Step 4: 实现 DAO 接口 (`UserDaoImpl.java`)**
+
+这是最核心的部分，包含了具体的 JDBC 代码。
+
+```java
+// src/main/java/com/example/dao/dao/UserDaoImpl.java
+package com.example.dao.dao;
+
+import com.example.dao.model.User;
+import com.example.dao.util.DatabaseConnection;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+public class UserDaoImpl implements UserDao {
+
+    @Override
+    public void addUser(User user) {
+        String sql = "INSERT INTO users (name, email) VALUES (?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, user.getName());
+            pstmt.setString(2, user.getEmail());
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public Optional<User> getUserById(int id) {
+        String sql = "SELECT * FROM users WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                User user = new User();
+                user.setId(rs.getInt("id"));
+                user.setName(rs.getString("name"));
+                user.setEmail(rs.getString("email"));
+                return Optional.of(user);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public List<User> getAllUsers() {
+        List<User> users = new ArrayList<>();
+        String sql = "SELECT * FROM users";
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                User user = new User();
+                user.setId(rs.getInt("id"));
+                user.setName(rs.getString("name"));
+                user.setEmail(rs.getString("email"));
+                users.add(user);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return users;
+    }
+
+    @Override
+    public void updateUser(User user) {
+        String sql = "UPDATE users SET name = ?, email = ? WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, user.getName());
+            pstmt.setString(2, user.getEmail());
+            pstmt.setInt(3, user.getId());
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void deleteUser(int id) {
+        String sql = "DELETE FROM users WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+*Tips: 使用 `try-with-resources` 语句可以自动关闭 `Connection`, `PreparedStatement` 等资源，非常方便且安全。*
+
+**Step 5: 创建测试主程序 (`Main.java`)**
+
+这个类模拟业务层，它使用 `UserDao` 来操作数据。
+
+```java
+// src/main/java/com/example/dao/Main.java
+package com.example.dao;
+
+import com.example.dao.dao.UserDao;
+import com.example.dao.dao.UserDaoImpl;
+import com.example.dao.model.User;
+
+import java.util.List;
+import java.util.Optional;
+
+public class Main {
+    public static void main(String[] args) {
+        // 业务层只与接口交互，不关心具体实现
+        UserDao userDao = new UserDaoImpl();
+
+        // 1. 添加新用户
+        System.out.println("--- 添加新用户 ---");
+        User newUser = new User("Charlie", "charlie@example.com");
+        userDao.addUser(newUser);
+        System.out.println("成功添加用户: " + newUser.getName());
+
+        // 2. 查询所有用户
+        System.out.println("\n--- 查询所有用户 ---");
+        List<User> users = userDao.getAllUsers();
+        users.forEach(System.out::println);
+
+        // 3. 根据ID查询用户
+        System.out.println("\n--- 根据ID查询用户 (ID=1) ---");
+        Optional<User> userOptional = userDao.getUserById(1);
+        userOptional.ifPresent(user -> System.out.println("找到用户: " + user));
+        
+        // 4. 更新用户信息
+        System.out.println("\n--- 更新用户信息 (ID=1) ---");
+        userOptional.ifPresent(user -> {
+            user.setName("Alice Smith");
+            userDao.updateUser(user);
+            System.out.println("用户信息已更新");
+        });
+        
+        // 再次查询确认更新
+        userDao.getUserById(1).ifPresent(user -> System.out.println("更新后的用户: " + user));
+
+
+        // 5. 删除用户
+        System.out.println("\n--- 删除用户 (ID=2) ---");
+        userDao.deleteUser(2);
+        System.out.println("ID为2的用户已删除");
+        
+        // 再次查询所有用户，确认删除
+        System.out.println("\n--- 删除后查询所有用户 ---");
+        userDao.getAllUsers().forEach(System.out::println);
+    }
+}
+```
+
+### 现代框架中的 DAO
+
+虽然上面的原生 JDBC 示例很好地解释了 DAO 模式的原理，但在现代 Java 开发中，我们很少手写这么多 JDBC 样板代码。像 **Spring Data JPA** 和 **MyBatis** 这样的框架极大地简化了 DAO 层的开发。
+
+*   **Spring Data JPA**: 你只需要定义一个接口，继承 `JpaRepository`，它就能在运行时自动为你生成实现类。
+
+    ```java
+    public interface UserRepository extends JpaRepository<User, Integer> {
+        // Spring Data JPA会根据方法名自动生成查询
+        Optional<User> findByEmail(String email);
+    }
+    ```
+
+*   **MyBatis**: 将 SQL 语句从 Java 代码中分离到 XML 文件或注解中，你只需编写接口和对应的 SQL 即可。
+
+    ```java
+    // Mapper 接口
+    public interface UserMapper {
+        @Select("SELECT * FROM users WHERE id = #{id}")
+        User getUserById(int id);
+    }
+    ```
+
+尽管这些框架隐藏了底层细节，但它们的设计思想仍然遵循着 DAO 模式的原则——**将数据访问逻辑与业务逻辑分离**。理解 DAO 模式的本质，能帮助你更好地使用这些现代工具。

@@ -1,0 +1,98 @@
+Duration: 11.954 seconds.
+
+Code generated:
+package com.employee.app.dao;
+
+import java.sql.SQLException;
+import java.util.List;
+import com.employee.app.entity.Employee;
+
+/**
+ * 员工数据访问接口（DAO）。
+ * 定义了对数据库中 Employee 实体进行增删改查的基础操作。
+ * 具体的数据库访问细节（SQL、ORM 映射、事务控制等）由实现类负责。
+ */
+public interface EmployeeDao {
+
+  /**
+   * 新增一名员工记录。
+   *
+   * 参数：
+   * - newEmployee：待新增的员工对象，通常要求其必填字段（如姓名、职位等）已赋值。
+   *
+   * 返回：
+   * - true 表示插入成功，false 表示插入失败。
+   *
+   * 异常：
+   * - SQLException：插入过程中出现的数据库访问异常（如约束冲突、连接错误等）。
+   */
+  Boolean addEmployee(Employee newEmployee) throws SQLException;
+
+  /**
+   * 按员工主键 ID 查询员工信息。
+   *
+   * 参数：
+   * - employeeId：员工主键 ID（不可为空）。
+   *
+   * 返回：
+   * - 查询到则返回对应的 Employee 对象；未查询到则返回 null。
+   */
+  Employee getEmployee(Integer employeeId);
+
+  /**
+   * 更新一名员工的完整信息（通常是全量更新）。
+   *
+   * 参数：
+   * - updateEmployee：包含最新信息的 Employee 对象，必须包含可用于定位记录的主键 ID。
+   *
+   * 返回：
+   * - true 表示更新成功，false 表示更新失败（如未匹配到记录）。
+   */
+  Boolean updateEmployee(Employee updateEmployee);
+
+  /**
+   * 局部更新员工姓名。
+   *
+   * 参数：
+   * - employeeId：员工主键 ID。
+   * - name：新的姓名。
+   *
+   * 返回：
+   * - true 表示更新成功，false 表示更新失败。
+   */
+  Boolean updateEmployeeName(Integer employeeId, String name);
+
+  /**
+   * 根据员工主键 ID 删除员工记录（物理删除）。
+   *
+   * 参数：
+   * - employeeId：员工主键 ID。
+   *
+   * 返回：
+   * - true 表示删除成功，false 表示删除失败（如未匹配到记录）。
+   */
+  Boolean deleteEmployee(Integer employeeId);
+
+  /**
+   * 查询所有员工记录。
+   *
+   * 返回：
+   * - 员工列表。建议实现返回空列表而不是 null。
+   */
+  List<Employee> getAllEmployees();
+
+  /**
+   * 局部更新员工薪资。
+   *
+   * 参数：
+   * - employeeId：员工主键 ID。
+   * - name：方法名与参数名不一致。按方法名语义，此参数应代表“薪资”而非“name”。
+   *         建议将参数类型与名称调整为与薪资一致的类型与命名（例如 BigDecimal salary 或 Double salary）。
+   *
+   * 返回：
+   * - true 表示更新成功，false 表示更新失败。
+   */
+  Boolean updateEmployeeSalary(Integer employeeId, String name);
+}
+
+

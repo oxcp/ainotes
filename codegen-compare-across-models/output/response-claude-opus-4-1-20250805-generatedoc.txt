@@ -1,0 +1,79 @@
+Duration: 46.77 seconds.
+
+Code generated:
+# Verifier 程序文档
+
+## 用途
+
+Verifier 是一个用于验证和测试 AI 模型（如 GPT 和 Claude）对提示词（prompts）响应的工具。它可以批量处理结构化的提示词文件，并通过指定的 AI 模型生成相应的代码或文本响应。
+
+## 工作原理
+
+### 核心流程
+
+1. **解析提示词文件**：程序读取并解析包含结构化提示词的文件
+2. **模型选择**：根据用户指定的模型类型（gpt 或 claude）选择相应的 AI 服务
+3. **提示词处理**：逐个处理解析出的提示词，将其发送给选定的 AI 模型
+4. **响应生成**：接收 AI 模型的响应并记录处理时间
+5. **结果输出**：显示生成的代码或文本内容
+
+### 主要组件
+
+- **Verifier 类**：核心验证器类，包含静态方法 `verify_with_prompt_file`
+- **Prompt 模块**：负责解析结构化提示词文件
+- **GPT 模块**：处理与 GPT 模型的交互
+- **计时功能**：记录每个提示词的处理时间
+
+## 使用方法
+
+### 命令行语法
+
+```bash
+python verifier.py <model> <prompt_file>
+```
+
+### 参数说明
+
+- `<model>`：指定要使用的 AI 模型
+  - `gpt`：使用 GPT 模型
+  - `claude`：使用 Claude 模型（当前未实现）
+
+- `<prompt_file>`：包含结构化提示词的文件路径
+
+### 使用示例
+
+```bash
+# 使用 GPT 模型验证 prompts.txt 文件中的提示词
+python verifier.py gpt prompts.txt
+
+# 使用 Claude 模型（待实现）
+python verifier.py claude my_prompts.json
+```
+
+### 输出内容
+
+程序执行时会显示：
+1. 正在验证的提示词内容
+2. 每个提示词的处理时间（秒）
+3. AI 模型生成的代码或响应内容
+
+### 注意事项
+
+1. **依赖项**：确保已安装并正确配置以下模块：
+   - `prompts` 模块及其 `Prompt` 类
+   - `gpt` 模块及其 `GPT` 类
+   - 标准库：`os`, `json`, `time`, `sys`
+
+2. **提示词文件格式**：文件必须符合 `Prompt.parse_structured_prompts_file` 方法所期望的格式
+
+3. **模型限制**：
+   - 目前仅实现了 GPT 模型的支持
+   - Claude 模型功能尚未实现，会返回占位符消息
+
+4. **返回值**：程序只返回第一个提示词的处理结果（这可能是一个 bug，因为循环中有 return 语句）
+
+### 错误处理
+
+- 如果命令行参数数量不正确，程序会显示使用说明并退出
+- 如果指定了不支持的模型，会返回 "Unsupported model specified." 消息
+

@@ -1,0 +1,431 @@
+Duration: 40.115 seconds.
+Output:
+# DAO (Data Access Object) 模式
+
+DAO（Data Access Object，数据访问对象）是一种设计模式，它将数据访问逻辑与业务逻辑分离，使得数据访问层可以独立于业务逻辑层。
+
+## DAO模式的核心优势
+
+1. **分离关注点**：业务逻辑与数据访问逻辑分离
+2. **提高可维护性**：数据访问细节的变化不会影响业务逻辑
+3. **提高代码复用性**：DAO可以被多个业务逻辑组件共享
+4. **易于单元测试**：可以轻松模拟DAO来测试业务逻辑
+
+## Java中的DAO模式示例
+
+下面是一个简单的Java DAO模式实现示例，使用用户（User）实体：
+
+### 1. 实体类 (User.java)
+
+```java
+public class User {
+    private int id;
+    private String username;
+    private String email;
+    
+    // 构造函数
+    public User(int id, String username, String email) {
+        this.id = id;
+        this.username = username;
+        this.email = email;
+    }
+    
+    // Getters and Setters
+    public int getId() {
+        return id;
+    }
+    
+    public void setId(int id) {
+        this.id = id;
+    }
+    
+    public String getUsername() {
+        return username;
+    }
+    
+    public void setUsername(String username) {
+        this.username = username;
+    }
+    
+    public String getEmail() {
+        return email;
+    }
+    
+    public void setEmail(String email) {
+        this.email = email;
+    }
+    
+    @Override
+    public String toString() {
+        return "User [id=" + id + ", username=" + username + ", email=" + email + "]";
+    }
+}
+```
+
+### 2. DAO接口 (UserDAO.java)
+
+```java
+import java.util.List;
+
+public interface UserDAO {
+    // 创建用户
+    void add(User user);
+    
+    // 根据ID获取用户
+    User getById(int id);
+    
+    // 获取所有用户
+    List<User> getAllUsers();
+    
+    // 更新用户
+    void update(User user);
+    
+    // 删除用户
+    void delete(int id);
+}
+```
+
+### 3. DAO实现类 (UserDAOImpl.java)
+
+```java
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class UserDAOImpl implements UserDAO {
+    private Connection connection;
+    
+    public UserDAOImpl() {
+        // 在实际应用中，这里通常会使用连接池或其他方式获取数据库连接
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            this.connection = DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/mydb", "username", "password");
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    @Override
+    public void add(User user) {
+        try {
+            PreparedStatement ps = connection.prepareStatement(
+                "INSERT INTO users (username, email) VALUES (?, ?)");
+            ps.setString(1, user.getUsername());
+            ps.setString(2, user.getEmail());
+            ps.executeUpdate();
+            ps.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    @Override
+    public User getById(int id) {
+        User user = null;
+        try {
+            PreparedStatement ps = connection.prepareStatement(
+                "SELECT * FROM users WHERE id = ?");
+            ps.setInt(1, id);
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                user = new User(
+                    rs.getInt("id"),
+                    rs.getString("username"),
+                    rs.getString("email")
+                );
+            }
+            rs.close();
+            ps.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return user;
+    }
+    
+    @Override
+    public List<User> getAllUsers() {
+        List<User> users = new ArrayList<>();
+        try {
+            Statement stmt = connection.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM users");
+            
+            while (rs.next()) {
+                User user = new User(
+                    rs.getInt("id"),
+                    rs.getString("username"),
+                    rs.getString("email")
+                );
+                users.add(user);
+            }
+            rs.close();
+            stmt.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return users;
+    }
+    
+    @Override
+    public void update(User user) {
+        try {
+            PreparedStatement ps = connection.prepareStatement(
+                "UPDATE users SET username = ?, email = ? WHERE id = ?");
+            ps.setString(1, user.getUsername());
+            ps.setString(2, user.getEmail());
+            ps.setInt(3, user.getId());
+            ps.executeUpdate();
+            ps.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    @Override
+    public void delete(int id) {
+        try {
+            PreparedStatement ps = connection.prepareStatement(
+                "DELETE FROM users WHERE id = ?");
+            ps.setInt(1, id);
+            ps.executeUpdate();
+            ps.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    // 确保资源释放
+    public void close() {
+        try {
+            if (connection != null) {
+                connection.close();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### 4. 使用DAO的客户端代码示例
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        UserDAO userDAO = new UserDAOImpl();
+        
+        // 创建新用户
+        User newUser = new User(0, "johndoe", "john@example.com");
+        userDAO.add(newUser);
+        System.out.println("User added successfully");
+        
+        // 获取所有用户并显示
+        System.out.println("All users:");
+        List<User> users = userDAO.getAllUsers();
+        for (User user : users) {
+            System.out.println(user);
+        }
+        
+        // 获取指定ID的用户
+        User user = userDAO.getById(1);
+        if (user != null) {
+            System.out.println("Found user: " + user);
+            
+            // 更新用户信息
+            user.setEmail("newemail@example.com");
+            userDAO.update(user);
+            System.out.println("User updated");
+            
+            // 删除用户
+            // userDAO.delete(user.getId());
+            // System.out.println("User deleted");
+        }
+        
+        // 关闭资源
+        ((UserDAOImpl) userDAO).close();
+    }
+}
+```
+
+## Python中的DAO模式示例
+
+下面是一个使用Python和SQLite实现的DAO模式示例：
+
+### 1. 实体类 (user.py)
+
+```python
+class User:
+    def __init__(self, id=None, username=None, email=None):
+        self.id = id
+        self.username = username
+        self.email = email
+    
+    def __str__(self):
+        return f"User [id={self.id}, username={self.username}, email={self.email}]"
+```
+
+### 2. DAO接口和实现 (user_dao.py)
+
+```python
+import sqlite3
+from abc import ABC, abstractmethod
+from user import User
+
+class UserDAO(ABC):
+    @abstractmethod
+    def add(self, user):
+        pass
+    
+    @abstractmethod
+    def get_by_id(self, id):
+        pass
+    
+    @abstractmethod
+    def get_all_users(self):
+        pass
+    
+    @abstractmethod
+    def update(self, user):
+        pass
+    
+    @abstractmethod
+    def delete(self, id):
+        pass
+
+class UserDAOImpl(UserDAO):
+    def __init__(self, db_path="users.db"):
+        self.db_path = db_path
+        self._create_table()
+    
+    def _create_table(self):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            email TEXT
+        )
+        ''')
+        conn.commit()
+        conn.close()
+    
+    def add(self, user):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO users (username, email) VALUES (?, ?)",
+            (user.username, user.email)
+        )
+        conn.commit()
+        user.id = cursor.lastrowid
+        conn.close()
+        return user
+    
+    def get_by_id(self, id):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, username, email FROM users WHERE id = ?", (id,))
+        row = cursor.fetchone()
+        conn.close()
+        
+        if row:
+            return User(id=row[0], username=row[1], email=row[2])
+        return None
+    
+    def get_all_users(self):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, username, email FROM users")
+        rows = cursor.fetchall()
+        conn.close()
+        
+        users = []
+        for row in rows:
+            users.append(User(id=row[0], username=row[1], email=row[2]))
+        return users
+    
+    def update(self, user):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE users SET username = ?, email = ? WHERE id = ?",
+            (user.username, user.email, user.id)
+        )
+        conn.commit()
+        conn.close()
+        return cursor.rowcount > 0
+    
+    def delete(self, id):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM users WHERE id = ?", (id,))
+        conn.commit()
+        conn.close()
+        return cursor.rowcount > 0
+```
+
+### 3. 使用DAO的客户端代码示例 (main.py)
+
+```python
+from user import User
+from user_dao import UserDAOImpl
+
+def main():
+    # 创建DAO实例
+    user_dao = UserDAOImpl()
+    
+    # 创建新用户
+    new_user = User(username="alice", email="alice@example.com")
+    user_dao.add(new_user)
+    print(f"User added with ID: {new_user.id}")
+    
+    # 获取所有用户并显示
+    print("\nAll users:")
+    users = user_dao.get_all_users()
+    for user in users:
+        print(user)
+    
+    # 获取指定ID的用户
+    user = user_dao.get_by_id(1)
+    if user:
+        print(f"\nFound user: {user}")
+        
+        # 更新用户信息
+        user.email = "newemail@example.com"
+        user_dao.update(user)
+        print("User updated")
+        
+        # 删除用户
+        # user_dao.delete(user.id)
+        # print("User deleted")
+    
+    # 再次获取所有用户以验证更新
+    print("\nAll users after update:")
+    for user in user_dao.get_all_users():
+        print(user)
+
+if __name__ == "__main__":
+    main()
+```
+
+## DAO模式总结
+
+1. **结构**：
+   - 实体类（如User）：表示数据结构
+   - DAO接口：定义数据操作方法
+   - DAO实现类：实现具体的数据访问逻辑
+
+2. **优点**：
+   - 分离数据访问和业务逻辑
+   - 提高代码的可维护性和可测试性
+   - 提供统一的数据访问API
+   - 实现技术无关性，可以更换底层数据存储而不影响业务逻辑
+
+3. **适用场景**：
+   - 需要访问一个或多个数据源的应用
+   - 需要支持多种数据存储技术的应用
+   - 希望将数据访问与业务逻辑分离的应用
+
+无论使用什么编程语言，DAO模式都是一种流行的数据访问抽象方式，能有效组织数据访问代码并提高应用程序的可维护性。

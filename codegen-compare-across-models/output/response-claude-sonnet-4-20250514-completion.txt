@@ -1,0 +1,303 @@
+Duration: 31.196 seconds.
+Output:
+Here's a single-page calculator app that meets all your requirements:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .calculator {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            width: 100%;
+            max-width: 400px;
+            min-width: 300px;
+        }
+
+        .display {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 25px 20px;
+            margin-bottom: 25px;
+            text-align: right;
+            font-size: clamp(24px, 6vw, 36px);
+            font-weight: 600;
+            color: #2c3e50;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        button {
+            border: none;
+            border-radius: 15px;
+            font-size: clamp(18px, 4vw, 24px);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            height: clamp(60px, 15vw, 80px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            outline: none;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .number {
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            color: #2c3e50;
+            border: 1px solid #e9ecef;
+        }
+
+        .number:hover {
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+        }
+
+        .operator {
+            background: linear-gradient(145deg, #74b9ff, #0984e3);
+            color: white;
+        }
+
+        .operator:hover {
+            background: linear-gradient(145deg, #0984e3, #74b9ff);
+        }
+
+        .equals {
+            background: linear-gradient(145deg, #00b894, #00a085);
+            color: white;
+            grid-column: span 2;
+        }
+
+        .equals:hover {
+            background: linear-gradient(145deg, #00a085, #00b894);
+        }
+
+        .clear {
+            background: linear-gradient(145deg, #fd79a8, #e84393);
+            color: white;
+        }
+
+        .clear:hover {
+            background: linear-gradient(145deg, #e84393, #fd79a8);
+        }
+
+        .zero {
+            grid-column: span 2;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: clamp(24px, 5vw, 32px);
+            font-weight: 700;
+        }
+
+        @media (max-width: 480px) {
+            .calculator {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .buttons {
+                gap: 10px;
+            }
+            
+            .display {
+                padding: 20px 15px;
+                min-height: 70px;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .calculator {
+                max-width: 450px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h1>Calculator</h1>
+        <div class="display" id="display">0</div>
+        <div class="buttons">
+            <button class="clear" onclick="clearDisplay()">C</button>
+            <button class="operator" onclick="deleteLast()">⌫</button>
+            <button class="operator" onclick="appendToDisplay('/')">&divide;</button>
+            <button class="operator" onclick="appendToDisplay('*')">&times;</button>
+            
+            <button class="number" onclick="appendToDisplay('7')">7</button>
+            <button class="number" onclick="appendToDisplay('8')">8</button>
+            <button class="number" onclick="appendToDisplay('9')">9</button>
+            <button class="operator" onclick="appendToDisplay('-')">-</button>
+            
+            <button class="number" onclick="appendToDisplay('4')">4</button>
+            <button class="number" onclick="appendToDisplay('5')">5</button>
+            <button class="number" onclick="appendToDisplay('6')">6</button>
+            <button class="operator" onclick="appendToDisplay('+')">+</button>
+            
+            <button class="number" onclick="appendToDisplay('1')">1</button>
+            <button class="number" onclick="appendToDisplay('2')">2</button>
+            <button class="number" onclick="appendToDisplay('3')">3</button>
+            <button class="equals" onclick="calculate()" rowspan="2">=</button>
+            
+            <button class="number zero" onclick="appendToDisplay('0')">0</button>
+            <button class="number" onclick="appendToDisplay('.')">.</button>
+        </div>
+    </div>
+
+    <script>
+        let display = document.getElementById('display');
+        let currentInput = '0';
+        let shouldResetDisplay = false;
+
+        function updateDisplay() {
+            display.textContent = currentInput;
+        }
+
+        function clearDisplay() {
+            currentInput = '0';
+            shouldResetDisplay = false;
+            updateDisplay();
+        }
+
+        function deleteLast() {
+            if (currentInput.length > 1) {
+                currentInput = currentInput.slice(0, -1);
+            } else {
+                currentInput = '0';
+            }
+            updateDisplay();
+        }
+
+        function appendToDisplay(value) {
+            if (shouldResetDisplay) {
+                currentInput = '0';
+                shouldResetDisplay = false;
+            }
+
+            if (currentInput === '0' && value !== '.') {
+                if ('+-*/'.includes(value)) {
+                    currentInput += value;
+                } else {
+                    currentInput = value;
+                }
+            } else {
+                // Prevent multiple operators in a row
+                const lastChar = currentInput[currentInput.length - 1];
+                if ('+-*/'.includes(lastChar) && '+-*/'.includes(value)) {
+                    currentInput = currentInput.slice(0, -1) + value;
+                } else {
+                    currentInput += value;
+                }
+            }
+            updateDisplay();
+        }
+
+        function calculate() {
+            try {
+                // Replace display symbols with JavaScript operators
+                let expression = currentInput
+                    .replace(/×/g, '*')
+                    .replace(/÷/g, '/');
+                
+                // Evaluate the expression
+                let result = Function('"use strict"; return (' + expression + ')')();
+                
+                // Handle division by zero
+                if (!isFinite(result)) {
+                    currentInput = 'Error';
+                } else {
+                    // Format the result to avoid long decimals
+                    currentInput = parseFloat(result.toFixed(10)).toString();
+                }
+                
+                shouldResetDisplay = true;
+            } catch (error) {
+                currentInput = 'Error';
+                shouldResetDisplay = true;
+            }
+            updateDisplay();
+        }
+
+        // Keyboard support
+        document.addEventListener('keydown', function(event) {
+            const key = event.key;
+            
+            if ('0123456789.'.includes(key)) {
+                appendToDisplay(key);
+            } else if ('+-*/'.includes(key)) {
+                appendToDisplay(key);
+            } else if (key === 'Enter' || key === '=') {
+                calculate();
+            } else if (key === 'Escape' || key === 'c' || key === 'C') {
+                clearDisplay();
+            } else if (key === 'Backspace') {
+                deleteLast();
+            }
+        });
+    </script>
+</body>
+</html>
+```
+
+This calculator app includes all the features you requested:
+
+**✅ Requirements Met:**
+- **Name**: "Calculator" displayed as the title
+- **Operations**: Add (+), Subtract (-), Multiply (×), Divide (÷)
+- **Nice Buttons**: Modern design with hover effects, gradients, and shadows
+- **Scalable**: Responsive design that adapts to different window sizes using CSS Grid, Flexbox, and clamp() functions
+- **Light Background**: Light gradient background with clean, bright colors
+
+**✨ Additional Features:**
+- **Keyboard Support**: You can use your keyboard to input numbers and operations
+- **Error Handling**: Displays "Error" for invalid operations (like division by zero)
+- **Delete Function**: Backspace button (⌫) to delete the last entered character
+- **Clear Function**: C button to clear everything
+- **Decimal Support**: Includes decimal point functionality
+- **Visual Feedback**: Buttons have hover and active states for better user experience
+- **Mobile Responsive**: Optimized for mobile devices with appropriate sizing
+
+The calculator uses a clean, modern design with a light theme and scales beautifully across different screen sizes. All calculations are performed using JavaScript's built-in math operations for the four basic arithmetic functions.

@@ -1,0 +1,125 @@
+Duration: 18.042 seconds.
+Output:
+我发现了以下几个重要的安全和代码质量问题：
+
+## 主要漏洞分析：
+
+1. **SQL注入漏洞** - 直接拼接SQL参数，存在严重安全风险
+2. **资源泄露** - 未正确关闭数据库连接和相关资源
+3. **异常处理不当** - 只是打印堆栈，没有适当的错误处理
+
+## 修复后的代码：
+
+```java
+public List<Manager> getManagersByLevel(int level) {
+    List<Manager> managers = new ArrayList<>();
+    
+    // 使用参数化查询防止SQL注入
+    String sql = "SELECT id, name, salary, level, department FROM employee WHERE level = ?";
+    
+    // 使用try-with-resources确保资源正确关闭
+    try (Connection connection = this.getConnection();
+         PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+        
+        // 设置参数，防止SQL注入
+        preparedStatement.setInt(1, level);
+        
+        try (ResultSet resultSet = preparedStatement.executeQuery()) {
+            while (resultSet.next()) {
+                Manager manager = new Manager();
+                manager.setId(resultSet.getInt("id"));
+                manager.setName(resultSet.getString("name"));
+                manager.setSalary(resultSet.getDouble("salary"));
+                manager.setLevel(resultSet.getInt("level"));
+                manager.setDepartment(resultSet.getString("department"));
+                managers.add(manager);
+            }
+        }
+        
+    } catch (SQLException e) {
+        // 记录日志而不是直接打印到控制台
+        logger.error("Failed to retrieve managers by level: " + level, e);
+        // 根据业务需求决定是否重新抛出异常或返回空列表
+        throw new DataAccessException("无法获取指定级别的管理员信息", e);
+    }
+    
+    return managers;
+}
+```
+
+## 进一步优化建议：
+
+### 1. 添加参数验证：
+```java
+public List<Manager> getManagersByLevel(int level) {
+    // 参数验证
+    if (level < 0) {
+        throw new IllegalArgumentException("Level cannot be negative");
+    }
+    
+    // ... 其余代码
+}
+```
+
+### 2. 使用常量定义SQL：
+```java
+private static final String SELECT_MANAGERS_BY_LEVEL = 
+    "SELECT id, name, salary, level, department FROM employee WHERE level = ?";
+```
+
+### 3. 考虑使用Builder模式或工厂方法创建Manager对象：
+```java
+private Manager createManagerFromResultSet(ResultSet resultSet) throws SQLException {
+    Manager manager = new Manager();
+    manager.setId(resultSet.getInt("id"));
+    manager.setName(resultSet.getString("name"));
+    manager.setSalary(resultSet.getDouble("salary"));
+    manager.setLevel(resultSet.getInt("level"));
+    manager.setDepartment(resultSet.getString("department"));
+    return manager;
+}
+```
+
+### 4. 完整的优化版本：
+```java
+private static final String SELECT_MANAGERS_BY_LEVEL = 
+    "SELECT id, name, salary, level, department FROM employee WHERE level = ?";
+
+public List<Manager> getManagersByLevel(int level) {
+    if (level < 0) {
+        throw new IllegalArgumentException("Level cannot be negative");
+    }
+    
+    List<Manager> managers = new ArrayList<>();
+    
+    try (Connection connection = this.getConnection();
+         PreparedStatement preparedStatement = connection.prepareStatement(SELECT_MANAGERS_BY_LEVEL)) {
+        
+        preparedStatement.setInt(1, level);
+        
+        try (ResultSet resultSet = preparedStatement.executeQuery()) {
+            while (resultSet.next()) {
+                managers.add(createManagerFromResultSet(resultSet));
+            }
+        }
+        
+    } catch (SQLException e) {
+        logger.error("Failed to retrieve managers by level: " + level, e);
+        throw new DataAccessException("无法获取指定级别的管理员信息", e);
+    }
+    
+    return managers;
+}
+
+private Manager createManagerFromResultSet(ResultSet resultSet) throws SQLException {
+    Manager manager = new Manager();
+    manager.setId(resultSet.getInt("id"));
+    manager.setName(resultSet.getString("name"));
+    manager.setSalary(resultSet.getDouble("salary"));
+    manager.setLevel(resultSet.getInt("level"));
+    manager.setDepartment(resultSet.getString("department"));
+    return manager;
+}
+```
+
+这样修复后的代码具备了更好的安全性、可维护性和健壮性。

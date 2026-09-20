@@ -1,0 +1,8 @@
+id: completion
+prompt: |
+  Create a single-page app for calculator in a single HTML file with the following requirements:
+  - Name: Calculator
+  - Goal: Support operations for add/substract/Multiple/Divide.
+  - Features: Nice button. Scalable with window size
+  - Background theme is light
+

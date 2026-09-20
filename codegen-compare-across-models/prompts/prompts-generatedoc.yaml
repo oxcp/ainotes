@@ -1,0 +1,41 @@
+id: generatedoc
+prompt: |
+  为以下程序生成文档，说明用途，工作原理，使用方法:
+from prompts import Prompt
+import os
+import json
+import time
+from gpt import GPT
+import sys
+
+class Verifier:
+    @staticmethod
+    def verify_with_prompt_file(model: str, prompt_file: str) -> str:
+        parsed_prompts = Prompt.parse_structured_prompts_file(prompt_file)
+        for prompt in parsed_prompts:
+            prompt_json = json.dumps(prompt)
+            print(f"Verifying prompt: \n{json.loads(prompt_json).get('prompt')}\n")
+            starttime = time.time()
+
+            if (model == "gpt"):
+                completion = GPT.code_completion(json.loads(prompt_json).get("prompt"))
+            elif model == "claude":
+                # Placeholder for Claude model verification
+                completion = "Claude model verification not implemented yet."
+            else:
+                return "Unsupported model specified."
+
+            duration = round(time.time() - starttime, 3)
+            print(f"Duration: {duration} seconds.\n")
+            return completion.choices[0].message.content
+
+#code for main
+if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        print("Usage: python verifier.py <model> <prompt_file>")
+        sys.exit(1)
+    model = sys.argv[1]
+    prompt_file = sys.argv[2]
+    completion_content = Verifier.verify_with_prompt_file(model, prompt_file)
+    print(f"Code generated:\n{completion_content}")
+
