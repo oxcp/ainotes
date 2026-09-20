@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI Notes</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root { color-scheme: light; --ink: #1f2328; --muted: #59636e; --border: #d1d9e0; --link: #0969da; --surface: #ffffff; --canvas: #f6f8fa; }
+        * { box-sizing: border-box; }
+        body { margin: 0; color: var(--ink); background: var(--canvas); font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.6; }
+        .toolbar { position: sticky; top: 0; z-index: 1; border-bottom: 1px solid var(--border); background: rgba(255, 255, 255, .96); }
+        .toolbar-inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; max-width: 1040px; margin: 0 auto; padding: .75rem 1.25rem; }
+        .back { color: var(--link); text-decoration: none; font-weight: 600; }
+        .path { overflow: hidden; color: var(--muted); font-size: .875rem; text-overflow: ellipsis; white-space: nowrap; }
+        main { max-width: 980px; min-height: calc(100vh - 58px); margin: 0 auto; padding: 2.5rem 2rem 4rem; background: var(--surface); }
+        h1, h2, h3, h4, h5, h6 { margin-top: 1.5em; margin-bottom: .6em; line-height: 1.25; }
+        h1, h2 { padding-bottom: .3em; border-bottom: 1px solid var(--border); }
+        h1 { margin-top: 0; font-size: 2rem; }
+        h2 { font-size: 1.5rem; }
+        a { color: var(--link); }
+        img, video { max-width: 100%; height: auto; }
+        table { display: block; width: 100%; overflow-x: auto; border-spacing: 0; border-collapse: collapse; }
+        th, td { padding: .5rem .75rem; border: 1px solid var(--border); }
+        th { background: var(--canvas); }
+        blockquote { margin-left: 0; padding: 0 1rem; color: var(--muted); border-left: .25rem solid var(--border); }
+        code { padding: .15em .35em; border-radius: 4px; background: var(--canvas); font-family: "Cascadia Code", Consolas, monospace; }
+        pre { overflow-x: auto; padding: 1rem; border-radius: 6px; background: var(--canvas); }
+        pre code { padding: 0; background: transparent; }
+        .status { color: var(--muted); }
+        .error { color: #cf222e; }
+        @media (max-width: 680px) { main { padding: 1.5rem 1rem 3rem; } .toolbar-inner { padding-inline: 1rem; } }
+    </style>
+</head>
+<body>
+    <nav class="toolbar" aria-label="Document navigation">
+        <div class="toolbar-inner">
+            <a class="back" href="index.html">&larr; AI Notes</a>
+            <span class="path" id="document-path"></span>
+        </div>
+    </nav>
+    <main id="content"><p class="status">Loading document...</p></main>
+    <script>
+        const content = document.getElementById('content');
+        const documentPath = document.getElementById('document-path');
+        const siteRoot = new URL('./', window.location.href);
+        const file = new URLSearchParams(window.location.search).get('file');
+
+        function isAllowedMarkdownPath(path) {
+            const url = new URL(path, siteRoot);
+            return url.origin === siteRoot.origin &&
+                url.pathname.startsWith(siteRoot.pathname) &&
+                /\.md$/i.test(url.pathname);
+        }
+
+        function resolveDocumentLinks(sourceUrl) {
+            content.querySelectorAll('a[href], img[src], video[src], source[src]').forEach((element) => {
+                const attribute = element.hasAttribute('href') ? 'href' : 'src';
+                const value = element.getAttribute(attribute);
+                if (!value || value.startsWith('#') || /^(?:data:|mailto:|javascript:)/i.test(value)) return;
+
+                const resolved = new URL(value, sourceUrl);
+                if (attribute === 'href' && resolved.origin === siteRoot.origin && /\.md$/i.test(resolved.pathname)) {
+                    const viewerUrl = new URL('markdown-viewer.html', siteRoot);
+                    viewerUrl.searchParams.set('file', decodeURIComponent(resolved.pathname.slice(siteRoot.pathname.length)));
+                    viewerUrl.hash = resolved.hash;
+                    element.setAttribute(attribute, viewerUrl.href);
+                } else {
+                    element.setAttribute(attribute, resolved.href);
+                }
+            });
+        }
+
+        async function renderDocument() {
+            if (!file || !isAllowedMarkdownPath(file)) {
+                throw new Error('Invalid or missing Markdown document path.');
+            }
+
+            const sourceUrl = new URL(file, siteRoot);
+            documentPath.textContent = file;
+            const response = await fetch(sourceUrl);
+            if (!response.ok) throw new Error(`Unable to load document (${response.status}).`);
+
+            content.innerHTML = marked.parse(await response.text());
+            resolveDocumentLinks(sourceUrl);
+            const heading = content.querySelector('h1, h2');
+            if (heading) document.title = `${heading.textContent} - AI Notes`;
+        }
+
+        renderDocument().catch((error) => {
+            content.innerHTML = `<p class="error">${error.message}</p>`;
+        });
+    </script>
+</body>
+</html>
