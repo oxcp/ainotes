@@ -17,7 +17,7 @@
   <div class="markdown-body" id="content">Loading...</div>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
-    fetch('compare-codegen-ingeneral.md')
+    fetch('README.md')
       .then(response => response.text())
       .then(md => {
         document.getElementById('content').innerHTML = marked.parse(md);
