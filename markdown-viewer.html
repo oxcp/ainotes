@@ -31,6 +31,19 @@
         .copy-code:hover { color: var(--ink); background: var(--canvas); }
         .copy-code svg { width: 1rem; height: 1rem; }
         .markdown-body video { display: block; width: min(100%, 900px); max-height: 70vh; margin: 1rem 0; background: #000; border-radius: 6px; }
+        .markdown-alert { margin: 1rem 0; padding: .5rem 1rem; color: inherit; border-left: .25rem solid var(--border); }
+        .markdown-alert-title { display: flex; align-items: center; gap: .4rem; margin: 0 0 .35rem; font-weight: 600; }
+        .markdown-alert-title svg { width: 1rem; height: 1rem; }
+        .markdown-alert-note { border-left-color: #0969da; }
+        .markdown-alert-note .markdown-alert-title { color: #0969da; }
+        .markdown-alert-tip { border-left-color: #1a7f37; }
+        .markdown-alert-tip .markdown-alert-title { color: #1a7f37; }
+        .markdown-alert-important { border-left-color: #8250df; }
+        .markdown-alert-important .markdown-alert-title { color: #8250df; }
+        .markdown-alert-warning { border-left-color: #9a6700; }
+        .markdown-alert-warning .markdown-alert-title { color: #9a6700; }
+        .markdown-alert-caution { border-left-color: #cf222e; }
+        .markdown-alert-caution .markdown-alert-title { color: #cf222e; }
         .markdown-body .task-list-item { list-style: none; }
         .markdown-body .task-list-item input { margin: 0 .45em 0 -1.4em; vertical-align: middle; }
         .status { color: var(--muted); }
@@ -65,7 +78,12 @@
                 const value = element.getAttribute(attribute);
                 if (!value || value.startsWith('#') || /^(?:data:|mailto:|javascript:)/i.test(value)) return;
 
-                const resolved = new URL(value, sourceUrl);
+                let resolved;
+                try {
+                    resolved = new URL(value, sourceUrl);
+                } catch {
+                    return;
+                }
                 if (attribute === 'href' && resolved.origin === siteRoot.origin && /\.md$/i.test(resolved.pathname)) {
                     const viewerUrl = new URL('markdown-viewer.html', siteRoot);
                     viewerUrl.searchParams.set('file', decodeURIComponent(resolved.pathname.slice(siteRoot.pathname.length)));
@@ -105,24 +123,62 @@
             });
         }
 
+        function renderAlerts() {
+            const alerts = {
+                note: { label: 'Note', icon: 'info' },
+                tip: { label: 'Tip', icon: 'lightbulb' },
+                important: { label: 'Important', icon: 'message-square-warning' },
+                warning: { label: 'Warning', icon: 'triangle-alert' },
+                caution: { label: 'Caution', icon: 'circle-alert' }
+            };
+
+            content.querySelectorAll('blockquote').forEach((blockquote) => {
+                const firstParagraph = blockquote.querySelector(':scope > p:first-child');
+                if (!firstParagraph) return;
+                const marker = firstParagraph.textContent.match(/^\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*/i);
+                if (!marker) return;
+
+                const type = marker[1].toLowerCase();
+                const alert = alerts[type];
+                const title = document.createElement('p');
+                title.className = 'markdown-alert-title';
+                title.innerHTML = window.lucide ? `<i data-lucide="${alert.icon}"></i><span>${alert.label}</span>` : alert.label;
+                blockquote.className = `markdown-alert markdown-alert-${type}`;
+                firstParagraph.innerHTML = firstParagraph.innerHTML.replace(/^\s*\[!(?:NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*/i, '');
+                blockquote.prepend(title);
+                if (!firstParagraph.textContent.trim() && !firstParagraph.children.length) firstParagraph.remove();
+            });
+        }
+
         function addCodeCopyButtons() {
-            async function copyText(code) {
+            async function copyText(text) {
                 try {
-                    await navigator.clipboard.writeText(code.textContent);
+                    await navigator.clipboard.writeText(text);
                     return;
                 } catch {
-                    const selection = window.getSelection();
-                    const range = document.createRange();
-                    range.selectNodeContents(code);
-                    selection.removeAllRanges();
-                    selection.addRange(range);
+                    const source = document.createElement('textarea');
+                    source.value = text;
+                    source.style.position = 'fixed';
+                    source.style.opacity = '0';
+                    document.body.append(source);
+                    source.select();
                     document.execCommand('copy');
-                    selection.removeAllRanges();
+                    source.remove();
                 }
             }
 
-            content.querySelectorAll('pre > code').forEach((code) => {
-                window.hljs?.highlightElement(code);
+            content.querySelectorAll('pre').forEach((pre) => {
+                if (pre.querySelector('.copy-code')) return;
+                const code = pre.querySelector('code');
+                const copyValue = code?.textContent ?? pre.textContent;
+                if (code && window.hljs) {
+                    const selection = window.getSelection();
+                    try {
+                        window.hljs.highlightElement(code);
+                    } catch {
+                        selection?.removeAllRanges();
+                    }
+                }
                 const button = document.createElement('button');
                 button.className = 'copy-code';
                 button.type = 'button';
@@ -130,7 +186,7 @@
                 button.setAttribute('aria-label', 'Copy code');
                 button.innerHTML = window.lucide ? '<i data-lucide="copy"></i>' : 'Copy';
                 button.addEventListener('click', async () => {
-                    await copyText(code);
+                    await copyText(copyValue);
                     button.title = 'Copied';
                     button.setAttribute('aria-label', 'Copied');
                     button.innerHTML = window.lucide ? '<i data-lucide="check"></i>' : 'Copied';
@@ -142,28 +198,32 @@
                         window.lucide?.createIcons({ nodes: [button] });
                     }, 1600);
                 });
-                code.parentElement.append(button);
+                pre.append(button);
             });
             window.lucide?.createIcons();
         }
 
         function embedVideos() {
-            content.querySelectorAll('p').forEach((paragraph) => {
-                const children = [...paragraph.childNodes].filter((node) => node.nodeType !== Node.TEXT_NODE || node.textContent.trim());
-                if (children.length !== 1 || children[0].nodeName !== 'A') return;
-
-                const link = children[0];
-                const url = new URL(link.href);
+            content.querySelectorAll('a[href]').forEach((link) => {
+                let url;
+                try {
+                    url = new URL(link.href);
+                } catch {
+                    return;
+                }
                 const isGitHubAttachment = url.hostname === 'github.com' && url.pathname.startsWith('/user-attachments/assets/');
                 const isVideoFile = /\.(?:mp4|webm|ogg)$/i.test(url.pathname);
                 if (!isGitHubAttachment && !isVideoFile) return;
+
+                const container = link.closest('p');
+                if (!container || container.textContent.trim() !== link.textContent.trim()) return;
 
                 const video = document.createElement('video');
                 video.controls = true;
                 video.preload = 'metadata';
                 video.src = link.href;
                 video.textContent = 'Your browser does not support embedded video.';
-                paragraph.replaceWith(video);
+                container.replaceWith(video);
             });
         }
 
@@ -182,6 +242,7 @@
             resolveDocumentLinks(sourceUrl);
             embedVideos();
             styleTaskLists();
+            renderAlerts();
             const heading = content.querySelector('h1, h2');
             if (heading) document.title = `${heading.textContent} - AI Notes`;
             addHeadingAnchors();
