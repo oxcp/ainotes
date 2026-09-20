@@ -18,7 +18,7 @@
         .back { color: var(--link); text-decoration: none; font-weight: 600; }
         .path { overflow: hidden; color: var(--muted); font-size: .875rem; text-overflow: ellipsis; white-space: nowrap; }
         .page-shell { max-width: 980px; min-height: calc(100vh - 58px); margin: 0 auto; background: var(--surface); }
-        .agenthost-view .page-shell { display: grid; grid-template-columns: 240px minmax(0, 980px); max-width: 1280px; }
+        .sidebar-view .page-shell { display: grid; grid-template-columns: 240px minmax(0, 980px); max-width: 1280px; }
         .sidebar { position: sticky; top: 58px; align-self: start; height: calc(100vh - 58px); padding: 1.5rem 1rem; overflow-y: auto; background: var(--canvas); border-right: 1px solid var(--border); }
         .sidebar-title { margin: 0 0 .75rem; padding: 0 .65rem; color: var(--muted); font-size: .75rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
         .sidebar-links { display: grid; gap: .25rem; }
@@ -79,19 +79,9 @@
         </div>
     </nav>
     <div class="page-shell">
-        <aside class="sidebar" aria-label="Agenthost workshop navigation" hidden>
-            <p class="sidebar-title">Agenthost Workshop</p>
-            <nav class="sidebar-links">
-                <a class="sidebar-link" data-file="agenthost/readme.md" href="markdown-viewer.html?file=agenthost/readme.md"><i data-lucide="house"></i><span>Workshop Home</span></a>
-                <a class="sidebar-link" data-file="agenthost/module-00/README.md" href="markdown-viewer.html?file=agenthost/module-00/README.md"><i data-lucide="presentation"></i><span>Module 0: Introduction</span></a>
-                <a class="sidebar-link" data-file="agenthost/module-01/README.md" href="markdown-viewer.html?file=agenthost/module-01/README.md"><i data-lucide="blocks"></i><span>Module 1: Infrastructure</span></a>
-                <a class="sidebar-link" data-file="agenthost/module-02/README.md" href="markdown-viewer.html?file=agenthost/module-02/README.md"><i data-lucide="bot"></i><span>Module 2: Hosted Agent</span></a>
-                <a class="sidebar-link" data-file="agenthost/module-03/README.md" href="markdown-viewer.html?file=agenthost/module-03/README.md"><i data-lucide="container"></i><span>Module 3: AKS Sandbox</span></a>
-                <a class="sidebar-link" data-file="agenthost/module-04/README.md" href="markdown-viewer.html?file=agenthost/module-04/README.md"><i data-lucide="box"></i><span>Module 4: ACA Sandbox</span></a>
-                <a class="sidebar-link" data-file="agenthost/module-05/README.md" href="markdown-viewer.html?file=agenthost/module-05/README.md"><i data-lucide="circle-check-big"></i><span>Module 5: Wrap-up</span></a>
-                <hr class="sidebar-divider">
-                <a class="sidebar-link" href="https://github.com/oxcp/ainotes" target="_blank" rel="noopener noreferrer"><i data-lucide="github"></i><span>GitHub Repository</span></a>
-            </nav>
+        <aside class="sidebar" aria-label="Document collection navigation" hidden>
+            <p class="sidebar-title"></p>
+            <nav class="sidebar-links"></nav>
         </aside>
         <main class="markdown-body" id="content"><p class="status">Loading document...</p></main>
     </div>
@@ -100,18 +90,109 @@
         const documentPath = document.getElementById('document-path');
         const siteRoot = new URL('./', window.location.href);
         const file = new URLSearchParams(window.location.search).get('file');
-        const isAgenthostDocument = /^agenthost\//i.test(file ?? '');
+        const repositoryUrl = 'https://github.com/oxcp/ainotes';
+        const navigationSections = [
+            {
+                root: 'agenthost/',
+                title: 'Agenthost Workshop',
+                links: [
+                    ['Workshop Home', 'agenthost/readme.md', 'house'],
+                    ['Module 0: Introduction', 'agenthost/module-00/README.md', 'presentation'],
+                    ['Module 1: Infrastructure', 'agenthost/module-01/README.md', 'blocks'],
+                    ['Module 2: Hosted Agent', 'agenthost/module-02/README.md', 'bot'],
+                    ['Module 3: AKS Sandbox', 'agenthost/module-03/README.md', 'container'],
+                    ['Module 4: ACA Sandbox', 'agenthost/module-04/README.md', 'box'],
+                    ['Module 5: Wrap-up', 'agenthost/module-05/README.md', 'circle-check-big']
+                ]
+            },
+            {
+                root: 'anyscale-on-aks/',
+                title: 'Anyscale on AKS',
+                links: [
+                    ['English Guide', 'anyscale-on-aks/README.md', 'book-open'],
+                    ['中文指南', 'anyscale-on-aks/README_CN.md', 'languages']
+                ]
+            },
+            {
+                root: 'azmon-export-to-prometheus/',
+                title: 'Azure Metrics Export',
+                links: [
+                    ['Prometheus + Grafana', 'azmon-export-to-prometheus/README.md', 'chart-no-axes-combined']
+                ]
+            },
+            {
+                root: 'azure-ai-infrastructure-workshop/',
+                title: 'AI Infrastructure Workshop',
+                links: [
+                    ['Workshop Home', 'azure-ai-infrastructure-workshop/README.md', 'house'],
+                    ['Lab 00: Preflight', 'azure-ai-infrastructure-workshop/labs/lab-00-preflight/README.md', 'clipboard-check'],
+                    ['Lab 01: Shared Infrastructure', 'azure-ai-infrastructure-workshop/labs/lab-01-shared-infrastructure/README.md', 'blocks'],
+                    ['Lab 02: KAITO Inference', 'azure-ai-infrastructure-workshop/labs/lab-02-kaito-inference/README.md', 'play'],
+                    ['Lab 03: KAITO Fine-tuning', 'azure-ai-infrastructure-workshop/labs/lab-03-kaito-fine-tuning/README.md', 'sliders-horizontal'],
+                    ['Lab 04: Anyscale on Azure', 'azure-ai-infrastructure-workshop/labs/lab-04-anyscale-on-azure/README.md', 'cloud'],
+                    ['Lab 05: Ray Data', 'azure-ai-infrastructure-workshop/labs/lab-05-anyscale-ray-data/README.md', 'database'],
+                    ['Lab 06: Ray Serve', 'azure-ai-infrastructure-workshop/labs/lab-06-anyscale-ray-serve/README.md', 'server'],
+                    ['Lab 07: Ray Train', 'azure-ai-infrastructure-workshop/labs/lab-07-anyscale-ray-train/README.md', 'brain-circuit'],
+                    ['Lab 08: Foundry Compute', 'azure-ai-infrastructure-workshop/labs/lab-08-foundry-managed-compute/README.md', 'cpu'],
+                    ['Lab 09: Fireworks AI', 'azure-ai-infrastructure-workshop/labs/lab-09-fireworks-ai-foundry/README.md', 'sparkles'],
+                    ['Lab 10: Observability', 'azure-ai-infrastructure-workshop/labs/lab-10-observability-comparison/README.md', 'activity']
+                ]
+            },
+            {
+                root: 'istio-on-aks/',
+                title: 'Istio on AKS',
+                links: [
+                    ['Monitoring Guide', 'istio-on-aks/monitoring/README.md', 'network']
+                ]
+            }
+        ];
 
-        if (isAgenthostDocument) {
-            document.body.classList.add('agenthost-view');
-            document.querySelector('.sidebar').hidden = false;
+        function createSidebarLink(label, path, icon) {
+            const link = document.createElement('a');
+            link.className = 'sidebar-link';
+            link.dataset.file = path;
+            link.href = `markdown-viewer.html?file=${encodeURIComponent(path)}`;
+            link.innerHTML = `<i data-lucide="${icon}"></i><span></span>`;
+            link.querySelector('span').textContent = label;
+            return link;
         }
 
-        document.querySelectorAll('.sidebar-link[data-file]').forEach((link) => {
-            if (link.dataset.file.toLowerCase() === file?.toLowerCase()) {
-                link.setAttribute('aria-current', 'page');
-            }
-        });
+        function markCurrentSidebarLink(links) {
+            const currentFile = file?.toLowerCase();
+            const exactMatch = links.find((link) => link.dataset.file.toLowerCase() === currentFile);
+            const closestParent = links
+                .filter((link) => currentFile?.startsWith(link.dataset.file.toLowerCase().replace(/[^/]+$/, '')))
+                .sort((first, second) => second.dataset.file.length - first.dataset.file.length)[0];
+            (exactMatch ?? closestParent)?.setAttribute('aria-current', 'page');
+        }
+
+        function configureSidebar() {
+            const section = navigationSections.find(({ root }) => file?.toLowerCase().startsWith(root.toLowerCase()));
+            if (!section) return;
+
+            const sidebar = document.querySelector('.sidebar');
+            const links = sidebar.querySelector('.sidebar-links');
+            document.body.classList.add('sidebar-view');
+            sidebar.hidden = false;
+            sidebar.querySelector('.sidebar-title').textContent = section.title;
+            const localLinks = section.links.map(([label, path, icon]) => createSidebarLink(label, path, icon));
+            localLinks.forEach((link) => links.append(link));
+            markCurrentSidebarLink(localLinks);
+
+            const divider = document.createElement('hr');
+            divider.className = 'sidebar-divider';
+            links.append(divider);
+
+            const repositoryLink = document.createElement('a');
+            repositoryLink.className = 'sidebar-link';
+            repositoryLink.href = repositoryUrl;
+            repositoryLink.target = '_blank';
+            repositoryLink.rel = 'noopener noreferrer';
+            repositoryLink.innerHTML = '<i data-lucide="github"></i><span>GitHub Repository</span>';
+            links.append(repositoryLink);
+        }
+
+        configureSidebar();
 
         function isAllowedMarkdownPath(path) {
             const url = new URL(path, siteRoot);
