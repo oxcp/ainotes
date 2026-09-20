@@ -1,5 +1,7 @@
 # AI Notes
 
+**English** | [简体中文](README_CN.md)
+
 A collection of hands-on workshops, deployment guides, technical deep dives, and model evaluations focused on AI infrastructure and cloud-native workloads on Azure.
 
 The repository combines runnable scripts and infrastructure templates with detailed documentation. Topics include hosting AI agents, distributed inference and fine-tuning, AKS networking and observability, and comparisons of foundation-model capabilities.
