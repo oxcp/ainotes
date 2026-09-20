@@ -4,7 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>AI Notes</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11/styles/github.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js"></script>
     <style>
         :root { color-scheme: light; --ink: #1f2328; --muted: #59636e; --border: #d1d9e0; --link: #0969da; --surface: #ffffff; --canvas: #f6f8fa; }
         * { box-sizing: border-box; }
@@ -13,23 +17,25 @@
         .toolbar-inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; max-width: 1040px; margin: 0 auto; padding: .75rem 1.25rem; }
         .back { color: var(--link); text-decoration: none; font-weight: 600; }
         .path { overflow: hidden; color: var(--muted); font-size: .875rem; text-overflow: ellipsis; white-space: nowrap; }
-        main { max-width: 980px; min-height: calc(100vh - 58px); margin: 0 auto; padding: 2.5rem 2rem 4rem; background: var(--surface); }
-        h1, h2, h3, h4, h5, h6 { margin-top: 1.5em; margin-bottom: .6em; line-height: 1.25; }
-        h1, h2 { padding-bottom: .3em; border-bottom: 1px solid var(--border); }
-        h1 { margin-top: 0; font-size: 2rem; }
-        h2 { font-size: 1.5rem; }
-        a { color: var(--link); }
-        img, video { max-width: 100%; height: auto; }
-        table { display: block; width: 100%; overflow-x: auto; border-spacing: 0; border-collapse: collapse; }
-        th, td { padding: .5rem .75rem; border: 1px solid var(--border); }
-        th { background: var(--canvas); }
-        blockquote { margin-left: 0; padding: 0 1rem; color: var(--muted); border-left: .25rem solid var(--border); }
-        code { padding: .15em .35em; border-radius: 4px; background: var(--canvas); font-family: "Cascadia Code", Consolas, monospace; }
-        pre { overflow-x: auto; padding: 1rem; border-radius: 6px; background: var(--canvas); }
-        pre code { padding: 0; background: transparent; }
+        main.markdown-body { max-width: 980px; min-height: calc(100vh - 58px); margin: 0 auto; padding: 2.5rem 2rem 4rem; color: var(--ink); background: var(--surface); }
+        .markdown-body pre { position: relative; padding-top: 2.75rem; }
+        .markdown-body pre code.hljs { padding: 0; background: transparent; }
+        .markdown-body .heading-anchor { margin-left: -1.2em; padding-right: .3em; color: var(--muted); text-decoration: none; opacity: 0; }
+        .markdown-body h1:hover .heading-anchor,
+        .markdown-body h2:hover .heading-anchor,
+        .markdown-body h3:hover .heading-anchor,
+        .markdown-body h4:hover .heading-anchor,
+        .markdown-body h5:hover .heading-anchor,
+        .markdown-body h6:hover .heading-anchor { opacity: 1; }
+        .copy-code { position: absolute; top: .5rem; right: .5rem; display: inline-grid; width: 2rem; height: 2rem; padding: 0; place-items: center; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; }
+        .copy-code:hover { color: var(--ink); background: var(--canvas); }
+        .copy-code svg { width: 1rem; height: 1rem; }
+        .markdown-body video { display: block; width: min(100%, 900px); max-height: 70vh; margin: 1rem 0; background: #000; border-radius: 6px; }
+        .markdown-body .task-list-item { list-style: none; }
+        .markdown-body .task-list-item input { margin: 0 .45em 0 -1.4em; vertical-align: middle; }
         .status { color: var(--muted); }
         .error { color: #cf222e; }
-        @media (max-width: 680px) { main { padding: 1.5rem 1rem 3rem; } .toolbar-inner { padding-inline: 1rem; } }
+        @media (max-width: 680px) { main.markdown-body { padding: 1.5rem 1rem 3rem; } .toolbar-inner { padding-inline: 1rem; } }
     </style>
 </head>
 <body>
@@ -39,7 +45,7 @@
             <span class="path" id="document-path"></span>
         </div>
     </nav>
-    <main id="content"><p class="status">Loading document...</p></main>
+    <main class="markdown-body" id="content"><p class="status">Loading document...</p></main>
     <script>
         const content = document.getElementById('content');
         const documentPath = document.getElementById('document-path');
@@ -71,6 +77,96 @@
             });
         }
 
+        function addHeadingAnchors() {
+            const usedIds = new Set();
+            content.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach((heading) => {
+                const baseId = heading.textContent.trim().toLowerCase()
+                    .replace(/[^\p{L}\p{N}\s-]/gu, '')
+                    .replace(/\s+/g, '-') || 'section';
+                let id = baseId;
+                let suffix = 1;
+                while (usedIds.has(id)) id = `${baseId}-${suffix++}`;
+                usedIds.add(id);
+                heading.id = id;
+
+                const anchor = document.createElement('a');
+                anchor.className = 'heading-anchor';
+                anchor.href = `#${id}`;
+                anchor.setAttribute('aria-label', `Link to ${heading.textContent}`);
+                anchor.textContent = '#';
+                heading.prepend(anchor);
+            });
+        }
+
+        function styleTaskLists() {
+            content.querySelectorAll('li > input[type="checkbox"]').forEach((checkbox) => {
+                checkbox.parentElement.classList.add('task-list-item');
+                checkbox.closest('ul')?.classList.add('contains-task-list');
+            });
+        }
+
+        function addCodeCopyButtons() {
+            async function copyText(code) {
+                try {
+                    await navigator.clipboard.writeText(code.textContent);
+                    return;
+                } catch {
+                    const selection = window.getSelection();
+                    const range = document.createRange();
+                    range.selectNodeContents(code);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    document.execCommand('copy');
+                    selection.removeAllRanges();
+                }
+            }
+
+            content.querySelectorAll('pre > code').forEach((code) => {
+                window.hljs?.highlightElement(code);
+                const button = document.createElement('button');
+                button.className = 'copy-code';
+                button.type = 'button';
+                button.title = 'Copy code';
+                button.setAttribute('aria-label', 'Copy code');
+                button.innerHTML = window.lucide ? '<i data-lucide="copy"></i>' : 'Copy';
+                button.addEventListener('click', async () => {
+                    await copyText(code);
+                    button.title = 'Copied';
+                    button.setAttribute('aria-label', 'Copied');
+                    button.innerHTML = window.lucide ? '<i data-lucide="check"></i>' : 'Copied';
+                    window.lucide?.createIcons({ nodes: [button] });
+                    window.setTimeout(() => {
+                        button.title = 'Copy code';
+                        button.setAttribute('aria-label', 'Copy code');
+                        button.innerHTML = window.lucide ? '<i data-lucide="copy"></i>' : 'Copy';
+                        window.lucide?.createIcons({ nodes: [button] });
+                    }, 1600);
+                });
+                code.parentElement.append(button);
+            });
+            window.lucide?.createIcons();
+        }
+
+        function embedVideos() {
+            content.querySelectorAll('p').forEach((paragraph) => {
+                const children = [...paragraph.childNodes].filter((node) => node.nodeType !== Node.TEXT_NODE || node.textContent.trim());
+                if (children.length !== 1 || children[0].nodeName !== 'A') return;
+
+                const link = children[0];
+                const url = new URL(link.href);
+                const isGitHubAttachment = url.hostname === 'github.com' && url.pathname.startsWith('/user-attachments/assets/');
+                const isVideoFile = /\.(?:mp4|webm|ogg)$/i.test(url.pathname);
+                if (!isGitHubAttachment && !isVideoFile) return;
+
+                const video = document.createElement('video');
+                video.controls = true;
+                video.preload = 'metadata';
+                video.src = link.href;
+                video.textContent = 'Your browser does not support embedded video.';
+                paragraph.replaceWith(video);
+            });
+        }
+
         async function renderDocument() {
             if (!file || !isAllowedMarkdownPath(file)) {
                 throw new Error('Invalid or missing Markdown document path.');
@@ -81,14 +177,27 @@
             const response = await fetch(sourceUrl);
             if (!response.ok) throw new Error(`Unable to load document (${response.status}).`);
 
+            marked.setOptions({ gfm: true, breaks: false });
             content.innerHTML = marked.parse(await response.text());
             resolveDocumentLinks(sourceUrl);
+            embedVideos();
+            styleTaskLists();
             const heading = content.querySelector('h1, h2');
             if (heading) document.title = `${heading.textContent} - AI Notes`;
+            addHeadingAnchors();
+            addCodeCopyButtons();
+
+            if (window.location.hash) {
+                document.getElementById(decodeURIComponent(window.location.hash.slice(1)))?.scrollIntoView();
+            }
         }
 
         renderDocument().catch((error) => {
-            content.innerHTML = `<p class="error">${error.message}</p>`;
+            content.replaceChildren();
+            const message = document.createElement('p');
+            message.className = 'error';
+            message.textContent = error.message;
+            content.append(message);
         });
     </script>
 </body>
