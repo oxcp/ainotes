@@ -14,10 +14,21 @@
         * { box-sizing: border-box; }
         body { margin: 0; color: var(--ink); background: var(--canvas); font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.6; }
         .toolbar { position: sticky; top: 0; z-index: 1; border-bottom: 1px solid var(--border); background: rgba(255, 255, 255, .96); }
-        .toolbar-inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; max-width: 1040px; margin: 0 auto; padding: .75rem 1.25rem; }
+        .toolbar-inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; max-width: 1280px; margin: 0 auto; padding: .75rem 1.25rem; }
         .back { color: var(--link); text-decoration: none; font-weight: 600; }
         .path { overflow: hidden; color: var(--muted); font-size: .875rem; text-overflow: ellipsis; white-space: nowrap; }
-        main.markdown-body { max-width: 980px; min-height: calc(100vh - 58px); margin: 0 auto; padding: 2.5rem 2rem 4rem; color: var(--ink); background: var(--surface); }
+        .page-shell { max-width: 980px; min-height: calc(100vh - 58px); margin: 0 auto; background: var(--surface); }
+        .agenthost-view .page-shell { display: grid; grid-template-columns: 240px minmax(0, 980px); max-width: 1280px; }
+        .sidebar { position: sticky; top: 58px; align-self: start; height: calc(100vh - 58px); padding: 1.5rem 1rem; overflow-y: auto; background: var(--canvas); border-right: 1px solid var(--border); }
+        .sidebar-title { margin: 0 0 .75rem; padding: 0 .65rem; color: var(--muted); font-size: .75rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+        .sidebar-links { display: grid; gap: .25rem; }
+        .sidebar-link { display: flex; align-items: center; gap: .6rem; min-height: 2.25rem; padding: .45rem .65rem; color: var(--ink); font-size: .875rem; line-height: 1.3; text-decoration: none; border-radius: 6px; }
+        .sidebar-link:hover { background: #eaeef2; }
+        .sidebar-link[aria-current="page"] { color: var(--link); font-weight: 600; background: #ddf4ff; }
+        .sidebar-link svg { flex: 0 0 auto; width: 1rem; height: 1rem; color: var(--muted); }
+        .sidebar-link[aria-current="page"] svg { color: var(--link); }
+        .sidebar-divider { margin: .75rem .65rem; border: 0; border-top: 1px solid var(--border); }
+        main.markdown-body { width: 100%; min-width: 0; min-height: calc(100vh - 58px); margin: 0; padding: 2.5rem 2rem 4rem; color: var(--ink); background: var(--surface); }
         .markdown-body pre { position: relative; padding-top: 2.75rem; }
         .markdown-body pre code.hljs { padding: 0; background: transparent; }
         .markdown-body .heading-anchor { margin-left: -1.2em; padding-right: .3em; color: var(--muted); text-decoration: none; opacity: 0; }
@@ -48,7 +59,16 @@
         .markdown-body .task-list-item input { margin: 0 .45em 0 -1.4em; vertical-align: middle; }
         .status { color: var(--muted); }
         .error { color: #cf222e; }
-        @media (max-width: 680px) { main.markdown-body { padding: 1.5rem 1rem 3rem; } .toolbar-inner { padding-inline: 1rem; } }
+        @media (max-width: 800px) {
+            .page-shell { display: block; }
+            .sidebar { position: static; width: 100%; height: auto; padding: .75rem 1rem; overflow: hidden; border-right: 0; border-bottom: 1px solid var(--border); }
+            .sidebar-title { margin-bottom: .4rem; padding: 0; }
+            .sidebar-links { display: flex; padding-bottom: .25rem; overflow-x: auto; scrollbar-width: thin; }
+            .sidebar-link { flex: 0 0 auto; white-space: nowrap; }
+            .sidebar-divider { display: none; }
+            main.markdown-body { padding: 1.5rem 1rem 3rem; }
+            .toolbar-inner { padding-inline: 1rem; }
+        }
     </style>
 </head>
 <body>
@@ -58,12 +78,40 @@
             <span class="path" id="document-path"></span>
         </div>
     </nav>
-    <main class="markdown-body" id="content"><p class="status">Loading document...</p></main>
+    <div class="page-shell">
+        <aside class="sidebar" aria-label="Agenthost workshop navigation" hidden>
+            <p class="sidebar-title">Agenthost Workshop</p>
+            <nav class="sidebar-links">
+                <a class="sidebar-link" data-file="agenthost/readme.md" href="markdown-viewer.html?file=agenthost/readme.md"><i data-lucide="house"></i><span>Workshop Home</span></a>
+                <a class="sidebar-link" data-file="agenthost/module-00/README.md" href="markdown-viewer.html?file=agenthost/module-00/README.md"><i data-lucide="presentation"></i><span>Module 0: Introduction</span></a>
+                <a class="sidebar-link" data-file="agenthost/module-01/README.md" href="markdown-viewer.html?file=agenthost/module-01/README.md"><i data-lucide="blocks"></i><span>Module 1: Infrastructure</span></a>
+                <a class="sidebar-link" data-file="agenthost/module-02/README.md" href="markdown-viewer.html?file=agenthost/module-02/README.md"><i data-lucide="bot"></i><span>Module 2: Hosted Agent</span></a>
+                <a class="sidebar-link" data-file="agenthost/module-03/README.md" href="markdown-viewer.html?file=agenthost/module-03/README.md"><i data-lucide="container"></i><span>Module 3: AKS Sandbox</span></a>
+                <a class="sidebar-link" data-file="agenthost/module-04/README.md" href="markdown-viewer.html?file=agenthost/module-04/README.md"><i data-lucide="box"></i><span>Module 4: ACA Sandbox</span></a>
+                <a class="sidebar-link" data-file="agenthost/module-05/README.md" href="markdown-viewer.html?file=agenthost/module-05/README.md"><i data-lucide="circle-check-big"></i><span>Module 5: Wrap-up</span></a>
+                <hr class="sidebar-divider">
+                <a class="sidebar-link" href="https://github.com/oxcp/ainotes/" target="_blank" rel="noopener noreferrer"><i data-lucide="github"></i><span>GitHub Repository</span></a>
+            </nav>
+        </aside>
+        <main class="markdown-body" id="content"><p class="status">Loading document...</p></main>
+    </div>
     <script>
         const content = document.getElementById('content');
         const documentPath = document.getElementById('document-path');
         const siteRoot = new URL('./', window.location.href);
         const file = new URLSearchParams(window.location.search).get('file');
+        const isAgenthostDocument = /^agenthost\//i.test(file ?? '');
+
+        if (isAgenthostDocument) {
+            document.body.classList.add('agenthost-view');
+            document.querySelector('.sidebar').hidden = false;
+        }
+
+        document.querySelectorAll('.sidebar-link[data-file]').forEach((link) => {
+            if (link.dataset.file.toLowerCase() === file?.toLowerCase()) {
+                link.setAttribute('aria-current', 'page');
+            }
+        });
 
         function isAllowedMarkdownPath(path) {
             const url = new URL(path, siteRoot);
