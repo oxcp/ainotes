@@ -12,6 +12,9 @@ properties:
   environmentId: /subscriptions/<subscriptionId>/resourceGroups/rg-agenthost-workshop/providers/Microsoft.App/managedEnvironments/aca-env-agenthost
   workloadProfileName: sandbox
   configuration:
+    secrets:
+      - name: horizondb-write-url
+        value: <HorizonDB PostgreSQL connection string>
     ingress:
       external: true
       targetPort: 8080
@@ -34,6 +37,8 @@ properties:
             value: stcagenthost
           - name: AGENT_APIM_ENDPOINT
             value: https://apim-agenthost.azure-api.net
+          - name: WRITE_DATABASE_URL
+            secretRef: horizondb-write-url
           - name: AZURE_CLIENT_ID
             value: <identityClientId>
         probes:

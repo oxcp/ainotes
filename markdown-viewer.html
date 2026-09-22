@@ -60,13 +60,13 @@
         .status { color: var(--muted); }
         .error { color: #cf222e; }
         @media (max-width: 800px) {
-            .page-shell { display: block; }
+            .sidebar-view .page-shell { display: block; }
             .sidebar { position: static; width: 100%; height: auto; padding: .75rem 1rem; overflow: hidden; border-right: 0; border-bottom: 1px solid var(--border); }
             .sidebar-title { margin-bottom: .4rem; padding: 0; }
             .sidebar-links { display: flex; padding-bottom: .25rem; overflow-x: auto; scrollbar-width: thin; }
             .sidebar-link { flex: 0 0 auto; white-space: nowrap; }
             .sidebar-divider { display: none; }
-            main.markdown-body { padding: 1.5rem 1rem 3rem; }
+            main.markdown-body { max-width: 100%; overflow-wrap: anywhere; padding: 1.5rem 1rem 3rem; }
             .toolbar-inner { padding-inline: 1rem; }
         }
     </style>

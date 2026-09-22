@@ -2,29 +2,33 @@
 # dynamic-session-invoke.sh — Minimal invocation example for the optional Dynamic Sessions learning track
 #
 # Calls a custom-container Dynamic Session endpoint using session identifier routing.
-# Default target endpoint: /health
+# Default target endpoint: /analyze
 #
 # Usage:
 #   ./dynamic-session-invoke.sh
 #   ./dynamic-session-invoke.sh <identifier>
-#   ENDPOINT_PATH=/api/projects/demo/openai/v1/responses METHOD=POST BODY='{"messages":[{"role":"user","content":"hello"}]}' ./dynamic-session-invoke.sh my-session-1
+#   BODY='{"requirement":"Compare regional growth","business_data":"region,growth\nEast,12\nWest,7"}' ./dynamic-session-invoke.sh my-session-1
 #
 # Optional env vars:
 #   RESOURCE_GROUP=rg-agenthost-workshop
 #   SESSION_POOL_NAME=sessionpool-agenthost-<SN>
-#   ENDPOINT_PATH=/health
+#   ENDPOINT_PATH=/analyze
 #   METHOD=POST
-#   BODY='{}'
+#   BODY='{"requirement":"...","business_data":"..."}'
 #   TOKEN_RESOURCE=https://dynamicsessions.io
 
 set -euo pipefail
 
 RESOURCE_GROUP="${RESOURCE_GROUP:-rg-agenthost-workshop}"
-ENDPOINT_PATH="${ENDPOINT_PATH:-/health}"
+ENDPOINT_PATH="${ENDPOINT_PATH:-/analyze}"
 METHOD="${METHOD:-POST}"
 BODY="${BODY:-}"
 TOKEN_RESOURCE="${TOKEN_RESOURCE:-https://dynamicsessions.io}"
 IDENTIFIER="${1:-test-session}"
+
+if [ -z "$BODY" ]; then
+  BODY='{"requirement":"Compare regional growth","business_data":"region,growth\nEast,12\nWest,7"}'
+fi
 
 # Get deployment suffix (SN) to derive default session pool name.
 SN=$(az group show --resource-group "$RESOURCE_GROUP" --query "tags.deploymentSN" --output tsv 2>/dev/null || echo "")

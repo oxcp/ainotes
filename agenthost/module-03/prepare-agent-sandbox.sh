@@ -117,8 +117,9 @@ kubectl wait --for=condition=Ready pod -l app=agent-sandbox-controller -n agent-
 echo "==> [6/8] Creating namespace"
 kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
 
-echo "==> [7/8] Creating runtime secrets for APIM and the model"
+echo "==> [7/8] Creating runtime secrets for APIM, the model, and HorizonDB"
 APIM_GATEWAY_URL="https://${APIM_NAME}.azure-api.net/foundry"
+: "${WRITE_DATABASE_URL:?Set WRITE_DATABASE_URL to the HorizonDB PostgreSQL connection string}"
 
 kubectl create secret generic agent-config \
   --namespace "$NAMESPACE" \
@@ -126,8 +127,8 @@ kubectl create secret generic agent-config \
   --from-literal=blob-container="agent-state" \
   --from-literal=apim-endpoint="$APIM_GATEWAY_URL" \
   --from-literal=llm-model="$LLM_MODEL" \
+  --from-literal=horizondb-write-url="$WRITE_DATABASE_URL" \
   --dry-run=client -o yaml | kubectl apply -f -
-# --from-literal=foundry-project-endpoint="$FOUNDRY_PROJECT_ENDPOINT" \
   
 echo "==> [8/8] Configuring Blob CSI persistence and preparing the Sandbox manifest"
 # The node-side Blob CSI driver authenticates with the kubelet identity. The

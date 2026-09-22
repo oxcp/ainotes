@@ -56,6 +56,40 @@ param modelDeploymentName string = 'gpt-5.4-mini'
 @description('Model version to deploy')
 param modelVersion string = '2026-03-17'
 
+@description('Azure region for HorizonDB. HorizonDB is not currently available in eastus2.')
+param horizonDbLocation string = 'eastus'
+
+@description('HorizonDB cluster name prefix')
+param horizonDbClusterName string = 'hdb-agenthost'
+
+@description('HorizonDB administrator login name')
+param horizonDbAdministratorLogin string = 'agentadmin'
+
+@secure()
+@description('HorizonDB administrator password (8-128 characters)')
+@minLength(8)
+@maxLength(128)
+param horizonDbAdministratorPassword string
+
+@description('HorizonDB PostgreSQL major version')
+param horizonDbVersion string = '17'
+
+@description('Number of vCores provisioned for HorizonDB')
+@minValue(1)
+@maxValue(96)
+param horizonDbVCores int = 4
+
+@description('Number of HorizonDB replicas')
+@minValue(1)
+param horizonDbReplicaCount int = 1
+
+@allowed([
+  'BestEffort'
+  'Strict'
+])
+@description('How HorizonDB replicas are placed across availability zones')
+param horizonDbZonePlacementPolicy string = 'BestEffort'
+
 @description('random deployment suffix from input parameters')
 //param deploymentSN string = utcNow('HHmmssfff')
 param deploymentSN string
@@ -66,6 +100,7 @@ var identityNameWithSN = '${identityName}-${deploymentSN}'
 var keyVaultNameWithSN = '${keyVaultName}-${deploymentSN}'
 var acrNameWithSN = '${acrName}${deploymentSN}'
 var foundryResourceNameWithSN = '${foundryResourceName}-${deploymentSN}'
+var horizonDbClusterNameWithSN = '${horizonDbClusterName}-${deploymentSN}'
 
 // ── Resource Group ──────────────────────────────────────────────────────────
 resource rg 'Microsoft.Resources/resourceGroups@2023-07-01' = {
@@ -96,6 +131,14 @@ module coreResources 'core.bicep' = {
     azdEnvName: azdEnvName
     modelDeploymentName: modelDeploymentName
     modelVersion: modelVersion
+    horizonDbLocation: horizonDbLocation
+    horizonDbClusterName: horizonDbClusterNameWithSN
+    horizonDbAdministratorLogin: horizonDbAdministratorLogin
+    horizonDbAdministratorPassword: horizonDbAdministratorPassword
+    horizonDbVersion: horizonDbVersion
+    horizonDbVCores: horizonDbVCores
+    horizonDbReplicaCount: horizonDbReplicaCount
+    horizonDbZonePlacementPolicy: horizonDbZonePlacementPolicy
   }
 }
 
@@ -112,6 +155,9 @@ output foundryProjectName string = coreResources.outputs.foundryProjectName
 output foundryProjectId string = coreResources.outputs.foundryProjectId
 output foundryProjectEndpoint string = coreResources.outputs.foundryProjectEndpoint
 output modelDeploymentName string = coreResources.outputs.modelDeploymentName
+output horizonDbClusterName string = coreResources.outputs.horizonDbClusterName
+output horizonDbFqdn string = coreResources.outputs.horizonDbFqdn
+output horizonDbConnectionSecretName string = coreResources.outputs.horizonDbConnectionSecretName
 output apimFoundryBackendName string = coreResources.outputs.apimFoundryBackendName
 output apimFoundryGatewayUrl string = coreResources.outputs.apimFoundryGatewayUrl
 output deploymentStatus object = coreResources.outputs.deploymentStatus

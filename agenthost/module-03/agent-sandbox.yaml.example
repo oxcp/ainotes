@@ -92,6 +92,11 @@ spec:
                 secretKeyRef:
                   name: agent-config
                   key: llm-model
+            - name: WRITE_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: agent-config
+                  key: horizondb-write-url
             # LLM_API_KEY intentionally unset: the app uses Workload Identity
             # (DefaultAzureCredential). The UAMI has the "Azure AI User" role on
             # the Foundry account (Module 1) to create/run agents.

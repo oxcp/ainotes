@@ -1,5 +1,12 @@
 # Module 2 — Solution A: Foundry Hosted Agent (30 min)
 
+> **Business-analysis workflow:** the hosted endpoint is only a protocol host and
+> coordinator. Reader, writer, reviewer, and writer-revision roles run as a local
+> LangGraph graph in `agent-src/analysis_workflow.py`; none is registered as a
+> Foundry project agent. Set `WRITE_DATABASE_URL` to a HorizonDB PostgreSQL primary
+> connection string before deployment. Evidence, draft, review, and final report
+> are stored as JSONB rows in `business_analysis_artifact`.
+
 [⬆ Back to Workshop Home](../readme.md)
 
 ## Overview
@@ -284,8 +291,9 @@ https://github.com/user-attachments/assets/5cf37256-1fc1-43e4-bf64-5d1108b893a0
 | File | Description |
 |---|---|
 | `azure.yaml` | Foundry agent manifest used by `azd ai agent init` (references `agent-src`) |
-| `agent-src/main.py` | Agent, served with `ResponsesHostServer`; `build_client()` selects `FoundryChatClient` (direct) or `OpenAIChatClient` → APIM gateway based on `MODEL_ROUTING` |
-| `agent-src/requirements.txt` | Python dependencies for the hosted agent (both `agent-framework-foundry` and `agent-framework-openai`) |
+| `agent-src/main.py` | Responses protocol coordinator that invokes the local LangGraph workflow tool |
+| `agent-src/analysis_workflow.py` | Reader → writer → reviewer → writer-revision graph and HorizonDB repository |
+| `agent-src/requirements.txt` | Agent Framework, LangGraph, OpenAI, identity, and PostgreSQL dependencies |
 | `agent-src/Dockerfile` | Container build for the hosted agent runtime |
 | `ai-gateway-inbound-policy.xml` | `validate-jwt` fragment to paste into the auto-created AI-Gateway API (locks it to the Foundry project managed identity — see the optional section above) |
 ---

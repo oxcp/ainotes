@@ -12,6 +12,8 @@
 # Optional overrides (export before running):
 #   RESOURCE_GROUP   default: rg-agenthost-workshop
 #   LOCATION         default: eastus2
+#   HORIZONDB_LOCATION default: eastus
+#   HORIZONDB_ADMIN_PASSWORD required; prompted securely when omitted
 #   DEPLOYMENT_SN    default: random 6-hex suffix (openssl rand -hex 3)
 # Any other main.bicep parameter can be overridden by appending
 # `key=value` pairs as script arguments, e.g.:
@@ -24,6 +26,21 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 RESOURCE_GROUP="${RESOURCE_GROUP:-rg-agenthost-workshop}"
 LOCATION="${LOCATION:-eastus2}"
+HORIZONDB_LOCATION="${HORIZONDB_LOCATION:-eastus}"
+
+if [[ -z "${HORIZONDB_ADMIN_PASSWORD:-}" ]]; then
+  if [[ ! -t 0 ]]; then
+    echo "HORIZONDB_ADMIN_PASSWORD must be set when setup.sh is run non-interactively." >&2
+    exit 1
+  fi
+  read -r -s -p "HorizonDB administrator password: " HORIZONDB_ADMIN_PASSWORD
+  echo ""
+fi
+
+if (( ${#HORIZONDB_ADMIN_PASSWORD} < 8 || ${#HORIZONDB_ADMIN_PASSWORD} > 128 )); then
+  echo "HorizonDB administrator password must contain 8-128 characters." >&2
+  exit 1
+fi
 
 # Random deployment suffix — feeds main.bicep's deploymentSN param, which
 # suffixes globally-unique resource names (matches README's openssl rand -hex 3).
@@ -41,6 +58,7 @@ BICEP_PATH="./main.bicep"
 echo "==> Deploying main.bicep (single-step Bicep provisioning)"
 echo "    Resource Group  : $RESOURCE_GROUP"
 echo "    Location        : $LOCATION"
+echo "    HorizonDB region: $HORIZONDB_LOCATION"
 echo "    Deployment SN   : $DEPLOYMENT_SN"
 echo "    Deployment name : $DEPLOYMENT_NAME"
 echo "    Bicep path      : $BICEP_PATH"
@@ -50,9 +68,12 @@ az deployment sub create \
   --name "$DEPLOYMENT_NAME" \
   --location "$LOCATION" \
   --template-file "$BICEP_PATH" \
+    --parameters @main.parameters.json \
   --parameters \
       resourceGroupName="$RESOURCE_GROUP" \
       location="$LOCATION" \
+      horizonDbLocation="$HORIZONDB_LOCATION" \
+      horizonDbAdministratorPassword="$HORIZONDB_ADMIN_PASSWORD" \
       deploymentSN="$DEPLOYMENT_SN" \
       "$@" \
   --output none

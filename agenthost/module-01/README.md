@@ -11,6 +11,7 @@ Provision the shared Azure infrastructure used by all three agent hosting soluti
 - Azure API Management
 - Azure Key Vault
 - Azure Container Registry
+- Azure HorizonDB for PostgreSQL 17
 - Entra ID App Registration
 - User-Assigned Managed Identity
 - Microsoft Foundry (AIServices) account
@@ -52,7 +53,10 @@ The Foundry account ships with:
 ```bash
 export RESOURCE_GROUP="rg-agenthost-workshop"
 export LOCATION="eastus2"
+export HORIZONDB_LOCATION="eastus"
 ```
+
+HorizonDB is deployed separately in `eastus`, because it is not currently available in `eastus2` for this workshop subscription. `setup.sh` prompts for the administrator password without echoing it. For non-interactive deployment, set `HORIZONDB_ADMIN_PASSWORD` in the shell environment; do not store it in `main.parameters.json`.
 
 ---
 
@@ -65,7 +69,7 @@ chmod +x setup.sh
 ./setup.sh
 ```
 > [!TIP]
-> Before running `setup.sh`, you can optionally override parameters in `main.bicep` as needed.
+> Before running `setup.sh`, you can optionally override the non-secret defaults in `main.parameters.json` or append `key=value` arguments. The HorizonDB password must contain 8-128 characters.
 
 <!-- Or run the equivalent Bicep deployment manually:
 
@@ -175,7 +179,8 @@ After the template deployed, you have a resource group created with below resour
 > 1. **User-assigned managed identity (UAMI)** for workloads in later modules. It receives access to Foundry inference and the agent-state storage account.
 > 2. **Azure Storage account** using Standard LRS and the Cool access tier, with HTTPS-only access, TLS 1.2, and public blob access disabled. Blob versioning is enabled, and a private `agent-state` container is created for durable agent state.
 > 3. **Azure Key Vault** using the Standard tier, with RBAC authorization, soft delete, purge protection, and public network access enabled.
-> 4. **Azure Container Registry (ACR)** using the Standard tier, with the administrator account disabled.
+> 4. **Azure HorizonDB** PostgreSQL 17 cluster in `eastus`, with an Azure-services firewall rule on `DefaultPool`. Its `WRITE_DATABASE_URL`-compatible connection string is stored as the `WRITE-DATABASE-URL` Key Vault secret, and the workload UAMI receives **Key Vault Secrets User** access.
+> 5. **Azure Container Registry (ACR)** using the Standard tier, with the administrator account disabled.
 > 5. **Microsoft Foundry account** `foundry-agenthost-<deploymentSN>` of kind `AIServices`, with a system-assigned managed identity, local key authentication disabled, project management enabled, and public network access enabled.
 > 6. **Foundry project** `maf-agent-prj`, configured as the account's default and associated project and assigned its own system-assigned managed identity.
 > 7. **Model deployment** `gpt-5.4-mini`, using the specified model version, the Global Standard SKU with capacity 50, automatic upgrades to new default versions, and the `Microsoft.DefaultV2` RAI policy.
@@ -194,6 +199,11 @@ After the template deployed, you have a resource group created with below resour
 > az deployment sub show \
 >   --name main-$SN \
 >   --query "properties.outputs.{endpoint:foundryProjectEndpoint.value, model:modelDeploymentName.value, gateway:apimFoundryGatewayUrl.value, backend:apimFoundryBackendName.value}"
+>
+> az keyvault secret show \
+>   --vault-name "kv-agenthost-$SN" \
+>   --name WRITE-DATABASE-URL \
+>   --query value --output tsv
 > ```
 
 ---
@@ -298,8 +308,9 @@ To configure APIM as the Foundry project's native AI gateway, complete the follo
 | File | Description |
 |---|---|
 | `setup.sh` | One-step wrapper that runs the `main.bicep` subscription deployment (`az deployment sub create`) and prints the outputs |
+| `main.parameters.json` | Non-secret HorizonDB deployment defaults; the administrator password is intentionally omitted |
 | `main.bicep` | Bicep subscription-scoped entry point (creates Resource Group, calls core.bicep) |
-| `core.bicep` | Bicep IaC template for all shared Azure resources (Storage, APIM Basic v2, Key Vault, ACR, UAMI) **and** the Foundry stack (account, project, `gpt-5.4-mini`, Defender for AI, APIM AI gateway) |
+| `core.bicep` | Bicep IaC template for all shared Azure resources (Storage, APIM Basic v2, Key Vault, HorizonDB, ACR, UAMI) **and** the Foundry stack (account, project, `gpt-5.4-mini`, Defender for AI, APIM AI gateway) |
 
 ---
 ## Next Step

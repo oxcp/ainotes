@@ -31,6 +31,31 @@ param modelDeploymentName string
 @description('Model version to deploy')
 param modelVersion string
 
+@description('Azure region for HorizonDB')
+param horizonDbLocation string
+
+@description('HorizonDB cluster name, already suffixed by main.bicep')
+param horizonDbClusterName string
+
+@description('HorizonDB administrator login name')
+param horizonDbAdministratorLogin string
+
+@secure()
+@description('HorizonDB administrator password')
+param horizonDbAdministratorPassword string
+
+@description('HorizonDB PostgreSQL major version')
+param horizonDbVersion string
+
+@description('Number of vCores provisioned for HorizonDB')
+param horizonDbVCores int
+
+@description('Number of HorizonDB replicas')
+param horizonDbReplicaCount int
+
+@description('How HorizonDB replicas are placed across availability zones')
+param horizonDbZonePlacementPolicy string
+
 // Cognitive Services OpenAI User — lets APIM's managed identity call Foundry
 // inference when the account has disableLocalAuth = true (keys disabled).
 // Includes the data action Microsoft.CognitiveServices/accounts/OpenAI/responses/*.
@@ -44,6 +69,11 @@ var foundryUserRoleId = '53ca6127-db72-4b80-b1b0-d745d6d5456d'
 // Storage Blob Data Contributor — lets the UAMI read/write agent state blobs
 // (the container app / sandbox / pod persists conversation state as JSON blobs).
 var storageBlobDataContributorRoleId = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+// Key Vault Secrets User — lets the workload UAMI read the HorizonDB connection
+// secret without granting permission to manage secrets or the vault.
+var keyVaultSecretsUserRoleId = '4633458b-17de-408a-b874-0445c86b69e6'
+var horizonDbDefaultPoolName = 'DefaultPool'
+var horizonDbConnectionSecretName = 'WRITE-DATABASE-URL'
 var gatewayApiPath = 'foundry'
 var entraLoginEndpoint = environment().authentication.loginEndpoint
 
@@ -128,6 +158,55 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
     enableSoftDelete: true
     enablePurgeProtection: true
     publicNetworkAccess: 'Enabled'
+  }
+}
+
+// ── HorizonDB (PostgreSQL 17) ───────────────────────────────────────────────
+resource horizonDbCluster 'Microsoft.HorizonDb/clusters@2026-01-20-preview' = {
+  name: horizonDbClusterName
+  location: horizonDbLocation
+  properties: {
+    administratorLogin: horizonDbAdministratorLogin
+    administratorLoginPassword: horizonDbAdministratorPassword
+    version: horizonDbVersion
+    createMode: 'Create'
+    replicaCount: horizonDbReplicaCount
+    vCores: horizonDbVCores
+    zonePlacementPolicy: horizonDbZonePlacementPolicy
+  }
+}
+
+resource horizonDbDefaultPool 'Microsoft.HorizonDb/clusters/pools@2026-01-20-preview' existing = {
+  parent: horizonDbCluster
+  name: horizonDbDefaultPoolName
+}
+
+resource horizonDbAllowAzureServices 'Microsoft.HorizonDb/clusters/pools/firewallRules@2026-01-20-preview' = {
+  parent: horizonDbDefaultPool
+  name: 'AllowAzureServices'
+  properties: {
+    startIpAddress: '0.0.0.0'
+    endIpAddress: '0.0.0.0'
+    description: 'Allow connections from Azure services'
+  }
+}
+
+resource horizonDbConnectionSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
+  name: horizonDbConnectionSecretName
+  properties: {
+    value: 'host=${horizonDbCluster.properties.fullyQualifiedDomainName} port=5432 dbname=postgres user=${horizonDbAdministratorLogin} password=${horizonDbAdministratorPassword} sslmode=require'
+    contentType: 'HorizonDB PostgreSQL connection string'
+  }
+}
+
+resource keyVaultSecretsRbacUami 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(keyVault.id, identity.id, keyVaultSecretsUserRoleId)
+  scope: keyVault
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', keyVaultSecretsUserRoleId)
+    principalId: identity.properties.principalId
+    principalType: 'ServicePrincipal'
   }
 }
 
@@ -412,6 +491,9 @@ output foundryProjectName string = foundryProject.name
 output foundryProjectId string = foundryProject.id
 output foundryProjectEndpoint string = 'https://${foundryResourceName}.services.ai.azure.com/api/projects/${projectName}'
 output modelDeploymentName string = foundryModel.name
+output horizonDbClusterName string = horizonDbCluster.name
+output horizonDbFqdn string = horizonDbCluster.properties.fullyQualifiedDomainName
+output horizonDbConnectionSecretName string = horizonDbConnectionSecret.name
 output apimFoundryBackendName string = foundryBackend.name
 output apimFoundryGatewayUrl string = 'https://${apim.properties.gatewayUrl}/${gatewayApiPath}'
 
@@ -427,4 +509,5 @@ output deploymentStatus object = {
   foundryAccount: foundryAccount.properties.provisioningState
   foundryProject: foundryProject.properties.provisioningState
   foundryModel: foundryModel.properties.provisioningState
+  horizonDb: horizonDbCluster.properties.provisioningState
 }

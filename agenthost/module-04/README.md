@@ -266,10 +266,13 @@ Scroll down to "Additional Details" to configure environment variables. Configur
 
 | Key | Sample value | Description |
 |---|---|---|
-| AGENT_ID | agent-host-on-aca | Logical agent identifier. Also determines the Blob state file name as `<AGENT_ID>.json`. |
-<!-- | AGENT_STORAGE_ACCOUNT | stcagenthostf28a14 | Module-01 Storage account name used by the agent to persist chat state in Blob. | -->
-<!-- | FOUNDRY_PROJECT_ENDPOINT | `https://foundry-agenthost-f28a14.services.ai.azure.com/api/projects/maf-agent-prj` | Foundry project endpoint used for catalog registration and project-scoped agent operations. Find the project endpoint value in your Microsoft Foundry project Home page. |
-| FOUNDRY_AGENT_NAME | agenthost-reflection-agent-on-aca | Agent name shown in the Foundry catalog. | -->
+| AGENT_ID | business-analysis-on-aca | Logical service identifier shown in the portal. |
+| AGENT_APIM_ENDPOINT | `https://apim-agenthost-<SN>.azure-api.net/foundry` | Responses API gateway base URL. |
+| LLM_MODEL | gpt-5.4-mini | Model deployment used by all LangGraph roles. |
+| WRITE_DATABASE_URL | `host=<primary> port=5432 dbname=postgres user=<user> password=<password> sslmode=require` | HorizonDB primary connection string. Configure it as a secret; do not commit it. |
+
+The reader, writer, reviewer, and writer-revision roles run entirely inside the
+reused Module 3 container. They are not registered in a Foundry project.
 
 For example, configure the `AGENT_ID` variable as shown below:
 ![module-04-ACA-Create-Sandbox-Advanced-add-envvar-list](../pic/module-04-ACA-Create-Sandbox-Advanced-add-envvar-list.png)

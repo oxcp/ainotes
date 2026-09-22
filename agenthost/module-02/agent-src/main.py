@@ -1,93 +1,71 @@
 # Copyright (c) Microsoft. All rights reserved.
 
+import asyncio
 import os
 
 from agent_framework import Agent
-from agent_framework.foundry import FoundryChatClient
+from agent_framework.openai import OpenAIChatClient
 from agent_framework_foundry_hosting import ResponsesHostServer
 from azure.identity import DefaultAzureCredential
-# from dotenv import load_dotenv
 
-# Load environment variables from the .env file next to this script,
-# regardless of the current working directory.
-# load_dotenv()
+from analysis_workflow import (
+    BusinessAnalysisWorkflow,
+    HorizonDBRepository,
+    OpenAIResponsesModel,
+)
 
-def build_client():
-    """Build the chat client for the agent.
 
-    Two model-routing modes are supported (set MODEL_ROUTING):
-      - "gateway" (default): call the model THROUGH the module-01 APIM AI gateway.
-      - "direct": call the Foundry project endpoint directly.
-    """
-    routing = os.environ.get("MODEL_ROUTING", "gateway").strip().lower()
-    model = os.environ.get("AI_MODEL_DEPLOYMENT_NAME")
-    print(f"Using model: {model} with routing: {routing}")
+_workflow = None
+_initialization_lock = asyncio.Lock()
 
-    if routing == "direct":
-        # Direct to the Foundry project endpoint. If you have registered APIM as the project AI gateway, you can call the Foundry project endpoint directly with a valid Entra token. The Foundry project endpoint will validate the token and forward to the APIM AI gateway and then enter the model deployment. 
-        # The running identity needs the
-        # "Azure AI User" role on the Foundry account (granted in module-01).
-        from agent_framework.foundry import FoundryChatClient
-        from azure.identity import DefaultAzureCredential
 
-        return FoundryChatClient(
-            project_endpoint=os.environ["FOUNDRY_PROJECT_ENDPOINT"],
-            model=model,
-            credential=DefaultAzureCredential(),
-        )
+async def _get_workflow() -> BusinessAnalysisWorkflow:
+    global _workflow
+    if _workflow is not None:
+        return _workflow
+    async with _initialization_lock:
+        if _workflow is None:
+            repository = HorizonDBRepository(os.environ.get("WRITE_DATABASE_URL", ""))
+            await repository.open()
+            model = OpenAIResponsesModel("APIM_GATEWAY_URL", "AI_MODEL_DEPLOYMENT_NAME")
+            _workflow = BusinessAnalysisWorkflow(model, repository)
+    return _workflow
 
-    if routing == "gateway":
-        # Through the module-01 APIM AI gateway (OpenAI Responses API). The
-        # gateway validates the caller's Entra token and forwards to Foundry with its own
-        # user-assigned managed identity.
-        # In this workshop, the AI Gateway validate-jwt just checks if it is a valid token 
-        # issued from Entra ID, and does not enforce the audience.
-        from agent_framework.openai import OpenAIChatClient
-        from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
-        credential = DefaultAzureCredential()
+async def run_business_analysis(requirement: str, business_data: str) -> dict[str, str]:
+    """Run reader, writer, reviewer, and writer revision over supplied business data."""
+    result = await (await _get_workflow()).run(requirement, business_data)
+    return {
+        "analysis_id": result["analysis_id"],
+        "final_report": result["final_report"],
+    }
 
-        access_token = credential.get_token(
-            "https://ai.azure.com/.default"
-        ).token
 
-        return OpenAIChatClient(
-            model=model,
-            base_url=f"{os.environ['APIM_GATEWAY_URL']}/openai/v1",
-            api_key=access_token,
-        )
-        # from agent_framework.azure import AzureOpenAIChatClient
-        # from azure.identity import DefaultAzureCredential, get_bearer_token_provider
-
-        # token_provider = get_bearer_token_provider(
-        #     DefaultAzureCredential(), "https://ai.azure.com/.default"
-        # )
-        # return AzureOpenAIChatClient(
-        #     deployment_name=model,
-        #     base_url=f"{os.environ['APIM_GATEWAY_URL']}/openai/v1",
-        #     azure_ad_token_provider=token_provider,   # ← callable 在这里才有效
-        #     # 注意：Azure 变体按 azure_endpoint + api-version 构造 URL，
-        #     # 指向 APIM 网关路径时要相应调整，不如方案 A 直接。
-        # )        
-
-    raise ValueError(
-        f"Unsupported MODEL_ROUTING={routing!r}; use 'gateway' or 'direct'."
+def build_client() -> OpenAIChatClient:
+    endpoint = os.environ["APIM_GATEWAY_URL"].rstrip("/")
+    model = os.environ.get("AI_MODEL_DEPLOYMENT_NAME", "gpt-5.4-mini")
+    credential = DefaultAzureCredential()
+    access_token = credential.get_token("https://ai.azure.com/.default").token
+    return OpenAIChatClient(
+        model=model,
+        base_url=f"{endpoint}/openai/v1",
+        api_key=access_token,
     )
 
 
-def main():
-    agent = Agent(
+def main() -> None:
+    coordinator = Agent(
         client=build_client(),
-        name="maf-agent",
-        instructions="You are a friendly assistant. Keep your answers brief.",
-        # History will be managed by the hosting infrastructure, thus there
-        # is no need to store history by the service. Learn more at:
-        # https://developers.openai.com/api/reference/resources/responses/methods/create
+        name="business-analysis-coordinator",
+        instructions=(
+            "Collect an analysis requirement and the source business data. When both are "
+            "available, call run_business_analysis exactly once. Present its final_report "
+            "and analysis_id. Do not perform the analysis yourself."
+        ),
+        tools=[run_business_analysis],
         default_options={"store": False},
     )
-
-    server = ResponsesHostServer(agent)
-    server.run()
+    ResponsesHostServer(coordinator).run()
 
 
 if __name__ == "__main__":

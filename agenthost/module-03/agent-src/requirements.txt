@@ -1,23 +1,13 @@
 # agent-src — Python dependencies
 
-# Microsoft Agent Framework — OpenAI client.
-#  OpenAIChatClient uses the model **Responses API** (the previous
-#  OpenAIResponsesClient alias was removed upstream). Pulls in the
-#  agent_framework core and openai>=2.25.0 transitively.
-agent-framework-openai>=1.10.0
-# Foundry project SDK (persistent agents live under the .agents operations;
-# recent versions expose create_version / list_versions).
-azure-ai-projects>=2.2.0
+langgraph>=0.6.0
 
 # Azure Workload Identity (Bearer token without static secrets)
 azure-identity>=1.19.0
 #
-# Azure Blob Storage (async) — conversation state persistence/recovery
-#azure-storage-blob>=12.24.0
-# Async HTTP transport required by the Azure Identity and Projects clients
-aiohttp
-
-# OpenAI SDK + httpx — directly used to build the APIM-routed Responses client
-# with a per-request Entra token refresh (custom httpx auth flow).
 openai>=2.25.0
-httpx
+httpx>=0.27.0
+
+# HorizonDB is PostgreSQL compatible.
+psycopg[binary]>=3.2.0
+psycopg-pool>=3.2.0

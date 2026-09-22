@@ -3,81 +3,96 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Agent Portal</title>
+<title>Business Analysis Studio</title>
 <style>
-  :root { --bg:#0f172a; --panel:#1e293b; --accent:#38bdf8; --user:#2563eb; --bot:#334155; --text:#e2e8f0; }
+  :root { --bg:#f3f5ef; --panel:#ffffff; --ink:#17201b; --muted:#667069; --line:#d8ddd7; --accent:#d64f32; --accent-dark:#a93620; --report:#f9faf7; }
   * { box-sizing:border-box; }
-  body { margin:0; font-family:system-ui,Segoe UI,Arial,sans-serif; background:var(--bg); color:var(--text); height:100vh; display:flex; flex-direction:column; }
-  header { padding:12px 20px; background:var(--panel); display:flex; align-items:center; gap:12px; border-bottom:1px solid #334155; }
-  header h1 { font-size:16px; margin:0; font-weight:600; }
-  header .meta { margin-left:auto; font-size:12px; color:#94a3b8; }
-  #chat { flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:12px; }
-  .msg { max-width:80%; padding:10px 14px; border-radius:12px; line-height:1.45; white-space:pre-wrap; word-wrap:break-word; }
-  .user { align-self:flex-end; background:var(--user); border-bottom-right-radius:2px; }
-  .bot  { align-self:flex-start; background:var(--bot); border-bottom-left-radius:2px; }
-  .role { font-size:11px; opacity:.7; margin-bottom:2px; }
-  footer { padding:14px 20px; background:var(--panel); border-top:1px solid #334155; display:flex; gap:10px; }
-  #q { flex:1; padding:12px 14px; border-radius:10px; border:1px solid #475569; background:#0b1220; color:var(--text); font-size:14px; }
-  #q:focus { outline:none; border-color:var(--accent); }
-  button { padding:0 20px; border:none; border-radius:10px; background:var(--accent); color:#0f172a; font-weight:600; cursor:pointer; }
+  body { margin:0; font-family:Georgia,"Times New Roman",serif; background:var(--bg); color:var(--ink); min-height:100vh; }
+  header { height:64px; padding:0 32px; background:var(--ink); color:white; display:flex; align-items:center; border-bottom:4px solid var(--accent); }
+  header h1 { font-size:20px; margin:0; font-weight:normal; }
+  header .meta { margin-left:auto; font:12px Verdana,sans-serif; color:#cbd2cd; }
+  main { width:min(1180px,calc(100% - 32px)); margin:28px auto; display:grid; grid-template-columns:minmax(300px,420px) 1fr; gap:24px; }
+  .workspace,.report { background:var(--panel); border:1px solid var(--line); border-radius:6px; min-height:calc(100vh - 120px); }
+  .workspace { padding:24px; }
+  .report { padding:28px 32px; background:var(--report); }
+  h2 { margin:0 0 8px; font-size:22px; }
+  .intro,.status { color:var(--muted); font:13px/1.5 Verdana,sans-serif; }
+  label { display:block; margin:22px 0 7px; font:600 12px Verdana,sans-serif; text-transform:uppercase; }
+  textarea { width:100%; resize:vertical; border:1px solid #aeb7b0; border-radius:4px; padding:12px; color:var(--ink); background:white; font:14px/1.5 Consolas,monospace; }
+  #requirement { min-height:110px; }
+  #businessData { min-height:290px; }
+  textarea:focus { outline:2px solid #efb4a7; border-color:var(--accent); }
+  button { margin-top:18px; width:100%; height:44px; border:0; border-radius:4px; background:var(--accent); color:white; font:600 14px Verdana,sans-serif; cursor:pointer; }
+  button:hover { background:var(--accent-dark); }
   button:disabled { opacity:.5; cursor:not-allowed; }
+  #output { margin-top:24px; white-space:pre-wrap; overflow-wrap:anywhere; font:15px/1.7 Georgia,serif; }
+  .empty { margin-top:80px; text-align:center; color:var(--muted); }
+  @media (max-width:800px) { main { grid-template-columns:1fr; } .workspace,.report { min-height:auto; } }
 </style>
 </head>
 <body>
   <header>
-    <h1>&#129302; Agent Portal</h1>
-    <span class="meta" id="meta">connecting…</span>
+    <h1>Business Analysis Studio</h1>
+    <span class="meta" id="meta">Connecting</span>
   </header>
-  <div id="chat"></div>
-  <footer>
-    <input id="q" placeholder="Ask the agent…" autocomplete="off" />
-    <button id="send">Send</button>
-  </footer>
+  <main>
+    <section class="workspace">
+      <h2>New analysis</h2>
+      <p class="intro">Reader extracts evidence, writer drafts, reviewer critiques, and writer revises.</p>
+      <label for="requirement">Analysis requirement</label>
+      <textarea id="requirement" placeholder="Example: Compare regional revenue growth and identify the two largest risks."></textarea>
+      <label for="businessData">Business data</label>
+      <textarea id="businessData" placeholder="Paste CSV, JSON, or plain-text business data."></textarea>
+      <button id="run">Run analysis</button>
+      <p class="status" id="status"></p>
+    </section>
+    <section class="report">
+      <h2>Final report</h2>
+      <div id="output" class="empty">The revised report will appear here.</div>
+    </section>
+  </main>
 <script>
-  const chat = document.getElementById('chat');
   const meta = document.getElementById('meta');
-  const q = document.getElementById('q');
-  const send = document.getElementById('send');
-
-  function add(role, text) {
-    const div = document.createElement('div');
-    div.className = 'msg ' + (role === 'user' ? 'user' : 'bot');
-    div.innerHTML = '<div class="role">' + (role === 'user' ? 'You' : 'Agent') + '</div>';
-    div.appendChild(document.createTextNode(text));
-    chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
-  }
+  const requirement = document.getElementById('requirement');
+  const businessData = document.getElementById('businessData');
+  const run = document.getElementById('run');
+  const status = document.getElementById('status');
+  const output = document.getElementById('output');
 
   async function loadState() {
     try {
       const r = await fetch('/state');
       const s = await r.json();
-      meta.textContent = (s.agent_id || 'agent') + ' · reflections: ' + (s.reflection_count || 0);
-      (s.history || []).forEach(h => { add('user', h.query); add('bot', h.response); });
-    } catch (e) { meta.textContent = 'state unavailable'; }
+      meta.textContent = (s.agent_id || 'agent') + ' | ' + (s.history || []).length + ' reports';
+      const latest = (s.history || []).at(-1);
+      if (latest) { output.textContent = latest.response; output.className = ''; }
+    } catch (e) { meta.textContent = 'State unavailable'; }
   }
 
-  async function ask() {
-    const text = q.value.trim();
-    if (!text) return;
-    add('user', text);
-    q.value = '';
-    send.disabled = true; q.disabled = true;
+  async function analyze() {
+    if (!requirement.value.trim() || !businessData.value.trim()) {
+      status.textContent = 'Both fields are required.';
+      return;
+    }
+    run.disabled = true;
+    status.textContent = 'Reader, writer, and reviewer are working...';
     try {
-      const r = await fetch('/reflect', {
+      const r = await fetch('/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: text })
+        body: JSON.stringify({ requirement: requirement.value, business_data: businessData.value })
       });
       const res = await r.json();
-      add('bot', res.response ?? JSON.stringify(res));
-      meta.textContent = (res.agent_id || 'agent') + ' · reflections: ' + (res.reflection_count || 0);
-    } catch (e) { add('bot', '[Error] ' + e); }
-    send.disabled = false; q.disabled = false; q.focus();
+      if (!r.ok) throw new Error(res.error || 'Analysis failed');
+      output.textContent = res.final_report;
+      output.className = '';
+      status.textContent = 'Saved to HorizonDB | Analysis ID: ' + res.analysis_id;
+      meta.textContent = res.agent_id;
+    } catch (e) { status.textContent = 'Error: ' + e.message; }
+    run.disabled = false;
   }
 
-  send.addEventListener('click', ask);
-  q.addEventListener('keydown', e => { if (e.key === 'Enter') ask(); });
+  run.addEventListener('click', analyze);
   loadState();
 </script>
 </body>
