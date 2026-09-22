@@ -163,7 +163,22 @@
             const closestParent = links
                 .filter((link) => currentFile?.startsWith(link.dataset.file.toLowerCase().replace(/[^/]+$/, '')))
                 .sort((first, second) => second.dataset.file.length - first.dataset.file.length)[0];
-            (exactMatch ?? closestParent)?.setAttribute('aria-current', 'page');
+            const currentLink = exactMatch ?? closestParent;
+            currentLink?.setAttribute('aria-current', 'page');
+            return currentLink;
+        }
+
+        function revealCurrentSidebarLink(links, currentLink) {
+            if (!currentLink || !window.matchMedia('(max-width: 800px)').matches) return;
+
+            window.requestAnimationFrame(() => {
+                const linksRect = links.getBoundingClientRect();
+                const currentRect = currentLink.getBoundingClientRect();
+                links.scrollTo({
+                    left: Math.max(0, links.scrollLeft + currentRect.left - linksRect.left - 8),
+                    behavior: 'auto'
+                });
+            });
         }
 
         function configureSidebar() {
@@ -177,7 +192,7 @@
             sidebar.querySelector('.sidebar-title').textContent = section.title;
             const localLinks = section.links.map(([label, path, icon]) => createSidebarLink(label, path, icon));
             localLinks.forEach((link) => links.append(link));
-            markCurrentSidebarLink(localLinks);
+            const currentLink = markCurrentSidebarLink(localLinks);
 
             const divider = document.createElement('hr');
             divider.className = 'sidebar-divider';
@@ -190,6 +205,8 @@
             repositoryLink.rel = 'noopener noreferrer';
             repositoryLink.innerHTML = '<i data-lucide="github"></i><span>GitHub Repository</span>';
             links.append(repositoryLink);
+            window.lucide?.createIcons({ nodes: [sidebar] });
+            revealCurrentSidebarLink(links, currentLink);
         }
 
         configureSidebar();
