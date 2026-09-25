@@ -4,9 +4,9 @@
 
 This workshop introduces a practical Azure agent-hosting journey. You start with shared infrastructure, compare three deployment options for enterprise and consumer scenarios, and finish with cost and production-hardening guidance.
 
-> 📊 **Prefer slides?** 
+<!-- > 📊 **Prefer slides?** 
 >
-> Open [introduction](https://oxcp.github.io/ainotes/agenthost/module-00/) to walkthrough the workshop content.
+> Open [introduction](https://oxcp.github.io/ainotes/agenthost/module-00/) to walkthrough the workshop content. -->
 
 > [!TIP]
 > For a better reading and navigation experience—use [Agent Hosting on Azure Workshop Guide](https://oxcp.github.io/ainotes/markdown-viewer.html?file=agenthost/readme.md).
@@ -16,13 +16,13 @@ This workshop introduces a practical Azure agent-hosting journey. You start with
 ## Workshop Outline
 
 - **Target Scenarios**: ToB enterprise and ToC consumer scenarios, each with different priorities for isolation, scale, authentication, and cost.
-- **Solutions (see [Workshop Design](./agenthost.md) for details)**:
+- **Solutions (see [Workshop Introduction](./module-00/README.md) for details)**:
   - **Solution A**: Azure AI Foundry Hosted Agent (ToB managed) — fastest on-ramp, native state and authentication, strong governance and security.
   - **Solution B**: AKS + agent-sandbox (ToB / ToC) — high customization: meet enterprise-specific technical requirements for ToB, or tune cost and performance for ToC.
   - **Solution C**: ACA container runtime options (ToC / ToB):
     - **Workshop path**: ACA Sandboxes — service-managed sandbox isolation (micro-VM boundary), suspend/resume.
     - **Optional learning track**: ACA Dynamic Sessions — Hyper-V isolated session pools for low-latency ephemeral execution.
-- **Implemented Features**: state persistence, fast start, scale-to-zero, isolation, Entra ID authentication, and AI Gateway integration.
+- **Implemented Features**: state persistence, scale-to-zero, isolation, Entra ID authentication, and AI Gateway integration.
 - **Workshop Schedule**: A 120-minute hands-on workshop covering core infrastructure setup, the three solutions above, and a wrap-up with cost-optimization tips and a production-hardening checklist.
 
 ## How to use this workshop
@@ -48,7 +48,7 @@ This downloads the content required for the `agenthost` workshop.
 
 ## Prerequisites (before workshop)
 
-- Linux console or WSL environment for running workshop scripts and commands
+- Linux console or WSL environment or Azure Cloud Shell for running workshop scripts and commands. In most cases, the Azure Cloud Shell has the minimum pre-requisites gap, however consider the Azure Cloud Shell may timeout when you leave, a Linux console or WSL environment is still recommended.
 - Azure permissions to create the workshop resources and role assignments at subscription scope, including `Microsoft.Authorization/roleAssignments/write`. Typical options are **Owner**, or **Contributor** plus **Role Based Access Control Administrator**.
 - Azure CLI `2.80.0+` installed, with an active Azure login (`az login`)
 - Other prerequisites listed in each module
@@ -155,14 +155,16 @@ Fix suggestion:
 
 ## Workshop Modules
 
-| Module | Topic | Duration | Files |
+| Module | Topic | Duration | Purpose |
 |---|---|---|---|
-| [module-00](./module-00/README.md) | Introduction | 10 min | README · slides |
-| [module-01](./module-01/README.md) | Core Infrastructure Setup | 20 min | README · setup.sh · main.bicep · core.bicep |
-| [module-02](./module-02/README.md) | Solution A: Foundry Hosted Agent | 30 min | README · azure.yaml · src/ (main.py, requirements.txt, Dockerfile) · agent-definition.json |
-| [module-03](./module-03/README.md) | Solution B: AKS + agent-sandbox | 40 min | README · prepare-agent-sandbox.sh · aks.bicep · agent-storage.yaml.example · agent-sandbox.yaml.example · agent-src/ |
-| [module-04](./module-04/README.md) | Solution C: ACA Sandboxes (workshop path) | 30 min | README · sandbox.bicep · sandbox-deploy.sh · dynamic-session-deploy.sh · dynamic-session-invoke.sh |
-| [module-05](./module-05/README.md) | Wrap-up and Q&A | 5 min | README |
+| [module-00](./module-00/README.md) | Introduction | 10 min | Understand the target scenarios, agent state pattern, and the three hosting solutions. |
+| [module-01](./module-01/README.md) | Core Infrastructure Setup | 20 min | Deploy the shared Azure infrastructure used by all hosting solutions. |
+| [module-02](./module-02/README.md) | Solution A: Foundry Hosted Agent | 30 min | Deploy a managed Foundry hosted agent with native state, authentication, governance, and AI Gateway integration. |
+| [module-03](./module-03/README.md) | Solution B: AKS + agent-sandbox | 40 min | Deploy a customizable agent runtime on AKS with sandbox isolation, persistent state, and workload identity. |
+| [module-04](./module-04/README.md) | Solution C: ACA Sandboxes (workshop path) | 30 min | Deploy an agent in ACA Sandboxes with micro-VM isolation and suspend/resume, and explore Dynamic Sessions as an optional track. |
+| [module-05](./module-05/README.md) | Wrap-up and Q&A | 5 min | Compare the solutions and review selection guidance, cost optimization, and production-hardening recommendations. |
+
+**Total workshop duration:** 135 minutes. **Hands-on exercises (Modules 01–04):** 120 minutes.
 
 ---
 
