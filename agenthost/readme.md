@@ -8,6 +8,9 @@ This workshop introduces a practical Azure agent-hosting journey. You start with
 >
 > Open [introduction](https://oxcp.github.io/ainotes/agenthost/module-00/) to walkthrough the workshop content.
 
+> [!TIP]
+> For a better reading and navigation experience—use [Agent Hosting on Azure Workshop Guide](https://oxcp.github.io/ainotes/markdown-viewer.html?file=agenthost/readme.md).
+
 ---
 
 ## Workshop Outline
