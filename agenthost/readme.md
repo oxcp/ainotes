@@ -48,10 +48,10 @@ This downloads the content required for the `agenthost` workshop.
 
 ## Prerequisites (before workshop)
 
-- Linux console or WSL environment or Azure Cloud Shell for running workshop scripts and commands. In most cases, the Azure Cloud Shell has the minimum pre-requisites gap, however consider the Azure Cloud Shell may timeout when you leave, a Linux console or WSL environment is still recommended.
-- Azure permissions to create the workshop resources and role assignments at subscription scope, including `Microsoft.Authorization/roleAssignments/write`. Typical options are **Owner**, or **Contributor** plus **Role Based Access Control Administrator**.
-- Azure CLI `2.80.0+` installed, with an active Azure login (`az login`)
-- Other prerequisites listed in each module
+- A Linux console, WSL environment, or Azure Cloud Shell for running workshop scripts and commands. Azure Cloud Shell typically requires the least setup, but it may time out when left unattended. Therefore, a Linux console or WSL environment is recommended.
+- Azure permissions to create workshop resources and role assignments at the subscription scope, including `Microsoft.Authorization/roleAssignments/write`. Typical options are **Owner** or **Contributor** plus **Role Based Access Control Administrator**.
+- Azure CLI `2.80.0+` installed, with an active Azure login (`az login`).
+- Any additional prerequisites listed in each module.
 
 > To verify the prerequisites automatically instead of checking them manually, use `check-prerequisites.sh` in the workshop folder.
 
@@ -171,16 +171,17 @@ Fix suggestion:
 ## Workshop structure
 ```
 agenthost/
-├── readme.md                    ← List workshop modules, structure
-├── agenthost.md                 ← Design considerations for the workshop
-├── check-prerequisites.sh       ← Checks tools, Azure login state, extensions, and required RBAC roles
+├── readme.md                    ← Workshop overview, prerequisites, modules, and structure
+├── check-prerequisites.sh       ← Checks tools, Azure login, extensions, permissions, and RBAC roles
+├── pic/                         ← Screenshots used by the workshop guides
 ├── module-00/
-│   └── README.md                ← Introduction: agent overview, state pattern, 3 solutions
+│   ├── README.md                ← Architecture decisions, scenarios, and solution comparison
+│   └── design.html              ← Interactive workshop design slides
 ├── module-01/
 │   ├── README.md                ← Core infrastructure setup steps
 │   ├── setup.sh                 ← One-step wrapper: runs the main.bicep deployment (az deployment sub create)
 │   ├── main.bicep               ← Subscription-scoped Bicep entry point
-│   └── core.bicep               ← Resource group Bicep (Storage, APIM, UAMI, Foundry account + project + model + Defender + AI gateway)
+│   └── core.bicep               ← Storage, APIM, identities, Foundry project, model, Defender, and AI gateway
 ├── module-02/
 │   ├── README.md                ← Foundry hosted-agent azd deployment steps
 │   ├── azure.yaml               ← Hosted-agent manifest used by azd init (references agent-src)
@@ -200,16 +201,19 @@ agenthost/
 │       ├── Dockerfile           ← Multi-stage Python image (build context = agent-src/)
 │       ├── requirements.txt     ← Python dependencies
 │       ├── lifecycle-hook.sh    ← SIGTERM pre-stop hook: state already durable in Blob (no-op log)
-│       └── README.md            ← agent-src usage notes
+│       ├── README.md            ← agent-src usage notes
+│       └── .dockerignore        ← Container build exclusions
 ├── module-04/
 │   ├── README.md                ← Workshop path: ACA Sandboxes; optional track: Dynamic Sessions
 │   ├── sandbox.bicep            ← Workshop path: SandboxGroup (real Sandboxes, micro-VM boundary, suspend/resume) + UAMI AcrPull role
 │   ├── sandbox-deploy.sh        ← Workshop path: reuses the Module-03 image + SandboxGroup + disk image + sandbox mgmt
 │   ├── dynamic-session-deploy.sh← Optional track: Session pool deployment (custom container)
 │   ├── dynamic-session-invoke.sh← Optional track: Minimal invoke example for session pool endpoint
+│   ├── dynamic-sessions.md       ← Optional Dynamic Sessions learning guide
 │   └── container-app.yaml       ← Legacy standard ACA manifest (reference only)
 └── module-05/
-    └── README.md                ← Comparison recap, decision guide, cost tips, prod checklist
+    └── README.md                ← Comparison recap, decision guide, cost tips, and production checklist
+
 ```
 
 ---

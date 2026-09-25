@@ -56,7 +56,7 @@ The three selected complementary solutions are used to demonstrate these trade-o
 | **Foundry Hosted Agent** | Strong, Managed (per-agent) | Fast (< 1 s) | Best (pay-per-exec) | Microsoft Foundry | ToB managed | Native agent lifecycle, built-in state & auth; strong governance & security | Limited customisation |
 | **Micro-VM** | Strong (hypervisor) | Slow (2–10 s) | Low (always-on VM) | AKS + Kata + agent-sandbox | ToB / ToC | High customisation (enterprise-specific requirements; cost/performance tuning); true kernel isolation | Cost, operational overhead |
 | **Session** | Strong (Hyper-V isolated session) | Fast (< 1 s) | Good | ACA Dynamic Sessions | ToC interactive / short-lived jobs | Managed, serverless; ideal for one-time code execution | Limited customisation; not suited for long-running agents |
-| **Sandbox** | Strong (service-managed sandbox isolation, micro-VM boundary) | Fast (< 2 s) | Good with scale-to-zero | ACA Sandbox *(Public Preview)* | ToC / ToB long-running agents | Strong isolation with lifecycle control (suspend/resume/snapshots) | Public preview; feature set still evolving |
+| **Sandbox** | Strong (service-managed sandbox isolation, micro-VM boundary) | Fast (< 2 s) | Good with scale-to-zero | ACA Sandbox | ToC / ToB long-running agents | Strong isolation with lifecycle control (suspend/resume/snapshots) | Less infrastructure control than AKS |
 | **Container** | Medium (namespace) | Fast (< 2 s) | Good with scale-to-zero | ACA, AKS | ToB / ToC | Mature ecosystem, OCI | Shared kernel |
 | **Process** | Weak (OS process) | Fastest (< 0.5 s) | Best | App Service, Functions | ToC low-risk | Minimal overhead | Noisy-neighbour risk |
 | **Serverless** | Medium | Fast (< 2 s) | Best (pay-per-exec) | Azure Functions, ACA Jobs | ToC stateless | Zero infra ops | Stateless by design |
@@ -69,7 +69,7 @@ The three selected complementary solutions are used to demonstrate these trade-o
 | **Foundry Hosted Agent** | Managed agent runtime | Strong, Managed (per-agent) | ✅ Native | ✅ Built-in | ✅ Native | ✅ Native | ToB managed, fastest on-ramp |
 | **AKS + agent-sandbox** | Micro-VM or Container | Strong, Micor-VM | ✅ Custom | ✅ Custom | ✅ Workload Identity for Pods | ✅ | ToB: high customisation for enterprise-specific technical requirements; ToC: high customisation for cost/performance tuning |
 | **ACA Dynamic Sessions** | Hyper-V isolated session pool | Strong (per-session, Hyper-V boundary) | ✅ Native | ✅ via Blob | ✅ Workload Identity | ✅ | ToC short-lived / one-time code execution; not ideal for persistent long-running agents |
-| **ACA Sandbox** *(Public Preview)* | Service-managed sandbox (micro-VM boundary) | Strong, Micro-VM (per-sandbox) | ✅ Native | ✅ via Blob | ✅ Workload Identity | ✅ | ToC / ToB long-running agents; strong isolation + lifecycle control |
+| **ACA Sandbox** | Service-managed sandbox (micro-VM boundary) | Strong, Micro-VM (per-sandbox) | ✅ Native | ✅ via Blob | ✅ Workload Identity | ✅ | ToC / ToB long-running agents; strong isolation + lifecycle control |
 | **Azure Container Apps** | Container | Medium (namespace) | ✅ Native | ✅ via Blob | ✅ Workload Identity | ✅ | ToB / ToC general |
 | **Azure App Service** | Process / Container | Weak–Medium | ❌ (min 1 instance) | ✅ | ✅ | ✅ | Simple ToC web apps |
 | **Azure Functions** | Serverless | Medium | ✅ Native | Limited | ✅ | ✅ | ToC stateless tasks |
@@ -85,11 +85,11 @@ Three complementary solutions are recommended, each optimised for a distinct ope
 |---|---|---|---|
 | **A** | Azure AI Foundry Host Agent | ToB managed | Fully managed; native agent lifecycle, state, auth; built-in governance & security; fastest time-to-value |
 | **B** | AKS + agent-sandbox | ToB / ToC | High customisation is the core value. **ToB:** customise to meet enterprise-specific technical requirements (Micro-VM isolation via Kata Containers, custom networking, compliance); **ToC:** customise for cost/performance tuning (Spot node pools, right-sized SKUs, hibernate/scale-to-zero); `Sandbox` CRD lifecycle across both |
-| **C** | ACA Sandbox *(Public Preview)* | ToC / ToB long-running agents | Service-managed sandbox isolation (micro-VM boundary); long-running agent support; lifecycle control; true scale-to-zero |
+| **C** | ACA Sandbox | ToC / ToB long-running agents | Service-managed sandbox isolation (micro-VM boundary); long-running agent support; lifecycle control; true scale-to-zero |
 
 > [!important]
 > **Why ACA Sandbox instead of ACA Dynamic Sessions for Solution C?**  
-> ACA Dynamic Sessions is optimised for **one-time or short-lived code execution** (e.g. code interpreter tasks, ephemeral sandboxes). It evicts sessions aggressively and is not designed for long-running stateful agents. **ACA Sandbox** provides strong, service-managed sandbox isolation with lifecycle control (create/suspend/resume/delete), making it a better fit for persistent, long-running agent workloads. Note that ACA Sandbox is currently in **public preview** — evaluate feature availability and SLA before adopting for production.  
+> ACA Dynamic Sessions is optimised for **one-time or short-lived code execution** (e.g. code interpreter tasks, ephemeral sandboxes). It evicts sessions aggressively and is not designed for long-running stateful agents. **ACA Sandbox** provides strong, service-managed sandbox isolation with lifecycle control (create/suspend/resume/delete), making it a better fit for persistent, long-running agent workloads. ACA Sandboxes are generally available; validate regional availability, quotas, service limits, and SLA requirements for production workloads.  
 > ACA Dynamic Sessions is retained in the comparison tables (Sections 2.1 and 2.2) as a valid option for short-lived execution scenarios.
 >
 > **Why not Azure Functions or App Service?**  
@@ -101,7 +101,7 @@ Three complementary solutions are recommended, each optimised for a distinct ope
 
 The table below maps each technical requirement to the implementation approach for all three selected solutions.
 
-| # | Requirement | Foundry Host Agent (A) | AKS + agent-sandbox (B) | ACA Sandbox — *Public Preview* (C) |
+| # | Requirement | Foundry Host Agent (A) | AKS + agent-sandbox (B) | ACA Sandbox (C) |
 |---|---|---|---|---|
 | 1 | **State & context persistence** | Built-in agent state store (Cosmos/Blob) | Azure Blob (per-agent JSON, saved on every change) | Azure Blob (per-agent JSON, saved on every change) |
 | 2 | **Fast start / scale-to-zero** | Native agent idle eviction + warm resume | agent-sandbox lifecycle: pause / resume / hibernate; state already durable in Blob; optional SandboxWarmPool | ACA Sandbox container pool; idle timeout = 15 min; state already durable in Blob |
@@ -293,12 +293,12 @@ flowchart TD
 
 ---
 
-### Solution C — ACA Sandbox (ToC / ToB Long-Running Agents) *(Public Preview)*
+### Solution C — ACA Sandbox (ToC / ToB Long-Running Agents)
 
 Solution C uses **Path 1 only**.
 
 > [!important]
-> **Note:** Azure Container Apps Sandbox is currently in **public preview**. Review the [feature documentation](https://learn.microsoft.com/en-us/azure/container-apps/sandboxes-overview) for current limitations and SLA before adopting for production workloads.
+> **Note:** Azure Container Apps Sandboxes are **generally available**. Review the [feature documentation](https://learn.microsoft.com/en-us/azure/container-apps/sandboxes-overview) for regional availability, quotas, service limits, and SLA details before adopting for production workloads.
 >
 > **ACA Dynamic Sessions vs ACA Sandbox:** ACA Dynamic Sessions is designed for **short-lived, one-time code execution** (e.g. ephemeral code interpreter tasks). Its aggressive session eviction makes it unsuitable for long-running stateful agents. ACA Sandbox provides service-managed sandbox isolation with lifecycle control and persistent state semantics, making it a better fit for long-running agent workloads.
 

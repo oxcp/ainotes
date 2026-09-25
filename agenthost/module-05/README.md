@@ -20,7 +20,7 @@ Recap the three solutions, provide decision guidance, and share cost-optimizatio
 | **Operational complexity** | Low | High | Medium |
 | **Cost** | Pay-per-exec | agent-sandbox hibernate + Spot | Serverless |
 | **Best for** | ToB managed fast on-ramp; strong governance and security | ToB / ToC — high customization (enterprise-specific requirements; cost/performance tuning) | ToC / ToB long-running, serverless agents |
-| **Status** | GA | GA | Public Preview |
+| **Status** | GA | GA | GA |
 
 ---
 
@@ -71,7 +71,7 @@ Recap the three solutions, provide decision guidance, and share cost-optimizatio
 - [ ] Enable Defender for Containers on AKS
 - [ ] Configure Conditional Access policies in Entra ID for ToB scenarios
 - [ ] Test BCDR: verify agent state restores from Blob after a pod/container restart
-- [ ] Review ACA Sandbox SLA and feature completeness before production (Public Preview)
+- [ ] Validate ACA Sandbox regional availability, quotas, service limits, and SLA before production
 
 ---
 
