@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11/styles/github.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js"></script>
     <style>
@@ -41,6 +42,9 @@
         .copy-code { position: absolute; top: .5rem; right: .5rem; display: inline-grid; width: 2rem; height: 2rem; padding: 0; place-items: center; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; }
         .copy-code:hover { color: var(--ink); background: var(--canvas); }
         .copy-code svg { width: 1rem; height: 1rem; }
+        .mermaid-diagram { margin: 1.5rem 0; overflow-x: auto; text-align: center; }
+        .mermaid-diagram svg { display: block; width: auto; max-width: 100%; height: auto; margin: 0 auto; }
+        .mermaid-error { padding: 1rem; color: #cf222e; text-align: left; white-space: pre-wrap; background: #ffebe9; border: 1px solid #ff8182; border-radius: 6px; }
         .markdown-body video { display: block; width: min(100%, 900px); max-height: 70vh; margin: 1rem 0; background: #000; border-radius: 6px; }
         .markdown-alert { margin: 1rem 0; padding: .5rem 1rem; color: inherit; border-left: .25rem solid var(--border); }
         .markdown-alert-title { display: flex; align-items: center; gap: .4rem; margin: 0 0 .35rem; font-weight: 600; }
@@ -296,6 +300,46 @@
             });
         }
 
+        let mermaidDiagramId = 0;
+
+        async function renderMermaidDiagrams() {
+            const codeBlocks = [...content.querySelectorAll('pre > code.language-mermaid')];
+            if (!codeBlocks.length) return;
+
+            if (!window.mermaid) {
+                console.error('Mermaid failed to load. Diagrams will remain as code blocks.');
+                return;
+            }
+
+            window.mermaid.initialize({
+                startOnLoad: false,
+                securityLevel: 'strict',
+                theme: 'default'
+            });
+
+            for (const code of codeBlocks) {
+                const source = code.textContent;
+                const container = document.createElement('div');
+                container.className = 'mermaid-diagram';
+                container.setAttribute('role', 'img');
+                container.setAttribute('aria-label', 'Mermaid diagram');
+                code.parentElement.replaceWith(container);
+
+                try {
+                    const id = `mermaid-diagram-${++mermaidDiagramId}`;
+                    const { svg, bindFunctions } = await window.mermaid.render(id, source);
+                    container.innerHTML = svg;
+                    bindFunctions?.(container);
+                } catch (error) {
+                    console.error('Unable to render Mermaid diagram:', error);
+                    container.classList.add('mermaid-error');
+                    container.removeAttribute('role');
+                    container.removeAttribute('aria-label');
+                    container.textContent = `Unable to render Mermaid diagram:\n${error?.message ?? String(error)}`;
+                }
+            }
+        }
+
         function addCodeCopyButtons() {
             async function copyText(text) {
                 try {
@@ -386,6 +430,7 @@
             marked.setOptions({ gfm: true, breaks: false });
             content.innerHTML = marked.parse(await response.text());
             resolveDocumentLinks(sourceUrl);
+            await renderMermaidDiagrams();
             embedVideos();
             styleTaskLists();
             renderAlerts();
