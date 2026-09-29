@@ -1,6 +1,6 @@
 # Agent Hosting on Azure Workshop Design
 
-[⬆ Back to Workshop Home](./readme.md)
+[Back to Workshop Home](../readme.md)
 
 ## Overview
 
@@ -328,4 +328,3 @@ flowchart TD
 ---
 
 *Document version 1.0 — prepared for the Azure AI Agent Hosting Workshop*
-
