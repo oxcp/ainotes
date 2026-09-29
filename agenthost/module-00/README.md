@@ -1,6 +1,6 @@
 # Agent Hosting on Azure Workshop Design
 
-[⬆ Back to Workshop Home](./readme.md)
+[Back to Workshop Home](../readme.md)
 
 ## Overview
 
