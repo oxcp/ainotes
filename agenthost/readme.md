@@ -1,7 +1,5 @@
 # Agent Hosting on Azure Workshop
 
-[简体中文](./README_CN.md)
-
 ## Workshop Introduction
 
 This workshop introduces a practical Azure agent-hosting journey. You start with shared infrastructure, compare three deployment options for enterprise and consumer scenarios, and finish with cost and production-hardening guidance.

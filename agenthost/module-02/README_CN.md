@@ -1,7 +1,5 @@
 # 模块 2 — 解决方案 A：Foundry 托管代理（30 分钟）
 
-[English](README.md)
-
 [⬆ 返回研讨会主页](../readme.md)
 
 ## 概述

@@ -1,7 +1,5 @@
 # Module 3 — Solution B: AKS + agent-sandbox (40 min)
 
-[简体中文](README_CN.md)
-
 [⬆ Back to Workshop Home](../readme.md)
 
 ## Overview

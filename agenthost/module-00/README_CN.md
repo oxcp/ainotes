@@ -1,7 +1,5 @@
 # Azure 上的智能体托管研讨会设计
 
-[English](./README.md)
-
 [⬆ 返回研讨会主页](./readme.md)
 
 ## 概述

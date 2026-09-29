@@ -1,7 +1,5 @@
 # 模块 3 — 解决方案 B：AKS + agent-sandbox（40 分钟）
 
-[English](README.md)
-
 [⬆ 返回研讨会主页](../readme.md)
 
 ## 概述

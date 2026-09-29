@@ -1,7 +1,5 @@
 # Agent Hosting on Azure Workshop Design
 
-[简体中文](./README_CN.md)
-
 [⬆ Back to Workshop Home](./readme.md)
 
 ## Overview

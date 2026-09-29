@@ -1,7 +1,5 @@
 # 模块 4 — 解决方案 C：基于容器的智能体运行时（ACA Sandboxes，30 分钟）
 
-[English](./README.md)
-
 [⬆ 返回研讨会主页](../readme.md)
 
 ## 概述

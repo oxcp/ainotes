@@ -1,7 +1,5 @@
 # 模块 5 — 总结和问答（5 分钟）
 
-[English](./README.md)
-
 [⬆ 返回研讨会主页](../README_CN.md)
 
 ## 概述
