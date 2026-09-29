@@ -1,5 +1,7 @@
 # Module 2 — Solution A: Foundry Hosted Agent (30 min)
 
+[简体中文](README_CN.md)
+
 [⬆ Back to Workshop Home](../readme.md)
 
 ## Overview

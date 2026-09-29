@@ -1,5 +1,7 @@
 # Module 5 — Wrap-up and Q&A (5 min)
 
+[简体中文](./README_CN.md)
+
 [⬆ Back to Workshop Home](../readme.md)
 
 ## Overview
