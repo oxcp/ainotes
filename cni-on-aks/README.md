@@ -172,12 +172,12 @@ cilium install \
 ```
 
 You will see the output for cilium install as below:
-<!-- Screenshot 3: Paste the Markdown image syntax for the successful cilium status output here. -->
+
 ```text
 🔮 Auto-detected Kubernetes kind: AKS
 ℹ️  Using Cilium version 1.16.4
 🔮 Auto-detected cluster name: aksbyocni
-✅ Derived Azure subscription ID 8bef68e4-9675-47c4-b4cd-272dea5455a3 from subscription kacai-premium
+✅ Derived Azure subscription ID <REDACTED> from subscription <REDACTED>
 ✅ Detected Azure AKS cluster in BYOCNI mode (no CNI plugin pre-installed)
 🔮 Auto-detected kube-proxy has been installed
 ```
