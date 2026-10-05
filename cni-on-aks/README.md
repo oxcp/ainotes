@@ -38,7 +38,7 @@ You can override every setting with environment variables. For example:
 
 ```bash
 SUBSCRIPTION_ID="<subscription-id>" \
-RESOURCE_GROUP="rg-my-aks-byocni" \
+RESOURCE_GROUP="rg-aks-byocni" \
 CLUSTER_NAME="aks-my-byocni" \
 LOCATION="southeastasia" \
 NODE_COUNT="2" \
