@@ -110,13 +110,48 @@
 
 例如，从 100K 扩展到 110K 时，本轮新增卷目标为 10,000；该轮实际执行挂载并 Ready 的 Pod 为 37,492，包含本轮新增卷以外的处理对象。卷配置和 Pod 挂载分别按各自的实际处理量统计效率。
 
-### 4.3 测试阶段
+### 4.3 测试执行步骤/阶段
 
-| 阶段 | 目标 | 完成检查 |
-|---|---|---|
-| PV provision | 创建本轮新增卷 | 检查首次配置成功数与失败数 |
-| PV repair | 恢复配置失败或缺失的对象 | 删除、重建并复查剩余异常 |
-| Pod attach + ready | 挂载持久卷并启动 Pod | 检查 Ready、pending 及 VolumeAttachment 状态 |
+- **Provision（资源创建）**：统计现有 Elastic SAN 卷，并按目标规模增量创建 Elastic SAN、Volume Group 和静态 Volume。创建过程采用批处理、限流和自动重试，同时记录耗时与成功率。
+
+- **Repair（失败修复）**：识别创建失败或缺失的 Volume，删除失败资源后使用相同名称重新创建。最多执行四轮修复，并记录每轮修复结果。
+
+- **Attach（挂载验证）**：为创建成功且尚未挂载的 Volume 创建 Kubernetes PV、PVC 和测试 Pod。通过检查 Pod Ready 状态和 VolumeAttachment 的 `attached=true` 状态，验证静态卷挂载链路。
+
+<!-- mermaid-checked: no \n, no em-dash/en-dash, no {} in labels, subgraphs are id["label"], arrows are -->|"label"|, all subgraphs closed by end, ids unique -->
+```mermaid
+flowchart TD
+    subgraph PipelineFlow["测试 Pipeline"]
+        ProvisionStage["Provision"]
+        RepairStage["Repair"]
+        AttachStage["Attach"]
+    end
+    subgraph AzureResources["Azure Elastic SAN 资源"]
+        SanResource["Elastic SAN"]
+        VgResource["Volume Group"]
+        VolumeResource["Static Volume"]
+    end
+    subgraph AksResources["AKS 挂载资源"]
+        PvResource["PersistentVolume"]
+        PvcResource["PersistentVolumeClaim"]
+        PodResource["Test Pod"]
+        PodReadyCheck["Pod Ready"]
+        AttachmentCheck["VolumeAttachment attached"]
+    end
+
+    ProvisionStage -->|"创建"| SanResource
+    SanResource -->|"包含"| VgResource
+    VgResource -->|"批量创建"| VolumeResource
+    VolumeResource -->|"失败或缺失时重新创建并验证"| RepairStage
+    ProvisionStage -->|"成功卷"| AttachStage
+    RepairStage -->|"修复成功卷"| AttachStage
+    AttachStage -->|"创建静态 PV"| PvResource
+    VolumeResource -->|"CSI volume handle"| PvResource
+    PvResource -->|"绑定"| PvcResource
+    PvcResource -->|"挂载到"| PodResource
+    PodResource -->|"就绪检查"| PodReadyCheck
+    PodResource -->|"挂载检查"| AttachmentCheck
+```
 
 ## 5. 分轮测试结果
 
@@ -137,7 +172,7 @@
 
 ### 5.2 各阶段耗时
 
-| 轮次 | PV provision 原始耗时 | 分钟 | PV repair 原始耗时 | 分钟 | Pod attach + ready 原始耗时 | 分钟 |
+| 轮次 | Provision 原始耗时 | 分钟 | Repair 原始耗时 | 分钟 | Attach 原始耗时 | 分钟 |
 |---|---|---:|---|---:|---|---:|
 | 42K | 18m 40s | 18.67 | 6m 1s | 6.02 | 4h 7m 18s | 247.30 |
 | 45K | 1h 21m 27s | 81.45 | 6m 51s | 6.85 | 4h 46m 48s | 286.80 |
@@ -154,16 +189,16 @@
 
 单位：**卷/分钟**，表示平均每分钟处理或成功配置的卷数。首次配置成功速率按首次配置成功数计算；卷配置完成速率同时计入 provision 与失败修复的阶段耗时。
 
-| 轮次 | 新增卷目标 | 首次成功 / 失败 | 首次成功率 | 首次配置成功速率 | 增量目标处理速率（含失败） | repair 结果 | 卷配置完成速率（含失败修复） |
-|---|---:|---|---:|---:|---:|---|---:|
-| 42K | 2,000 | 1,982 / 18 | 99.10% | **106.18** | 107.14 | 后续 18 个全部修复 | **81.03** |
-| 45K | 3,000 | 2,965 / 35 | 98.83% | **36.40** | 36.83 | 35 个全部修复 | **33.98** |
-| 60K | 15,000 | 14,746 / 254 | 98.31% | **38.25** | 38.91 | 254 个全部修复 | **37.28** |
-| 70K | 10,000 | 9,770 / 230 | 97.70% | **40.62** | 41.57 | 230 个全部修复 | **38.80** |
-| 90K | 20,000 | 19,572 / 428 | 97.86% | **41.04** | 41.93 | 428 个全部修复 | **39.87** |
-| 100K | 10,000 | 9,403 / 597 | 94.03% | **38.10** | 40.52 | 597 个全部修复 | **35.75** |
-| 110K | 10,000 | 9,151 / 849 | 91.51% | **45.99** | 50.26 | 849 个经两轮全部修复 | **37.06** |
-| 120K | 10,000 | 8,627 / 1,373 | 86.27% | **43.21** | 50.09 | **repair 报告与耗时缺失** | **无法计算** |
+| 轮次 | 新增卷目标 | 首次成功 / 失败 | 首次成功率 | 首次配置成功速率（分钟） | repair 结果 | 卷配置完成速率（含失败修复）（分钟） |
+|---|---:|---|---:|---:|---|---:|
+| 42K | 2,000 | 1,982 / 18 | 99.10% | **106.18** | 后续 18 个全部修复 | **81.03** |
+| 45K | 3,000 | 2,965 / 35 | 98.83% | **36.40** | 35 个全部修复 | **33.98** |
+| 60K | 15,000 | 14,746 / 254 | 98.31% | **38.25** | 254 个全部修复 | **37.28** |
+| 70K | 10,000 | 9,770 / 230 | 97.70% | **40.62** | 230 个全部修复 | **38.80** |
+| 90K | 20,000 | 19,572 / 428 | 97.86% | **41.04** | 428 个全部修复 | **39.87** |
+| 100K | 10,000 | 9,403 / 597 | 94.03% | **38.10** | 597 个全部修复 | **35.75** |
+| 110K | 10,000 | 9,151 / 849 | 91.51% | **45.99** | 849 个经两轮全部修复 | **37.06** |
+| 120K | 10,000 | 8,627 / 1,373 | 86.27% | **43.21** | **repair 报告与耗时缺失** | **无法计算** |
 
 **部署观察：** 42K 至 110K 轮的首次配置失败对象均通过后续 repair 完成修复。110K、120K 轮首次配置分别有 849、1,373 个失败对象，表明大规模部署需要将修复流程和时间预算纳入标准交付路径。120K 轮后续挂载批次的 10,000 个 Pod 全部 Ready。
 

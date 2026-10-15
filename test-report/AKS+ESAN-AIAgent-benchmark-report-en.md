@@ -110,13 +110,48 @@ The scaling path is:
 
 For example, expanding from 100K to 110K targets 10,000 new volumes. In that round, 37,492 Pods were attached and reached Ready, including processing beyond the newly added volumes. Volume provisioning and Pod attachment rates are calculated separately using their respective processing counts.
 
-### 4.3 Test Stages
+### 4.3 Test Execution Steps and Stages
 
-| Stage | Objective | Completion Checks |
-|---|---|---|
-| PV provision | Create the new volumes for the current round | Check initial provisioning success and failure counts |
-| PV repair | Recover failed or missing provisioning objects | Delete, recreate, and revalidate remaining exceptions |
-| Pod attach + ready | Attach persistent volumes and start Pods | Check Ready, pending, and VolumeAttachment status |
+- **Provision**: Counts existing Elastic SAN volumes and incrementally creates Elastic SANs, volume groups, and static volumes to reach the target scale. Provisioning uses batching, rate limiting, and automatic retries while recording duration and success rate.
+
+- **Repair**: Identifies failed or missing volumes, deletes failed resources, and recreates them with the same names. It performs up to four repair rounds and records the result of each round.
+
+- **Attach**: Creates Kubernetes PVs, PVCs, and test Pods for successful volumes that are not currently attached. It validates the static volume attachment path by checking Pod Ready status and confirming `VolumeAttachment.status.attached=true`.
+
+<!-- mermaid-checked: no \n, no em-dash/en-dash, no {} in labels, subgraphs are id["label"], arrows are -->|"label"|, all subgraphs closed by end, ids unique -->
+```mermaid
+flowchart TD
+    subgraph PipelineFlow["Test Pipeline"]
+        ProvisionStage["Provision"]
+        RepairStage["Repair"]
+        AttachStage["Attach"]
+    end
+    subgraph AzureResources["Azure Elastic SAN Resources"]
+        SanResource["Elastic SAN"]
+        VgResource["Volume Group"]
+        VolumeResource["Static Volume"]
+    end
+    subgraph AksResources["AKS Attachment Resources"]
+        PvResource["PersistentVolume"]
+        PvcResource["PersistentVolumeClaim"]
+        PodResource["Test Pod"]
+        PodReadyCheck["Pod Ready"]
+        AttachmentCheck["VolumeAttachment attached"]
+    end
+
+    ProvisionStage -->|"Create"| SanResource
+    SanResource -->|"Contain"| VgResource
+    VgResource -->|"Create in batches"| VolumeResource
+    VolumeResource -->|"Recreate and validate if failed or missing"| RepairStage
+    ProvisionStage -->|"Successful volumes"| AttachStage
+    RepairStage -->|"Repaired volumes"| AttachStage
+    AttachStage -->|"Create static PV"| PvResource
+    VolumeResource -->|"CSI volume handle"| PvResource
+    PvResource -->|"Bind"| PvcResource
+    PvcResource -->|"Mount to"| PodResource
+    PodResource -->|"Check readiness"| PodReadyCheck
+    PodResource -->|"Check attachment"| AttachmentCheck
+```
 
 ## 5. Results by Test Round
 
@@ -137,7 +172,7 @@ All dates and times below are in UTC. The 110K round shows the provisioning resu
 
 ### 5.2 Stage Durations
 
-| Round | PV Provision Original Duration | Minutes | PV Repair Original Duration | Minutes | Pod Attach + Ready Original Duration | Minutes |
+| Round | Provision Original Duration | Minutes | Repair Original Duration | Minutes | Attach Original Duration | Minutes |
 |---|---|---:|---|---:|---|---:|
 | 42K | 18m 40s | 18.67 | 6m 1s | 6.02 | 4h 7m 18s | 247.30 |
 | 45K | 1h 21m 27s | 81.45 | 6m 51s | 6.85 | 4h 46m 48s | 286.80 |
@@ -154,16 +189,16 @@ Each stage is measured by its individual execution duration; some rounds span mu
 
 Unit: **volumes/minute**, representing the average number of volumes processed or successfully provisioned per minute. The initial successful provisioning rate uses the initial success count; the provisioning completion rate includes both provisioning and failure-repair stage durations.
 
-| Round | New Volume Target | Initial Successes / Failures | Initial Success Percentage | Initial Successful Provisioning Rate | Incremental Target Processing Rate (Including Failures) | Repair Result | Provisioning Completion Rate (Including Failure Repair) |
-|---|---:|---|---:|---:|---:|---|---:|
-| 42K | 2,000 | 1,982 / 18 | 99.10% | **106.18** | 107.14 | All 18 subsequently repaired | **81.03** |
-| 45K | 3,000 | 2,965 / 35 | 98.83% | **36.40** | 36.83 | All 35 repaired | **33.98** |
-| 60K | 15,000 | 14,746 / 254 | 98.31% | **38.25** | 38.91 | All 254 repaired | **37.28** |
-| 70K | 10,000 | 9,770 / 230 | 97.70% | **40.62** | 41.57 | All 230 repaired | **38.80** |
-| 90K | 20,000 | 19,572 / 428 | 97.86% | **41.04** | 41.93 | All 428 repaired | **39.87** |
-| 100K | 10,000 | 9,403 / 597 | 94.03% | **38.10** | 40.52 | All 597 repaired | **35.75** |
-| 110K | 10,000 | 9,151 / 849 | 91.51% | **45.99** | 50.26 | All 849 repaired over two repair rounds | **37.06** |
-| 120K | 10,000 | 8,627 / 1,373 | 86.27% | **43.21** | 50.09 | **Repair report and duration not recorded** | **Not calculable** |
+| Round | New Volume Target | Initial Successes / Failures | Initial Success Percentage | Initial Successful Provisioning Rate (Minutes) | Repair Result | Provisioning Completion Rate (Including Failure Repair) (Minutes) |
+|---|---:|---|---:|---:|---|---:|
+| 42K | 2,000 | 1,982 / 18 | 99.10% | **106.18** | All 18 subsequently repaired | **81.03** |
+| 45K | 3,000 | 2,965 / 35 | 98.83% | **36.40** | All 35 repaired | **33.98** |
+| 60K | 15,000 | 14,746 / 254 | 98.31% | **38.25** | All 254 repaired | **37.28** |
+| 70K | 10,000 | 9,770 / 230 | 97.70% | **40.62** | All 230 repaired | **38.80** |
+| 90K | 20,000 | 19,572 / 428 | 97.86% | **41.04** | All 428 repaired | **39.87** |
+| 100K | 10,000 | 9,403 / 597 | 94.03% | **38.10** | All 597 repaired | **35.75** |
+| 110K | 10,000 | 9,151 / 849 | 91.51% | **45.99** | All 849 repaired over two repair rounds | **37.06** |
+| 120K | 10,000 | 8,627 / 1,373 | 86.27% | **43.21** | **Repair report and duration not recorded** | **Not calculable** |
 
 **Deployment observation:** Initial provisioning failures in rounds from 42K through 110K were resolved through subsequent repair. The 110K and 120K rounds had 849 and 1,373 initial failures, respectively, highlighting the need to include repair workflows and time budgets in standard large-scale deployment procedures. In the subsequent attachment batch of the 120K round, all 10,000 Pods reached Ready.
 
