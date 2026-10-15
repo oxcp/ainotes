@@ -118,7 +118,7 @@
 
 - **Attach（挂载验证）**：为创建成功且尚未挂载的 Volume 创建 Kubernetes PV、PVC 和测试 Pod。通过检查 Pod Ready 状态和 VolumeAttachment 的 `attached=true` 状态，验证静态卷挂载链路。
 
-<!-- mermaid-checked: no \n, no em-dash/en-dash, no {} in labels, subgraphs are id["label"], arrows are -->|"label"|, all subgraphs closed by end, ids unique -->
+<!-- mermaid-checked: no \n, no em-dash/en-dash, no {} in labels, subgraphs are id["label"], arrows are -->
 ```mermaid
 flowchart TD
     subgraph PipelineFlow["测试 Pipeline"]

@@ -118,7 +118,7 @@ For example, expanding from 100K to 110K targets 10,000 new volumes. In that rou
 
 - **Attach**: Creates Kubernetes PVs, PVCs, and test Pods for successful volumes that are not currently attached. It validates the static volume attachment path by checking Pod Ready status and confirming `VolumeAttachment.status.attached=true`.
 
-<!-- mermaid-checked: no \n, no em-dash/en-dash, no {} in labels, subgraphs are id["label"], arrows are -->|"label"|, all subgraphs closed by end, ids unique -->
+<!-- mermaid-checked: no \n, no em-dash/en-dash, no {} in labels, subgraphs are id["label"], arrows are -->
 ```mermaid
 flowchart TD
     subgraph PipelineFlow["Test Pipeline"]
