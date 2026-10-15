@@ -199,6 +199,8 @@
 
 ## 附录 A：测试参数
 
+**镜像A='ghcr.io/openclaw/openclaw:latest'**
+
 | 参数 | 42K | 45K | 60K | 70K | 90K | 100K | 110K | 120K |
 |---|---|---|---|---|---|---|---|---|
 | `target_total_volumes` | 42,000 | 45,000 | 60,000 | 70,000 | 90,000 | 100,000 | 110,000 | 120,000 |
@@ -206,7 +208,7 @@
 | `max_volume_writes_per_burst` | 20 | 20 | 20 | 20 | 20 | 20 | 20 | 20 |
 | `burst_window_seconds` | 1.1 | 1.1 | 1.1 | 1.1 | 1.1 | 1.1 | 1.1 | 1.1 |
 | `pods_per_node` | 150 | 150 | 150 | 150 | 150 | 150 | 150 | 150 |
-| `pod_image` | 镜像 A | 缺失 | 缺失 | 缺失 | 镜像 A | 镜像 A | 镜像 A | 镜像 A |
+| `pod_image` | 镜像A | 镜像A | 镜像A | 镜像A | 镜像A | 镜像A | 镜像A | 镜像A |
 | `pod_cpu_request` | 300m | 300m | 300m | 300m | 300m | 300m | 300m | 300m |
 | `pod_memory_request` | 32Mi | 32Mi | 32Mi | 32Mi | 32Mi | 32Mi | 32Mi | 32Mi |
 
