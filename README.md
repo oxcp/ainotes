@@ -18,6 +18,7 @@ The easiest way to explore the repository is through the [AI Notes site](https:/
 | [CNI on AKS](cni-on-aks/README.md) | A hands-on guide to managing and installing a Container Network Interface (CNI) on AKS, including creating a BYO CNI cluster, installing Cilium, and validating network connectivity. |
 | [Azure Metrics to Prometheus and Grafana](azmon-export-to-prometheus/README.md) | A practical guide for exporting Azure Monitor metrics in Prometheus format and visualizing them with Grafana. |
 | [Istio Monitoring on AKS](istio-on-aks/monitoring/README.md) | A consolidated observability guide for the AKS Istio add-on, including metrics, access logs, tracing, and supporting tools. |
+| [E2B Embed on Azure](e2b-on-azure/readme.md) | A step-by-step Terraform guide for deploying E2B Embed on a single Azure VM Scale Set instance, with a dedicated VNet, runner VNet peering, and Blob Private Link. Public Blob access variants are also available for [Bash](e2b-on-azure/e2b_on_azure_blob_public_access_bash.md) and [PowerShell](e2b-on-azure/e2b_on_azure_blob_public_access_powershell.md). |
 
 ### Technical Notes and Evaluations
 
@@ -37,6 +38,7 @@ azmon-export-to-prometheus/      Azure Monitor metrics exporter guide and manife
 azure-ai-infrastructure-workshop/ Multi-track Azure AI infrastructure labs
 cni-on-aks/                      AKS CNI management and Cilium installation guide
 codegen-compare-across-models/   Code-generation comparisons and source material
+e2b-on-azure/                    E2B Embed deployment guides and vendored Azure runtime
 istio-on-aks/                    AKS Istio observability guidance
 models-healthcare/               Healthcare and medical-model evaluations
 multi-k8s-mgmt/                  Kubernetes multi-cluster management notes

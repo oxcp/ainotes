@@ -20,6 +20,7 @@
 | [AKS 上的 CNI](cni-on-aks/README.md) | 在 AKS 中管理和安装容器网络接口（CNI）的动手指南，包括创建 BYO CNI 集群、安装 Cilium，以及验证网络连通性。 |
 | [将 Azure 指标导出至 Prometheus 和 Grafana](azmon-export-to-prometheus/README.md) | 将 Azure Monitor 指标导出为 Prometheus 格式并使用 Grafana 进行可视化的实践指南。 |
 | [AKS 上的 Istio 监控](istio-on-aks/monitoring/README.md) | 面向 AKS Istio 插件的综合可观测性指南，包括指标、访问日志、链路追踪和相关工具。 |
+| [在 Azure 上部署 E2B Embed](e2b-on-azure/readme.md) | 使用 Terraform 将 E2B Embed 部署到单实例 Azure VM Scale Set 的分步指南，包含专用 VNet、运行端 VNet 对等互连和 Blob Private Link。另提供允许 Blob 公共网络访问的 [Bash 版](e2b-on-azure/e2b_on_azure_blob_public_access_bash.md)和 [PowerShell 版](e2b-on-azure/e2b_on_azure_blob_public_access_powershell.md)。 |
 
 ### 技术笔记与评测
 
@@ -39,6 +40,7 @@ azmon-export-to-prometheus/      Azure Monitor 指标导出指南与清单
 azure-ai-infrastructure-workshop/ 多路线 Azure AI 基础设施实验
 cni-on-aks/                      AKS CNI 管理与 Cilium 安装指南
 codegen-compare-across-models/   代码生成对比与相关资料
+e2b-on-azure/                    E2B Embed 部署指南与内置 Azure runtime
 istio-on-aks/                    AKS Istio 可观测性指南
 models-healthcare/               医疗健康与医学模型评测
 multi-k8s-mgmt/                  Kubernetes 多集群管理笔记

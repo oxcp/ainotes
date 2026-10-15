@@ -8,7 +8,7 @@
         :root {
             --bg1:#eef2f7; --bg2:#dbe4f3;
             --ink:#1f2733; --muted:#5b6675;
-            --labs:#2563eb; --docs:#7c3aed; --proto:#0d9488;
+            --labs:#2563eb; --docs:#7c3aed; --proto:#0d9488; --reports:#c2410c;
             --card:#ffffff; --border:#e6ebf2;
         }
         * { box-sizing: border-box; }
@@ -74,6 +74,7 @@
         .labs  { --accent: var(--labs); }
         .docs  { --accent: var(--docs); }
         .proto { --accent: var(--proto); }
+        .reports { --accent: var(--reports); }
 
         footer { text-align: center; color: var(--muted); margin-top: 3rem; font-size: .9rem; }
         @media (max-width: 520px) { body { padding: 2rem 1rem; } }
@@ -94,6 +95,7 @@
                 <li><a href="markdown-viewer.html?file=cni-on-aks/README.md">Managing and Installing CNI on AKS</a></li>
                 <li><a href="markdown-viewer.html?file=azmon-export-to-prometheus/README.md">Exporting Azure Metrics to Prometheus+Grafana</a></li>
                 <li><a href="markdown-viewer.html?file=istio-on-aks/monitoring/README.md">Build completed monitoring for AKS Istio based Service Mesh</a></li>
+                <li><a href="markdown-viewer.html?file=e2b-on-azure/readme.md">E2B Embed on Azure with Private Link</a></li>
             </ul>
         </section>
 
@@ -105,6 +107,14 @@
                 <li><a href="markdown-viewer.html?file=models-healthcare/models-in-Bio-Healthcare-industry.md">GPT-5 comparisons in Bio-Healthcare</a></li>
                 <li><a href="markdown-viewer.html?file=models-healthcare/model-4-SKH-TC.md">Medical image models comparison</a></li>
                 <li><a href="markdown-viewer.html?file=multi-k8s-mgmt/multiclustermgmt.md">Multi-cluster management for Kubernetes</a></li>
+            </ul>
+        </section>
+
+        <section class="category reports">
+            <h2>Test Reports</h2>
+            <ul class="category-list">
+                <li><a href="markdown-viewer.html?file=test-report/AKS%2BESAN-AIAgent-benchmark-report-en.md">AKS + Azure Elastic SAN: 120K-Scale AI Agent Infrastructure Test Report (English)</a></li>
+                <li><a href="markdown-viewer.html?file=test-report/AKS%2BESAN-AIAgent-benchmark-report-cn.md">AKS + Azure Elastic SAN：12 万级 AI Agent 基础设施规模测试报告（中文）</a></li>
             </ul>
         </section>
 
