@@ -1,5 +1,7 @@
 # AI Notes
 
+**English** | [简体中文](README_CN.md)
+
 A collection of hands-on workshops, deployment guides, technical deep dives, and model evaluations focused on AI infrastructure and cloud-native workloads on Azure.
 
 The repository combines runnable scripts and infrastructure templates with detailed documentation. Topics include hosting AI agents, distributed inference and fine-tuning, AKS networking and observability, and comparisons of foundation-model capabilities.
@@ -29,6 +31,12 @@ The easiest way to explore the repository is through the [AI Notes site](https:/
 | [Medical Image Model Comparison](models-healthcare/model-4-SKH-TC.md) | Evaluation notes for models used in medical-image scenarios. |
 | [Multi-cluster Kubernetes Management](multi-k8s-mgmt/multiclustermgmt.md) | Notes on approaches and tools for managing multiple Kubernetes clusters. |
 
+### Benchmark and Test Reports
+
+| Report | Description | Languages |
+|---|---|---|
+| AKS + Azure Elastic SAN: 120K-Scale AI Agent Infrastructure Test | Scale validation of 120,000 Pods with persistent volumes, covering resource and capacity design, deployment limits and measured rates, test methodology, per-round volume provisioning and Pod readiness results, and production deployment recommendations. | [English](test-report/AKS+ESAN-AIAgent-benchmark-report-en.md) · [简体中文](test-report/AKS+ESAN-AIAgent-benchmark-report-cn.md) |
+
 ## Repository Structure
 
 ```text
@@ -42,6 +50,7 @@ e2b-on-azure/                    E2B Embed deployment guides and vendored Azure 
 istio-on-aks/                    AKS Istio observability guidance
 models-healthcare/               Healthcare and medical-model evaluations
 multi-k8s-mgmt/                  Kubernetes multi-cluster management notes
+test-report/                     AI infrastructure benchmark and scale-test reports
 index.html                       GitHub Pages landing page
 markdown-viewer.html             Shared Markdown renderer for the site
 ```

@@ -31,6 +31,12 @@
 | [医学影像模型对比](models-healthcare/model-4-SKH-TC.md) | 医学影像场景所用模型的评测笔记。 |
 | [Kubernetes 多集群管理](multi-k8s-mgmt/multiclustermgmt.md) | Kubernetes 多集群管理方案与工具笔记。 |
 
+### 基准测试与测试报告
+
+| 报告 | 说明 | 语言 |
+|---|---|---|
+| AKS + Azure Elastic SAN：12 万级 AI Agent 基础设施规模测试 | 对 120,000 个挂载持久卷的 Pod 进行规模验证，涵盖资源与容量设计、部署限制与实测速率、测试方法、分轮卷配置和 Pod 就绪结果，以及生产部署建议。 | [简体中文](test-report/AKS+ESAN-AIAgent-benchmark-report-cn.md) · [English](test-report/AKS+ESAN-AIAgent-benchmark-report-en.md) |
+
 ## 仓库结构
 
 ```text
@@ -44,6 +50,7 @@ e2b-on-azure/                    E2B Embed 部署指南与内置 Azure runtime
 istio-on-aks/                    AKS Istio 可观测性指南
 models-healthcare/               医疗健康与医学模型评测
 multi-k8s-mgmt/                  Kubernetes 多集群管理笔记
+test-report/                     AI 基础设施基准与规模测试报告
 index.html                       GitHub Pages 首页
 markdown-viewer.html             网站共用的 Markdown 阅读器
 ```
