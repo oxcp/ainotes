@@ -120,6 +120,21 @@ For example, expanding from 100K to 110K targets 10,000 new volumes. In that rou
 
 <!-- mermaid-checked: no \n, no em-dash/en-dash, no {} in labels, subgraphs are id["label"], arrows are -->
 ```mermaid
+%%{init: {
+  "theme": "default",
+  "flowchart": {
+    "defaultRenderer": "dagre",
+    "htmlLabels": false,
+    "curve": "linear",
+    "nodeSpacing": 50,
+    "rankSpacing": 50,
+    "useMaxWidth": true
+  },
+  "themeVariables": {
+    "fontFamily": "Arial, sans-serif",
+    "fontSize": "16px"
+  }
+}}%%
 flowchart TD
     subgraph PipelineFlow["Test Pipeline"]
         ProvisionStage["Provision"]
@@ -157,18 +172,16 @@ flowchart TD
 
 ### 5.1 Execution Order and Incremental Scale
 
-All dates and times below are in UTC. The 110K round shows the provisioning result timestamp; all other rounds show the provisioning start timestamp.
-
-| Round | Date and Time (UTC) | Existing Volumes Before Round | New Volume Target | Cumulative Volume Target | Selected for Attachment in This Round | Actual Ready Count |
-|---|---|---:|---:|---:|---:|---:|
-| 42K | 2026-09-25 23:21:55 | 40,000 | 2,000 | 42,000 | Initial: 1,982; subsequent: 21 | 1,979 + 18 = **1,997** |
-| 45K | 2026-09-29 04:20:24 | 42,000 | 3,000 | 45,000 | 3,003 | **2,990** |
-| 60K | 2026-10-08 00:23:52 | 45,000 | 15,000 | 60,000 | 15,000 | **15,000** |
-| 70K | 2026-10-08 11:36:13 | 60,000 | 10,000 | 70,000 | 10,000 | **10,000** |
-| 90K | 2026-10-09 05:06:27 | 70,000 | 20,000 | 90,000 | 20,000 | **19,946** |
-| 100K | 2026-10-10 08:12:06 | 90,000 | 10,000 | 100,000 | 10,000 | **10,000** |
-| 110K | 2026-10-13 05:58:50 (result timestamp) | 100,000 | 10,000 | 110,000 | 37,492 | **37,492** |
-| 120K | 2026-10-14 12:32:29 | 110,000 | 10,000 | 120,000 | 10,000 | **10,000** |
+| Round | Existing Volumes Before Round | New Volume Target | Cumulative Volume Target | Selected for Attachment in This Round | Actual Ready Count |
+|---|---:|---:|---:|---:|---:|
+| 42K | 40,000 | 2,000 | 42,000 | Initial: 1,982; subsequent: 21 | 1,979 + 18 = **1,997** |
+| 45K | 42,000 | 3,000 | 45,000 | 3,003 | **2,990** |
+| 60K | 45,000 | 15,000 | 60,000 | 15,000 | **15,000** |
+| 70K | 60,000 | 10,000 | 70,000 | 10,000 | **10,000** |
+| 90K | 70,000 | 20,000 | 90,000 | 20,000 | **19,946** |
+| 100K | 90,000 | 10,000 | 100,000 | 10,000 | **10,000** |
+| 110K | 100,000 | 10,000 | 110,000 | 37,492 | **37,492** |
+| 120K | 110,000 | 10,000 | 120,000 | 10,000 | **10,000** |
 
 ### 5.2 Stage Durations
 
