@@ -69,7 +69,7 @@ These rate limits apply to the **volume provisioning control plane**. Plan volum
 
 | Deployment Activity | Observed Result | Capacity Planning Implication |
 |---|---|---|
-| Complete incremental volume provisioning, including repair | Approximately **35.75-39.87 volumes/minute** for batches of at least 10,000 volumes with completed repair | Include both initial provisioning and failure repair in the deployment window |
+| Complete incremental volume provisioning, including repair | Approximately **34.76-39.87 volumes/minute** for batches of at least 10,000 volumes with completed repair | Include both initial provisioning and failure repair in the deployment window; the 120K result uses a recoverable overall-time estimate |
 | Pod attachment and readiness | Approximately **39.02-65.23 Pods/minute** in rounds from 60K onward where the entire selected batch reached Ready | Estimate the startup window using the actual attachment batch size |
 | Large attachment batch in the 110K round | **37,492 Pods** reached Ready in **574.73 minutes**, averaging **65.23 Pods/minute** | Validated attachment and readiness processing for tens of thousands of Pods in a single round |
 | Incremental attachment batch in the 120K round | **10,000 Pods** reached Ready in **256.27 minutes**, averaging **39.02 Pods/minute** | The entire selected batch in the latest round reached Ready, with pending=0 |
@@ -120,21 +120,6 @@ For example, expanding from 100K to 110K targets 10,000 new volumes. In that rou
 
 <!-- mermaid-checked: no \n, no em-dash/en-dash, no {} in labels, subgraphs are id["label"], arrows are -->
 ```mermaid
-%%{init: {
-  "theme": "default",
-  "flowchart": {
-    "defaultRenderer": "dagre",
-    "htmlLabels": false,
-    "curve": "linear",
-    "nodeSpacing": 50,
-    "rankSpacing": 50,
-    "useMaxWidth": true
-  },
-  "themeVariables": {
-    "fontFamily": "Arial, sans-serif",
-    "fontSize": "16px"
-  }
-}}%%
 flowchart TD
     subgraph PipelineFlow["Test Pipeline"]
         ProvisionStage["Provision"]
@@ -194,9 +179,8 @@ flowchart TD
 | 90K | 7h 56m 56s | 476.93 | 24m 39s | 24.65 | 8h 17m 46s | 497.77 |
 | 100K | 4h 6m 47s | 246.78 | 32m 54s | 32.90 | 3h 45m 23s | 225.38 |
 | 110K | 3h 18m 58s | 198.97 | 1h 10m 51s | 70.85 | 9h 34m 44s | 574.73 |
-| 120K | 3h 19m 38s | 199.63 | **Not recorded** | - | 4h 16m 16s | 256.27 |
+| 120K | 3h 19m 38s | 199.63 | 56m 14s | 56.23 | 4h 16m 16s | 256.27 |
 
-Each stage is measured by its individual execution duration; some rounds span multiple runs or days. The repair duration for the 120K round remains to be provided.
 
 ### 5.3 Volume Provisioning Results and Average Per-Minute Rates
 
@@ -211,9 +195,11 @@ Unit: **volumes/minute**, representing the average number of volumes processed o
 | 90K | 20,000 | 19,572 / 428 | 97.86% | **41.04** | All 428 repaired | **39.87** |
 | 100K | 10,000 | 9,403 / 597 | 94.03% | **38.10** | All 597 repaired | **35.75** |
 | 110K | 10,000 | 9,151 / 849 | 91.51% | **45.99** | All 849 repaired over two repair rounds | **37.06** |
-| 120K | 10,000 | 8,627 / 1,373 | 86.27% | **43.21** | **Repair report and duration not recorded** | **Not calculable** |
+| 120K | 10,000 | 8,627 / 1,373 | 86.27% | **43.21** | All 1,373 repaired | **34.76** |
 
-**Deployment observation:** Initial provisioning failures in rounds from 42K through 110K were resolved through subsequent repair. The 110K and 120K rounds had 849 and 1,373 initial failures, respectively, highlighting the need to include repair workflows and time budgets in standard large-scale deployment procedures.
+The 120K provisioning completion rate uses a recoverable overall-time estimate: the provision time is derived from the initial successful provisioning rate as `10,000 / 43.21 = approximately 231.43` minutes. Adding the estimated 56.23 minutes from the first repair plan through final confirmation gives approximately 287.66 minutes, so `10,000 / 287.66 = approximately 34.76` volumes/minute. This value is not calculated using the measured provision-stage duration in section 5.2.
+
+**Deployment observation:** Initial provisioning failures in rounds from 42K through 120K were subsequently repaired or ultimately confirmed complete. The 110K and 120K rounds had 849 and 1,373 initial failures, respectively, highlighting the need to include repair workflows and time budgets in standard large-scale deployment procedures.
 
 The 42K round was a short, small batch with a higher average rate than the other batches. Plan sustained deployment using the subscription-level hourly and per-second rate budgets.
 
@@ -275,18 +261,3 @@ The main report uses stage execution durations. Calculations use seconds before 
 | Initial successful provisioning rate (volumes/minute) | Initially successful volume count / provisioning stage duration in minutes |
 | Provisioning completion rate (including failure repair, volumes/minute) | New unique volumes successfully provisioned after repair / combined provisioning and repair stage durations in minutes |
 | Average attachment readiness rate (Pods/minute) | Actual Ready count for the batch / attach + ready stage duration in minutes |
-
-### B.2 Internal Script Processing Durations
-
-Internal script timings provide supplementary information for processing-efficiency analysis and are presented separately from the stage execution durations used in the main report. Each entry below shows original seconds -> minutes.
-
-| Round | Provision | Repair | Attach + Ready |
-|---|---|---|---|
-| 42K | 915.428 s -> 15.26 | 134.557 s -> 2.24 | Not recorded |
-| 45K | 4586.765 s -> 76.45 | 179.835 s -> 3.00 | Not recorded |
-| 60K | 22830.439 s -> 380.51 | 775.449 s -> 12.92 | 14470.605 s -> 241.18 |
-| 70K | 14013.451 s -> 233.56 | 877.860 s -> 14.63 | 9865.825 s -> 164.43 |
-| 90K | 28074.531 s -> 467.91 | 1300.812 s -> 21.68 | Not recorded |
-| 100K | 14153.773 s -> 235.90 | 1824.075 s -> 30.40 | 11064.007 s -> 184.40 |
-| 110K | Not recorded | 4005.464 s -> 66.76 | 30800.872 s -> 513.35 |
-| 120K | 10773.166 s -> 179.55 | Not recorded | 11474.038 s -> 191.23 |
