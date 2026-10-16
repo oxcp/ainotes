@@ -170,6 +170,9 @@ flowchart TD
 | 110K | 100,000 | 10,000 | 110,000 | 37,492 | **37,492** |
 | 120K | 110,000 | 10,000 | 120,000 | 10,000 | **10,000** |
 
+- Attachment counts are tracked independently for the batch processed in each round.
+- In the 110K round, the planned number of new Pods was 10,000. During the test, AKS nodes were restarted and upgraded as part of platform maintenance, causing some existing running and attached Pods to disappear. As a result, 37,492 Pods were actually attached in the 110K round, including the planned 10,000 new Pods and the restoration of existing Pods lost or reduced during maintenance.
+
 ### 5.2 Stage Durations
 
 | Round | Provision Original Duration | Minutes | Repair Original Duration | Minutes | Attach Original Duration | Minutes |
