@@ -213,7 +213,7 @@ Unit: **volumes/minute**, representing the average number of volumes processed o
 | 110K | 10,000 | 9,151 / 849 | 91.51% | **45.99** | All 849 repaired over two repair rounds | **37.06** |
 | 120K | 10,000 | 8,627 / 1,373 | 86.27% | **43.21** | **Repair report and duration not recorded** | **Not calculable** |
 
-**Deployment observation:** Initial provisioning failures in rounds from 42K through 110K were resolved through subsequent repair. The 110K and 120K rounds had 849 and 1,373 initial failures, respectively, highlighting the need to include repair workflows and time budgets in standard large-scale deployment procedures. In the subsequent attachment batch of the 120K round, all 10,000 Pods reached Ready.
+**Deployment observation:** Initial provisioning failures in rounds from 42K through 110K were resolved through subsequent repair. The 110K and 120K rounds had 849 and 1,373 initial failures, respectively, highlighting the need to include repair workflows and time budgets in standard large-scale deployment procedures.
 
 The 42K round was a short, small batch with a higher average rate than the other batches. Plan sustained deployment using the subscription-level hourly and per-second rate budgets.
 
@@ -260,7 +260,7 @@ The average attachment readiness rate for 42K uses the combined Ready count of 1
 | `pod_cpu_request` | 300m | 300m | 300m | 300m | 300m | 300m | 300m | 300m |
 | `pod_memory_request` | 32Mi | 32Mi | 32Mi | 32Mi | 32Mi | 32Mi | 32Mi | 32Mi |
 
-Image A: `ghcr.io/openclaw/openclaw:latest`. Image configurations for the 45K, 60K, and 70K rounds were not recorded.
+Image A: `ghcr.io/openclaw/openclaw:latest`. 
 
 The burst parameters above are test-client settings. Production rate limiting must enforce the subscription-level limits of 10 volumes/second and 3,400 volumes/hour.
 
@@ -273,7 +273,6 @@ The main report uses stage execution durations. Calculations use seconds before 
 | Metric | Calculation |
 |---|---|
 | Initial successful provisioning rate (volumes/minute) | Initially successful volume count / provisioning stage duration in minutes |
-| Incremental target processing rate (including failures, volumes/minute) | New volume target for the round / provisioning stage duration in minutes, including initially failed objects |
 | Provisioning completion rate (including failure repair, volumes/minute) | New unique volumes successfully provisioned after repair / combined provisioning and repair stage durations in minutes |
 | Average attachment readiness rate (Pods/minute) | Actual Ready count for the batch / attach + ready stage duration in minutes |
 
