@@ -1,5 +1,7 @@
 # AKS + Azure Elastic SAN：12 万级 AI Agent 基础设施规模测试报告
 
+[English](AKS+ESAN-AIAgent-benchmark-report-en.md) | **简体中文**
+
 **报告日期：** 2026-10-15  
 **测试周期：** 2026-09-25 至 2026-10-15
 

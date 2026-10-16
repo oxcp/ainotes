@@ -1,5 +1,7 @@
 # AKS + Azure Elastic SAN: 120K-Scale AI Agent Infrastructure Test Report
 
+**English** | [简体中文](AKS+ESAN-AIAgent-benchmark-report-cn.md)
+
 **Report date:** 2026-10-15  
 **Test period:** 2026-09-25 to 2026-10-15
 
