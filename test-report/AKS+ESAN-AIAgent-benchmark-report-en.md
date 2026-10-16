@@ -199,8 +199,6 @@ Unit: **volumes/minute**, representing the average number of volumes processed o
 | 110K | 10,000 | 9,151 / 849 | 91.51% | **45.99** | All 849 repaired over two repair rounds | **37.06** |
 | 120K | 10,000 | 8,627 / 1,373 | 86.27% | **43.21** | All 1,373 repaired | **34.76** |
 
-The 120K provisioning completion rate uses a recoverable overall-time estimate: the provision time is derived from the initial successful provisioning rate as `10,000 / 43.21 = approximately 231.43` minutes. Adding the estimated 56.23 minutes from the first repair plan through final confirmation gives approximately 287.66 minutes, so `10,000 / 287.66 = approximately 34.76` volumes/minute. This value is not calculated using the measured provision-stage duration in section 5.2.
-
 **Deployment observation:** Initial provisioning failures in rounds from 42K through 120K were subsequently repaired or ultimately confirmed complete. The 110K and 120K rounds had 849 and 1,373 initial failures, respectively, highlighting the need to include repair workflows and time budgets in standard large-scale deployment procedures.
 
 The 42K round was a short, small batch with a higher average rate than the other batches. Plan sustained deployment using the subscription-level hourly and per-second rate budgets.
@@ -218,7 +216,23 @@ The 42K round was a short, small batch with a higher average rate than the other
 | 110K | 37,492 | 574.73 | **65.23** | Entire selected batch reached Ready |
 | 120K | 10,000 | 256.27 | **39.02** | Entire selected batch reached Ready |
 
-The average attachment readiness rate for 42K uses the combined Ready count of 1,997 across both runs and assumes that 247.30 minutes covers both executions. Attachment counts are tracked independently for the batch processed in each round.
+- Attachment counts are tracked independently for the batch processed in each round.
+- In the 110K round, the planned number of new Pods was 10,000. During the test, AKS nodes were restarted and upgraded as part of platform maintenance, causing some existing running and attached Pods to disappear. As a result, 37,492 Pods were actually attached in the 110K round, including the planned 10,000 new Pods and the restoration of existing Pods lost or reduced during maintenance.
+
+> [!tip]
+>- The attachment runs for both the 42K and 45K rounds had a small number of Pods remain pending until the readiness wait timed out. This extended the overall attachment duration and resulted in significantly lower average attachment-and-readiness rates.
+>- Diagnosis showed that the pending Pods in the 42K and 45K rounds were caused by OOM events resulting from the CSI Driver's default memory limits being too low. Increasing the CSI Driver memory limits resolved the issue. A similar issue occurred during the 90K round; after the memory limits were increased further, no Pod pending issues occurred in the subsequent larger-scale rounds.
+>- The final CSI Driver memory limits were:
+>
+>| Kubernetes workload | Type | Container | New memory limit |
+>|---|---|---|---:|
+>| `acstor-cluster-manager` | Deployment | `manager` | 2 Gi |
+>| `acstor-node-agent` | DaemonSet | `agent` | 4 Gi |
+>| `acstor-otel-collector` | DaemonSet | `otel-collector` | 1 Gi |
+>| `acstor-azuresan-csi-driver` | DaemonSet | `driver` | 2 Gi |
+>| `acstor-azuresan-csi-driver` | DaemonSet | `csi-provisioner` | 2 Gi |
+>| `acstor-azuresan-csi-driver` | DaemonSet | `csi-resizer` | 4 Gi |
+
 
 ## 6. Production Deployment Recommendations
 
@@ -261,3 +275,32 @@ Stage execution durations are used, calculated first in seconds and then convert
 | Initial successful provisioning rate (volumes/minute) | Initially successful volume count / provisioning stage duration in minutes |
 | Provisioning completion rate (including failure repair, volumes/minute) | New unique volumes successfully provisioned after repair / combined provisioning and repair stage durations in minutes |
 | Average attachment readiness rate (Pods/minute) | Actual Ready count for the batch / attach + ready stage duration in minutes |
+
+## Appendix C: Reference Command for Increasing CSI Driver Memory
+
+The following command updates the Azure Container Storage extension on the AKS cluster to increase the memory requests and limits for the manager, agent, OpenTelemetry Collector, and Azure SAN CSI Driver components. This command is provided for reference only; verify the target cluster, subscription, and workload-specific values before running it.
+
+```bash
+az k8s-extension update \
+  --cluster-type managedClusters \
+  --subscription "<subscription-id>" \
+  --cluster-name "<aks-cluster-name>" \
+  --resource-group "<resource-group-name>" \
+  --name "acstor" \
+  --config "resources.manager.limits.memory=2Gi" \
+  --config "resources.manager.requests.memory=256Mi" \
+  --config "agent.values.resources.agent.limits.memory=4Gi" \
+  --config "agent.values.resources.agent.requests.memory=512Mi" \
+  --config "agent.values.resources.otelCollector.limits.memory=1Gi" \
+  --config "agent.values.resources.otelCollector.requests.memory=512Mi" \
+  --config "csiDriverConfigs.azuresan-csi-driver.values.resources.azuresan.limits.memory=2Gi" \
+  --config "csiDriverConfigs.azuresan-csi-driver.values.resources.azuresan.requests.memory=256Mi" \
+  --config "csiDriverConfigs.azuresan-csi-driver.values.resources.csiAttacher.limits.memory=2Gi" \
+  --config "csiDriverConfigs.azuresan-csi-driver.values.resources.csiAttacher.requests.memory=256Mi" \
+  --config "csiDriverConfigs.azuresan-csi-driver.values.resources.csiProvisioner.limits.memory=2Gi" \
+  --config "csiDriverConfigs.azuresan-csi-driver.values.resources.csiProvisioner.requests.memory=256Mi" \
+  --config "csiDriverConfigs.azuresan-csi-driver.values.resources.csiResizer.limits.memory=4Gi" \
+  --config "csiDriverConfigs.azuresan-csi-driver.values.resources.csiResizer.requests.memory=512Mi" \
+  --yes \
+  --verbose
+```

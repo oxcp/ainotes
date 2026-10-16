@@ -186,7 +186,7 @@ flowchart TD
 
 ### 5.3 卷配置结果与平均每分钟速率
 
-单位：**卷/分钟**，表示平均每分钟处理或成功配置的卷数。首次配置成功速率按首次配置成功数计算；卷配置完成速率同时计入 provision 与失败修复的阶段耗时。
+单位：**卷/分钟**，表示平均每分钟处理或成功配置的卷数。首次配置成功速率按首次配置成功数计算；卷配置完成速率同时计入 provision 与 repair 阶段耗时。
 
 | 轮次 | 新增卷目标 | 首次成功 / 失败 | 首次成功率 | 首次配置成功速率（分钟） | repair 结果 | 卷配置完成速率（含失败修复）（分钟） |
 |---|---:|---|---:|---:|---|---:|
@@ -199,7 +199,6 @@ flowchart TD
 | 110K | 10,000 | 9,151 / 849 | 91.51% | **45.99** | 849 个经两轮全部修复 | **37.06** |
 | 120K | 10,000 | 8,627 / 1,373 | 86.27% | **43.21** | 1,373 个全部修复 | **34.76** |
 
-120K 的卷配置完成速率采用可恢复的整体时间估算：按首次配置成功速率反推 provision 时间为 `10,000 ÷ 43.21 ≈ 231.43` 分钟，加上从首次 plan 到最终确认完成的 repair 估算时间 56.23 分钟，总计约 287.66 分钟，因此 `10,000 ÷ 287.66 ≈ 34.76` 卷/分钟。该值不是使用 5.2 中 provision 阶段实测耗时计算的。
 
 **部署观察：** 42K 至 120K 轮的首次配置失败对象均通过后续 repair 完成修复或最终确认完成。110K、120K 轮首次配置分别有 849、1,373 个失败对象，表明大规模部署需要将修复流程和时间预算纳入标准交付路径。
 
@@ -218,7 +217,23 @@ flowchart TD
 | 110K | 37,492 | 574.73 | **65.23** | 选中批次全部 Ready |
 | 120K | 10,000 | 256.27 | **39.02** | 选中批次全部 Ready |
 
-42K 的平均挂载就绪速率按两次 Ready 数合计 1,997 计算，并假设 247.30 分钟覆盖两次执行。各轮挂载量按实际处理批次独立统计。
+- 各轮挂载量按实际处理批次独立统计
+- 110K轮次中，理论计划新增的Pod数量为10,00。实际测试中，测试平台中AKS节点因平台维护重启升级，导致部分已运行和挂载的Pod消失，因此在110K轮次中，实际挂载的Pod数量为37,492，这包括了计划的10,000，以及恢复因维护而消失/减少的已有Pod
+
+> [!tip]
+>- 42K 和 45K 轮次的挂载，均出现了个别Pod pending，等待超时情况，因此挂载整体耗时偏长，导致平均挂载+就绪速率明显偏低
+>- 42K 和 45K 轮次的挂载，Pod pending问题诊断的原因为 CSI driver 默认的Memory限额偏低导致OOM。在提升CSI driver memory上限后，问题解决。在随后的90K轮次中出现类似问题，进一步提升CSI driver memory后，在后续更大规模轮次中，没有再出现Pod pending问题
+>- 最终设置的CSI driver memory limit如下：
+>
+>| Kubernetes workload | Type | Container | New memory limit |
+>|---|---|---|---:|
+>| `acstor-cluster-manager` | Deployment | `manager` | 2 Gi |
+>| `acstor-node-agent` | DaemonSet | `agent` | 4 Gi |
+>| `acstor-otel-collector` | DaemonSet | `otel-collector` | 1 Gi |
+>| `acstor-azuresan-csi-driver` | DaemonSet | `driver` | 2 Gi |
+>| `acstor-azuresan-csi-driver` | DaemonSet | `csi-provisioner` | 2 Gi |
+>| `acstor-azuresan-csi-driver` | DaemonSet | `csi-resizer` | 4 Gi 
+
 
 ## 6. 生产部署建议
 
@@ -261,3 +276,32 @@ flowchart TD
 | 首次配置成功速率（卷/分钟） | 首次配置成功卷数 ÷ provision 阶段分钟数 |
 | 卷配置完成速率（含失败修复，卷/分钟） | 最终修复完成的新增独立卷数 ÷（provision + repair）阶段分钟数 |
 | 平均挂载就绪速率（Pod/分钟） | 对应批次实际 Ready 数 ÷ attach + ready 阶段分钟数 |
+
+## 附录 C：提升 CSI Driver 内存配置的参考命令
+
+以下命令用于更新 AKS 集群中的 Azure Container Storage 扩展，提高 manager、agent、OpenTelemetry Collector 和 Azure SAN CSI Driver 相关组件的内存 request 与 limit。该命令仅供参考，执行前应根据目标集群、订阅及工作负载需求核对参数。
+
+```bash
+az k8s-extension update \
+  --cluster-type managedClusters \
+  --subscription "<subscription-id>" \
+  --cluster-name "<aks-cluster-name>" \
+  --resource-group "<resource-group-name>" \
+  --name "acstor" \
+  --config "resources.manager.limits.memory=2Gi" \
+  --config "resources.manager.requests.memory=256Mi" \
+  --config "agent.values.resources.agent.limits.memory=4Gi" \
+  --config "agent.values.resources.agent.requests.memory=512Mi" \
+  --config "agent.values.resources.otelCollector.limits.memory=1Gi" \
+  --config "agent.values.resources.otelCollector.requests.memory=512Mi" \
+  --config "csiDriverConfigs.azuresan-csi-driver.values.resources.azuresan.limits.memory=2Gi" \
+  --config "csiDriverConfigs.azuresan-csi-driver.values.resources.azuresan.requests.memory=256Mi" \
+  --config "csiDriverConfigs.azuresan-csi-driver.values.resources.csiAttacher.limits.memory=2Gi" \
+  --config "csiDriverConfigs.azuresan-csi-driver.values.resources.csiAttacher.requests.memory=256Mi" \
+  --config "csiDriverConfigs.azuresan-csi-driver.values.resources.csiProvisioner.limits.memory=2Gi" \
+  --config "csiDriverConfigs.azuresan-csi-driver.values.resources.csiProvisioner.requests.memory=256Mi" \
+  --config "csiDriverConfigs.azuresan-csi-driver.values.resources.csiResizer.limits.memory=4Gi" \
+  --config "csiDriverConfigs.azuresan-csi-driver.values.resources.csiResizer.requests.memory=512Mi" \
+  --yes \
+  --verbose
+```
