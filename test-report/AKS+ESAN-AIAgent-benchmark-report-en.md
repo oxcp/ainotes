@@ -1,7 +1,5 @@
 # AKS + Azure Elastic SAN: 120K-Scale AI Agent Infrastructure Test Report
 
-**English** | [简体中文](AKS+ESAN-AIAgent-benchmark-report-cn.md)
-
 **Report date:** 2026-10-15  
 **Test period:** 2026-09-25 to 2026-10-15
 
@@ -60,7 +58,7 @@ The test used a deployment density of 150 Pods per user node. Production node ca
 |---|---|---|
 | Volumes per Elastic SAN | 20,000 | Distribute volumes across multiple SANs |
 | Elastic SAN quota per subscription | Increased to 10 for this test; default quota is 5 | The 120K plan requires at least 6 SANs; complete the quota request before deployment |
-| Hourly volume provisioning rate | **3,400 volumes/hour, subscription-wide** | Multiple SANs share the subscription-level rate budget |
+| Hourly volume provisioning rate | **3,400 volumes/hour, subscription-wide** | Multiple SANs share the subscription-level rate budget. The default write-operation limit is 1,200 operations/hour; complete the hourly write-limit increase request before deployment |
 | Per-second volume provisioning rate | **10 volumes/second, subscription-wide** | Enforce this limit together with the hourly limit |
 | User node Pod density | 150 Pods/node validated in this test | Use the corresponding node SKUs and reserve production operational headroom |
 | Failure repair | Include deletion, recreation, and revalidation in the deployment workflow | Reserve time and a control-plane write-operation budget for retries |
@@ -254,7 +252,7 @@ The burst parameters above are test-client settings. Production rate limiting mu
 
 ## Appendix B: Timing and Calculation Definitions
 
-Stage execution durations are used, calculated first in seconds, then converted to minutes and rounded to two decimal places.
+Stage execution durations are used, calculated first in seconds and then converted to minutes and rounded to two decimal places.
 
 | Metric | Calculation |
 |---|---|
