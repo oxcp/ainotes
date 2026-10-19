@@ -1,7 +1,7 @@
 # Install E2B Embed on Azure: Step-by-Step Guide (Powershell)
 
 > [!tip]
-> To setup when Azure storage account prohibits public access, please follow [link](readme.md).
+> To set up when the Azure Storage account prohibits public access, follow the [PowerShell Private Link guide](readme_powershell.md).
 
 Prepared October 14, 2026. Commands use Windows PowerShell unless otherwise indicated.
 

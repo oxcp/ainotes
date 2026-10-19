@@ -1,5 +1,7 @@
 # Install E2B Embed on Azure: Step-by-Step Guide
 
+**Bash guide** | [PowerShell guide](readme_powershell.md)
+
 > [!tip]
 > To setup when Azure storage account permits public access, follow [Bash](e2b_on_azure_blob_public_access_bash.md) or [PowerShell](e2b_on_azure_blob_public_access_powershell.md).
 
