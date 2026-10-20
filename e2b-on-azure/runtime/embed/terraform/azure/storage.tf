@@ -51,21 +51,23 @@ resource "azurerm_private_dns_zone" "blob" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "e2b" {
-  name                  = "${var.vnet_name}-blob"
+  count = var.link_vnet_to_blob_private_dns_zone ? 1 : 0
+
+  name                  = "${local.vnet_name}-blob"
   resource_group_name   = local.blob_private_dns_zone_resource_group_name
   private_dns_zone_name = local.blob_private_dns_zone_name
-  virtual_network_id    = azurerm_virtual_network.this.id
+  virtual_network_id    = local.vnet_id
   registration_enabled  = false
   tags                  = var.tags
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "runner" {
-  count = var.link_runner_vnet_to_blob_private_dns_zone ? 1 : 0
+  count = !local.use_existing_vnet && var.link_runner_vnet_to_blob_private_dns_zone ? 1 : 0
 
-  name                  = "${var.runner_vnet_name}-blob"
+  name                  = "${data.azurerm_virtual_network.runner[0].name}-blob"
   resource_group_name   = local.blob_private_dns_zone_resource_group_name
   private_dns_zone_name = local.blob_private_dns_zone_name
-  virtual_network_id    = data.azurerm_virtual_network.runner.id
+  virtual_network_id    = data.azurerm_virtual_network.runner[0].id
   registration_enabled  = false
   tags                  = var.tags
 }
@@ -88,6 +90,18 @@ resource "azurerm_private_endpoint" "blob" {
     name                 = "blob"
     private_dns_zone_ids = [local.blob_private_dns_zone_id]
   }
+
+  lifecycle {
+    precondition {
+      condition     = var.link_vnet_to_blob_private_dns_zone || var.blob_private_dns_zone_id != null
+      error_message = "A new Blob Private DNS Zone requires a VNet link. Disable link_vnet_to_blob_private_dns_zone only for an existing zone already linked to the E2B VNet."
+    }
+  }
+}
+
+moved {
+  from = azurerm_private_dns_zone_virtual_network_link.e2b
+  to   = azurerm_private_dns_zone_virtual_network_link.e2b[0]
 }
 
 resource "time_sleep" "private_network_propagation" {
@@ -95,12 +109,14 @@ resource "time_sleep" "private_network_propagation" {
 
   triggers = {
     private_endpoint = azurerm_private_endpoint.blob.id
-    e2b_dns_link     = azurerm_private_dns_zone_virtual_network_link.e2b.id
-    runner_dns_link = var.link_runner_vnet_to_blob_private_dns_zone ? (
+    e2b_dns_link = var.link_vnet_to_blob_private_dns_zone ? (
+      azurerm_private_dns_zone_virtual_network_link.e2b[0].id
+    ) : "externally-managed"
+    runner_dns_link = !local.use_existing_vnet && var.link_runner_vnet_to_blob_private_dns_zone ? (
       azurerm_private_dns_zone_virtual_network_link.runner[0].id
     ) : "externally-managed"
-    e2b_to_runner = azurerm_virtual_network_peering.e2b_to_runner.id
-    runner_to_e2b = azurerm_virtual_network_peering.runner_to_e2b.id
+    e2b_to_runner = local.use_existing_vnet ? "not-required" : azurerm_virtual_network_peering.e2b_to_runner[0].id
+    runner_to_e2b = local.use_existing_vnet ? "not-required" : azurerm_virtual_network_peering.runner_to_e2b[0].id
   }
 }
 

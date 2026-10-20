@@ -47,8 +47,8 @@ output "blob_private_endpoint_ip" {
 }
 
 output "vnet_id" {
-  description = "Resource ID of the dedicated E2B VNet."
-  value       = azurerm_virtual_network.this.id
+  description = "Resource ID of the existing or dedicated E2B VNet."
+  value       = local.vnet_id
 }
 
 output "vm_subnet_id" {

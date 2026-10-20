@@ -5,11 +5,11 @@
 > [!tip]
 > To set up E2B when the Azure Storage account permits public access, follow the public-access [Bash](e2b_on_azure_blob_public_access_bash.md) or [PowerShell](e2b_on_azure_blob_public_access_powershell.md) guide instead.
 
-Prepared October 19, 2026. Local commands use **PowerShell 7.4 or newer on Windows**. Scripts passed to Azure VM Run Command execute on the deployed **Ubuntu VM**, so those script strings intentionally use Linux commands.
+Updated October 20, 2026. Local commands use **PowerShell 7.4 or newer on Windows**. Scripts passed to Azure VM Run Command execute on the deployed **Ubuntu VM**, so those script strings intentionally use Linux commands.
 
-This is the PowerShell companion to the [Bash guide](readme.md), using the same vendored module and private-storage topology. It deploys **E2B Embed on one Azure Linux VM**, managed by a single-instance VM Scale Set. Terraform creates the infrastructure, installs Docker, and starts the complete E2B stack automatically. You do not need AKS, an existing **E2B** VM, or an E2B Cloud account. You **do** need an existing Windows VM or self-hosted runner on the configured runner VNet to execute Terraform.
+This PowerShell guide uses the vendored module's **existing-VNet mode**, unlike the dedicated-VNet topology in the [Bash guide](readme.md). It deploys **E2B Embed on one Azure Linux VM**, managed by a single-instance VM Scale Set. Terraform creates the infrastructure, installs Docker, and starts the complete E2B stack automatically. You do not need AKS, an existing **E2B** VM, or an E2B Cloud account. You **do** need an existing VNet and a Windows VM or self-hosted runner on that VNet to execute Terraform.
 
-This walkthrough is based on the upstream [Azure README](https://github.com/e2b-dev/runtime/blob/main/embed/terraform/azure/README.md#install) and the locally adapted module. The module creates a dedicated `e2bvnet`, peers it with the runner VNet, and keeps Azure Storage public network access disabled through Blob Private Link.
+This walkthrough is based on the upstream [Azure README](https://github.com/e2b-dev/runtime/blob/main/embed/terraform/azure/README.md#install) and the locally adapted module. It creates **two new subnets in the supplied VNet**: one for the E2B VM and one for a new Blob Private Endpoint to the deployed Storage Account. It creates **no VNet and no VNet peering**, and keeps Storage public network access disabled. The Blob Private DNS Zone and its VNet link can be created or reused using `terraform.tfvars`.
 
 > **Before starting:** this is a single-node deployment with plain HTTP and no persistent data disk. It is suitable for evaluating E2B, but needs additional networking, TLS, and operational design for sensitive production workloads.
 
@@ -25,18 +25,23 @@ This walkthrough is based on the upstream [Azure README](https://github.com/e2b-
 | Python | For testing the E2B SDK; the examples use the `python` command |
 | Azure capacity | A supported nested-virtualization VM size and sufficient regional/family vCPU quota |
 | Private-network execution | An existing Windows Azure VM or self-hosted Windows runner attached to a VNet in the same subscription |
-| Non-overlapping address space | A CIDR for `e2bvnet` that does not overlap the runner VNet or connected networks |
+| Available subnet space | Two unused, non-overlapping subnet CIDRs inside the existing VNet's address space, and two unused subnet names |
+| VNet region | The existing VNet must be in the deployment region (`southeastasia` in this guide) |
 
-The deploying identity also needs permission to read the existing runner VNet and create a peering on it. By default, Terraform creates `privatelink.blob.core.windows.net` in the E2B resource group and links both VNets. Reusing a Private DNS Zone requires permission to create links and endpoint records in that zone. The runner VM and runner VNet remain outside this deployment's ownership.
+The deploying identity also needs permission to read the existing VNet, create/delete the two subnets, join them, and associate the VM subnet with the deployment's NSG and NAT gateway. By default, Terraform creates `privatelink.blob.core.windows.net` in the E2B resource group and links the supplied VNet. Reusing a Private DNS Zone requires permission to join that zone for the endpoint's DNS zone group and manage the endpoint's DNS records; creating a new VNet link also requires link permissions. Use a zone in the selected subscription for this walkthrough. The existing VNet, runner VM, other subnets, and other Storage Accounts' endpoints remain outside this deployment's ownership.
+
+The deploying identity needs custom-role management permission in both resource groups and role-assignment permission on the new VM subnet. The module extends its custom role's assignable scopes to the VNet resource group and grants the VM identity subnet join at **only the new VM subnet**, so first-boot NIC/public-IP attachment works across resource groups. It does not grant the VM access to all existing subnets.
+
+Use a **new, separate E2B resource group** (`name = "e2b-embed-demo"` below), not the existing VNet or shared DNS resource group. Terraform must not own a resource group containing shared infrastructure.
 
 Install missing tools using their official installers or Windows Package Manager:
 
 ```powershell
-winget install --exact --id Microsoft.PowerShell
-winget install --exact --id Microsoft.AzureCLI
-winget install --exact --id Hashicorp.Terraform
-winget install --exact --id Git.Git
-winget install --exact --id Python.Python.3.12
+winget install --exact --id Microsoft.PowerShell --source winget
+winget install --exact --id Microsoft.AzureCLI --source winget
+winget install --exact --id Hashicorp.Terraform --source winget
+winget install --exact --id Git.Git --source winget
+winget install --exact --id Python.Python.3.12 --source winget
 ```
 
 Run installers only for tools that are missing. If `winget` is unavailable on your Windows Server runner, use the official [PowerShell](https://learn.microsoft.com/powershell/scripting/install/installing-powershell-on-windows), [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli-windows), [Terraform](https://developer.hashicorp.com/terraform/install), [Git](https://git-scm.com/downloads/win), and [Python](https://www.python.org/downloads/windows/) installers.
@@ -136,9 +141,9 @@ Copy the **complete** `runtime` tree, including its Compose files and `.env`. Do
 
 For a deployment that already failed partway through, use the **original deployment directory and state**, not a new directory. Back up and securely transfer the existing `terraform.tfstate` (for local state), `.terraform.lock.hcl`, variable files, and backend configuration to the runner. Do not transfer the machine-specific `.terraform` provider cache; run `terraform init` on the runner. Never commit state or upload it publicly.
 
-The module call stays named `e2b`, preserving unchanged `module.e2b.*` resource addresses. The adapted VNet name and subnet layout differ from upstream; review the plan and state before applying to an existing deployment.
+The module call stays named `e2b`, preserving unchanged `module.e2b.*` resource addresses. **This is not an in-place migration from the old dedicated-VNet topology.** Switching an existing deployment to `existing_vnet` can destroy its old VNet/peerings and replace subnets or compute. Plan a migration separately; do not approve such changes for an in-use deployment.
 
-The checked-in [main.tf](main.tf) currently uses `eastus`. To match this walkthrough, edit the copied `main.tf` to use `southeastasia`, as shown below. The HCL syntax is the same in Bash and PowerShell; keep Terraform module paths in their existing form.
+Replace the copied [main.tf](main.tf) with the **complete configuration below**. It requires `existing_vnet` (no fallback to creating a VNet), uses `southeastasia`, and exposes subnet names and prefixes through tfvars. Change `location` if your existing VNet is in another region, and repeat the capacity checks for that region. The HCL syntax is the same in Bash and PowerShell; keep Terraform module paths in their existing form.
 
 ```hcl
 terraform {
@@ -162,32 +167,35 @@ variable "client_cidrs" {
   type        = list(string)
 }
 
-variable "runner_vnet_name" {
-  description = "Name of the existing VNet containing the VM that runs Terraform."
-  type        = string
+variable "existing_vnet" {
+  description = "Existing VNet for the new E2B VM and Private Endpoint subnets."
+  type = object({
+    name                = string
+    resource_group_name = string
+  })
+  nullable = false
 }
 
-variable "runner_vnet_resource_group_name" {
-  description = "Resource group of the existing VNet containing the VM that runs Terraform."
+variable "e2b_vm_subnet_name" {
+  description = "Unused name for the new E2B VM subnet."
   type        = string
-}
-
-variable "e2b_vnet_address_space" {
-  description = "Address space for e2bvnet. It must not overlap the runner VNet."
-  type        = list(string)
-  default     = ["10.10.0.0/24"]
+  default     = "e2b-vm"
 }
 
 variable "e2b_vm_subnet_prefixes" {
-  description = "Address prefixes for the E2B VM subnet."
+  description = "Unused address prefixes inside the existing VNet for the E2B VM subnet."
   type        = list(string)
-  default     = ["10.10.0.0/25"]
+}
+
+variable "private_endpoint_subnet_name" {
+  description = "Unused name for the new Blob Private Endpoint subnet."
+  type        = string
+  default     = "e2b-private-endpoints"
 }
 
 variable "private_endpoint_subnet_prefixes" {
-  description = "Address prefixes for the Storage private endpoint subnet."
+  description = "Unused address prefixes inside the existing VNet for the Blob Private Endpoint subnet."
   type        = list(string)
-  default     = ["10.10.0.128/26"]
 }
 
 variable "blob_private_dns_zone_id" {
@@ -197,8 +205,8 @@ variable "blob_private_dns_zone_id" {
   nullable    = true
 }
 
-variable "link_runner_vnet_to_blob_private_dns_zone" {
-  description = "Create the Blob Private DNS Zone link to the runner VNet."
+variable "link_vnet_to_blob_private_dns_zone" {
+  description = "Create the VNet link; false reuses an existing link to the supplied Blob DNS zone."
   type        = bool
   default     = true
 }
@@ -206,21 +214,18 @@ variable "link_runner_vnet_to_blob_private_dns_zone" {
 module "e2b" {
   source = "./runtime/embed/terraform/azure"
 
-  name                                    = "e2b-embed-demo"
-  location                                = "southeastasia"
-  zone                                    = "1"
-  instance_size                           = "Standard_D4ds_v7"
-  client_cidrs                            = var.client_cidrs
-  vnet_name                               = "e2bvnet"
-  vnet_address_space                      = var.e2b_vnet_address_space
-  vm_subnet_name                          = "e2b-vm"
-  vm_subnet_prefixes                      = var.e2b_vm_subnet_prefixes
-  private_endpoint_subnet_name            = "private-endpoints"
-  private_endpoint_subnet_prefixes        = var.private_endpoint_subnet_prefixes
-  runner_vnet_name                        = var.runner_vnet_name
-  runner_vnet_resource_group_name         = var.runner_vnet_resource_group_name
-  blob_private_dns_zone_id                = var.blob_private_dns_zone_id
-  link_runner_vnet_to_blob_private_dns_zone = var.link_runner_vnet_to_blob_private_dns_zone
+  name                              = "e2b-embed-demo"
+  location                          = "southeastasia"
+  zone                              = "1"
+  instance_size                     = "Standard_D4ds_v7"
+  client_cidrs                      = var.client_cidrs
+  existing_vnet                     = var.existing_vnet
+  vm_subnet_name                    = var.e2b_vm_subnet_name
+  vm_subnet_prefixes                = var.e2b_vm_subnet_prefixes
+  private_endpoint_subnet_name      = var.private_endpoint_subnet_name
+  private_endpoint_subnet_prefixes  = var.private_endpoint_subnet_prefixes
+  blob_private_dns_zone_id          = var.blob_private_dns_zone_id
+  link_vnet_to_blob_private_dns_zone = var.link_vnet_to_blob_private_dns_zone
 }
 
 output "api_url" {
@@ -273,7 +278,21 @@ Important details:
 - Use a different `name` for another installation in the same tenant; custom role names must be unique.
 - The outputs expose the module's values to `terraform output`.
 
-## 5. Configure the runner VNet, E2B network, and client CIDRs
+## 5. Configure the existing VNet, new subnets, and Private DNS
+
+First inspect the supplied VNet and existing subnets:
+
+```powershell
+$VnetResourceGroup = '<EXISTING-VNET-RESOURCE-GROUP>'
+$VnetName = '<EXISTING-VNET-NAME>'
+
+az network vnet show --resource-group $VnetResourceGroup --name $VnetName `
+  --query "{id:id,location:location,addressSpace:addressSpace.addressPrefixes,dnsServers:dhcpOptions.dnsServers}" --output json
+az network vnet subnet list --resource-group $VnetResourceGroup --vnet-name $VnetName `
+  --query "[].{name:name,prefix:addressPrefix,prefixes:addressPrefixes}" --output table
+```
+
+Reserve two unused CIDRs inside this VNet, not overlapping any existing subnet or each other. This guide always creates new subnets, even when other Storage Accounts already have Private Endpoints in the VNet. Do not import or reuse their subnets for this deployment. If another Terraform stack manages the VNet with inline `subnet` blocks, coordinate ownership first: inline subnet management conflicts with separately managed `azurerm_subnet` resources.
 
 On each workstation or application host that will access E2B, find its outbound public IPv4 address:
 
@@ -288,8 +307,19 @@ Back in the deployment directory on the runner, create `terraform.tfvars` after 
 
 ```powershell
 @'
-runner_vnet_name                = "YOUR-RUNNER-VNET-NAME"
-runner_vnet_resource_group_name = "YOUR-RUNNER-VNET-RESOURCE-GROUP"
+existing_vnet = {
+  name                = "YOUR-EXISTING-VNET-NAME"
+  resource_group_name = "YOUR-EXISTING-VNET-RESOURCE-GROUP"
+}
+
+e2b_vm_subnet_name               = "e2b-vm"
+e2b_vm_subnet_prefixes           = ["YOUR-UNUSED-VM-SUBNET-CIDR"]
+private_endpoint_subnet_name    = "e2b-private-endpoints"
+private_endpoint_subnet_prefixes = ["YOUR-UNUSED-PRIVATE-ENDPOINT-SUBNET-CIDR"]
+
+# Case A: no existing Blob Private DNS Zone to reuse.
+blob_private_dns_zone_id          = null
+link_vnet_to_blob_private_dns_zone = true
 
 client_cidrs = ["YOUR-PUBLIC-IPV4/32"]
 '@ | Set-Content -LiteralPath .\terraform.tfvars -Encoding utf8NoBOM
@@ -314,59 +344,85 @@ client_cidrs = [
 
 **Do not use `0.0.0.0/0`.** VPNs, proxies, and changing home IPs may require updates. Port 22 is intentionally closed.
 
-The default network layout is:
+For example, **only if** the existing VNet contains `10.10.0.0/16` and these ranges are unused:
 
 ```hcl
-e2b_vnet_address_space           = ["10.10.0.0/24"]
 e2b_vm_subnet_prefixes           = ["10.10.0.0/25"]
 private_endpoint_subnet_prefixes = ["10.10.0.128/26"]
 ```
 
-Change all three values together if the VNet CIDR overlaps the runner VNet, peered networks, VPN/ExpressRoute routes, or on-premises networks. Azure rejects peering between overlapping address spaces.
+No VNet address-space change or peering is performed. Existing DNS servers and existing subnet settings are not changed.
 
-By default, Terraform creates the Blob Private DNS Zone and links both VNets. To reuse an existing zone, add to `terraform.tfvars`:
+### Choose the DNS case in terraform.tfvars
+
+Private Endpoints connect to individual Storage Accounts; **an endpoint for another account cannot be reused for the new account**. A single `privatelink.blob.core.windows.net` zone can hold records for multiple accounts.
+
+| Case | `blob_private_dns_zone_id` | `link_vnet_to_blob_private_dns_zone` | Terraform behavior |
+|---|---|---|---|
+| A: no existing Blob zone | `null` | `true` | Create the zone, its VNet link, and the new endpoint's DNS zone group |
+| B: existing zone already linked to this VNet | Existing zone resource ID | `false` | Reuse the zone and link; create only the new endpoint's DNS zone group/record |
+| C: existing zone not yet linked to this VNet | Existing zone resource ID | `true` | Reuse the zone; create its VNet link and the new endpoint's DNS zone group/record |
+
+All cases create a **new Blob Private Endpoint** for this deployment's Storage Account. Case A with `false` is invalid and is rejected by the module.
+
+For **Case B**, replace the two DNS settings in `terraform.tfvars` with:
 
 ```hcl
 blob_private_dns_zone_id = "/subscriptions/<SUBSCRIPTION-ID>/resourceGroups/<DNS-RESOURCE-GROUP>/providers/Microsoft.Network/privateDnsZones/privatelink.blob.core.windows.net"
+link_vnet_to_blob_private_dns_zone = false
 ```
 
-If the runner VNet is already linked to that exact zone and the link is managed elsewhere, also set:
+For **Case C**, use the same existing zone ID but set:
 
 ```hcl
-link_runner_vnet_to_blob_private_dns_zone = false
+link_vnet_to_blob_private_dns_zone = true
 ```
+
+Before choosing B or C, check the intended shared zone and its links:
+
+```powershell
+$DnsResourceGroup = '<DNS-RESOURCE-GROUP>'
+$BlobZoneName = 'privatelink.blob.core.windows.net'
+
+az network private-dns zone show --resource-group $DnsResourceGroup --name $BlobZoneName `
+  --query id --output tsv
+az network private-dns link vnet list --resource-group $DnsResourceGroup --zone-name $BlobZoneName `
+  --query "[].{name:name,vnet:virtualNetwork.id,state:virtualNetworkLinkState}" --output table
+```
+
+For Case B, confirm the link targets the **exact supplied VNet ID** and is completed. Existing Private Endpoints alone do not prove that the correct zone is linked. Do not create a second same-name zone linked to this VNet. If the zone is centrally managed, get its ID and link status from its owner; a failed lookup is not evidence that no zone exists.
+
+The endpoint's `private_dns_zone_group` automatically creates the new account's A record (`<new-account>` -> endpoint private IP) in the selected zone and manages its lifecycle. **Do not add a duplicate `azurerm_private_dns_a_record` or manually overwrite records.** Existing records for other Storage Accounts and their endpoints are not imported or modified. Keep the zone ID and link-ownership flag stable after deployment: changing from a Terraform-created zone/link to external ownership requires a deliberate state migration, not simply flipping tfvars.
 
 ### Storage Private Link and the bootstrap sequence
 
 `client_cidrs` controls E2B services, **not Storage access**.
 
 ```text
-Existing Windows Terraform runner VM in its VNet
+Existing VNet (southeastasia; address space unchanged)
+    |-- existing runner subnet --> Windows Terraform runner VM (unchanged)
+    |-- existing subnets / other Storage Private Endpoints (unchanged)
+    |-- NEW e2b-vm subnet --> Ubuntu E2B VMSS
     |
-    | Bidirectional global VNet peering
-    v
-E2B VNet (southeastasia, 10.10.0.0/24)
-    |-- e2b-vm (10.10.0.0/25) --> Ubuntu E2B VMSS
-    |
-    `-- private-endpoints (10.10.0.128/26)
+    `-- NEW e2b-private-endpoints subnet
           |
           v
         Blob Private Endpoint --> Storage Account (public access disabled)
 
-privatelink.blob.core.windows.net
-    | Link: runner VNet
-    ` Link: E2B VNet
+privatelink.blob.core.windows.net (new or reused)
+    | Link: existing VNet (new or reused)
+    ` NEW A record: deployed Storage Account --> new endpoint private IP
 ```
 
-The runner does not need the Storage Account to exist first. It needs Azure credentials, access to management/authentication endpoints, and attachment to the configured VNet. Terraform creates the E2B VNet, subnets, peerings, Storage Account, Private Endpoint, DNS zone group, and DNS links through the management API.
+The runner does not need the Storage Account to exist first. It needs Azure credentials, access to management/authentication endpoints, and attachment to the supplied VNet. Terraform reads that VNet and creates only the new subnets, Storage Account, Private Endpoint, DNS zone group, and any requested DNS zone/link through the management API. No existing Private Endpoint is required.
 
 The two Blob uploads wait for these resources, a 60-second private-network propagation delay, and RBAC propagation. Only after uploading the files does Terraform start the E2B VMSS in the VM subnet. This avoids relying on an E2B VM that cannot boot until its Compose files exist, without opening Storage publicly.
 
-The 60-second delay is not proof of connectivity. NSGs, routes, DNS caches, and custom DNS must permit the runner to resolve and reach the endpoint on TCP 443. With custom DNS, configure conditional forwarding for `privatelink.blob.core.windows.net` through Azure DNS Private Resolver or an equivalent path. Keep using `<account>.blob.core.windows.net`, not a `privatelink` URL or an IP address.
+The 60-second delay is not proof of connectivity. NSGs, routes, DNS caches, and custom DNS must permit the runner to resolve and reach the endpoint on TCP 443. With custom DNS, configure conditional forwarding for `blob.core.windows.net` through an Azure DNS Private Resolver inbound endpoint in a VNet linked to the Blob private zone, or an equivalent Azure DNS forwarding path. This must resolve the public hostname's `privatelink.blob.core.windows.net` alias to the private A record. Keep using `<account>.blob.core.windows.net`, not a `privatelink` URL or an IP address.
 
 ## 6. Deploy with Terraform
 
-Run in the deployment directory **on the Windows VM in the configured runner VNet**, authenticated as in step 2 with `$env:ARM_SUBSCRIPTION_ID` set. An ordinary machine outside the private DNS/network path cannot perform the Blob data-plane operations.
+Run in the deployment directory **on the Windows VM in the supplied existing VNet**, authenticated as in step 2 with `$env:ARM_SUBSCRIPTION_ID` set. An ordinary machine outside the private DNS/network path cannot perform the Blob data-plane operations.
 
 ```powershell
 terraform init
@@ -378,7 +434,7 @@ terraform apply
 
 Review the plan and enter `yes` to approve creation. For an earlier deployment, migrate/import state where appropriate rather than accepting unexpected replacement of an in-use VNet, VMSS, or Storage Account.
 
-Terraform provisions the dedicated VNet, both subnets, bidirectional peering, VMSS, **two public IPs**, NAT gateway, identity, Storage Account, RBAC resources, Blob Private Endpoint, and DNS links. It creates the DNS Zone unless you supply an existing one. The Ubuntu VM then installs Docker and starts E2B.
+Verify the plan creates **zero VNets and zero peerings**, creates the two subnets in the **existing VNet's resource group**, and places the VMSS and Blob Private Endpoint in those subnets. It also provisions **two public IPs**, a NAT gateway associated only with the new VM subnet, an NSG, identity, Storage Account, and RBAC resources. DNS zone/link creation must match Case A, B, or C. Existing subnets, endpoints, zones, and links must not be scheduled for replacement or deletion. The Ubuntu VM then installs Docker and starts E2B.
 
 | Milestone | Approximate upstream timing |
 |---|---|
@@ -388,7 +444,7 @@ Terraform provisions the dedicated VNet, both subnets, bidirectional peering, VM
 
 These are upstream measurements, not guarantees. The local Private Link configuration adds a 60-second propagation wait and may take longer. Allow roughly **15-20 minutes** or more for deployment and verification.
 
-Charges apply for the VM, Premium disk, NAT gateway, public IPs, storage, Private Endpoint, and applicable traffic, including global VNet peering.
+Charges apply for the VM, Premium disk, NAT gateway, public IPs, storage, Private Endpoint, DNS, and applicable traffic. This deployment creates no peering.
 
 Verify private DNS and authenticated Blob access from the runner:
 
@@ -538,7 +594,9 @@ The `--scripts` values intentionally remain Linux shell code: Azure executes the
 |---|---|
 | Role creation/assignment denied | Owner, or Contributor + User Access Administrator permissions |
 | `AuthorizationPermissionMismatch` during Blob upload | RBAC propagation; retry `terraform apply` after propagation |
-| Blob 403 or timeout with public access disabled | Use the private runner; verify private DNS, both peerings, endpoint approval, routes, and TCP 443. Do not enable public access to bypass organizational policy |
+| Blob 403 or timeout with public access disabled | Use the private runner; verify the VNet DNS link, new account's A record, endpoint approval, subnet routes/NSGs, and TCP 443. Do not enable public access to bypass organizational policy |
+| Subnet creation conflict | Use unused names and CIDRs inside the existing VNet; check for another stack managing inline subnets |
+| DNS link already exists or namespace overlap | Reuse the correct existing zone ID and set `link_vnet_to_blob_private_dns_zone = false` only when its link to this VNet already exists |
 | VM SKU or zone deployment failure | Subscription restrictions, zone availability, and vCPU quota |
 | API/dashboard connection timeout | Startup progress and the actual client public IP in `client_cidrs` |
 | API healthy, initial sandbox creation fails | The `base` template build may still be running |
@@ -562,9 +620,9 @@ terraform plan -destroy
 terraform destroy
 ```
 
-Destroy from the private runner while its network and DNS path remain intact. Review and confirm destruction. This removes the E2B resource group, VNet, subnets, Private Endpoint, both peering directions, and DNS links created by this deployment. **VM-local templates and data will be lost.**
+Destroy from the private runner while its network and DNS path remain intact. Review and confirm destruction. This removes the E2B resource group, **only the two new subnets** in the existing VNet, the new Private Endpoint and its DNS zone group/A record, and any DNS zone/link created by this deployment. No existing VNet or peering is owned or deleted. **VM-local templates and data will be lost.**
 
-The existing runner VM and VNet remain. A supplied existing Private DNS Zone and any runner DNS link excluded with `link_runner_vnet_to_blob_private_dns_zone = false` remain outside this deployment's state.
+The existing runner VM, VNet, other subnets, and other Storage Accounts' Private Endpoints/records remain. A supplied existing Private DNS Zone and an existing link excluded with `link_vnet_to_blob_private_dns_zone = false` remain outside this deployment's state. In Case C, the shared zone remains but this deployment's newly created VNet link is removed; coordinate cleanup if other workloads have started depending on that link. Do not let unrelated resources depend on a zone or subnet owned by this deployment without first transferring ownership.
 
 Clear the SDK credentials from this PowerShell session when no longer needed:
 

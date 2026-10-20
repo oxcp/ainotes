@@ -20,6 +20,28 @@ variable "vnet_name" {
   default     = "e2bvnet"
 }
 
+variable "existing_vnet" {
+  description = "Existing VNet for new E2B and private endpoint subnets. When set, no VNet or peering is created; the Terraform runner must already have access to this VNet."
+  type = object({
+    name                = string
+    resource_group_name = string
+  })
+  default = null
+
+  validation {
+    condition = var.existing_vnet == null ? true : (
+      trimspace(var.existing_vnet.name) != "" && trimspace(var.existing_vnet.resource_group_name) != ""
+    )
+    error_message = "existing_vnet must contain a non-empty name and resource_group_name."
+  }
+}
+
+variable "link_vnet_to_blob_private_dns_zone" {
+  description = "Create a Blob DNS link to the E2B VNet. Set false only when reusing an existing zone already linked to that VNet."
+  type        = bool
+  default     = true
+}
+
 variable "vnet_address_space" {
   description = "Address space of the dedicated E2B virtual network. It must not overlap the runner VNet."
   type        = list(string)
@@ -53,11 +75,13 @@ variable "private_endpoint_subnet_prefixes" {
 variable "runner_vnet_name" {
   description = "Name of the existing VNet that contains the VM or runner executing Terraform."
   type        = string
+  default     = null
 }
 
 variable "runner_vnet_resource_group_name" {
   description = "Resource group of the existing VNet that contains the VM or runner executing Terraform."
   type        = string
+  default     = null
 }
 
 variable "blob_private_dns_zone_id" {

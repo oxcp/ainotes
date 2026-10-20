@@ -1,5 +1,5 @@
-# Everything the module makes lives in its own resource group, so a destroy
-# takes the whole install and nothing else in the subscription shares it.
+# Subnets in an existing VNet and links in a shared DNS zone live outside
+# this deployment resource group, but are still owned by this module.
 resource "azurerm_resource_group" "this" {
   name     = var.name
   location = var.location

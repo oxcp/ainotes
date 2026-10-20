@@ -5,6 +5,48 @@ of one, which installs Docker, writes the two files Embed ships and runs
 `docker compose up -d --wait`. It is a single-machine package rather than a
 deployment pattern; the hub is [`../../README.md`](../../README.md).
 
+## Local networking modes
+
+This vendored module adds private Blob Storage to the upstream package. Use
+the local module source, not the upstream GitHub source shown below, for these
+extensions. Terraform must run with private DNS resolution and TCP 443 access
+to the Blob Private Endpoint for upload, refresh, and destroy operations.
+
+- By default, it creates a dedicated VNet and peers it to the supplied
+  `runner_vnet_name` / `runner_vnet_resource_group_name` (the [Bash guide](../../../../readme.md)).
+- Set `existing_vnet = { name = "...", resource_group_name = "..." }` to
+  create both new subnets in that existing VNet instead. No VNet or peering is
+  created and runner-VNet inputs are ignored. The VNet must be in `location`;
+  use unused subnet names/CIDRs and a separate deployment resource group.
+  The VNet itself and its existing subnets remain externally managed.
+  The VM identity receives the existing custom role at the new VM subnet
+  scope for cross-resource-group subnet join during public-IP attachment.
+  The deploying identity needs role-management permissions in both resource
+  groups and role-assignment permission on that subnet.
+- `blob_private_dns_zone_id = null` creates the Blob DNS zone. Supplying the
+  ID of `privatelink.blob.core.windows.net` reuses it; the new endpoint's DNS
+  zone group maintains only the new Storage Account's record.
+- `link_vnet_to_blob_private_dns_zone` defaults to `true`. Set it to `false`
+  only when the supplied zone is already linked to the E2B VNet externally.
+  A new zone requires this link. `link_runner_vnet_to_blob_private_dns_zone`
+  applies only to the dedicated-VNet mode.
+
+See the [PowerShell guide](../../../../readme_powershell.md) for complete tfvars
+examples covering a new zone, a shared zone with an existing link, and a shared
+zone needing a new link. Destroy removes created subnets, endpoints and DNS
+records, plus any zone/links owned by this deployment, not reused resources.
+Coordinate with owners of shared DNS and VNet infrastructure before changes.
+
+The `moved` blocks preserve resource addresses when upgrading an existing
+dedicated-VNet deployment to the conditional resources. They do **not** make
+switching network modes an in-place migration: inspect replacement/deletion
+plans and arrange migration separately.
+
+Run the local regression tests with `terraform init -backend=false`,
+`terraform validate`, then `terraform test`. All providers in
+[`tests/network_modes.tftest.hcl`](tests/network_modes.tftest.hcl) are mocked:
+these tests create no Azure resources.
+
 ## Requirements
 
 - Terraform 1.7.5 or newer.

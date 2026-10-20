@@ -33,7 +33,10 @@ resource "azurerm_role_definition" "public_ip_attach" {
     not_actions = []
   }
 
-  assignable_scopes = [azurerm_resource_group.this.id]
+  assignable_scopes = concat(
+    [azurerm_resource_group.this.id],
+    local.use_existing_vnet ? [join("/", slice(split("/", local.vnet_id), 0, 5))] : []
+  )
 }
 
 # The resource group, not the address: the interface the instance writes does
@@ -41,6 +44,17 @@ resource "azurerm_role_definition" "public_ip_attach" {
 # name it at. The group holds this install and nothing else.
 resource "azurerm_role_assignment" "public_ip_attach" {
   scope              = azurerm_resource_group.this.id
+  role_definition_id = azurerm_role_definition.public_ip_attach.role_definition_resource_id
+  principal_id       = azurerm_user_assigned_identity.this.principal_id
+  principal_type     = "ServicePrincipal"
+}
+
+# Updating the NIC reauthorizes subnet join; an existing VNet's subnet is
+# outside the deployment resource group's role-assignment scope.
+resource "azurerm_role_assignment" "existing_subnet_join" {
+  count = local.use_existing_vnet ? 1 : 0
+
+  scope              = azurerm_subnet.this.id
   role_definition_id = azurerm_role_definition.public_ip_attach.role_definition_resource_id
   principal_id       = azurerm_user_assigned_identity.this.principal_id
   principal_type     = "ServicePrincipal"
@@ -58,12 +72,15 @@ resource "azurerm_role_assignment" "blob_writer" {
 # Role assignments are eventually consistent: a data-plane call or a first
 # boot inside the window after one is written is refused as if it were never
 # made. The blobs and the scale set wait on this sleep, which starts once all
-# three assignments exist and starts again if one of them is replaced.
+# assignments exist and starts again if one of them is replaced.
 resource "time_sleep" "rbac_propagation" {
   create_duration = "60s"
   triggers = {
     blob_reader      = azurerm_role_assignment.blob_reader.id
     blob_writer      = azurerm_role_assignment.blob_writer.id
     public_ip_attach = azurerm_role_assignment.public_ip_attach.id
+    existing_subnet_join = local.use_existing_vnet ? (
+      azurerm_role_assignment.existing_subnet_join[0].id
+    ) : "not-required"
   }
 }

@@ -22,11 +22,28 @@ variable "client_cidrs" {
 variable "runner_vnet_name" {
   description = "Name of the existing VNet containing the VM that runs Terraform."
   type        = string
+  default     = null
 }
 
 variable "runner_vnet_resource_group_name" {
   description = "Resource group of the existing VNet containing the VM that runs Terraform."
   type        = string
+  default     = null
+}
+
+variable "existing_vnet" {
+  description = "Existing VNet for new E2B subnets; when set, no VNet or peering is created."
+  type = object({
+    name                = string
+    resource_group_name = string
+  })
+  default = null
+}
+
+variable "link_vnet_to_blob_private_dns_zone" {
+  description = "Create the Blob DNS link to the E2B VNet; false reuses an externally managed link."
+  type        = bool
+  default     = true
 }
 
 variable "e2b_vnet_address_space" {
@@ -68,6 +85,8 @@ module "e2b" {
   zone                                      = "1"
   instance_size                             = "Standard_D4ds_v7"
   client_cidrs                              = var.client_cidrs
+  existing_vnet                             = var.existing_vnet
+  link_vnet_to_blob_private_dns_zone        = var.link_vnet_to_blob_private_dns_zone
   vnet_name                                 = "e2bvnet"
   vnet_address_space                        = var.e2b_vnet_address_space
   vm_subnet_name                            = "e2b-vm"
