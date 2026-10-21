@@ -123,7 +123,7 @@ mkdir -p "$HOME/e2b-azure"
 cd "$HOME/e2b-azure"
 ```
 
-Copy this guide's `main.tf` and the complete `runtime` directory into the working directory. The vendored files are based on upstream commit `f9b828e76e190abe75d1cdd2d58fff6f4688ca34` and include the Compose files required by the module. Do not copy `main_blob_public_access.tf` into the same working directory: Terraform loads every `*.tf` file and the old example would duplicate the module, provider, variables, and outputs.
+Create `main.tf` in the working directory using the complete HCL block below, and copy the complete `runtime` directory alongside it. The checked-in [main.tf](main.tf) follows the [PowerShell guide](readme_powershell.md)'s existing-VNet topology instead; do not use it unchanged for this dedicated-VNet/peering walkthrough. The vendored files are based on upstream commit `f9b828e76e190abe75d1cdd2d58fff6f4688ca34` and include the Compose files required by the module. Do not copy `main_blob_public_access.tf` into the same working directory: Terraform loads every `*.tf` file and the old example would duplicate the module, provider, variables, and outputs.
 
 For a deployment that already failed partway through, use the **original deployment directory and state**, not a fresh directory. Back up and securely transfer the existing `terraform.tfstate` (if using local state), `.terraform.lock.hcl`, variable files, and backend configuration to the runner. Do not transfer the machine-specific `.terraform` provider cache; run `terraform init` on the runner. State contains secrets and must not be committed or uploaded to a public location.
 

@@ -143,7 +143,7 @@ For a deployment that already failed partway through, use the **original deploym
 
 The module call stays named `e2b`, preserving unchanged `module.e2b.*` resource addresses. **This is not an in-place migration from the old dedicated-VNet topology.** Switching an existing deployment to `existing_vnet` can destroy its old VNet/peerings and replace subnets or compute. Plan a migration separately; do not approve such changes for an in-use deployment.
 
-Replace the copied [main.tf](main.tf) with the **complete configuration below**. It requires `existing_vnet` (no fallback to creating a VNet), uses `southeastasia`, and exposes subnet names and prefixes through tfvars. Change `location` if your existing VNet is in another region, and repeat the capacity checks for that region. The HCL syntax is the same in Bash and PowerShell; keep Terraform module paths in their existing form.
+The copied [main.tf](main.tf) already contains the **complete configuration below**; no replacement is needed. Keep this code block synchronized with that file. It requires `existing_vnet` (no fallback to creating a VNet), uses `southeastasia`, and exposes subnet names and prefixes through tfvars. Change `location` if your existing VNet is in another region, and repeat the capacity checks for that region. The HCL syntax is the same in Bash and PowerShell; keep Terraform module paths in their existing form.
 
 ```hcl
 terraform {
@@ -214,17 +214,17 @@ variable "link_vnet_to_blob_private_dns_zone" {
 module "e2b" {
   source = "./runtime/embed/terraform/azure"
 
-  name                              = "e2b-embed-demo"
-  location                          = "southeastasia"
-  zone                              = "1"
-  instance_size                     = "Standard_D4ds_v5"
-  client_cidrs                      = var.client_cidrs
-  existing_vnet                     = var.existing_vnet
-  vm_subnet_name                    = var.e2b_vm_subnet_name
-  vm_subnet_prefixes                = var.e2b_vm_subnet_prefixes
-  private_endpoint_subnet_name      = var.private_endpoint_subnet_name
-  private_endpoint_subnet_prefixes  = var.private_endpoint_subnet_prefixes
-  blob_private_dns_zone_id          = var.blob_private_dns_zone_id
+  name                               = "e2b-embed-demo"
+  location                           = "southeastasia"
+  zone                               = "1"
+  instance_size                      = "Standard_D4ds_v5"
+  client_cidrs                       = var.client_cidrs
+  existing_vnet                      = var.existing_vnet
+  vm_subnet_name                     = var.e2b_vm_subnet_name
+  vm_subnet_prefixes                 = var.e2b_vm_subnet_prefixes
+  private_endpoint_subnet_name       = var.private_endpoint_subnet_name
+  private_endpoint_subnet_prefixes   = var.private_endpoint_subnet_prefixes
+  blob_private_dns_zone_id           = var.blob_private_dns_zone_id
   link_vnet_to_blob_private_dns_zone = var.link_vnet_to_blob_private_dns_zone
 }
 
