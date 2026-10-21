@@ -63,7 +63,7 @@ these tests create no Azure resources.
   module creates refuses shared keys, so Terraform writes the two files with
   the identity you ran it as rather than with an account key, which is what
   keeps a key and a SAS out of the state file.
-- A region that offers the instance size, `Standard_D4ds_v7` by default, in
+- A region that offers the instance size, `Standard_D4ds_v5` by default, in
   the zone you ask for.
 - The Azure CLI on your own machine, for the `run_command` output and the
   serial console under Reaching the instance. `terraform apply` needs neither.
@@ -184,7 +184,7 @@ user-assigned managed identity, a custom role definition and three role
 assignments, and a 60-second `time_sleep` that gives them time to propagate
 (Timings); a storage account that refuses shared keys, with one private
 container holding the two files; a scale set of one
-(`Standard_D4ds_v7`, a 50 GB Premium SSD OS disk, the Application Health
+(`Standard_D4ds_v5`, a 50 GB Premium SSD OS disk, the Application Health
 extension, the startup script as custom data); and the four secrets under
 Secrets below. The providers are azurerm, random and time.
 
@@ -254,7 +254,8 @@ same tenant needs its own `name`.
 | `/health` dying, until the extension reports the instance unhealthy | about 2 minutes |
 | a reboot of the instance | about 1 minute |
 
-Measured on `Standard_D4ds_v7` in `eastus`. Most of the first boot happens
+These historical timings were measured on `Standard_D4ds_v7` in `eastus`,
+not the current `Standard_D4ds_v5` default. Most of the first boot happens
 while `apply` is still waiting for the scale set, which is why `/health`
 answers so soon after it returns. The 60-second row is a fixed wait: a role
 assignment takes some time to reach the service that enforces it, and a call
@@ -405,9 +406,9 @@ takes the replacement under Upgrading; the reference's
 |-------|---------|------------|
 | `client_cidrs` | required | the IPv4 CIDRs allowed to reach 3000, 3001 and 3002, as network addresses (`203.0.113.0/24`, `198.51.100.7/32`); at least one, and a browser's has to be its public IPv4 address |
 | `name` | `e2b-embed` | name prefix for the resource group and everything in it; the custom role definition takes it too, and role definition names are unique per tenant, so a second install in the same tenant needs its own `name` |
-| `location` | `eastus` | the region for the resource group and everything in it |
+| `location` | `southeastasia` | the region for the resource group and everything in it |
 | `zone` | `1` | the availability zone for the instance, as a bare number; empty places it regionally, for a region that has no zones |
-| `instance_size` | `Standard_D4ds_v7` | a general-purpose D size with premium storage, generation 3 or newer (`Dsv3` and up, with or without the `a` and `d` letters), or an `Lsv3` and up; no burstable and no arm64 Cobalt size; 12 GiB RAM recommended, the default has 16. Which generations you can actually use depends on the region **and on your subscription's offer** — `az vm list-skus -l <region> --resource-type virtualMachines` is what answers it, and a size it marks `NotAvailableForSubscription` fails at apply |
+| `instance_size` | `Standard_D4ds_v5` | a general-purpose D size with premium storage, generation 3 or newer (`Dsv3` and up, with or without the `a` and `d` letters), or an `Lsv3` and up; no burstable and no arm64 Cobalt size; 12 GiB RAM recommended, the default has 16. Which generations you can actually use depends on the region **and on your subscription's offer** — `az vm list-skus -l <region> --resource-type virtualMachines` is what answers it, and a size it marks `NotAvailableForSubscription` fails at apply |
 | `image` | Ubuntu 24.04 LTS | the marketplace image, as publisher, offer, sku and version; the module wants Ubuntu 24.04 on x86-64 and a generation 2 image, and `latest` records a new model when Canonical publishes one |
 | `os_disk_size_gb` | `50` | 20 GiB has to stay free after the OS and Docker |
 | `os_disk_type` | `Premium_LRS` | the OS disk's storage type |

@@ -22,9 +22,9 @@ module "e2b" {
   source = "github.com/e2b-dev/runtime//embed/terraform/azure?ref=9791dc8e1c78d459c29b23c57221c38d7318f80a"
 
   name          = "e2b-embed-demo"
-  location      = "eastus"
+  location      = "southeastasia"
   zone          = "1"
-  instance_size = "Standard_D4ds_v7"
+  instance_size = "Standard_D4ds_v5"
   client_cidrs  = var.client_cidrs
 }
 

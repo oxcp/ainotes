@@ -66,9 +66,9 @@ Your account must be able to create **custom roles and role assignments**, not j
 
 The defaults are:
 
-- Region: `eastus`
+- Region: `southeastasia`
 - Availability zone: `1`
-- VM size: `Standard_D4ds_v7`
+- VM size: `Standard_D4ds_v5`
 - RAM: 16 GiB
 - OS: Ubuntu 24.04, x86-64
 - OS disk: 50 GB Premium SSD
@@ -77,23 +77,23 @@ Check whether your subscription can use the default size:
 
 ```powershell
 az vm list-skus `
-  --location eastus `
+  --location southeastasia `
   --resource-type virtualMachines `
-  --size Standard_D4ds_v7 `
+  --size Standard_D4ds_v5 `
   --all `
-  --query "[?name=='Standard_D4ds_v7'].{name:name,zones:locationInfo[0].zones,restrictions:restrictions}" `
+  --query "[?name=='Standard_D4ds_v5'].{name:name,zones:locationInfo[0].zones,restrictions:restrictions}" `
   --output json
 ```
 
 Check regional quota:
 
 ```powershell
-az vm list-usage --location eastus --output table
+az vm list-usage --location southeastasia --output table
 ```
 
 Ensure zone `1` is available and no applicable subscription/zone restriction blocks the size.
 
-If unavailable, select another supported size, such as `Standard_D4ds_v5`, **after checking its availability**. The [module's validation](https://github.com/e2b-dev/runtime/blob/9791dc8e1c78d459c29b23c57221c38d7318f80a/embed/terraform/azure/variables.tf) accepts certain Intel D-series v3+, AMD D-series v5+, and L-series v3+ sizes.
+If unavailable, select another supported size, such as `Standard_D4ds_v7`, **after checking its availability**. The [module's validation](https://github.com/e2b-dev/runtime/blob/9791dc8e1c78d459c29b23c57221c38d7318f80a/embed/terraform/azure/variables.tf) accepts certain Intel D-series v3+, AMD D-series v5+, and L-series v3+ sizes.
 
 **Do not substitute a B-series or ARM/Cobalt VM.** E2B sandboxes require nested virtualization and `/dev/kvm`.
 
@@ -133,9 +133,9 @@ module "e2b" {
   source = "github.com/e2b-dev/runtime//embed/terraform/azure?ref=9791dc8e1c78d459c29b23c57221c38d7318f80a"
 
   name          = "e2b-embed-demo"
-  location      = "eastus"
+  location      = "southeastasia"
   zone          = "1"
-  instance_size = "Standard_D4ds_v7"
+  instance_size = "Standard_D4ds_v5"
   client_cidrs  = var.client_cidrs
 }
 
