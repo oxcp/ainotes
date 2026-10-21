@@ -35,6 +35,7 @@ resource "azurerm_storage_account" "this" {
 
 locals {
   use_existing_blob_private_dns_zone = var.blob_private_dns_zone_id != null
+  create_e2b_blob_dns_link           = !local.use_existing_vnet || !local.use_existing_blob_private_dns_zone
   blob_private_dns_zone_id = local.use_existing_blob_private_dns_zone ? (
     var.blob_private_dns_zone_id
   ) : azurerm_private_dns_zone.blob[0].id
@@ -51,7 +52,7 @@ resource "azurerm_private_dns_zone" "blob" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "e2b" {
-  count = var.link_vnet_to_blob_private_dns_zone ? 1 : 0
+  count = local.create_e2b_blob_dns_link ? 1 : 0
 
   name                  = "${local.vnet_name}-blob"
   resource_group_name   = local.blob_private_dns_zone_resource_group_name
@@ -91,12 +92,6 @@ resource "azurerm_private_endpoint" "blob" {
     private_dns_zone_ids = [local.blob_private_dns_zone_id]
   }
 
-  lifecycle {
-    precondition {
-      condition     = var.link_vnet_to_blob_private_dns_zone || var.blob_private_dns_zone_id != null
-      error_message = "A new Blob Private DNS Zone requires a VNet link. Disable link_vnet_to_blob_private_dns_zone only for an existing zone already linked to the E2B VNet."
-    }
-  }
 }
 
 moved {
@@ -109,7 +104,7 @@ resource "time_sleep" "private_network_propagation" {
 
   triggers = {
     private_endpoint = azurerm_private_endpoint.blob.id
-    e2b_dns_link = var.link_vnet_to_blob_private_dns_zone ? (
+    e2b_dns_link = local.create_e2b_blob_dns_link ? (
       azurerm_private_dns_zone_virtual_network_link.e2b[0].id
     ) : "externally-managed"
     runner_dns_link = !local.use_existing_vnet && var.link_runner_vnet_to_blob_private_dns_zone ? (

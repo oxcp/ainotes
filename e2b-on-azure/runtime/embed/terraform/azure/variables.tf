@@ -36,12 +36,6 @@ variable "existing_vnet" {
   }
 }
 
-variable "link_vnet_to_blob_private_dns_zone" {
-  description = "Create a Blob DNS link to the E2B VNet. Set false only when reusing an existing zone already linked to that VNet."
-  type        = bool
-  default     = true
-}
-
 variable "vnet_address_space" {
   description = "Address space of the dedicated E2B virtual network. It must not overlap the runner VNet."
   type        = list(string)
@@ -85,7 +79,7 @@ variable "runner_vnet_resource_group_name" {
 }
 
 variable "blob_private_dns_zone_id" {
-  description = "Optional existing privatelink.blob.core.windows.net Private DNS Zone ID. When null, the module creates the zone."
+  description = "Optional existing privatelink.blob.core.windows.net Private DNS Zone ID. In existing-VNet mode, this zone must already be linked to that VNet; no link is created. When null, the module creates the zone and link."
   type        = string
   default     = null
   nullable    = true

@@ -51,33 +51,26 @@ variable "private_endpoint_subnet_prefixes" {
 }
 
 variable "blob_private_dns_zone_id" {
-  description = "Optional existing privatelink.blob.core.windows.net zone ID. Leave null to create one."
+  description = "Existing privatelink.blob.core.windows.net zone already associated with existing_vnet via a Private DNS Zone VNet link. Leave null to create the zone and its DNS association."
   type        = string
   default     = null
   nullable    = true
 }
 
-variable "link_vnet_to_blob_private_dns_zone" {
-  description = "Create the VNet link; false reuses an existing link to the supplied Blob DNS zone."
-  type        = bool
-  default     = true
-}
-
 module "e2b" {
   source = "./runtime/embed/terraform/azure"
 
-  name                               = "e2b-embed-demo"
-  location                           = "southeastasia"
-  zone                               = "1"
-  instance_size                      = "Standard_D4ds_v5"
-  client_cidrs                       = var.client_cidrs
-  existing_vnet                      = var.existing_vnet
-  vm_subnet_name                     = var.e2b_vm_subnet_name
-  vm_subnet_prefixes                 = var.e2b_vm_subnet_prefixes
-  private_endpoint_subnet_name       = var.private_endpoint_subnet_name
-  private_endpoint_subnet_prefixes   = var.private_endpoint_subnet_prefixes
-  blob_private_dns_zone_id           = var.blob_private_dns_zone_id
-  link_vnet_to_blob_private_dns_zone = var.link_vnet_to_blob_private_dns_zone
+  name                             = "e2b-embed-demo"
+  location                         = "southeastasia"
+  zone                             = "1"
+  instance_size                    = "Standard_D4ds_v5"
+  client_cidrs                     = var.client_cidrs
+  existing_vnet                    = var.existing_vnet
+  vm_subnet_name                   = var.e2b_vm_subnet_name
+  vm_subnet_prefixes               = var.e2b_vm_subnet_prefixes
+  private_endpoint_subnet_name     = var.private_endpoint_subnet_name
+  private_endpoint_subnet_prefixes = var.private_endpoint_subnet_prefixes
+  blob_private_dns_zone_id         = var.blob_private_dns_zone_id
 }
 
 output "api_url" {

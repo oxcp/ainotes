@@ -26,16 +26,24 @@ to the Blob Private Endpoint for upload, refresh, and destroy operations.
 - `blob_private_dns_zone_id = null` creates the Blob DNS zone. Supplying the
   ID of `privatelink.blob.core.windows.net` reuses it; the new endpoint's DNS
   zone group maintains only the new Storage Account's record.
-- `link_vnet_to_blob_private_dns_zone` defaults to `true`. Set it to `false`
-  only when the supplied zone is already linked to the E2B VNet externally.
-  A new zone requires this link. `link_runner_vnet_to_blob_private_dns_zone`
-  applies only to the dedicated-VNet mode.
+- In existing-VNet mode, supplying a zone ID also means its link to that
+  VNet is already externally managed: the module creates neither zone nor
+  link. Verify the link before deployment. A null zone ID creates both.
+  There is no separate E2B VNet link switch.
+- In dedicated-VNet mode, the new E2B VNet always needs a new DNS link,
+  even when reusing a zone. `link_runner_vnet_to_blob_private_dns_zone`
+  still controls the separate runner link in that mode.
 
 See the [PowerShell guide](../../../../readme_powershell.md) for complete tfvars
-examples covering a new zone, a shared zone with an existing link, and a shared
-zone needing a new link. Destroy removes created subnets, endpoints and DNS
+examples covering a new zone or a shared zone with an existing link.
+Destroy removes created subnets, endpoints and DNS
 records, plus any zone/links owned by this deployment, not reused resources.
 Coordinate with owners of shared DNS and VNet infrastructure before changes.
+
+When upgrading, remove the obsolete `link_vnet_to_blob_private_dns_zone`
+input from module calls and tfvars. In existing-VNet mode with a supplied
+zone ID, a previously managed link is now excluded. If the plan would delete
+that shared link, stop and transfer state ownership before applying.
 
 The `moved` blocks preserve resource addresses when upgrading an existing
 dedicated-VNet deployment to the conditional resources. They do **not** make
