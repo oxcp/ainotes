@@ -8,7 +8,7 @@
 > - It does not support selecting an existing VNet for the E2B instance.
 > - It does not support connecting to the Storage Account through Private Link. **The Storage Account must allow public network access**; this does not mean enabling anonymous access to blobs.
 >
-> For these more complex configurations, including an existing VNet and private Storage Account access, see the [advanced directory](advanced/) and its [PowerShell deployment guide](advanced/readme_powershell.md).
+> For these more complex configurations, including an existing VNet and private Storage Account access, see the [advanced guides](advanced/readme_powershell.md).
 
 Prepared October 14, 2026. Commands use Windows PowerShell unless otherwise indicated.
 

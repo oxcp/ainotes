@@ -8,7 +8,7 @@
 > - It does not support selecting an existing VNet for the E2B instance.
 > - It does not support connecting to the Storage Account through Private Link. **The Storage Account must allow public network access**; this does not mean enabling anonymous access to blobs.
 >
-> For these more complex configurations, including an existing VNet and private Storage Account access, see the [advanced directory](advanced/) and its [Bash deployment guide](advanced/readme.md).
+> For these more complex configurations, including an existing VNet and private Storage Account access, see the [advanced guides](advanced/readme.md).
 
 Updated October 15, 2026. Commands use Bash on Ubuntu/Debian Linux unless otherwise indicated.
 
