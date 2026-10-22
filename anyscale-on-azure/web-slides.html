@@ -1,0 +1,1403 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="Anyscale on Azure 简体中文 L200 交互演示：从 AI 学习闭环，到 Ray、AKS、双平面架构、身份网络与生产落地。">
+  <meta name="theme-color" content="#ffffff">
+  <title>Anyscale on Azure — 拥有自己的 AI 学习闭环</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #ffffff; --surface: #ffffff; --ink: #242824; --muted: #62665d;
+      --line: #d8d8cc; --accent: #b7401d; --accent-bg: #f3e5da;
+      --green: #24614d; --green-bg: #e3eadf; --dark: #18231f;
+      --mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      --sans: "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      --gutter: clamp(24px, 5.3vw, 100px);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-padding-top: 82px; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+    button, input { font: inherit; }
+    button, a, input { -webkit-tap-highlight-color: transparent; }
+    button { cursor: pointer; }
+    a { color: inherit; text-underline-offset: 4px; }
+    button { color: inherit; }
+    button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 5px; }
+    button:disabled { cursor: default; opacity: .3; }
+    button:disabled:hover { transform: none; }
+    ::selection { background: #f0b690; color: #18231f; }
+    [hidden] { display: none !important; }
+    h1, h2, h3, p, figure { margin: 0; }
+    h1, h2, h3 { font-weight: 650; }
+    h1, h2 { text-wrap: balance; letter-spacing: -.045em; }
+    h2 { font-size: clamp(32px, 3.65vw, 64px); line-height: 1.2; }
+    h2:focus { outline: none; }
+    h3 { font-size: clamp(20px, 1.7vw, 28px); line-height: 1.4; letter-spacing: -.025em; }
+    p { line-height: 1.75; }
+    em { color: var(--accent); font-style: normal; }
+    .mono { font-family: var(--mono); }
+    .eyebrow { font: 11px/1.5 var(--mono); font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
+    .lede { color: var(--muted); font-size: clamp(16px, 1.25vw, 20px); max-width: 880px; line-height: 1.75; }
+    .small { font-size: 13px; color: var(--muted); line-height: 1.7; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .skip-link { position: fixed; z-index: 100; top: 8px; left: 12px; background: var(--ink); color: var(--paper); padding: 12px 20px; transform: translateY(-160%); }
+    .skip-link:focus { transform: translateY(0); }
+    .icon { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+    .symbols { position: absolute; width: 0; height: 0; overflow: hidden; }
+    .topbar { position: sticky; top: 0; z-index: 20; height: 70px; padding: 0 var(--gutter); display: flex; align-items: center; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--line); background: var(--paper); }
+    .brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; font-size: 14px; font-weight: 650; letter-spacing: -.02em; white-space: nowrap; }
+    .brand-mark { display: grid; grid-template-columns: repeat(2, 6px); gap: 3px; transform: rotate(-10deg); }
+    .brand-mark i { width: 6px; height: 6px; background: var(--accent); }
+    .brand-mark i:last-child { border-radius: 50%; }
+    .brand span span { color: var(--muted); font-weight: 400; margin: 0 6px; }
+    .chapter-nav { display: flex; align-items: center; gap: clamp(10px, 1.8vw, 28px); }
+    .chapter-nav a { font-size: 12px; color: var(--muted); text-decoration: none; padding: 24px 0; position: relative; white-space: nowrap; }
+    .chapter-nav a[aria-current] { color: var(--ink); }
+    .chapter-nav a[aria-current]::after { content: ""; position: absolute; bottom: -1px; height: 2px; background: var(--accent); left: 0; right: 0; }
+    .top-actions { display: flex; align-items: center; gap: 10px; }
+    .icon-button { border: 1px solid var(--line); background: transparent; width: 38px; height: 38px; display: inline-grid; place-items: center; border-radius: 50%; transition: background .2s; }
+    .icon-button:hover { background: var(--accent-bg); }
+    .text-button { border: none; background: transparent; font-size: 12px; padding: 10px 4px; color: var(--muted); }
+    .js-only { display: none; }
+    .enhanced .js-only { display: inline-flex; }
+    .scene { position: relative; min-height: calc(100svh - 70px); padding: 42px var(--gutter); display: flex; flex-direction: column; justify-content: center; gap: clamp(22px, 3vh, 36px); background: var(--paper); border-bottom: 1px solid var(--line); scroll-margin-top: 70px; }
+    .enhanced:not(.reading) .scene { min-height: calc(100svh - 156px); border-bottom: 0; }
+    .enhanced main { padding-bottom: 86px; }
+    .scene > * { width: 100%; max-width: 1440px; margin-inline: auto; }
+    .scene-heading { display: grid; gap: 13px; }
+    .scene-heading .eyebrow { margin-bottom: 3px; }
+    #identity, #start { padding-block: 36px; gap: 24px; }
+    .scene-meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; align-items: center; color: var(--muted); font-size: 10px; letter-spacing: .025em; padding-top: 12px; border-top: 1px solid var(--line); }
+    .source-links { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .source-links a { text-decoration-color: var(--line); }
+    .source-links a:hover { color: var(--accent); }
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(24px, 5vw, 80px); align-items: center; }
+    .split > *, .columns > *, .three > *,
+    .comparison > *, .loop-layout > *, .architecture-map > *, .network-layout > *,
+    .workload-layout > *, .launch-layout > *, .demo-layout > *, .pilot-layout > * { min-width: 0; }
+    .columns { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+    .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+    .panel { padding: clamp(20px, 2.3vw, 34px); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; }
+    .panel p { color: var(--muted); font-size: 15px; }
+    .rule { border-top: 1px solid var(--line); padding-top: 18px; }
+    .insight { font-size: clamp(16px, 1.45vw, 23px); line-height: 1.6; border-left: 3px solid var(--accent); padding-left: 20px; }
+    .tag { display: inline-flex; gap: 8px; align-items: center; width: fit-content; padding: 6px 10px; font-size: 10px; font-weight: 650; letter-spacing: .05em; border: 1px solid var(--line); border-radius: 2px; color: var(--muted); }
+    .tag.status { border-color: #b2c4ac; color: var(--green); background: var(--green-bg); }
+    .tag.status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .tag.preview { color: var(--accent); border-color: var(--accent); }
+    .button { display: inline-flex; align-items: center; justify-content: center; gap: 18px; padding: 13px 20px; min-height: 46px; background: var(--ink); color: var(--paper); border: 1px solid var(--ink); text-decoration: none; font-size: 13px; font-weight: 600; border-radius: 2px; }
+    .button:hover { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+    .button.outline { background: transparent; color: var(--ink); border-color: var(--line); }
+    .button.outline:hover { background: var(--accent-bg); }
+    .hero { gap: 26px; }
+    .hero .split { grid-template-columns: 1.08fr 1fr; gap: 40px; }
+    .hero h1 { font-size: clamp(66px, 7.25vw, 116px); line-height: .98; letter-spacing: -.075em; margin: 22px 0 28px; }
+    .hero h1 .period { color: var(--accent); }
+    .hero .hero-line { font-size: clamp(20px, 2.05vw, 30px); letter-spacing: -.035em; font-weight: 550; margin-bottom: 14px; }
+    .hero .lede { max-width: 570px; font-size: 16px; }
+    .hero-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 20px; margin-top: 28px; }
+    .hero-actions .small { font-size: 11px; }
+    .hero-figure { position: relative; align-self: stretch; display: flex; align-items: center; justify-content: center; min-height: 360px; background-image: radial-gradient(var(--line) .8px, transparent .8px); background-size: 18px 18px; border-radius: 50%; }
+    .hero-figure svg { width: 100%; max-height: 480px; overflow: visible; }
+    .hero-figure svg text { fill: var(--ink); font-family: var(--sans); }
+    .orbit { transform-origin: 260px 235px; animation: orbit 32s linear infinite; }
+    @keyframes orbit { to { transform: rotate(360deg); } }
+    .caption { color: var(--muted); font: 10px/1.6 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+    .tabs { display: flex; flex-wrap: wrap; gap: 4px; width: fit-content; padding: 4px; border: 1px solid var(--line); border-radius: 4px; }
+    .tabs button { border: 0; background: transparent; padding: 10px 17px; color: var(--muted); font-size: 12px; border-radius: 2px; }
+    .tabs button[aria-selected="true"] { background: var(--ink); color: var(--paper); }
+    [role="tabpanel"] { min-width: 0; }
+    .comparison { display: grid; grid-template-columns: 1.08fr 1fr; gap: 44px; align-items: center; margin-top: 22px; }
+    .lanes { display: grid; gap: 10px; }
+    .lane { display: flex; align-items: center; gap: 12px; padding: 13px 16px; border: 1px solid var(--line); background: var(--surface); border-radius: 3px; }
+    .lane-label { width: 86px; font-size: 12px; flex-shrink: 0; }
+    .cells { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; flex: 1; }
+    .cells i { height: 20px; border: 1px solid var(--line); background: var(--paper); }
+    .cells i.busy { background: var(--accent); border-color: var(--accent); }
+    .cells i.green { background: var(--green); border-color: var(--green); }
+    .cell-legend { display: flex; gap: 20px; margin-top: 12px; font-size: 10px; color: var(--muted); }
+    .cell-legend span::before { content: ""; display: inline-block; width: 8px; height: 8px; background: var(--accent); margin-right: 7px; }
+    .cell-legend span:last-child::before { background: transparent; border: 1px solid var(--line); }
+    .contrast-copy { display: grid; gap: 16px; }
+    .contrast-copy .big-word { font-size: clamp(32px, 4vw, 62px); line-height: 1.12; letter-spacing: -.055em; }
+    .contrast-copy p { color: var(--muted); font-size: 16px; }
+    .stack { display: grid; gap: 12px; }
+    .stack-row { display: grid; grid-template-columns: 66px 1.1fr 1.6fr; gap: 24px; align-items: center; padding: 23px 28px; border: 1px solid var(--line); border-radius: 3px; }
+    .stack-row:first-child { background: var(--accent-bg); border-color: #d7b6a0; }
+    .stack-row:nth-child(2) { background: var(--green-bg); }
+    .stack-row .stack-n { font: 12px var(--mono); color: var(--accent); }
+    .stack-row h3 { margin-bottom: 3px; font-size: 25px; }
+    .stack-row p { font-size: 14px; color: var(--muted); }
+    .stack-role { font-size: 17px; }
+    .loop-layout { display: grid; grid-template-columns: 1.4fr 1fr; gap: 48px; align-items: center; }
+    .loop-track { position: relative; padding: 20px 0 32px; }
+    .loop-steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; border: none; padding: 0; width: 100%; }
+    .loop-steps button { position: relative; padding: 26px 8px 20px; min-height: 125px; border: 1px solid var(--line); background: var(--surface); text-align: center; border-radius: 3px; }
+    .loop-steps button[aria-selected="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+    .loop-steps button .step-no { display: block; font: 10px var(--mono); opacity: .7; margin-bottom: 18px; }
+    .loop-steps button strong { font-size: 14px; font-weight: 600; }
+    .loop-feedback { margin: 10px 36px 0; height: 35px; border: 1px solid var(--line); border-top: 0; position: relative; }
+    .loop-feedback::before { content: ""; position: absolute; top: -4px; left: -4px; width: 6px; height: 6px; border: solid var(--accent); border-width: 1px 0 0 1px; transform: rotate(45deg); }
+    .loop-feedback span { position: absolute; left: 50%; bottom: -10px; transform: translateX(-50%); padding: 0 12px; background: var(--paper); font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .detail-kicker { font: 11px var(--mono); color: var(--accent); margin-bottom: 18px; }
+    .detail h3 { font-size: clamp(24px, 2.5vw, 38px); margin-bottom: 15px; }
+    .detail p { font-size: 16px; color: var(--muted); }
+    .detail .tag { margin-top: 22px; }
+    .architecture-tabs { margin-top: 2px; }
+    .architecture-map { display: grid; grid-template-columns: 1fr 160px 1.65fr; align-items: stretch; margin-top: 20px; }
+    .plane { border: 1px solid var(--line); padding: 20px; border-radius: 4px; background: var(--surface); }
+    .plane-label { font: 10px var(--mono); color: var(--muted); letter-spacing: .1em; margin-bottom: 8px; }
+    .plane h3 { font-size: 22px; margin-bottom: 12px; }
+    .control-items { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .control-items div { border: 1px solid var(--line); padding: 10px; font-size: 11px; }
+    .connection { display: flex; flex-direction: column; justify-content: center; gap: 10px; padding: 0 8px; text-align: center; }
+    .connection span { font-size: 11px; color: var(--accent); line-height: 1.6; }
+    .connection .outbound { height: 1px; width: 100%; background: var(--accent); position: relative; }
+    .connection .outbound::before { content: ""; position: absolute; left: 0; top: -3px; border: 4px solid transparent; border-left: 0; border-right-color: var(--accent); }
+    .aks { padding: 12px; border: 1px dashed var(--line); background: var(--paper); }
+    .aks-label { font-size: 9px; color: var(--muted); margin-bottom: 8px; }
+    .cluster-row { display: grid; grid-template-columns: 1fr 20px 1.2fr; align-items: center; gap: 10px; }
+    .operator { background: var(--accent); color: #ffffff; padding: 12px 8px; font-size: 12px; text-align: center; border-radius: 2px; }
+    .ray-cluster { border: 1px solid var(--line); padding: 8px; font-size: 11px; text-align: center; }
+    .workers { display: flex; justify-content: center; gap: 4px; margin-top: 6px; }
+    .workers i { width: 13px; height: 13px; border: 1px solid var(--green); background: var(--green-bg); }
+    .storage { display: flex; justify-content: space-around; gap: 12px; flex-wrap: wrap; margin-top: 12px; border: 1px solid var(--line); padding: 10px; font-size: 11px; transition: background .25s; }
+    .arch-description { margin-top: 18px; min-height: 42px; color: var(--muted); font-size: 14px; }
+    #architecture { padding-block: 32px; gap: 24px; }
+    #architecture[data-view="data"] .storage { background: var(--green-bg); border-color: var(--green); color: var(--ink); }
+    #architecture[data-view="metadata"] .metadata-node { border-color: var(--accent); background: var(--accent-bg); }
+    #architecture[data-view="metadata"] .connection .outbound { height: 2px; }
+    .network-layout { display: grid; grid-template-columns: 1.35fr 1fr; gap: 44px; align-items: center; }
+    .network-chart { display: grid; grid-template-columns: 1fr 1fr; gap: 26px 32px; padding: 28px; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; position: relative; }
+    .net-node { padding: 18px 12px; text-align: center; border: 1px solid var(--line); min-height: 90px; display: flex; flex-direction: column; justify-content: center; gap: 6px; position: relative; z-index: 1; background: var(--surface); }
+    .net-node strong { font-size: 15px; font-weight: 600; }
+    .net-node span { font-size: 10px; color: var(--muted); }
+    .net-node.highlight { border-color: var(--accent); background: var(--accent-bg); }
+    .flow-line { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+    .flow-line path { fill: none; stroke: var(--accent); stroke-width: 2; stroke-dasharray: 5 5; animation: flow 1.8s linear infinite; }
+    @keyframes flow { to { stroke-dashoffset: -20; } }
+    .network-detail { margin-top: 22px; }
+    .flow-path { font: 12px/1.8 var(--mono); color: var(--accent); margin-bottom: 14px; }
+    .identity-row { display: grid; grid-template-columns: .6fr 1.2fr 1.3fr; gap: 24px; align-items: start; padding: 22px 0; border-top: 1px solid var(--line); }
+    .identity-row .who { color: var(--accent); font-size: 13px; display: flex; align-items: center; gap: 10px; }
+    .identity-row h3 { font-size: 21px; margin-bottom: 7px; }
+    .identity-row p { font-size: 14px; color: var(--muted); }
+    .identity-row .tag { margin-top: 4px; }
+    .boundary-number { font: clamp(64px, 8vw, 110px)/1 var(--mono); color: var(--accent); letter-spacing: -.07em; margin-bottom: 26px; }
+    .boundary-panel h3 { font-size: 29px; margin-bottom: 16px; }
+    .boundary-panel p { max-width: 540px; font-size: 16px; }
+    .boundary-panel .tag { margin-bottom: 18px; }
+    .boundary-panel + .boundary-panel { border-left: 1px solid var(--line); padding-left: 40px; }
+    .workload-layout { display: grid; grid-template-columns: .85fr 1.6fr; gap: 48px; }
+    .workload-tabs { display: flex; flex-direction: column; width: 100%; border: 0; padding: 0; gap: 0; }
+    .workload-tabs button { padding: 15px 12px; border-bottom: 1px solid var(--line); border-radius: 0; text-align: left; font-size: 15px; display: flex; justify-content: space-between; gap: 12px; }
+    .workload-tabs button[aria-selected="true"] { background: var(--green-bg); color: var(--ink); border-color: var(--green); }
+    .workload-tabs button span { font: 10px var(--mono); color: var(--muted); align-self: center; }
+    .workload-body { padding: 30px; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; display: flex; flex-direction: column; justify-content: center; }
+    .workload-body h3 { font-size: 31px; margin-bottom: 16px; }
+    .workload-body p { font-size: 16px; color: var(--muted); }
+    .mini-pipeline { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 28px 0; }
+    .mini-pipeline span { border: 1px solid var(--line); padding: 10px 14px; font-size: 12px; background: var(--paper); }
+    .mini-pipeline b { color: var(--accent); font-size: 15px; font-weight: 400; }
+    .mini-pipeline span.gpu { border-color: var(--accent); color: var(--accent); }
+    .earth { position: relative; width: min(100%, 370px); aspect-ratio: 1; margin: auto; border: 1px solid var(--line); border-radius: 50%; display: grid; place-items: center; background: radial-gradient(ellipse at 35% 30%, #3e5842, #1b2c25 70%); overflow: hidden; }
+    .earth svg { width: 100%; height: 100%; }
+    .earth-label { position: absolute; background: var(--paper); border: 1px solid var(--line); padding: 8px 14px; font: 10px var(--mono); color: var(--accent); left: 50%; bottom: 38px; transform: translateX(-50%); white-space: nowrap; }
+    .case-copy { display: grid; gap: 22px; }
+    .case-copy h3 { font-size: clamp(28px, 3vw, 44px); }
+    .case-copy p { font-size: 16px; color: var(--muted); }
+    .case-copy .mini-pipeline { margin: 0; }
+    .launch-layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: 55px; align-items: start; }
+    .launch-steps { list-style: none; margin: 0; padding: 0; counter-reset: launch; }
+    .launch-steps li { counter-increment: launch; position: relative; padding: 0 0 22px 50px; border-left: 1px solid var(--line); margin-left: 12px; }
+    .launch-steps li:last-child { border-left: 0; padding-bottom: 0; }
+    .launch-steps li::before { content: "0" counter(launch); position: absolute; top: 0; left: -13px; width: 26px; height: 26px; display: grid; place-items: center; background: var(--paper); border: 1px solid var(--line); color: var(--accent); font: 10px var(--mono); }
+    .launch-steps h3 { font-size: 18px; margin-bottom: 4px; }
+    .launch-steps p { font-size: 13px; color: var(--muted); }
+    .launch-check { display: grid; gap: 20px; }
+    .launch-check h3 { font-size: 22px; }
+    .launch-check p { font-size: 14px; }
+    .code-window { background: #1b2521; color: #e6ebdf; border: 1px solid #435146; border-radius: 4px; overflow: hidden; }
+    .code-title { display: flex; align-items: center; justify-content: space-between; padding: 11px 18px; border-bottom: 1px solid #435146; color: #bcc5b7; font: 11px var(--mono); gap: 12px; }
+    .code-title > span { min-width: 0; overflow-wrap: anywhere; }
+    .code-title button { flex-shrink: 0; }
+    .code-dots { display: flex; gap: 5px; margin-right: auto; }
+    .code-dots i { width: 5px; height: 5px; border-radius: 50%; background: #627467; }
+    pre { margin: 0; padding: 24px; overflow-x: auto; font: clamp(12px, 1.15vw, 17px)/1.8 var(--mono); tab-size: 4; }
+    code { font-family: var(--mono); }
+    p code { font-size: .9em; background: var(--accent-bg); padding: 1px 4px; border-radius: 2px; overflow-wrap: anywhere; }
+    .code-window button { border: 1px solid #627467; border-radius: 2px; background: transparent; color: #e6ebdf; padding: 5px 9px; font: 10px var(--sans); }
+    .code-window button:hover { background: #35483a; }
+    .kw { color: #e7af87; }
+    .fn { color: #b9d8bc; }
+    .comment { color: #a4b39f; }
+    .demo-layout { display: grid; grid-template-columns: 1.5fr .85fr; gap: 30px; align-items: center; }
+    .demo-layout .tabs { margin-bottom: 16px; }
+    .demo-explainer { display: grid; gap: 24px; }
+    .demo-explainer .output { background: var(--green-bg); color: var(--green); padding: 16px; font: 14px var(--mono); border-left: 2px solid var(--green); }
+    .demo-explainer p { font-size: 14px; color: var(--muted); }
+    .equation { display: grid; grid-template-columns: 1.1fr auto 1fr auto 1fr; gap: 22px; align-items: center; padding: 30px 0; border-block: 1px solid var(--line); }
+    .equation h3 { font-size: 25px; margin-bottom: 10px; }
+    .equation p { font-size: 13px; color: var(--muted); }
+    .equation .plus { font: 28px var(--mono); color: var(--accent); }
+    .measure { padding-top: 20px; border-top: 2px solid var(--ink); }
+    .measure .eyebrow { margin-bottom: 15px; }
+    .measure h3 { font-size: 22px; margin-bottom: 10px; }
+    .measure p { font-size: 14px; color: var(--muted); }
+    .limits-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 44px; }
+    .limit { padding: 22px 0; border-top: 1px solid var(--line); display: grid; grid-template-columns: 34px 1fr; gap: 20px; }
+    .limit .limit-n { font: 12px var(--mono); color: var(--accent); padding-top: 5px; }
+    .limit h3 { font-size: 20px; margin-bottom: 10px; }
+    .limit p { color: var(--muted); font-size: 14px; }
+    .pilot-layout { display: grid; grid-template-columns: 1.4fr .8fr; gap: 60px; align-items: center; }
+    .checklist { border-top: 1px solid var(--line); }
+    .checklist label { display: grid; grid-template-columns: 22px 115px 1fr; gap: 18px; padding: 17px 0; border-bottom: 1px solid var(--line); align-items: center; cursor: pointer; }
+    .checklist input { width: 20px; height: 20px; accent-color: var(--green); margin: 0; cursor: pointer; }
+    .checklist strong { font-size: 15px; font-weight: 600; }
+    .checklist span { font-size: 13px; color: var(--muted); }
+    .checklist label:has(input:checked) strong { color: var(--green); }
+    .pilot-score { padding: 32px; background: var(--green-bg); border: 1px solid var(--line); border-radius: 4px; }
+    .pilot-score .count { font: 80px/1 var(--mono); letter-spacing: -.075em; margin: 20px 0; }
+    .pilot-score .count span { color: var(--muted); font-size: 28px; letter-spacing: -.05em; }
+    .pilot-score h3 { font-size: 21px; margin-bottom: 10px; }
+    .pilot-score p { color: var(--muted); font-size: 13px; }
+    .closing-title { font-size: clamp(42px, 5.3vw, 85px); max-width: 1100px; }
+    .closing-points { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; margin-top: 10px; }
+    .closing-points > div { border-top: 1px solid var(--line); padding-top: 18px; }
+    .closing-points span { font: 11px var(--mono); color: var(--accent); }
+    .closing-points h3 { font-size: 23px; margin: 12px 0; }
+    .closing-points p { font-size: 14px; color: var(--muted); }
+    .closing-actions { display: flex; gap: 14px; flex-wrap: wrap; }
+    .deck-controls { display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 20; background: var(--paper); color: var(--ink); border-top: 1px solid var(--line); padding: 10px var(--gutter) 12px; }
+    .enhanced .deck-controls { display: block; }
+    .rail { display: flex; align-items: center; gap: 5px; margin-bottom: 8px; }
+    .rail button { background: none; border: 0; height: 10px; padding: 0; flex: 1; position: relative; }
+    .rail button::before { content: ""; position: absolute; left: 0; right: 0; top: 4px; height: 2px; background: var(--line); }
+    .rail button.past::before, .rail button[aria-current]::before { background: var(--accent); }
+    .rail button:hover::before { height: 4px; top: 3px; }
+    .controls-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .page-label { display: flex; align-items: center; gap: 18px; min-width: 0; }
+    .page-number { font: 12px var(--mono); color: var(--muted); white-space: nowrap; }
+    .page-number strong { color: var(--ink); font-weight: 500; }
+    .current-label { font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .utilities, .paging { display: flex; align-items: center; gap: 16px; }
+    .utilities button { display: inline-flex; align-items: center; gap: 6px; padding: 7px 0; }
+    .utilities .icon { width: 15px; height: 15px; }
+    .paging .icon-button { width: 32px; height: 32px; }
+    .reading .scene { min-height: 90svh; padding-block: 70px; }
+    .reading .rail { display: none; }
+    .reading .scene + .scene { border-top: 1px solid var(--line); }
+    .reading .tabs { display: none; }
+    .reading [role="tabpanel"] { margin-block: 24px; padding-top: 15px; border-top: 1px solid var(--line); }
+    .reading .loop-layout { display: block; }
+    .reading .loop-track { display: none; }
+    .reading .network-layout { align-items: start; }
+    .reading .network-chart { position: sticky; top: 100px; }
+    .reading .workload-layout { display: block; }
+    .reading .comparison { margin-block: 16px; }
+    .reading .arch-description { min-height: 0; }
+    dialog { width: min(860px, calc(100% - 32px)); max-height: calc(100svh - 64px); border: 1px solid #d8d8cc; background: #ffffff; color: #242824; border-radius: 5px; padding: 0; box-shadow: 0 20px 100px #0004; }
+    dialog::backdrop { background: #13211fcc; backdrop-filter: blur(6px); }
+    .dialog-head { display: flex; align-items: center; justify-content: space-between; padding: 22px 28px; border-bottom: 1px solid #d8d8cc; gap: 20px; }
+    .dialog-head h2 { font-size: 23px; letter-spacing: -.025em; }
+    .dialog-body { padding: 24px 28px 32px; }
+    .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .overview-grid button { display: flex; align-items: center; gap: 14px; text-align: left; padding: 16px; border: 1px solid #d8d8cc; background: transparent; color: #242824; font-size: 13px; border-radius: 2px; }
+    .overview-grid button span { font: 10px var(--mono); color: #b7401d; }
+    .overview-grid button:hover, .overview-grid button[aria-current] { background: #e3eadf; border-color: #7d9a7e; }
+    .reference-list { padding: 0; margin: 20px 0 0; list-style: none; }
+    .reference-list li { border-top: 1px solid #d8d8cc; padding: 14px 0; }
+    .reference-list a { display: inline-block; color: #8e361c; font-size: 15px; font-weight: 600; }
+    .reference-list p { font: 10px/1.7 var(--mono); color: #62665d; overflow-wrap: anywhere; margin-top: 6px; }
+    .reference-list .this-page { display: inline-block; background: #e3eadf; color: #24614d; font-size: 10px; padding: 2px 6px; margin-left: 10px; vertical-align: middle; }
+    .notes-copy { font-size: 17px; line-height: 1.95; white-space: pre-line; }
+    .help-list { display: grid; gap: 14px; margin: 20px 0; }
+    .help-list div { display: flex; align-items: center; gap: 18px; font-size: 14px; }
+    kbd { display: inline-block; min-width: 31px; padding: 4px 8px; text-align: center; border: 1px solid #c7c9ba; border-bottom-width: 2px; background: #fffcf6; font: 12px var(--mono); border-radius: 3px; }
+    .key-group { width: 155px; flex-shrink: 0; }
+    .toast { position: fixed; z-index: 70; bottom: 100px; left: 50%; transform: translateX(-50%); background: #242824; color: #f5f3ed; border: 1px solid #7b8372; padding: 12px 20px; border-radius: 3px; font-size: 13px; max-width: calc(100% - 32px); text-align: center; }
+    .enhanced:not(.reading) .scene:not([hidden]) > :not(.scene-meta) { animation: arrive .4s ease-out both; }
+    @keyframes arrive { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    @media (min-width: 1000px) and (max-height: 800px) {
+      .scene { padding-block: 20px; gap: 18px; }
+      h2 { font-size: clamp(32px, 2.9vw, 44px); }
+      .scene-heading .lede { font-size: 14px; line-height: 1.6; }
+      #challenge { padding-block: 14px; gap: 16px; }
+      .contrast-copy .big-word { font-size: 44px; }
+      .hero h1 { font-size: clamp(65px, 6.8vw, 98px); margin-block: 16px 20px; }
+      .hero-figure { min-height: 290px; }
+      .hero-figure svg { max-height: 350px; }
+      .hero-actions { margin-top: 20px; }
+      .scene-heading { gap: 9px; }
+      .stack-row { padding-block: 12px; }
+      .plane { padding: 14px; }
+      .plane h3 { font-size: 20px; margin-bottom: 8px; }
+      .plane-label { margin-bottom: 6px; }
+      .control-items div { padding: 8px; font-size: 10px; }
+      .aks { padding: 10px; }
+      .operator { padding: 9px 6px; }
+      .ray-cluster { padding: 6px; }
+      .storage { padding: 8px; margin-top: 10px; }
+      .architecture-map { margin-top: 14px; }
+      .arch-description { font-size: 13px; min-height: 28px; margin-top: 12px; }
+      #architecture { padding-block: 18px; gap: 18px; }
+      #identity, #start { padding-block: 20px; gap: 18px; }
+      .tabs button { padding-block: 8px; }
+      .network-chart { padding: 22px; gap: 20px 32px; }
+      .net-node { min-height: 80px; padding: 14px 10px; }
+      .network-detail h3 { font-size: 28px; }
+      .network-detail p { font-size: 14px; }
+      .identity-row { padding-block: 13px; }
+      .identity-row h3 { font-size: 19px; margin-bottom: 5px; }
+      .identity-row p { font-size: 13px; line-height: 1.65; }
+      .earth { max-width: 260px; }
+      .boundary-number { font-size: 60px; margin-bottom: 16px; }
+      .boundary-panel h3 { font-size: 25px; }
+      .boundary-panel p { font-size: 14px; }
+      .launch-steps li { padding-bottom: 12px; }
+      .launch-steps h3 { font-size: 17px; line-height: 1.35; }
+      .launch-steps p { font-size: 12px; line-height: 1.6; }
+      .launch-check { gap: 14px; }
+      .launch-check pre { padding: 14px; font-size: 12px; }
+      .launch-check .panel { padding: 18px; }
+      .launch-check .panel p { font-size: 12px; line-height: 1.65; }
+      .launch-check > .small { font-size: 12px; line-height: 1.6; }
+      .code-title { padding-block: 9px; }
+      .demo-layout pre { padding: 18px; font-size: 13px; line-height: 1.6; }
+      .demo-layout .tabs { margin-bottom: 12px; }
+      .demo-explainer { gap: 16px; }
+      .demo-explainer p { font-size: 12.5px; line-height: 1.65; }
+      .demo-explainer .output { padding: 12px; font-size: 13px; }
+      .closing-title { font-size: clamp(42px, 4.5vw, 68px); }
+      .limit { padding-block: 17px; }
+      .workload-tabs button { padding-block: 10px; }
+      .workload-body h3 { font-size: 28px; }
+      .workload-body p { font-size: 14px; }
+    }
+    @media (max-width: 1050px) {
+      .chapter-nav { display: none; }
+      .architecture-map { grid-template-columns: 1fr 100px 1.45fr; }
+      .plane { padding: 18px; }
+      .architecture-map .cluster-row { grid-template-columns: 1fr; gap: 8px; }
+      .cluster-arrow { display: none; }
+      .comparison { gap: 28px; }
+      .loop-layout { grid-template-columns: 1fr; gap: 28px; }
+      .loop-track { padding-top: 0; }
+      .loop-steps button { min-height: 90px; padding-block: 15px; }
+      .loop-steps button .step-no { margin-bottom: 10px; }
+      .loop-layout .detail { padding-top: 15px; border-top: 1px solid var(--line); }
+      .loop-layout .detail h3 { font-size: 27px; margin-bottom: 8px; }
+      .loop-layout .detail .tag { margin-top: 12px; }
+      .workload-layout { gap: 26px; }
+      .pilot-layout { gap: 28px; }
+      .checklist label { grid-template-columns: 22px 94px 1fr; gap: 12px; }
+    }
+    @media (max-width: 740px) {
+      :root { --gutter: 22px; }
+      .topbar { height: 60px; gap: 14px; }
+      .brand { font-size: 12px; gap: 9px; }
+      .brand span span { margin-inline: 3px; }
+      .top-actions { gap: 8px; }
+      .top-actions .text-button { display: none; }
+      .top-actions .icon-button { width: 33px; height: 33px; }
+      .scene, .enhanced:not(.reading) .scene { min-height: calc(100svh - 143px); padding-block: 30px; gap: 24px; scroll-margin-top: 60px; }
+      h2 { font-size: clamp(30px, 7.5vw, 42px); line-height: 1.25; }
+      .eyebrow { font-size: 10px; letter-spacing: .11em; }
+      .lede { font-size: 14px; }
+      .hero .split, .split, .columns, .three, .comparison, .network-layout, .demo-layout, .launch-layout, .pilot-layout { grid-template-columns: 1fr; gap: 26px; }
+      .hero h1 { font-size: clamp(66px, 16vw, 98px); margin: 19px 0; }
+      .hero .hero-line { font-size: 22px; }
+      .hero .lede { font-size: 14px; }
+      .hero-figure { min-height: 0; max-width: 340px; width: 100%; justify-self: center; }
+      .hero-figure svg { max-height: 300px; }
+      .hero-actions { gap: 14px; margin-top: 24px; }
+      .hero-actions .small { display: none; }
+      .stack-row { grid-template-columns: 28px 1fr; padding: 20px 15px; gap: 15px; }
+      .stack-row .stack-role { grid-column: 2; font-size: 14px; }
+      .stack-row h3 { font-size: 22px; }
+      .stack-row p { font-size: 12px; }
+      .insight { font-size: 16px; padding-left: 14px; }
+      .tabs button { padding: 9px 12px; font-size: 11px; }
+      .loop-steps { gap: 5px; }
+      .loop-steps button { padding: 14px 4px; }
+      .loop-steps button strong { font-size: 12px; }
+      .architecture-map { grid-template-columns: 1fr; margin-top: 18px; }
+      .connection { padding: 16px; flex-direction: row; align-items: center; gap: 12px; }
+      .connection span { font-size: 10px; }
+      .connection .outbound { width: 60px; }
+      .connection .outbound::before { border: 4px solid transparent; border-left: 0; border-right-color: var(--accent); }
+      .connection::after { content: "↑ 出站目标为上方控制平面"; color: var(--accent); font-size: 10px; }
+      .connection .outbound { display: none; }
+      .architecture-map .cluster-row { grid-template-columns: 1fr 20px 1fr; }
+      .cluster-arrow { display: block; }
+      .plane h3 { font-size: 20px; }
+      .control-items { grid-template-columns: 1fr 1fr; }
+      .control-items div { font-size: 11px; padding: 9px; }
+      .network-chart { padding: 18px; gap: 24px 28px; }
+      .net-node { padding-inline: 6px; }
+      .net-node strong { font-size: 13px; }
+      .network-detail { margin-top: 16px; }
+      .identity-row { grid-template-columns: 1fr; gap: 10px; padding-block: 20px; }
+      .identity-row .who { font-size: 11px; }
+      .identity-row h3 { font-size: 20px; }
+      .identity-row .tag { margin-top: 8px; }
+      .boundary-number { font-size: 65px; margin-bottom: 15px; }
+      .boundary-panel h3 { font-size: 25px; }
+      .boundary-panel p { font-size: 14px; }
+      .boundary-panel + .boundary-panel { border-left: 0; border-top: 1px solid var(--line); padding: 24px 0 0; }
+      .workload-layout { grid-template-columns: 1fr; gap: 20px; }
+      .workload-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+      .workload-tabs button { border: 1px solid var(--line); padding: 12px; font-size: 12px; }
+      .workload-tabs button span { display: none; }
+      .workload-body { padding: 22px; }
+      .workload-body h3 { font-size: 25px; }
+      .workload-body p { font-size: 14px; }
+      .earth { max-width: 260px; }
+      .case-copy h3 { font-size: 27px; }
+      .case-copy p { font-size: 14px; }
+      .launch-steps li { padding-left: 36px; }
+      .demo-layout { gap: 22px; }
+      pre { font-size: 12px; padding: 18px; }
+      .demo-explainer { gap: 15px; }
+      .equation { grid-template-columns: 1fr; gap: 16px; padding-block: 22px; }
+      .equation .plus { font-size: 21px; }
+      .equation h3 { font-size: 23px; margin-bottom: 5px; }
+      .three { gap: 25px; }
+      .measure h3 { font-size: 20px; }
+      .limits-grid { grid-template-columns: 1fr; }
+      .limit { padding-block: 18px; gap: 10px; }
+      .limit h3 { font-size: 19px; }
+      .checklist label { grid-template-columns: 22px 1fr; gap: 9px 14px; }
+      .checklist label span { grid-column: 2; }
+      .pilot-score { padding: 24px; }
+      .pilot-score .count { font-size: 64px; margin-block: 14px; }
+      .closing-title { font-size: clamp(35px, 9vw, 55px); }
+      .closing-points { grid-template-columns: 1fr; gap: 24px; }
+      .closing-points h3 { font-size: 22px; margin-block: 8px; }
+      .deck-controls { padding: 8px 22px 12px; }
+      .controls-row { gap: 10px; }
+      .current-label { display: none; }
+      .page-label { gap: 8px; }
+      .utilities { gap: 15px; }
+      .utilities .utility-label { display: none; }
+      .utilities button { min-width: 28px; min-height: 32px; justify-content: center; }
+      .utilities .icon { width: 18px; height: 18px; }
+      .paging { gap: 10px; }
+      .page-number { font-size: 11px; }
+      .reading .scene { padding-block: 44px; }
+      .reading .network-chart { position: static; }
+      .overview-grid { grid-template-columns: 1fr; }
+      .dialog-head { padding: 20px; }
+      .dialog-body { padding: 20px; }
+      .dialog-head h2 { font-size: 20px; }
+      .notes-copy { font-size: 15px; }
+      .key-group { width: 135px; }
+      .scene-meta { font-size: 9px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+    }
+    @media print {
+      :root { --gutter: 0; }
+      @page { size: landscape; margin: 12mm; }
+      body { background: white !important; }
+      .topbar, .deck-controls, .skip-link, dialog, .toast, .js-only, .tabs, .loop-track { display: none !important; }
+      .enhanced main { padding: 0; }
+      .scene, .enhanced:not(.reading) .scene, .reading .scene {
+        display: flex !important; min-height: 170mm; padding: 10mm 0; page-break-after: always; break-after: page;
+        border: 0; gap: 16px; background: white !important; color: #242824 !important;
+        --paper: white; --surface: #faf9f5; --ink: #242824; --muted: #62665d; --line: #d8d8cc; --accent: #9e381a; --accent-bg: #f3e5da; --green: #24614d; --green-bg: #e3eadf;
+      }
+      .scene:last-child { break-after: auto; }
+      .scene > * { animation: none !important; }
+      h2 { font-size: 28pt; }
+      .hero h1 { font-size: 62pt; }
+      .hero-figure svg { max-height: 105mm; }
+      .lede, .detail p, .workload-body p { font-size: 11pt; }
+      .scene [role="tabpanel"][hidden] { display: block !important; }
+      .scene [role="tabpanel"] { margin-block: 14px; }
+      .loop-layout, .workload-layout { display: block; }
+      .scene .detail h3 { font-size: 17pt; }
+      .scene .detail .tag { margin-top: 8px; }
+      .network-chart { position: static !important; }
+      .code-window { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 10pt; }
+      .source-links a::after { content: ""; }
+      .scene-meta { font-size: 7pt; }
+      .workload-body, .panel, .identity-row, .limit, .measure { break-inside: avoid; }
+      .closing-title { font-size: 38pt; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到演示内容</a>
+  <svg class="symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="M4 12h15m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="M20 12H5m6-6-6 6 6 6"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><rect x="14" y="14" width="6" height="6"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 6v15M12 6C8 3 4 4 2 5v14c3-1 6-1 10 2 4-3 7-3 10-2V5c-2-1-6-2-10 1Z"/></symbol>
+    <symbol id="i-full" viewBox="0 0 24 24"><path d="M9 4H4v5m11-5h5v5M4 15v5h5m11-5v5h-5"/></symbol>
+    <symbol id="i-note" viewBox="0 0 24 24"><path d="M5 3h14v18H5zM8 8h8m-8 4h8m-8 4h5"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="m10 14 4-4m-5 6-2 2a4 4 0 0 1-5-5l5-5a4 4 0 0 1 5 0m0 8a4 4 0 0 0 5 0l5-5a4 4 0 0 0-5-5l-2 2"/></symbol>
+  </svg>
+
+  <header class="topbar">
+    <a class="brand" href="#intro" aria-label="Anyscale on Azure，回到首页">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span>Anyscale <span>/</span> Azure</span>
+    </a>
+    <nav class="chapter-nav" aria-label="章节导航">
+      <a href="#challenge" data-chapter-link="why">为什么</a>
+      <a href="#architecture" data-chapter-link="how">如何运行</a>
+      <a href="#workloads" data-chapter-link="where">用在哪里</a>
+      <a href="#start" data-chapter-link="start">如何开始</a>
+      <a href="#economics" data-chapter-link="decide">如何判断</a>
+    </nav>
+    <div class="top-actions js-only">
+      <button class="text-button" type="button" data-dialog="sources" title="资料来源（S）">资料来源 ↗</button>
+      <button class="icon-button" type="button" data-dialog="overview" aria-label="章节总览（G）" title="章节总览（G）"><svg class="icon"><use href="#i-grid"/></svg></button>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <section class="scene hero" id="intro" data-title="把 AI 学习闭环带回 Azure" data-chapter="why" data-sources="announcement overview">
+      <div class="split">
+        <div>
+          <div class="eyebrow">A FIELD GUIDE TO DISTRIBUTED AI · L200</div>
+          <h1>Anyscale<br>on Azure<span class="period">.</span></h1>
+          <p class="hero-line">拥有自己的 <em>AI 学习闭环。</em></p>
+          <p class="lede">在你的 Azure 订阅中，把数据准备、训练与推理连接起来。由 Anyscale 管理 Ray 平台，而不是再搭建一座计算孤岛。</p>
+          <div class="hero-actions">
+            <a class="button" href="#challenge">开始探索 <svg class="icon"><use href="#i-right"/></svg></a>
+            <span class="tag status">GENERALLY AVAILABLE · 2026.10</span>
+          </div>
+        </div>
+        <figure class="hero-figure" aria-label="AI 学习闭环概念图：数据、训练、评估和推理围绕 Ray 运行时，生产反馈进入下一轮迭代。">
+          <svg viewBox="0 0 520 460" role="img" aria-labelledby="hero-svg-title">
+            <title id="hero-svg-title">同一个 Ray 运行时，连接 AI 的每个阶段</title>
+            <circle cx="260" cy="235" r="163" fill="none" stroke="#b4bcab" stroke-width="1"/>
+            <circle cx="260" cy="235" r="124" fill="none" stroke="#cdd2c3" stroke-dasharray="3 8"/>
+            <path d="M260 75V395M100 235H420" stroke="#cdd2c3" stroke-width="1" stroke-dasharray="3 8"/>
+            <g class="orbit"><circle cx="260" cy="72" r="5" fill="#b7401d"/></g>
+            <rect x="179" y="186" width="162" height="98" rx="4" fill="#18231f"/>
+            <text x="260" y="226" text-anchor="middle" style="fill:#f4f2e9;font-size:34px;font-weight:600;letter-spacing:-1.5px">Ray</text>
+            <text x="260" y="256" text-anchor="middle" style="fill:#b4beb3;font-size:10px;letter-spacing:2px">ONE RUNTIME</text>
+            <g fill="#fffcf6" stroke="#c8cbbd">
+              <rect x="208" y="48" width="104" height="49" rx="3"/>
+              <rect x="370" y="209" width="104" height="49" rx="3"/>
+              <rect x="208" y="373" width="104" height="49" rx="3"/>
+              <rect x="46" y="209" width="104" height="49" rx="3"/>
+            </g>
+            <g text-anchor="middle" font-size="14" font-weight="500">
+              <text x="260" y="79">数据准备</text><text x="422" y="240">训练 / 后训练</text>
+              <text x="260" y="404">评估</text><text x="98" y="240">推理 / 服务</text>
+            </g>
+            <path d="m345 97 9 13-15-2m52 209-12 11 1-15m-186 53-10-12 15 1M112 154l12-11-1 15" fill="none" stroke="#b7401d" stroke-width="1.5"/>
+            <text x="260" y="444" text-anchor="middle" style="fill:#62665d;font-size:9px;letter-spacing:1.5px">YOUR AZURE · YOUR LEARNING LOOP</text>
+          </svg>
+        </figure>
+      </div>
+      <div class="scene-meta"><span>简体中文 · 约 25–35 分钟 · 概念、架构与落地</span></div>
+      <aside class="speaker-note" hidden>开场不要从功能列表讲起，而是提出一个问题：当模型需要持续改进时，谁拥有数据、模型和计算基础设施？
+本演示面向了解 Azure、Python 或 Kubernetes 的技术受众。Ray 基础不作前置要求。图中是概念闭环，不是客户部署拓扑。
+GA 不代表所有可选能力都已正式可用；后续会单独说明 Private Link 预览和控制平面数据边界。</aside>
+    </section>
+
+    <section class="scene" id="challenge" data-title="从工具孤岛，到共同运行时" data-chapter="why" data-sources="announcement overview">
+      <div class="scene-heading">
+        <div class="eyebrow">01 / THE PROBLEM</div>
+        <h2>模型在进步，<br>计算栈不该越来越碎。</h2>
+        <p class="lede">真正拖慢 AI 的，常常是阶段之间的交接、闲置的资源，以及反复搭建的运营能力。</p>
+      </div>
+      <div data-tab-group>
+        <div class="tabs" role="tablist" aria-label="对比计算组织方式">
+          <button type="button" role="tab" id="silo-tab" aria-controls="silo-panel" aria-selected="true" data-tab="silo">各管一段</button>
+          <button type="button" role="tab" id="unified-tab" aria-controls="unified-panel" aria-selected="false" tabindex="-1" data-tab="unified">共用运行时</button>
+        </div>
+        <div role="tabpanel" id="silo-panel" aria-labelledby="silo-tab" data-panel="silo">
+          <div class="comparison">
+            <div>
+              <div class="lanes" aria-label="概念示意：不同阶段分别预留资源，存在忙闲不均；不是实测利用率。">
+                <div class="lane"><span class="lane-label">数据准备</span><div class="cells" aria-hidden="true"><i class="busy"></i><i class="busy"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+                <div class="lane"><span class="lane-label">训练</span><div class="cells" aria-hidden="true"><i class="busy"></i><i class="busy"></i><i class="busy"></i><i class="busy"></i><i class="busy"></i><i class="busy"></i><i class="busy"></i><i class="busy"></i><i></i><i></i></div></div>
+                <div class="lane"><span class="lane-label">在线推理</span><div class="cells" aria-hidden="true"><i class="busy"></i><i class="busy"></i><i class="busy"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+              </div>
+              <div class="cell-legend" aria-hidden="true"><span>正在使用</span><span>预留但闲置</span></div>
+              <p class="small" style="margin-top:12px">资源格仅作概念示意，不表示实际 GPU 利用率。</p>
+            </div>
+            <div class="contrast-copy"><h3 class="big-word">每个阶段，<br>都要再建一遍。</h3><p>单独的计算池、依赖环境、身份配置和监控。一个阶段资源闲置，另一个阶段可能仍在等待。</p></div>
+          </div>
+        </div>
+        <div role="tabpanel" id="unified-panel" aria-labelledby="unified-tab" data-panel="unified" hidden>
+          <div class="comparison">
+            <div class="panel">
+              <div class="eyebrow">SHARED OPERATING MODEL</div>
+              <div class="mini-pipeline"><span>数据</span><b>→</b><span>训练</span><b>→</b><span>评估</span><b>→</b><span>推理</span></div>
+              <div class="lane"><span class="lane-label">Ray 计算池</span><div class="cells" aria-hidden="true"><i class="busy"></i><i class="busy"></i><i class="green"></i><i class="green"></i><i class="busy"></i><i class="green"></i><i class="busy"></i><i></i><i></i><i></i></div></div>
+              <p class="small" style="margin-top:16px">统一的是计算与运营模式，不要求所有任务挤进同一个集群。</p>
+            </div>
+            <div class="contrast-copy"><h3 class="big-word">共享计算，<br>减少交接。</h3><p>同一套分布式 API 与生命周期管理，协调 CPU / GPU 供给。目标是提高有效产出；收益仍需在真实工作负载上验证。</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="scene-meta"><span>设计目标，不是固定的提速或节省承诺。</span></div>
+      <aside class="speaker-note" hidden>先展示“各管一段”，再切换“共用运行时”。重点不在格子的数量，而在资源和运营能力被割裂。
+GA 公告讨论了共享计算、CPU 与 GPU 协同以及模型持续改进。本图没有复用宣传中的利用率数字，也不应将其解释为性能测量。
+统一运行时不意味着一个无限大的集群，隔离、配额与放置策略仍然存在。</aside>
+    </section>
+
+    <section class="scene" id="stack" data-title="Ray、Anyscale、Azure：三层职责" data-chapter="why" data-sources="overview architecture ray">
+      <div class="scene-heading"><div class="eyebrow">02 / THREE LAYERS, THREE RESPONSIBILITIES</div><h2>先分清三个名字，<br>再理解它如何工作。</h2></div>
+      <div class="stack">
+        <div class="stack-row"><span class="stack-n">L03</span><div><h3>Anyscale</h3><p>托管平台</p></div><div class="stack-role">管理作业、集群生命周期与可观测性</div></div>
+        <div class="stack-row"><span class="stack-n">L02</span><div><h3>Ray</h3><p>开源分布式 Python 运行时</p></div><div class="stack-role">用 Task、Actor 与 AI 库组织分布式计算</div></div>
+        <div class="stack-row"><span class="stack-n">L01</span><div><h3>Azure / AKS</h3><p>客户订阅中的基础设施</p></div><div class="stack-role">提供 Kubernetes、CPU / GPU、存储与网络</div></div>
+      </div>
+      <p class="insight">Anyscale 管理 Ray 平台，<em>并没有把你的 AKS、数据与应用责任一起拿走。</em></p>
+      <div class="scene-meta"><span>工作负载编排 ≠ Ray 任务调度 ≠ Kubernetes Pod / 节点管理。</span></div>
+      <aside class="speaker-note" hidden>Ray Core 提供 Task 和 Actor，Ray Data、Train、Tune、Serve、RLlib 则提供面向 AI 的上层能力。
+Anyscale 把分布式引擎变成可管理的平台，AKS 是 Azure 主部署路径的承载层。
+三个层次各有调度和生命周期能力，不应混为同一个调度器。已有 Ray 代码更容易复用，但不是免迁移验证。</aside>
+    </section>
+
+    <section class="scene" id="loop" data-title="把推理管线变成学习闭环" data-chapter="why" data-sources="announcement ray">
+      <div class="scene-heading"><div class="eyebrow">03 / THE LEARNING LOOP</div><h2>推理不是终点，<br>下一轮学习才刚开始。</h2><p class="lede">点击任一阶段，查看它做什么，以及 Ray 在这里承担什么角色。</p></div>
+      <div class="loop-layout" data-tab-group>
+        <div class="loop-track">
+          <div class="tabs loop-steps" role="tablist" aria-label="AI 学习闭环阶段">
+            <button type="button" role="tab" id="loop-data-tab" aria-controls="loop-data-panel" aria-selected="true" data-tab="data"><span class="step-no">01</span><strong>数据准备</strong></button>
+            <button type="button" role="tab" id="loop-train-tab" aria-controls="loop-train-panel" aria-selected="false" tabindex="-1" data-tab="train"><span class="step-no">02</span><strong>训练</strong></button>
+            <button type="button" role="tab" id="loop-post-tab" aria-controls="loop-post-panel" aria-selected="false" tabindex="-1" data-tab="post"><span class="step-no">03</span><strong>后训练</strong></button>
+            <button type="button" role="tab" id="loop-eval-tab" aria-controls="loop-eval-panel" aria-selected="false" tabindex="-1" data-tab="eval"><span class="step-no">04</span><strong>评估</strong></button>
+            <button type="button" role="tab" id="loop-serve-tab" aria-controls="loop-serve-panel" aria-selected="false" tabindex="-1" data-tab="serve"><span class="step-no">05</span><strong>推理 / 服务</strong></button>
+          </div>
+          <div class="loop-feedback" aria-hidden="true"><span>生产反馈，进入下一轮数据与模型迭代</span></div>
+        </div>
+        <div>
+          <div class="detail" role="tabpanel" id="loop-data-panel" aria-labelledby="loop-data-tab" data-panel="data"><div class="detail-kicker">01 / CURATE</div><h3>先让 GPU 有数据可用。</h3><p>清洗、解码、转换与特征处理。协调 CPU 预处理与 GPU 推理，减少等待和多系统交接。</p><span class="tag">Ray Data</span></div>
+          <div class="detail" role="tabpanel" id="loop-train-panel" aria-labelledby="loop-train-tab" data-panel="train" hidden><div class="detail-kicker">02 / TRAIN</div><h3>从一台机器，扩到多个节点。</h3><p>组织分布式训练与数据供给。训练框架、GPU 显存、通信与 checkpoint 策略仍需专门设计。</p><span class="tag">Ray Train · PyTorch 等框架</span></div>
+          <div class="detail" role="tabpanel" id="loop-post-panel" aria-labelledby="loop-post-tab" data-panel="post" hidden><div class="detail-kicker">03 / ADAPT</div><h3>让模型适应自己的任务。</h3><p>微调或强化学习可以把业务数据转成模型改进。Rollout、奖励评分和训练可在 Ray 程序中协调。</p><span class="tag">Ray Core · 训练 / RL 框架</span></div>
+          <div class="detail" role="tabpanel" id="loop-eval-panel" aria-labelledby="loop-eval-tab" data-panel="eval" hidden><div class="detail-kicker">04 / EVALUATE</div><h3>更快，不代表更好。</h3><p>并行评估质量、安全与成本。客户决定通过阈值和发布门禁，平台提供可扩展的执行能力。</p><span class="tag">Ray Core 编排 · 客户评估逻辑</span></div>
+          <div class="detail" role="tabpanel" id="loop-serve-panel" aria-labelledby="loop-serve-tab" data-panel="serve" hidden><div class="detail-kicker">05 / SERVE</div><h3>把改进送回真实业务。</h3><p>批量推理或在线服务产生新反馈。Ray Serve 可以组合多个模型与处理步骤，再驱动下一轮学习。</p><span class="tag">Ray Data / Ray Serve</span></div>
+        </div>
+      </div>
+      <p class="insight">平台统一计算，团队仍然拥有<em>模型、评估标准和应用工作流。</em></p>
+      <div class="scene-meta"><span>库与场景是概念映射；具体框架版本和恢复语义需验证。</span></div>
+      <aside class="speaker-note" hidden>不要把本页讲成所有项目必须同时启用的五项功能。团队可以先从一个阶段开始，然后复用运行时向相邻阶段扩展。
+后训练并不等于 RLlib；许多 LLM RL 程序使用 Ray Core 配合其他框架。
+生产反馈如何收集、如何进入训练集、如何防止敏感数据进入日志，仍然由客户设计。</aside>
+    </section>
+
+    <section class="scene" id="architecture" data-title="两个平面，一条清晰边界" data-chapter="how" data-sources="architecture networking regions" data-view="manage">
+      <div class="scene-heading"><div class="eyebrow">04 / THE ARCHITECTURE</div><h2>平台由它管理。<br><em>计算，仍在你的 Azure。</em></h2><p class="lede">Anyscale 托管控制平面；客户订阅内的 AKS 承载数据平面。</p></div>
+      <div data-tab-group class="architecture-tabs">
+        <div class="tabs" role="tablist" aria-label="架构观察视角">
+          <button type="button" role="tab" id="arch-manage-tab" aria-controls="arch-manage-panel" aria-selected="true" data-tab="manage">谁来管理</button>
+          <button type="button" role="tab" id="arch-data-tab" aria-controls="arch-data-panel" aria-selected="false" tabindex="-1" data-tab="data">数据在哪里</button>
+          <button type="button" role="tab" id="arch-metadata-tab" aria-controls="arch-metadata-panel" aria-selected="false" tabindex="-1" data-tab="metadata">什么会上传</button>
+        </div>
+        <div class="architecture-map" aria-label="双平面架构：Operator 与 Ray 主动出站连接控制平面；客户数据在订阅内，遥测发送到控制平面。">
+          <div class="plane">
+            <div class="plane-label">ANYSCALE AZURE TENANT</div><h3>控制平面</h3>
+            <div class="control-items"><div>Console / API / SDK</div><div>调度与作业管理</div><div class="metadata-node">日志 / 指标 / 集群状态</div><div>位置：美国</div></div>
+          </div>
+          <div class="connection"><span>Operator / Ray<br>主动出站</span><div class="outbound" aria-hidden="true"></div><span>轮询指令 / 健康与遥测</span></div>
+          <div class="plane">
+            <div class="plane-label">YOUR AZURE SUBSCRIPTION / VNET</div><h3>客户数据平面</h3>
+            <div class="aks"><div class="aks-label">AZURE KUBERNETES SERVICE</div><div class="cluster-row"><div class="operator">Anyscale Operator</div><span class="cluster-arrow" aria-hidden="true">→</span><div class="ray-cluster">Ray Head<div class="workers" aria-label="CPU 和 GPU Workers"><i></i><i></i><i></i><i></i><i></i><i></i></div></div></div></div>
+            <div class="storage"><span>Blob / ADLS · 数据与模型</span><span>ACR · 自定义镜像</span></div>
+          </div>
+        </div>
+        <div class="arch-description" role="tabpanel" id="arch-manage-panel" aria-labelledby="arch-manage-tab" data-panel="manage">Operator 在 AKS 内轮询待执行操作，并本地管理 Ray 集群。控制平面不直接连接 AKS 节点；指令通过出站发起的连接返回。</div>
+        <div class="arch-description" role="tabpanel" id="arch-data-panel" aria-labelledby="arch-data-tab" data-panel="data" hidden>工作负载、应用数据与模型产物保留在客户数据平面。客户负责存储访问、网络配置和业务数据治理。</div>
+        <div class="arch-description" role="tabpanel" id="arch-metadata-panel" aria-labelledby="arch-metadata-tab" data-panel="metadata" hidden>系统日志、指标与集群状态进入美国控制平面。开启日志摄取时，还可能包含结构化应用日志；“数据在订阅内”不是“所有信息都不出域”。</div>
+      </div>
+      <div class="scene-meta"><span>箭头表示连接发起方向，不代表连接只能单向传送信息。</span></div>
+      <aside class="speaker-note" hidden>这是整场演示最重要的一页。按“管理、数据、遥测”依次切换，明确三个不同问题。
+Operator 是 Kubernetes controller，主动轮询指令、创建资源并回报状态；Ray 集群也会主动连接控制平面进行健康和遥测上报。
+控制平面位于美国。应用数据不直接由控制平面访问，并不意味着日志没有敏感内容。客户应审查应用日志和数据分类。</aside>
+    </section>
+
+    <section class="scene" id="network" data-title="仅出站，不等于没有客户端入口" data-chapter="how" data-sources="networking quickstart">
+      <div class="scene-heading"><div class="eyebrow">05 / FOLLOW THE TRAFFIC</div><h2>“仅出站”，<br>说的是哪一条连接？</h2><p class="lede">分别检查控制台访问、客户端入口、集群管理和数据访问，才是完整网络设计。</p></div>
+      <div class="network-layout" data-tab-group>
+        <div class="network-chart" aria-label="网络节点：客户端、Anyscale 控制平面、客户 AKS、客户存储及镜像仓库。">
+          <svg class="flow-line" viewBox="0 0 500 250" preserveAspectRatio="none" aria-hidden="true"><defs><marker id="flow-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" style="fill:var(--accent);stroke:none"/></marker></defs><path id="network-path" d="M200 65H300" marker-end="url(#flow-arrow)"/></svg>
+          <div class="net-node highlight" data-node="client"><strong>客户端</strong><span>Console / CLI / SDK / 应用</span></div>
+          <div class="net-node highlight" data-node="control"><strong>控制平面</strong><span>Anyscale 托管</span></div>
+          <div class="net-node" data-node="aks"><strong>客户 AKS</strong><span>Operator + Ray + 入口控制器</span></div>
+          <div class="net-node" data-node="storage"><strong>Azure 资源</strong><span>Blob / ADLS / Registry</span></div>
+        </div>
+        <div>
+          <div class="tabs" role="tablist" aria-label="网络流量路径">
+            <button type="button" role="tab" id="net-console-tab" aria-controls="net-console-panel" aria-selected="true" data-tab="console">01 控制台</button>
+            <button type="button" role="tab" id="net-entry-tab" aria-controls="net-entry-panel" aria-selected="false" tabindex="-1" data-tab="entry">02 入口</button>
+            <button type="button" role="tab" id="net-egress-tab" aria-controls="net-egress-panel" aria-selected="false" tabindex="-1" data-tab="egress">03 出站</button>
+            <button type="button" role="tab" id="net-storage-tab" aria-controls="net-storage-panel" aria-selected="false" tabindex="-1" data-tab="storage">04 数据</button>
+          </div>
+          <div class="network-detail detail" role="tabpanel" id="net-console-panel" aria-labelledby="net-console-tab" data-panel="console"><div class="flow-path">客户端 → Anyscale 控制平面</div><h3>人先连接管理平台。</h3><p>通过控制台、CLI 或 SDK 管理工作负载。现有 Microsoft Entra 凭据负责认证，平台 RBAC 负责授权。</p></div>
+          <div class="network-detail detail" role="tabpanel" id="net-entry-panel" aria-labelledby="net-entry-tab" data-panel="entry" hidden><div class="flow-path">客户端 → 标准 Azure LB → Controller → Ray</div><h3>用户仍需访问工作负载。</h3><p>Dashboard、Jupyter 与 Services 需要客户端入口。必须自备 Ingress / Gateway Controller；Operator 只创建路由资源，不会代装控制器。</p><span class="tag">四层 TCP LB · 非 Application Gateway 主入口</span></div>
+          <div class="network-detail detail" role="tabpanel" id="net-egress-panel" aria-labelledby="net-egress-tab" data-panel="egress" hidden><div class="flow-path">Operator / Ray → Anyscale 控制平面</div><h3>这才是“仅出站”。</h3><p>集群主动轮询并上报健康与遥测。无需为 Anyscale 直连节点开放入站防火墙；仍需允许文档要求的 HTTPS 443 出站域名。</p></div>
+          <div class="network-detail detail" role="tabpanel" id="net-storage-panel" aria-labelledby="net-storage-tab" data-panel="storage" hidden><div class="flow-path">AKS ↔ Azure 存储 / 镜像仓库</div><h3>网络可达，身份也要被允许。</h3><p>工作负载通过托管身份访问数据与镜像。另注意：提交 Job 时，客户端会把本地 working_dir 上传到 Blob，客户端也必须可达该存储。</p></div>
+        </div>
+      </div>
+      <p class="insight">最常见的遗漏：<em>装了 Operator，却没有装入口控制器。</em></p>
+      <div class="scene-meta"><span>快速入门使用 Envoy Gateway；部署前先运行 anyscale cloud verify。</span></div>
+      <aside class="speaker-note" hidden>点击四个流量路径，图中会高亮端点和连接方向。图中的客户端到 AKS 入口简化了负载均衡器与控制器，正文补充完整路径。
+节点不需要接收来自控制平面的直连，不代表所有客户端入口都不存在。
+对于私有 AKS，可使用内部负载均衡器与私有 DNS，再通过 VPN 或 ExpressRoute 访问。客户端代码上传是独立数据路径，也会受到存储网络 ACL 影响。</aside>
+    </section>
+
+    <section class="scene" id="identity" data-title="谁登录，谁访问资源" data-chapter="how" data-sources="identity quickstart">
+      <div class="scene-heading"><div class="eyebrow">06 / IDENTITY IS NOT ONE THING</div><h2>把人的权限，<br>与程序的权限分开。</h2><p class="lede">Entra ID 解决“你是谁”；平台角色与托管身份分别决定“你能做什么”和“程序能访问什么”。</p></div>
+      <div>
+        <div class="identity-row"><div class="who"><span class="mono">01</span> 用户身份</div><div><h3>Entra ID + Azure RBAC</h3><p>使用现有凭据登录，显式授予 Anyscale 平台角色。</p></div><div><p>Reader：只读与控制台访问<br>Contributor：工作负载读写<br>Administrator：平台管理操作*</p></div></div>
+        <div class="identity-row"><div class="who"><span class="mono">02</span> 平台组件</div><div><h3>Operator 托管身份</h3><p>供 Operator 在客户 Azure 环境中执行所需操作。</p></div><div><p>与用户登录和工作负载身份不同。门户在创建 Cloud 时配置相关资源与授权。</p></div></div>
+        <div class="identity-row"><div class="who"><span class="mono">03</span> 工作负载</div><div><h3>Cluster 托管身份</h3><p>默认由工作负载共享，可按用户、项目或任务类型细分映射。</p></div><div><span class="tag">最小权限 · 存储 / Registry 等资源访问</span></div></div>
+      </div>
+      <p class="small">* Administrator 含专属 dataAction，目前管理能力仅在订阅作用域有效。不要假定 Azure Owner / Contributor 自动具备全部 Anyscale 权限。云注册另需租户内服务主体。</p>
+      <div class="scene-meta"><span>安装者的高权限，不应成为团队日常运行的默认权限。</span></div>
+      <aside class="speaker-note" hidden>本页最容易混淆的是三类主体：登录的用户、Operator 托管身份、Cluster 托管身份。
+平台 Reader 至少提供控制台资源访问，工作负载读写一般分配 Platform Contributor。管理员角色还有专门的 dataAction，而 Azure Owner / Contributor 的空 dataActions 列表并不授予该操作。
+一次性创建的云注册服务主体是另一件事，不属于这两个托管身份。</aside>
+    </section>
+
+    <section class="scene" id="boundaries" data-title="数据驻留与 Private Link 的真实边界" data-chapter="how" data-sources="regions private">
+      <div class="scene-heading"><div class="eyebrow">07 / TWO BOUNDARIES THAT MATTER</div><h2>私网连接，<br>不等于所有信息都不出域。</h2></div>
+      <div class="columns">
+        <div class="boundary-panel"><div class="boundary-number">01</div><span class="tag">DATA RESIDENCY</span><h3>看信息最终去哪里。</h3><p>应用数据与模型产物留在客户数据平面。<em>控制平面位于美国</em>，运营元数据会上传；开启日志摄取时包含结构化应用日志。</p><p class="small" style="margin-top:14px">选区域前，先审查日志内容、数据分类与监管要求。</p></div>
+        <div class="boundary-panel"><div class="boundary-number">02</div><span class="tag preview">PRIVATE LINK · PREVIEW · 无 SLA</span><h3>看连接经过哪里。</h3><p>Private Endpoint 与私有 DNS 让<em>受支持的出站流量</em>走 Microsoft 骨干网。需通过 Azure 支持申请，并等待连接批准。</p><p class="small" style="margin-top:14px">不改变控制平面位置；客户端私网入口仍需单独设计。</p></div>
+      </div>
+      <p class="insight">GA 是产品状态，<em>不是每项可选功能都已 GA。</em></p>
+      <div class="scene-meta"><span>状态核验：2026-10-20。上线前重新核对功能条款与数据分类说明。</span></div>
+      <aside class="speaker-note" hidden>这是架构评审中应明确展示，而不是藏在附录里的内容。
+数据驻留和传输路径是两个不同维度。Private Link 不能消除元数据流转，也不会把美国控制平面迁移到所选工作负载区域。
+Private Link 文档明确写明预览不含 SLA。审批、DNS、入口与其他出站依赖都应单独验证。</aside>
+    </section>
+
+    <section class="scene" id="workloads" data-title="六类工作负载，一个运行时" data-chapter="where" data-sources="announcement ray">
+      <div class="scene-heading"><div class="eyebrow">08 / WHERE IT FITS</div><h2>不只是 Serving。<br>从最有价值的一段开始。</h2><p class="lede">选择一个场景，观察 CPU、GPU 与分布式编排如何协作。</p></div>
+      <div class="workload-layout" data-tab-group>
+        <div class="tabs workload-tabs" role="tablist" aria-label="工作负载场景">
+          <button type="button" role="tab" id="w-data-tab" aria-controls="w-data-panel" aria-selected="true" data-tab="data">多模态数据准备 <span>01</span></button>
+          <button type="button" role="tab" id="w-embed-tab" aria-controls="w-embed-panel" aria-selected="false" tabindex="-1" data-tab="embed">Embedding / 批量推理 <span>02</span></button>
+          <button type="button" role="tab" id="w-train-tab" aria-controls="w-train-panel" aria-selected="false" tabindex="-1" data-tab="train">分布式训练与微调 <span>03</span></button>
+          <button type="button" role="tab" id="w-serve-tab" aria-controls="w-serve-panel" aria-selected="false" tabindex="-1" data-tab="serve">复合模型在线服务 <span>04</span></button>
+          <button type="button" role="tab" id="w-rl-tab" aria-controls="w-rl-panel" aria-selected="false" tabindex="-1" data-tab="rl">LLM 强化学习 <span>05</span></button>
+          <button type="button" role="tab" id="w-sim-tab" aria-controls="w-sim-panel" aria-selected="false" tabindex="-1" data-tab="sim">Physical AI 仿真 <span>06</span></button>
+        </div>
+        <div class="workload-body">
+          <div role="tabpanel" id="w-data-panel" aria-labelledby="w-data-tab" data-panel="data"><div class="detail-kicker">DATA PIPELINE</div><h3>让异构处理连成一条管线。</h3><p>图像、视频、文本与传感器数据，往往同时需要 CPU 解码与 GPU 模型处理。</p><div class="mini-pipeline"><span>CPU 解码</span><b>→</b><span class="gpu">GPU 特征提取</span><b>→</b><span>数据集</span></div><p class="small">关注：数据供给速度、跨阶段等待、输出质量。</p></div>
+          <div role="tabpanel" id="w-embed-panel" aria-labelledby="w-embed-tab" data-panel="embed" hidden><div class="detail-kicker">BATCH INFERENCE</div><h3>把离线吞吐，变成可测量的价值。</h3><p>分布式预处理与 GPU 推理协作，批量生成向量或预测结果。通常是边界清晰的试点起点。</p><div class="mini-pipeline"><span>读取 / 分片</span><b>→</b><span class="gpu">模型推理</span><b>→</b><span>向量 / 预测</span></div><p class="small">关注：记录 / 秒、元 / 百万条有效记录、显存与批大小。</p></div>
+          <div role="tabpanel" id="w-train-panel" aria-labelledby="w-train-tab" data-panel="train" hidden><div class="detail-kicker">DISTRIBUTED TRAINING</div><h3>扩展训练，也要验证恢复。</h3><p>通过多节点、多 GPU 组织训练与微调。数据加载、通信、checkpoint 和中断恢复共同决定端到端效率。</p><div class="mini-pipeline"><span>数据供给</span><b>→</b><span class="gpu">多 GPU 训练</span><b>→</b><span>Checkpoint</span></div><p class="small">关注：达到目标质量的时间与总成本，而非只看单步吞吐。</p></div>
+          <div role="tabpanel" id="w-serve-panel" aria-labelledby="w-serve-tab" data-panel="serve" hidden><div class="detail-kicker">COMPOSITE SERVING</div><h3>一个服务，组合多个模型。</h3><p>用 Ray Serve 编排预处理、多个模型和后处理，形成可扩展的在线应用。</p><div class="mini-pipeline"><span>请求</span><b>→</b><span class="gpu">模型 A / B</span><b>→</b><span>响应</span></div><p class="small">关注：尾延迟、并发、更新策略，以及服务对应的容量边界。</p></div>
+          <div role="tabpanel" id="w-rl-panel" aria-labelledby="w-rl-tab" data-panel="rl" hidden><div class="detail-kicker">LLM POST-TRAINING</div><h3>协调一次训练里的多个系统。</h3><p>并行 Rollout、奖励评分与参数更新，让推理与训练围绕同一个目标协同。</p><div class="mini-pipeline"><span class="gpu">Rollout</span><b>→</b><span>Reward</span><b>→</b><span class="gpu">Training</span></div><p class="small">关注：各阶段供需平衡与模型质量；不限定必须使用 RLlib。</p></div>
+          <div role="tabpanel" id="w-sim-panel" aria-labelledby="w-sim-tab" data-panel="sim" hidden><div class="detail-kicker">PHYSICAL AI</div><h3>让仿真环境并行起来。</h3><p>调度大量独立仿真环境，收集轨迹并衔接训练。实际并发规模取决于资源需求与容量。</p><div class="mini-pipeline"><span>并行环境</span><b>→</b><span>轨迹收集</span><b>→</b><span class="gpu">策略训练</span></div><p class="small">关注：每条有效轨迹成本、并发伸缩与恢复语义。</p></div>
+        </div>
+      </div>
+      <div class="scene-meta"><span>场景映射，不替代框架兼容、GPU 驱动和部署验证。</span></div>
+      <aside class="speaker-note" hidden>按听众背景选择两到三个场景，不必逐一展开。
+对于首次采用的团队，Embedding 或批量推理更容易固定数据集、建立成本基线并控制业务风险。
+对训练与强化学习，要测达到相同质量所付出的总成本。对 Serving，要增加延迟与可用性目标。场景可行并不代表每个开源框架版本均已验证兼容。</aside>
+    </section>
+
+    <section class="scene" id="xoople" data-title="Xoople：从卫星影像到决策信息" data-chapter="where" data-sources="announcement">
+      <div class="scene-heading"><div class="eyebrow">09 / IN THE REAL WORLD</div><h2>把卫星影像，<br>转化为可用于决策的信息。</h2></div>
+      <div class="split">
+        <figure class="earth" aria-label="地球观测概念插图，非实际卫星影像">
+          <svg viewBox="0 0 400 400" role="img" aria-labelledby="earth-title">
+            <title id="earth-title">地球观测与数据处理概念图</title>
+            <g fill="none" stroke="#71876b" stroke-width=".7" opacity=".6"><ellipse cx="200" cy="200" rx="195" ry="70"/><ellipse cx="200" cy="200" rx="195" ry="135"/><ellipse cx="200" cy="200" rx="70" ry="195"/><ellipse cx="200" cy="200" rx="135" ry="195"/><path d="M0 200h400M200 0v400"/></g>
+            <path d="m66 123 42-37 28 8 18 37-11 39-24 13-5 32-18-7-23-45Zm84 103 33-12 29 25 7 44-22 39-18 7-8-46Zm88-119 33-25 60 29 18 38-25 25-34-7-14 16-21-17 7-30-29-12Zm23 93 45-18 30 34-10 39-30 6-16-28-22-7Z" fill="#657f58" opacity=".7"/>
+            <path d="M-10 308 402 60M-10 329 402 81M-10 350 402 102" stroke="#efb783" stroke-width="1" opacity=".7"/>
+            <g fill="#efb783"><rect x="268" y="138" width="7" height="7"/><rect x="283" y="153" width="7" height="7"/><rect x="253" y="153" width="7" height="7"/><circle cx="101" cy="157" r="3"/><circle cx="188" cy="265" r="3"/></g>
+          </svg>
+          <span class="earth-label">EARTH INTELLIGENCE / CONCEPT</span>
+        </figure>
+        <div class="case-copy"><span class="tag">CUSTOMER STORY · XOOPLE</span><h3>挑战不是一个模型，<br>而是一条持续的 AI 流水线。</h3><p>Xoople 使用 Anyscale on Azure 处理大规模卫星影像，将复杂的遥感数据转化为可用于决策的信息。</p><div class="mini-pipeline"><span>数据处理</span><b>→</b><span class="gpu">模型计算</span><b>→</b><span>决策信息</span></div><p class="small">启示：不同计算特征的阶段，需要共同的分布式执行与运营能力。</p></div>
+      </div>
+      <div class="scene-meta"><span>基于官方 GA 公告归纳；非客户拓扑，无未经证实的性能或成本数字。</span></div>
+      <aside class="speaker-note" hidden>官方 GA 公告中的 Earth intelligence 指从卫星影像中提取可用于决策的地表观测信息，并不是泛指地球整体的变化。因此本页直接使用“卫星影像”和“决策信息”表述。本页不增加客户 GPU 数量、吞吐量、架构拓扑或节省百分比。
+插图完全是概念表达，不是实际遥感数据。
+借案例把话题从“用哪一个模型”转向“如何持续处理数据、执行模型计算并交付业务信息”。</aside>
+    </section>
+
+    <section class="scene" id="start" data-title="从 AKS 到第一个 Cloud" data-chapter="start" data-sources="quickstart identity networking regions">
+      <div class="scene-heading"><div class="eyebrow">10 / GET TO A VERIFIED CLOUD</div><h2>先把环境验证通过，<br>再把模型搬进来。</h2><p class="lede">推荐从 Azure 门户注册已有 AKS；自动化部署可参考官方 ARM / Terraform 路径。</p></div>
+      <div class="launch-layout">
+        <ol class="launch-steps">
+          <li><h3>准备订阅与租户</h3><p>安装权限、云注册服务主体、所需资源提供程序。</p></li>
+          <li><h3>准备 AKS 与计算容量</h3><p>OIDC + Workload Identity；确认区域、SKU、vCPU / GPU 配额。</p></li>
+          <li><h3>在 Azure 门户创建 Cloud</h3><p>关联 AKS，配置存储与身份，安装 Operator 扩展。</p></li>
+          <li><h3>分配角色，安装与配置入口</h3><p>Anyscale 平台角色 + Envoy Gateway；配置 Operator 的 Gateway 参数。</p></li>
+          <li><h3>验证 Cloud，再提交工作负载</h3><p>先检查连通性、身份与路由，再验证业务程序。</p></li>
+        </ol>
+        <div class="launch-check">
+          <div class="code-window"><div class="code-title"><span class="code-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>deployment gate</span></div><pre><code>anyscale cloud verify --id &lt;cloud-id&gt;</code></pre></div>
+          <div class="panel"><h3>部署前的三个“不等于”</h3><p style="margin-top:14px">服务区域可用 ≠ 所需 GPU SKU 可用<br>配额已获批 ≠ 实际分配一定成功<br>Operator 已安装 ≠ 客户端入口可访问</p></div>
+          <p class="small">模板 / CLI 创建 Cloud 前需接受协议并等待 Active。Operator 通过 AKS 扩展配置，不直接使用 Helm 修改。</p>
+        </div>
+      </div>
+      <div class="scene-meta"><span>区域清单会变化；亚太当前包括 Southeast Asia 与 Australia East，其他区域见原文。</span></div>
+      <aside class="speaker-note" hidden>本页只讲部署顺序，不替代快速入门中的具体参数。
+安装需要订阅 Owner 或 Contributor 配合 User Access Administrator 等所需权限，还需要创建外部租户服务主体的权限；日常操作应使用显式 Anyscale 平台角色。
+官方快速入门使用 Envoy Gateway。Operator 作为 AKS extension 安装，应通过 az k8s-extension update 配置，而不是对 Operator 直接执行 Helm。
+区域、配额与容量是三次不同的检查。</aside>
+    </section>
+
+    <section class="scene" id="job" data-title="一项最小 Ray Job" data-chapter="start" data-sources="quickstart ray networking">
+      <div class="scene-heading"><div class="eyebrow">11 / YOUR FIRST WORKLOAD</div><h2>同一段 Python，<br>由集群执行。</h2><p class="lede">先用最小任务验证提交、调度、执行和日志，再迁移真正的 AI 工作负载。</p></div>
+      <div class="demo-layout">
+        <div data-tab-group>
+          <div class="tabs" role="tablist" aria-label="最小 Ray 作业文件与命令">
+            <button type="button" role="tab" id="code-python-tab" aria-controls="code-python-panel" aria-selected="true" data-tab="python">01 main.py</button>
+            <button type="button" role="tab" id="code-yaml-tab" aria-controls="code-yaml-panel" aria-selected="false" tabindex="-1" data-tab="yaml">02 job.yaml</button>
+            <button type="button" role="tab" id="code-submit-tab" aria-controls="code-submit-panel" aria-selected="false" tabindex="-1" data-tab="submit">03 提交</button>
+          </div>
+          <div role="tabpanel" id="code-python-panel" aria-labelledby="code-python-tab" data-panel="python"><div class="code-window"><div class="code-title"><span>main.py</span><button type="button" data-copy="python-code">复制代码</button></div><pre><code id="python-code"><span class="kw">import</span> ray
+
+<span class="fn">@ray.remote</span>
+<span class="kw">def</span> <span class="fn">double</span>(x):
+    <span class="kw">return</span> x * 2
+result = ray.get([double.remote(i) <span class="kw">for</span> i <span class="kw">in</span> range(5)])
+print(result)</code></pre></div></div>
+          <div role="tabpanel" id="code-yaml-panel" aria-labelledby="code-yaml-tab" data-panel="yaml" hidden><div class="code-window"><div class="code-title"><span>job.yaml · 与 main.py 同目录</span><button type="button" data-copy="yaml-code">复制代码</button></div><pre><code id="yaml-code">name: first-ray-job
+working_dir: .
+entrypoint: python main.py
+max_retries: 1</code></pre></div></div>
+          <div role="tabpanel" id="code-submit-panel" aria-labelledby="code-submit-tab" data-panel="submit" hidden><div class="code-window"><div class="code-title"><span>PowerShell · 替换占位符</span><button type="button" data-copy="submit-code">复制命令</button></div><pre><code id="submit-code">$env:ANYSCALE_HOST = "https://console.azure.anyscale.com"
+anyscale login
+anyscale cloud list
+anyscale cloud verify --id &lt;cloud-id&gt;
+anyscale job submit -f job.yaml --cloud &lt;cloud-name&gt;</code></pre></div></div>
+        </div>
+        <div class="demo-explainer"><div><div class="eyebrow">EXPECTED OUTPUT</div><div class="output" style="margin-top:12px">[0, 2, 4, 6, 8]</div></div><p><strong>不是性能基准。</strong><br>这里验证完整执行链路，不用五个小任务衡量分布式收益。</p><p><strong>提交机也在数据路径中。</strong><br><code>working_dir</code> 从客户端上传到 Blob；受限存储需要网络可达。</p><p class="small">示例在网页中不执行。需已安装 Anyscale CLI、完成 Cloud 验证并具有工作负载操作权限。</p></div>
+      </div>
+      <div class="scene-meta"><span>cloud-name 使用控制台 / cloud list 中的完整云名称；不要与 cld_* 形式的 cloud-id 混用。</span></div>
+      <aside class="speaker-note" hidden>依次切换三个文件与命令。remote 声明可分布式执行的任务，ray.get 汇总结果。
+实际使用时，将 main.py 和 job.yaml 放在同一目录。按当前 CLI 展示的完整名称传 cloud-name；Cloud ID 则用于 verify。
+本演示不连接 Azure，不会真的运行或收费。示例输出是预期，不是本材料已经执行真实订阅的声明。
+迁移真实模型时还要验证镜像、Python 与 Ray 版本、GPU 依赖和数据访问。</aside>
+    </section>
+
+    <section class="scene" id="economics" data-title="关注单位有效产出，而不只是 GPU 忙碌" data-chapter="decide" data-sources="pricing announcement overview">
+      <div class="scene-heading"><div class="eyebrow">12 / THE ECONOMICS</div><h2>GPU 忙起来是手段，<br><em>有效产出更便宜</em>才是目标。</h2></div>
+      <div class="equation" aria-label="总成本包含 Anyscale 运行时服务、Azure 基础设施和客户工程运营投入。">
+        <div><h3>Anyscale 服务</h3><p>运行时使用费，含平台支持</p></div><span class="plus" aria-hidden="true">+</span>
+        <div><h3>Azure 基础设施</h3><p>AKS / VM、存储与网络</p></div><span class="plus" aria-hidden="true">+</span>
+        <div><h3>工程与运营</h3><p>集成、维护、重试与恢复</p></div>
+      </div>
+      <div class="three">
+        <div class="measure"><div class="eyebrow">THROUGHPUT</div><h3>每百万条有效记录成本</h3><p>固定数据与质量标准，比较端到端吞吐和总费用。</p></div>
+        <div class="measure"><div class="eyebrow">MODEL QUALITY</div><h3>达到同等质量的成本</h3><p>把数据处理、训练、评估与重算都纳入，而非只看推理。</p></div>
+        <div class="measure"><div class="eyebrow">SERVICE OBJECTIVE</div><h3>满足同等服务目标的成本</h3><p>在相同延迟与可用性要求下，比较资源和运营投入。</p></div>
+      </div>
+      <div class="scene-meta"><span>费用进入 Azure 订阅账单；MACC 抵扣以具体协议与资格为准。无固定节省比例承诺。</span></div>
+      <aside class="speaker-note" hidden>官方定价包含 Anyscale runtime service 与底层 AKS 基础设施两部分。工程运营投入是本演示额外建议纳入的内部 TCO 维度，不是第三个 Azure 计费项目。
+不要引用单一 GPU 利用率数字作为所有客户的收益保证。小任务的调度成本、数据移动、空闲资源和失败重算都会影响经济性。
+GA 公告提到 MACC，但最终应核对客户合同和 offer 资格。</aside>
+    </section>
+
+    <section class="scene" id="limits" data-title="生产前要明确的能力与责任边界" data-chapter="decide" data-sources="overview identity architecture support">
+      <div class="scene-heading"><div class="eyebrow">13 / READ THE BOUNDARIES</div><h2>“托管”，<br>不等于“所有事情都包办”。</h2><p class="lede">使用 Azure 专属文档判断能力范围，不直接套用通用 Anyscale 功能清单。</p></div>
+      <div class="limits-grid">
+        <div class="limit"><span class="limit-n">01</span><div><h3>主部署路径是 AKS</h3><p>VM stack 与 Anyscale-hosted clouds 不可用。客户仍负责 AKS 配置、入口控制器以及应用与数据治理。</p></div></div>
+        <div class="limit"><span class="limit-n">02</span><div><h3>Azure 管资源，Anyscale 管运行</h3><p>Cloud 生命周期通过 Azure 管理；不支持通用 anyscale cloud setup / register / delete。运行、重试与回滚使用 Console / CLI。</p></div></div>
+        <div class="limit"><span class="limit-n">03</span><div><h3>多资源，不是一个跨区大集群</h3><p>Cloud 可挂多个 Cloud Resource；单个 Ray 集群不跨资源调度或扩缩。Services 仅运行于 primary resource。</p></div></div>
+        <div class="limit"><span class="limit-n">04</span><div><h3>通用功能并非全部可用</h3><p>不支持 Lineage tracking、Job queues 等。调度优先级用于 Jobs / Workspaces，非 Services；部分账单与预算组织设置不可用。</p></div></div>
+      </div>
+      <p class="small">ARM / Resource Graph 对 tracked 与 proxied 资源的覆盖不同；Azure Policy 应按资源类型验证。故障先走 Azure Support，Microsoft 初诊并按需协调 Anyscale。</p>
+      <div class="scene-meta"><span>支持文档提供 Enterprise tier SLA 信息；具体指标以正式条款为准。</span></div>
+      <aside class="speaker-note" hidden>微软文档与 GA 公告对跨区域和多资源的描述粒度不同，不能把跨资源容量管理理解为单个 Ray 集群跨区扩展。
+Cloud 和 Cloud Resource 是 ARM tracked 资源；许多工作负载为 proxied 资源，虽然可从门户父 Cloud 导航访问，但不在标准 ARM 清单中。
+资源归属、软件维护与故障支持是不同责任维度；Operator 软件由 Anyscale 维护，但运行在客户 AKS 中。</aside>
+    </section>
+
+    <section class="scene" id="pilot" data-title="用一个可验收的试点做决定" data-chapter="decide" data-sources="quickstart pricing architecture">
+      <div class="scene-heading"><div class="eyebrow">14 / A PRACTICAL DECISION</div><h2>不从“大迁移”开始。<br>从一项可验收的试点开始。</h2><p class="lede">例如：固定数据集上的批量 Embedding。先记录现有基线，再迁移、测量与故障演练。</p></div>
+      <div class="pilot-layout">
+        <div class="checklist" aria-label="试点评审讨论清单">
+          <label><input type="checkbox" name="quality"><strong>功能与质量</strong><span>相同输入、相同评估阈值，输出可复现。</span></label>
+          <label><input type="checkbox" name="performance"><strong>性能与容量</strong><span>记录吞吐、排队、扩容与端到端耗时。</span></label>
+          <label><input type="checkbox" name="cost"><strong>完整成本</strong><span>平台、基础设施、闲置与失败重算全部计入。</span></label>
+          <label><input type="checkbox" name="security"><strong>安全与合规</strong><span>验证角色、网络、应用日志及元数据去向。</span></label>
+          <label><input type="checkbox" name="operations"><strong>运营与恢复</strong><span>演练重试、监控、回滚与支持流程，并明确负责人。</span></label>
+        </div>
+        <div class="pilot-score"><div class="eyebrow">REVIEW CHECKPOINTS</div><div class="count"><output id="pilot-count" aria-label="已讨论维度数量" aria-live="polite">0</output><span> / 5</span></div><h3 id="pilot-heading">先建立共同的验收标准。</h3><p id="pilot-status">勾选已讨论的维度。不是自动验收或合规认证，不会保存或上传你的选择。</p></div>
+      </div>
+      <div class="scene-meta"><span>方法建议，非产品承诺；阈值由业务、平台与安全团队共同确定。</span></div>
+      <aside class="speaker-note" hidden>用这页开展团队讨论。清单只是现场记录，不连接任何后端，也不保存到浏览器存储。
+勾选代表已经讨论该维度，不代表系统自动认证通过。即便全部勾选，仍需可复现数据和相关团队签字。
+若单机足够、只需要模型 API，或者无法接受控制平面元数据边界，应重新评估采用分布式平台的必要性。</aside>
+    </section>
+
+    <section class="scene" id="next" data-title="拥有闭环，明确边界，用试点证明价值" data-chapter="decide" data-sources="announcement overview quickstart">
+      <div class="scene-heading"><div class="eyebrow">15 / TAKE IT FORWARD</div><h2 class="closing-title">不只是把模型跑起来。<br>是让下一次改进，<em>更容易。</em></h2></div>
+      <div class="closing-points">
+        <div><span>01 / UNIFY</span><h3>统一计算与运营模型</h3><p>用 Ray 贯通数据、训练和推理，减少重复的平台工作。</p></div>
+        <div><span>02 / UNDERSTAND</span><h3>明确两个平面的边界</h3><p>保留客户数据平面控制权，正视遥测、网络与共享责任。</p></div>
+        <div><span>03 / VERIFY</span><h3>用真实结果决定扩展</h3><p>从一个可度量的工作负载出发，而不是从收益假设出发。</p></div>
+      </div>
+      <div class="closing-actions"><a class="button" href="https://learn.microsoft.com/en-us/azure/anyscale-on-azure/quickstart-azure-cli" target="_blank" rel="noopener noreferrer">打开官方 Quickstart <svg class="icon"><use href="#i-right"/></svg></a><button class="button outline js-only" type="button" data-dialog="sources">查看全部参考资料 <svg class="icon"><use href="#i-link"/></svg></button></div>
+      <div class="scene-meta"><span>内容核验于 2026-10-20 · 技术介绍，不替代正式文档、条款或 SLA。</span></div>
+      <aside class="speaker-note" hidden>收尾可回到架构图，请听众解释三个问题：计算在哪里运行、连接由谁发起、哪些信息进入控制平面。
+下一步不是立即迁移所有 AI 系统，而是从官方 Quickstart 跑通 Cloud 和首个作业，再在同等质量目标下比较成本与运营结果。
+所有资料都可以通过来源面板打开；若 GA 公告和详细技术文档的范围不同，部署边界应以对应 Microsoft Learn 页面为准。</aside>
+    </section>
+  </main>
+
+  <footer class="deck-controls" aria-label="演示控制">
+    <nav class="rail" id="rail" aria-label="快速跳转到任意页"></nav>
+    <div class="controls-row">
+      <div class="page-label"><span class="page-number"><strong id="page-current">01</strong> / <span id="page-total">16</span></span><span class="current-label" id="current-label">把 AI 学习闭环带回 Azure</span></div>
+      <div class="utilities">
+        <button class="text-button" id="reading-toggle" type="button" aria-pressed="false" aria-label="切换连续阅读（R）" title="切换连续阅读（R）"><svg class="icon"><use href="#i-book"/></svg><span class="utility-label">阅读</span></button>
+        <button class="text-button" type="button" data-dialog="notes" title="讲者备注（N）" aria-label="讲者备注（N）"><svg class="icon"><use href="#i-note"/></svg><span class="utility-label">备注</span></button>
+        <button class="text-button" id="fullscreen-toggle" type="button" title="切换全屏（F）" aria-label="切换全屏（F）" aria-pressed="false"><svg class="icon"><use href="#i-full"/></svg><span class="utility-label">全屏</span></button>
+        <button class="text-button" type="button" data-dialog="help" title="键盘快捷键（?）" aria-label="帮助与键盘快捷键">?</button>
+      </div>
+      <div class="paging"><button class="icon-button" type="button" id="previous" aria-label="上一页" title="上一页（←）"><svg class="icon"><use href="#i-left"/></svg></button><button class="icon-button" type="button" id="next-page" aria-label="下一页" title="下一页（→）"><svg class="icon"><use href="#i-right"/></svg></button></div>
+    </div>
+  </footer>
+
+  <dialog id="utility-dialog" aria-labelledby="dialog-title">
+    <div class="dialog-head"><h2 id="dialog-title">章节总览</h2><button class="icon-button" id="dialog-close" type="button" aria-label="关闭面板"><svg class="icon"><use href="#i-close"/></svg></button></div>
+    <div class="dialog-body" id="dialog-body"></div>
+  </dialog>
+  <div class="toast" id="toast" role="status" hidden></div>
+  <div class="sr-only" id="announcer" aria-live="polite" aria-atomic="true"></div>
+
+  <script>
+    "use strict";
+    const references = {
+      announcement: { name: "GA 公告 · Anyscale on Azure", short: "GA 公告", url: "https://www.anyscale.com/blog/anyscale-on-azure-general-availability-enterprise-ai" },
+      overview: { name: "Microsoft Learn · 产品概述与限制", short: "产品概述", url: "https://learn.microsoft.com/en-us/azure/anyscale-on-azure/overview" },
+      architecture: { name: "Microsoft Learn · 架构与责任矩阵", short: "架构", url: "https://learn.microsoft.com/en-us/azure/anyscale-on-azure/architecture" },
+      networking: { name: "Microsoft Learn · 网络流向与入口要求", short: "网络", url: "https://learn.microsoft.com/en-us/azure/anyscale-on-azure/networking" },
+      identity: { name: "Microsoft Learn · 身份、RBAC 与 ARM 资源", short: "身份与权限", url: "https://learn.microsoft.com/en-us/azure/anyscale-on-azure/identity-access" },
+      regions: { name: "Microsoft Learn · 区域、配额与数据驻留", short: "区域与数据驻留", url: "https://learn.microsoft.com/en-us/azure/anyscale-on-azure/supported-regions" },
+      private: { name: "Microsoft Learn · Private Link（预览）", short: "Private Link", url: "https://learn.microsoft.com/en-us/azure/anyscale-on-azure/configure-private-link" },
+      quickstart: { name: "Microsoft Learn · 部署与首个作业", short: "Quickstart", url: "https://learn.microsoft.com/en-us/azure/anyscale-on-azure/quickstart-azure-cli" },
+      pricing: { name: "Azure · Anyscale on Azure 定价", short: "定价", url: "https://azure.microsoft.com/en-us/pricing/details/anyscale-on-azure/" },
+      support: { name: "Microsoft Learn · 联合支持模式", short: "支持", url: "https://learn.microsoft.com/en-us/azure/anyscale-on-azure/support-model" },
+      ray: { name: "Ray 官方文档 · 运行时与 AI 库", short: "Ray 文档", url: "https://docs.ray.io/en/latest/ray-overview/index.html" }
+    };
+    const scenes = [...document.querySelectorAll(".scene")];
+    const dialog = document.getElementById("utility-dialog");
+    const dialogBody = document.getElementById("dialog-body");
+    const dialogTitle = document.getElementById("dialog-title");
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const groups = [...document.querySelectorAll("[data-tab-group]")];
+    let current = Math.max(0, scenes.findIndex(scene => scene.id === location.hash.slice(1)));
+    let reading = false;
+    let toastTimer;
+    let lastDialogTrigger = null;
+    const pad = value => String(value).padStart(2, "0");
+    const sourceKeys = scene => scene.dataset.sources.split(" ");
+
+    function linkToSource(key) {
+      const source = references[key];
+      const anchor = document.createElement("a");
+      anchor.href = source.url;
+      anchor.target = "_blank";
+      anchor.rel = "noopener noreferrer";
+      anchor.textContent = source.short;
+      return anchor;
+    }
+    scenes.forEach((scene, index) => {
+      const meta = scene.querySelector(".scene-meta");
+      const sources = document.createElement("div");
+      sources.className = "source-links";
+      const label = document.createElement("span");
+      label.textContent = "依据";
+      sources.append(label, ...sourceKeys(scene).map(linkToSource));
+      meta.append(sources);
+      const heading = scene.querySelector("h1, h2");
+      heading.tabIndex = -1;
+      const jump = document.createElement("button");
+      jump.type = "button";
+      jump.title = `${pad(index + 1)} · ${scene.dataset.title}`;
+      jump.setAttribute("aria-label", jump.title);
+      jump.addEventListener("click", () => goTo(index));
+      document.getElementById("rail").append(jump);
+    });
+
+    function updateChrome(announce = false) {
+      const scene = scenes[current];
+      document.title = `${scene.dataset.title} — Anyscale on Azure`;
+      document.getElementById("page-current").textContent = pad(current + 1);
+      document.getElementById("page-total").textContent = pad(scenes.length);
+      document.getElementById("current-label").textContent = scene.dataset.title;
+      document.getElementById("previous").disabled = current === 0;
+      document.getElementById("next-page").disabled = current === scenes.length - 1;
+      document.querySelectorAll("#rail button").forEach((button, index) => {
+        button.classList.toggle("past", index < current);
+        if (index === current) button.setAttribute("aria-current", "step");
+        else button.removeAttribute("aria-current");
+      });
+      document.querySelectorAll("[data-chapter-link]").forEach(anchor => {
+        if (anchor.dataset.chapterLink === scene.dataset.chapter) anchor.setAttribute("aria-current", "true");
+        else anchor.removeAttribute("aria-current");
+      });
+      if (announce) document.getElementById("announcer").textContent = `第 ${current + 1} 页，共 ${scenes.length} 页。${scene.dataset.title}`;
+    }
+    function render() {
+      scenes.forEach((scene, index) => {
+        scene.hidden = !reading && index !== current;
+        scene.inert = !reading && index !== current;
+      });
+      updateChrome();
+    }
+    function goTo(index, { historyEntry = true, focus = true } = {}) {
+      if (!Number.isInteger(index) || index < 0 || index >= scenes.length) return;
+      current = index;
+      if (historyEntry && location.hash !== `#${scenes[index].id}`) history.pushState(null, "", `#${scenes[index].id}`);
+      render();
+      if (reading) scenes[index].scrollIntoView({ behavior: reducedMotion.matches ? "instant" : "smooth", block: "start" });
+      else window.scrollTo({ top: 0, behavior: "instant" });
+      if (focus) scenes[index].querySelector("h1, h2").focus({ preventScroll: true });
+      updateChrome(true);
+    }
+    document.getElementById("previous").addEventListener("click", () => goTo(current - 1));
+    document.getElementById("next-page").addEventListener("click", () => goTo(current + 1));
+    document.addEventListener("click", event => {
+      const anchor = event.target.closest('a[href^="#"]');
+      if (!anchor) return;
+      const index = scenes.findIndex(scene => `#${scene.id}` === anchor.getAttribute("href"));
+      if (index < 0) return;
+      event.preventDefault();
+      goTo(index);
+    });
+    document.getElementById("main").addEventListener("click", event => {
+      if (reading || dialog.open || event.defaultPrevented || event.button !== 0 || event.detail !== 1) return;
+      if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
+      if (event.pointerType && event.pointerType !== "mouse") return;
+      if (event.target.closest('a, button, input, label, select, textarea, summary, pre, [data-tab-group], [contenteditable]:not([contenteditable="false"])')) return;
+      if (window.getSelection()?.toString()) return;
+      goTo(current + 1);
+    });
+
+    function canScrollVertically(target, direction) {
+      for (let element = target; element && element !== document.scrollingElement; element = element.parentElement) {
+        const overflow = getComputedStyle(element).overflowY;
+        if (!["auto", "scroll"].includes(overflow)) continue;
+        const remaining = element.scrollHeight - element.clientHeight - element.scrollTop;
+        if (direction > 0 ? remaining > 2 : element.scrollTop > 2) return true;
+      }
+      const page = document.scrollingElement;
+      return direction > 0
+        ? page.scrollHeight - page.clientHeight - page.scrollTop > 2
+        : page.scrollTop > 2;
+    }
+    let wheelDistance = 0;
+    let wheelDirection = 0;
+    let wheelConsumed = false;
+    let lastWheelAt = -Infinity;
+    let lastWheelNavigationAt = -Infinity;
+    document.addEventListener("wheel", event => {
+      if (reading || dialog.open || event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
+      if (event.target.closest('input, select, textarea, pre, [contenteditable]:not([contenteditable="false"])')) return;
+      if (!event.deltaY || Math.abs(event.deltaX) >= Math.abs(event.deltaY)) return;
+      const direction = Math.sign(event.deltaY);
+      const now = performance.now();
+      if (now - lastWheelAt > 180 || direction !== wheelDirection) {
+        wheelDistance = 0;
+        wheelConsumed = false;
+      }
+      lastWheelAt = now;
+      wheelDirection = direction;
+      if (canScrollVertically(event.target, direction)) {
+        wheelDistance = 0;
+        wheelConsumed = true;
+        return;
+      }
+      event.preventDefault();
+      // Consume momentum from the same gesture so one scroll cannot skip several slides.
+      if (wheelConsumed || now - lastWheelNavigationAt < 550) return;
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1;
+      wheelDistance += Math.abs(event.deltaY) * unit;
+      if (wheelDistance < 48) return;
+      wheelDistance = 0;
+      wheelConsumed = true;
+      lastWheelNavigationAt = now;
+      goTo(current + direction);
+    }, { passive: false });
+    function restoreHash() {
+      const index = scenes.findIndex(scene => scene.id === location.hash.slice(1));
+      goTo(index < 0 ? 0 : index, { historyEntry: false, focus: false });
+    }
+    window.addEventListener("popstate", restoreHash);
+
+    const networkStates = {
+      console: { nodes: ["client", "control"], path: "M200 65H300", both: false },
+      entry: { nodes: ["client", "aks"], path: "M130 105V145", both: false },
+      egress: { nodes: ["aks", "control"], path: "M200 185L300 65", both: false },
+      storage: { nodes: ["aks", "storage"], path: "M200 185H300", both: true }
+    };
+    function activateTab(group, key, focus = false) {
+      const buttons = [...group.querySelectorAll('[role="tab"]')];
+      const selected = buttons.find(button => button.dataset.tab === key);
+      if (!selected) return;
+      group.dataset.selected = key;
+      buttons.forEach(button => {
+        const active = button === selected;
+        button.setAttribute("aria-selected", String(active));
+        button.tabIndex = active ? 0 : -1;
+      });
+      group.querySelectorAll("[data-panel]").forEach(panel => {
+        panel.hidden = !reading && panel.dataset.panel !== key;
+      });
+      const scene = group.closest(".scene");
+      if (scene.id === "architecture") scene.dataset.view = key;
+      if (scene.id === "network") {
+        const state = networkStates[key];
+        scene.querySelectorAll("[data-node]").forEach(node => node.classList.toggle("highlight", state.nodes.includes(node.dataset.node)));
+        const path = document.getElementById("network-path");
+        path.setAttribute("d", state.path);
+        if (state.both) path.setAttribute("marker-start", "url(#flow-arrow)");
+        else path.removeAttribute("marker-start");
+      }
+      if (focus) selected.focus();
+    }
+    groups.forEach(group => {
+      const buttons = [...group.querySelectorAll('[role="tab"]')];
+      buttons.forEach(button => {
+        button.addEventListener("click", () => activateTab(group, button.dataset.tab));
+        button.addEventListener("keydown", event => {
+          if (!["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+          event.preventDefault();
+          event.stopPropagation();
+          let next = buttons.indexOf(button);
+          if (event.key === "Home") next = 0;
+          else if (event.key === "End") next = buttons.length - 1;
+          else next = (next + (["ArrowRight", "ArrowDown"].includes(event.key) ? 1 : -1) + buttons.length) % buttons.length;
+          activateTab(group, buttons[next].dataset.tab, true);
+        });
+      });
+      activateTab(group, buttons.find(button => button.getAttribute("aria-selected") === "true").dataset.tab);
+    });
+
+    const readerObserver = new IntersectionObserver(entries => {
+      if (!reading || dialog.open) return;
+      const candidates = entries.filter(entry => entry.isIntersecting && entry.boundingClientRect.top >= -entry.boundingClientRect.height * .6);
+      if (!candidates.length) return;
+      const first = candidates.sort((a, b) => Math.abs(a.boundingClientRect.top - 70) - Math.abs(b.boundingClientRect.top - 70))[0];
+      current = scenes.indexOf(first.target);
+      updateChrome();
+    }, { rootMargin: "-70px 0px -35% 0px", threshold: [0, .25, .5] });
+    function toggleReading() {
+      reading = !reading;
+      document.body.classList.toggle("reading", reading);
+      const toggle = document.getElementById("reading-toggle");
+      toggle.setAttribute("aria-pressed", String(reading));
+      toggle.title = reading ? "返回逐页演示（R）" : "切换连续阅读（R）";
+      toggle.setAttribute("aria-label", toggle.title);
+      toggle.querySelector(".utility-label").textContent = reading ? "演示" : "阅读";
+      readerObserver.disconnect();
+      render();
+      groups.forEach(group => activateTab(group, group.dataset.selected));
+      scenes[current].scrollIntoView({ behavior: "instant", block: "start" });
+      if (reading) scenes.forEach(scene => readerObserver.observe(scene));
+      else window.scrollTo({ top: 0, behavior: "instant" });
+      notify(reading ? "连续阅读：显示全部章节与交互说明。按 R 返回演示。" : "已返回逐页演示。");
+    }
+    document.getElementById("reading-toggle").addEventListener("click", toggleReading);
+
+    function notify(message) {
+      clearTimeout(toastTimer);
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.hidden = false;
+      toastTimer = setTimeout(() => { toast.hidden = true; }, 4200);
+    }
+    async function toggleFullscreen() {
+      try {
+        if (document.fullscreenElement) await document.exitFullscreen();
+        else if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
+        else notify("此浏览器不支持网页全屏，请使用浏览器的全屏命令。");
+      } catch (error) {
+        console.warn("Fullscreen request failed:", error);
+        notify("全屏请求未获允许，请使用浏览器的全屏命令。");
+      }
+    }
+    document.getElementById("fullscreen-toggle").addEventListener("click", toggleFullscreen);
+    document.addEventListener("fullscreenchange", () => {
+      document.getElementById("fullscreen-toggle").setAttribute("aria-pressed", String(Boolean(document.fullscreenElement)));
+    });
+    document.querySelectorAll("[data-copy]").forEach(button => {
+      button.addEventListener("click", async () => {
+        const text = document.getElementById(button.dataset.copy).textContent;
+        if (!navigator.clipboard?.writeText) {
+          notify("当前浏览器无法自动复制，请选中代码后手动复制。");
+          return;
+        }
+        try {
+          await navigator.clipboard.writeText(text);
+          notify("已复制。运行前请替换占位符，并确认目标 Azure 环境。");
+        } catch (error) {
+          console.warn("Clipboard write failed:", error);
+          notify("复制未获允许，请选中代码后手动复制。");
+        }
+      });
+    });
+
+    function openDialog(kind, trigger = document.activeElement) {
+      if (dialog.open) return;
+      lastDialogTrigger = trigger;
+      dialogBody.replaceChildren();
+      if (kind === "overview") {
+        dialogTitle.textContent = "选择一段，继续探索。";
+        const grid = document.createElement("div");
+        grid.className = "overview-grid";
+        scenes.forEach((scene, index) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          const number = document.createElement("span");
+          number.textContent = pad(index + 1);
+          button.append(number, document.createTextNode(scene.dataset.title));
+          if (index === current) button.setAttribute("aria-current", "page");
+          button.addEventListener("click", () => {
+            lastDialogTrigger = null;
+            dialog.close();
+            goTo(index);
+          });
+          grid.append(button);
+        });
+        dialogBody.append(grid);
+      } else if (kind === "sources") {
+        dialogTitle.textContent = "直接回到一手资料。";
+        const intro = document.createElement("p");
+        intro.className = "small";
+        intro.textContent = "核验日期：2026-10-20。GA 公告提供叙事与场景；具体部署边界以对应 Microsoft Learn 文档为准。";
+        dialogBody.append(intro);
+        const keys = sourceKeys(scenes[current]);
+        const list = document.createElement("ul");
+        list.className = "reference-list";
+        [...keys, ...Object.keys(references).filter(key => !keys.includes(key))].forEach(key => {
+          const li = document.createElement("li");
+          const source = references[key];
+          const link = linkToSource(key);
+          link.textContent = source.name;
+          li.append(link);
+          if (keys.includes(key)) {
+            const tag = document.createElement("span");
+            tag.className = "this-page";
+            tag.textContent = "本页依据";
+            li.append(tag);
+          }
+          const url = document.createElement("p");
+          url.textContent = source.url;
+          li.append(url);
+          list.append(li);
+        });
+        dialogBody.append(list);
+      } else if (kind === "notes") {
+        dialogTitle.textContent = `${pad(current + 1)} / 讲者备注`;
+        const notes = document.createElement("div");
+        notes.className = "notes-copy";
+        notes.textContent = scenes[current].querySelector(".speaker-note").textContent.trim();
+        dialogBody.append(notes);
+      } else {
+        dialogTitle.textContent = "按自己的节奏演示。";
+        const help = document.createElement("div");
+        help.className = "help-list";
+        const rows = [
+          [["单击"], "内容区域下一页（交互控件除外）"],
+          [["滚轮 ↓ / ↑"], "下一页 / 上一页"],
+          [["←", "→"], "上一页 / 下一页"],
+          [["Space"], "下一页（Shift + Space 上一页）"],
+          [["Home", "End"], "跳到首页 / 最后一页"],
+          [["G"], "章节总览"],
+          [["S"], "本页来源与全部参考资料"],
+          [["N"], "本页讲者备注"],
+          [["R"], "逐页演示 / 连续阅读"],
+          [["F"], "进入 / 退出全屏"],
+          [["?"], "显示帮助"],
+          [["Esc"], "关闭面板 / 退出浏览器全屏"]
+        ];
+        rows.forEach(([keys, label]) => {
+          const row = document.createElement("div");
+          const keyGroup = document.createElement("span");
+          keyGroup.className = "key-group";
+          keys.forEach((key, index) => {
+            if (index) keyGroup.append(document.createTextNode(" "));
+            const kbd = document.createElement("kbd");
+            kbd.textContent = key;
+            keyGroup.append(kbd);
+          });
+          row.append(keyGroup, document.createTextNode(label));
+          help.append(row);
+        });
+        const note = document.createElement("p");
+        note.className = "small";
+        note.textContent = "演示模式中，单击内容区域向后翻页，滚轮向下 / 向上翻页；长页会先滚动内容，到达边缘后再次滚动翻页。交互控件、代码块、文字选择和阅读模式不触发单击翻页。标签组内用方向键切换选项；触屏可左右轻扫。连续阅读或浏览器打印可查看完整内容。无需联网加载库、字体或图片。";
+        dialogBody.append(help, note);
+      }
+      dialog.showModal();
+      dialogBody.scrollTop = 0;
+    }
+    document.querySelectorAll("[data-dialog]").forEach(button => button.addEventListener("click", () => openDialog(button.dataset.dialog, button)));
+    document.getElementById("dialog-close").addEventListener("click", () => dialog.close());
+    dialog.addEventListener("click", event => {
+      if (event.target !== dialog) return;
+      const bounds = dialog.getBoundingClientRect();
+      if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close();
+    });
+    dialog.addEventListener("close", () => {
+      if (lastDialogTrigger?.isConnected && !lastDialogTrigger.closest("[hidden]")) lastDialogTrigger.focus({ preventScroll: true });
+      lastDialogTrigger = null;
+    });
+
+    document.querySelectorAll(".checklist input").forEach(input => input.addEventListener("change", () => {
+      const count = document.querySelectorAll(".checklist input:checked").length;
+      document.getElementById("pilot-count").textContent = count;
+      document.getElementById("pilot-heading").textContent = count === 5 ? "讨论完成，用证据做决定。" : "先建立共同的验收标准。";
+      document.getElementById("pilot-status").textContent = count === 5
+        ? "五个维度已勾选。仍需实测记录与团队确认；此清单不构成自动验收或合规认证。"
+        : "勾选已讨论的维度。不是自动验收或合规认证，不会保存或上传你的选择。";
+    }));
+    document.addEventListener("keydown", event => {
+      if (event.defaultPrevented || dialog.open || event.altKey || event.ctrlKey || event.metaKey) return;
+      if (event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+      const interactive = event.target.closest('button, a, summary, [role="tab"]');
+      if (event.key === " " && interactive) return;
+      if (!reading && ["ArrowRight", "PageDown", "ArrowLeft", "PageUp", " ", "Home", "End"].includes(event.key)) {
+        event.preventDefault();
+        if (event.key === "Home") goTo(0);
+        else if (event.key === "End") goTo(scenes.length - 1);
+        else goTo(current + (["ArrowLeft", "PageUp"].includes(event.key) || (event.key === " " && event.shiftKey) ? -1 : 1));
+        return;
+      }
+      const key = event.key.toLowerCase();
+      if (["g", "s", "n", "r", "f", "?"].includes(key)) {
+        event.preventDefault();
+        if (key === "r") toggleReading();
+        else if (key === "f") toggleFullscreen();
+        else openDialog({ g: "overview", s: "sources", n: "notes", "?": "help" }[key]);
+      }
+    });
+    let swipeStart = null;
+    document.getElementById("main").addEventListener("touchstart", event => {
+      if (reading || dialog.open || event.touches.length !== 1 || event.target.closest("button, a, pre, input, [data-tab-group]") || window.getSelection()?.toString()) {
+        swipeStart = null;
+        return;
+      }
+      swipeStart = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+    }, { passive: true });
+    document.getElementById("main").addEventListener("touchend", event => {
+      if (!swipeStart || !event.changedTouches.length) return;
+      const dx = event.changedTouches[0].clientX - swipeStart.x;
+      const dy = event.changedTouches[0].clientY - swipeStart.y;
+      if (Math.abs(dx) > 75 && Math.abs(dx) > Math.abs(dy) * 2) goTo(current + (dx < 0 ? 1 : -1));
+      swipeStart = null;
+    }, { passive: true });
+    document.getElementById("main").addEventListener("touchcancel", () => { swipeStart = null; }, { passive: true });
+    document.body.classList.add("enhanced");
+    render();
+  </script>
+</body>
+</html>
