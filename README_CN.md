@@ -17,6 +17,7 @@
 | [Azure AI 智能体托管](agenthost/readme.md) | 模块化 Workshop，对比 Microsoft Foundry 托管智能体、AKS 与 `agent-sandbox`，以及 Azure Container Apps Sandboxes。内容涵盖共享基础设施、身份认证、状态持久化、隔离、生命周期管理和生产环境注意事项。 |
 | [Azure AI 基础设施 Workshop](azure-ai-infrastructure-workshop/README.md) | 端到端实验，涵盖 AKS 与 KAITO、Anyscale on Azure、Ray Data/Serve/Train、Microsoft Foundry 托管计算、合作伙伴模型和可观测性。 |
 | [AKS 上的 Anyscale](anyscale-on-aks/README_CN.md) | 在 AKS 上部署 Anyscale Operator，并使用 Ray 运行分布式模型推理和微调的脚本与指南。也提供[英文指南](anyscale-on-aks/README.md)。 |
+| [Azure 上的 Anyscale](anyscale-on-azure/README.md) | Anyscale Kubernetes Operator 认证所需的 Microsoft Entra 服务主体配置，附脱敏输出示例；另提供涵盖架构、网络、身份与 AI 工作负载的[中文网页介绍幻灯片](anyscale-on-azure/web-slides.html)及[权限检查脚本](anyscale-on-azure/check_permission.sh)。 |
 | [AKS 上的 CNI](cni-on-aks/README.md) | 在 AKS 中管理和安装容器网络接口（CNI）的动手指南，包括创建 BYO CNI 集群、安装 Cilium，以及验证网络连通性。 |
 | [将 Azure 指标导出至 Prometheus 和 Grafana](azmon-export-to-prometheus/README.md) | 将 Azure Monitor 指标导出为 Prometheus 格式并使用 Grafana 进行可视化的实践指南。 |
 | [AKS 上的 Istio 监控](istio-on-aks/monitoring/README.md) | 面向 AKS Istio 插件的综合可观测性指南，包括指标、访问日志、链路追踪和相关工具。 |
@@ -42,6 +43,7 @@
 ```text
 agenthost/                       智能体托管 Workshop 与部署资源
 anyscale-on-aks/                 Anyscale Operator、Ray 服务与训练示例
+anyscale-on-azure/               Anyscale on Azure 介绍、Operator 身份配置与权限检查脚本
 azmon-export-to-prometheus/      Azure Monitor 指标导出指南与清单
 azure-ai-infrastructure-workshop/ 多路线 Azure AI 基础设施实验
 cni-on-aks/                      AKS CNI 管理与 Cilium 安装指南

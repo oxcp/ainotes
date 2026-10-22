@@ -17,6 +17,7 @@ The easiest way to explore the repository is through the [AI Notes site](https:/
 | [Agent Hosting on Azure](agenthost/readme.md) | A modular workshop comparing Microsoft Foundry hosted agents, AKS with `agent-sandbox`, and Azure Container Apps Sandboxes. It covers shared infrastructure, identity, state persistence, isolation, lifecycle management, and production considerations. |
 | [Azure AI Infrastructure Workshop](azure-ai-infrastructure-workshop/README.md) | End-to-end labs for AKS with KAITO, Anyscale on Azure, Ray Data/Serve/Train, Microsoft Foundry managed compute, partner models, and observability. |
 | [Anyscale on AKS](anyscale-on-aks/README.md) | Scripts and guidance for deploying the Anyscale Operator on AKS and running distributed model inference and fine-tuning with Ray. A [Chinese guide](anyscale-on-aks/README_CN.md) is also available. |
+| [Anyscale on Azure](anyscale-on-azure/README.md) | Microsoft Entra service principal setup for Anyscale Kubernetes Operator authentication, with a masked example response. Includes [introductory web slides (Chinese)](anyscale-on-azure/web-slides.html) covering architecture, networking, identity, and AI workloads, plus a [permission-check script](anyscale-on-azure/check_permission.sh). |
 | [CNI on AKS](cni-on-aks/README.md) | A hands-on guide to managing and installing a Container Network Interface (CNI) on AKS, including creating a BYO CNI cluster, installing Cilium, and validating network connectivity. |
 | [Azure Metrics to Prometheus and Grafana](azmon-export-to-prometheus/README.md) | A practical guide for exporting Azure Monitor metrics in Prometheus format and visualizing them with Grafana. |
 | [Istio Monitoring on AKS](istio-on-aks/monitoring/README.md) | A consolidated observability guide for the AKS Istio add-on, including metrics, access logs, tracing, and supporting tools. |
@@ -42,6 +43,7 @@ The easiest way to explore the repository is through the [AI Notes site](https:/
 ```text
 agenthost/                       Agent-hosting workshop and deployment assets
 anyscale-on-aks/                 Anyscale Operator, Ray serving, and training examples
+anyscale-on-azure/               Anyscale on Azure introduction, operator identity setup, and permission-check script
 azmon-export-to-prometheus/      Azure Monitor metrics exporter guide and manifests
 azure-ai-infrastructure-workshop/ Multi-track Azure AI infrastructure labs
 cni-on-aks/                      AKS CNI management and Cilium installation guide

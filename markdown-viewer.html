@@ -159,6 +159,15 @@
                 ]
             },
             {
+                root: 'anyscale-on-azure/',
+                title: 'Anyscale on Azure',
+                links: [
+                    ['Operator Authentication Setup', 'anyscale-on-azure/README.md', 'key-round'],
+                    ['Introduction Slides (Chinese)', 'anyscale-on-azure/web-slides.html', 'presentation'],
+                    ['Permission Check Script', 'anyscale-on-azure/check_permission.sh', 'terminal']
+                ]
+            },
+            {
                 root: 'azmon-export-to-prometheus/',
                 title: 'Azure Metrics Export',
                 links: [
@@ -228,7 +237,9 @@
             const link = document.createElement('a');
             link.className = 'sidebar-link';
             link.dataset.file = path;
-            link.href = `markdown-viewer.html?file=${encodeURIComponent(path)}`;
+            link.href = /\.md$/i.test(path)
+                ? `markdown-viewer.html?file=${encodeURIComponent(path)}`
+                : new URL(path, siteRoot).href;
             link.innerHTML = `<i data-lucide="${icon}"></i><span></span>`;
             link.querySelector('span').textContent = label;
             return link;

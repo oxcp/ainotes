@@ -4,7 +4,7 @@ This guide covers configuring the Anyscale Kubernetes Operator authentication se
 
 [View the slides](web-slides.html).
 
-> 📊 **Need a overview of AnyScale on Azure?** 
+> 📊 **Need an overview of AnyScale on Azure?** 
 >
 > Open [Introduction](https://oxcp.github.io/ainotes/anyscale-on-azure/web-slides.html) to quickly overview the AnyScale on Azure.
 
