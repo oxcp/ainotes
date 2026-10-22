@@ -1,8 +1,6 @@
 # Anyscale on Azure
 
-This guide covers configuring the Anyscale Kubernetes Operator authentication service principal in Microsoft Entra ID.
-
-[View the slides](web-slides.html).
+This guide covers ... (in construction)
 
 > 📊 **Need an overview of AnyScale on Azure?** 
 >
