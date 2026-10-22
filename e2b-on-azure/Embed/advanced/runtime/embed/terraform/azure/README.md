@@ -86,7 +86,7 @@ these tests create no Azure resources.
   itself, which the `github.com/...//` source form below provides by cloning.
   A copy of this directory alone fails at plan time, and so does an absolute
   local path, which Terraform copies the same way. A checkout of your own
-  works through a relative `source`, such as `../runtime/embed/terraform/azure`.
+  works through a relative `source`, such as `./runtime/embed/terraform/azure`.
 
 ## Install
 

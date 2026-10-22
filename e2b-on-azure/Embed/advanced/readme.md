@@ -1,9 +1,9 @@
-# Install E2B Embed on Azure: Step-by-Step Guide
+# Install E2B Embed on Azure: Advanced Step-by-Step Guide (Bash)
 
 **Bash guide** | [PowerShell guide](readme_powershell.md)
 
 > [!tip]
-> To set up E2B when the Azure Storage account permits public access, follow the public-access [Bash](e2b_on_azure_blob_public_access_bash.md) or [PowerShell](e2b_on_azure_blob_public_access_powershell.md) guide instead.
+> To set up E2B when the Azure Storage account permits public access, follow the quick install guide: [Bash](../quick-install.md) or [PowerShell](../quick-install-powershell.md).
 
 Updated October 22, 2026. Commands use Bash on Ubuntu/Debian Linux unless otherwise indicated.
 
@@ -138,7 +138,7 @@ If `Standard_D4ds_v6` is unavailable, select another supported size, such as `St
 Use a directory outside OneDrive or other automatically synchronized folders: **Terraform state contains secrets**. These commands are for a **new** deployment:
 
 ```bash
-SOURCE_DIRECTORY="/path/to/ainotes/e2b-on-azure"
+SOURCE_DIRECTORY="/path/to/ainotes/e2b-on-azure/Embed/advanced"
 DEPLOYMENT_DIRECTORY="$HOME/e2b-azure"
 
 if [[ -e "$DEPLOYMENT_DIRECTORY" || -L "$DEPLOYMENT_DIRECTORY" ]]; then
@@ -151,9 +151,11 @@ cp -R -- "$SOURCE_DIRECTORY/runtime" "$DEPLOYMENT_DIRECTORY/"
 cd -- "$DEPLOYMENT_DIRECTORY"
 ```
 
-Replace `SOURCE_DIRECTORY` with your local checkout's `e2b-on-azure` directory. Confirm that `DEPLOYMENT_DIRECTORY` is not synchronized before running the copy commands.
+Replace `SOURCE_DIRECTORY` with your local checkout's `e2b-on-azure/Embed/advanced` directory. Confirm that `DEPLOYMENT_DIRECTORY` is not synchronized before running the copy commands.
 
-Copy the **complete** `runtime` tree, including its Compose files and `.env`. Do not copy only the Azure module directory. Do not copy `main_blob_public_access.tf`: Terraform loads every `*.tf` file, so it would duplicate providers, variables, the module, and outputs.
+Keep `main.tf` and `runtime` in the same working directory. Run Terraform from `DEPLOYMENT_DIRECTORY`; create tfvars and keep state there.
+
+Copy the **complete** `runtime` tree, including its Compose files and `.env`. Do not copy only the Azure module directory. Use this directory's [main.tf](main.tf), not the public-access configuration in [../main.tf](../main.tf).
 
 For a deployment that already failed partway through, use the **original deployment directory and state**, not a fresh directory. Back up and securely transfer the existing `terraform.tfstate` (if using local state), `.terraform.lock.hcl`, variable files, and backend configuration to the runner. Do not transfer the machine-specific `.terraform` provider cache; run `terraform init` on the runner. State contains secrets and must not be committed or uploaded to a public location.
 

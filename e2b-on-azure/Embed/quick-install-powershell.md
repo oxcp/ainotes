@@ -1,7 +1,14 @@
-# Install E2B Embed on Azure: Step-by-Step Guide (Powershell)
+# Install E2B Embed on Azure: Quick Step-by-Step Guide (PowerShell)
+
+[Bash guide](quick-install.md) | **PowerShell guide**
 
 > [!tip]
-> To set up when the Azure Storage account prohibits public access, follow the [PowerShell Private Link guide](readme_powershell.md).
+> This quick-install guide summarizes E2B's official [Embed on Azure documentation](https://github.com/e2b-dev/runtime/blob/main/embed/README.md#terraform-on-azure). It follows the standard deployment path, not an advanced networking configuration.
+>
+> - It does not support selecting an existing VNet for the E2B instance.
+> - It does not support connecting to the Storage Account through Private Link. **The Storage Account must allow public network access**; this does not mean enabling anonymous access to blobs.
+>
+> For these more complex configurations, including an existing VNet and private Storage Account access, see the [advanced directory](advanced/) and its [PowerShell deployment guide](advanced/readme_powershell.md).
 
 Prepared October 14, 2026. Commands use Windows PowerShell unless otherwise indicated.
 
