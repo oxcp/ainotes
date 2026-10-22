@@ -61,9 +61,9 @@ module "e2b" {
   source = "./runtime/embed/terraform/azure"
 
   name                             = "e2b-embed-demo"
-  location                         = "southeastasia"
+  location                         = "eastasia"
   zone                             = "1"
-  instance_size                    = "Standard_D4ds_v5"
+  instance_size                    = "Standard_D4ds_v6"
   client_cidrs                     = var.client_cidrs
   existing_vnet                    = var.existing_vnet
   vm_subnet_name                   = var.e2b_vm_subnet_name

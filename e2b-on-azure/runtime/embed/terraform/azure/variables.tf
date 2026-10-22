@@ -11,7 +11,7 @@ variable "name" {
 variable "location" {
   description = "Azure region for the resource group and everything in it. It must offer instance_size, and zone unless that is empty."
   type        = string
-  default     = "southeastasia"
+  default     = "eastasia"
 }
 
 variable "vnet_name" {
@@ -115,7 +115,7 @@ variable "zone" {
 variable "instance_size" {
   description = "VM size. It must expose /dev/kvm to the instance, which on Azure is decided by the size alone: there is no per-instance nested-virtualization flag and no plan-time API to ask. Take a general-purpose D size with premium storage -- generation 3 or newer for the Intel sizes (Dsv3 and up, with or without the d letter), generation 5 or newer for the AMD sizes (an a in the name: Dasv5 and up, where nested virtualization first appears) -- or an Lsv3 and up; those are the x86-64 families Azure offers nested virtualization on. Which generations a subscription may use varies by region and by the subscription's own offer -- `az vm list-skus -l <region> --resource-type virtualMachines` is what answers it. 12 GiB RAM recommended; the default has 16."
   type        = string
-  default     = "Standard_D4ds_v5"
+  default     = "Standard_D4ds_v6"
   # Sandboxes are Firecracker microVMs, so the host needs /dev/kvm. The
   # burstable sizes do not offer nested virtualization and the Cobalt sizes
   # (a p in the size name) are arm64, which the default image is not.
