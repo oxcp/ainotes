@@ -28,7 +28,7 @@ You need:
 | Azure capacity | A supported nested-virtualization VM size and sufficient regional/family vCPU quota |
 | Private-network execution | An existing Linux Azure VM or self-hosted Linux runner attached to a VNet in the same subscription |
 | Available subnet space | Two unused, non-overlapping subnet CIDRs inside the existing VNet's address space, and two unused subnet names |
-| VNet region | The existing VNet must be in the deployment region (`eastasia` in this guide) |
+| VNet region | The existing VNet must be in the deployment region (`westus2` in this guide) |
 
 The deploying identity also needs permission to read the existing VNet, create/delete the two subnets, join them, and associate the VM subnet with the deployment's NSG and NAT gateway. By default, Terraform creates `privatelink.blob.core.windows.net` in the E2B resource group and associates that DNS zone with the supplied VNet through a Private DNS Zone VNet link. Reusing a Private DNS Zone requires permission to join that zone for the endpoint's DNS zone group and manage the endpoint's DNS records; creating a new Private DNS Zone VNet link also requires permission to manage that DNS association. Use a zone in the selected subscription for this walkthrough. The existing VNet, runner VM, other subnets, and other Storage Accounts' endpoints remain outside this deployment's ownership.
 
@@ -102,9 +102,9 @@ Your account must be able to create **custom roles and role assignments**, not j
 
 The defaults are:
 
-- Region: `eastasia`
+- Region: `westus2`
 - Availability zone: `1`
-- VM size: `Standard_D4ds_v6`
+- VM size: `Standard_D4s_v6`
 - RAM: 16 GiB
 - OS: Ubuntu 24.04, x86-64
 - OS disk: 50 GB Premium SSD
@@ -113,23 +113,23 @@ Check whether your subscription can use the default size:
 
 ```bash
 az vm list-skus \
-  --location eastasia \
+  --location westus2 \
   --resource-type virtualMachines \
-  --size Standard_D4ds_v6 \
+  --size Standard_D4s_v6 \
   --all \
-  --query "[?name=='Standard_D4ds_v6'].{name:name,zones:locationInfo[0].zones,restrictions:restrictions}" \
+  --query "[?name=='Standard_D4s_v6'].{name:name,zones:locationInfo[0].zones,restrictions:restrictions}" \
   --output json
 ```
 
 Check regional quota:
 
 ```bash
-az vm list-usage --location eastasia --output table
+az vm list-usage --location westus2 --output table
 ```
 
 Ensure zone `1` is available and no applicable subscription/zone restriction blocks the size.
 
-If `Standard_D4ds_v6` is unavailable, select another supported size, such as `Standard_D4ds_v7`, **after checking availability and quota in `eastasia`**. The [module's validation](https://github.com/e2b-dev/runtime/blob/f9b828e76e190abe75d1cdd2d58fff6f4688ca34/embed/terraform/azure/variables.tf) accepts certain Intel D-series v3+, AMD D-series v5+, and L-series v3+ sizes.
+If `Standard_D4s_v6` is unavailable, try another supported size, such as `Standard_D4s_v7`, **after checking availability and quota in `westus2`**. Repeat the SKU check above with the alternative size in both `--size` and `--query`, then update `instance_size` in `main.tf` before deployment. The [module's validation](https://github.com/e2b-dev/runtime/blob/f9b828e76e190abe75d1cdd2d58fff6f4688ca34/embed/terraform/azure/variables.tf) accepts certain Intel D-series v3+, AMD D-series v5+, and L-series v3+ sizes.
 
 **Do not substitute a B-series or ARM/Cobalt VM.** E2B sandboxes require nested virtualization and `/dev/kvm`.
 
@@ -161,7 +161,7 @@ For a deployment that already failed partway through, use the **original deploym
 
 The module call stays named `e2b`, preserving unchanged `module.e2b.*` resource addresses. **This is not an in-place migration from the old dedicated-VNet topology.** Switching an existing deployment to `existing_vnet` can destroy its old VNet/peerings and replace subnets or compute. Plan a migration separately; do not approve such changes for an in-use deployment.
 
-The copied [main.tf](main.tf) already contains the **complete configuration below**; no replacement is needed. Keep this code block synchronized with that file. It requires `existing_vnet` (no fallback to creating a VNet), uses `eastasia`, and exposes subnet names and prefixes through tfvars. Change `location` if your existing VNet is in another region, and repeat the capacity checks for that region. The HCL syntax is the same in Bash and PowerShell; keep Terraform module paths in their existing form.
+The copied [main.tf](main.tf) already contains the **complete configuration below**; no replacement is needed. Keep this code block synchronized with that file. It requires `existing_vnet` (no fallback to creating a VNet), uses `westus2`, and exposes subnet names and prefixes through tfvars. Change `location` if your existing VNet is in another region, and repeat the capacity checks for that region. The HCL syntax is the same in Bash and PowerShell; keep Terraform module paths in their existing form.
 
 ```hcl
 terraform {
@@ -227,9 +227,9 @@ module "e2b" {
   source = "./runtime/embed/terraform/azure"
 
   name                             = "e2b-embed-demo"
-  location                         = "eastasia"
+  location                         = "westus2"
   zone                             = "1"
-  instance_size                    = "Standard_D4ds_v6"
+  instance_size                    = "Standard_D4s_v6"
   client_cidrs                     = var.client_cidrs
   existing_vnet                    = var.existing_vnet
   vm_subnet_name                   = var.e2b_vm_subnet_name
@@ -420,7 +420,7 @@ The endpoint's `private_dns_zone_group` automatically creates the new account's 
 The selected topology is:
 
 ```text
-Existing VNet (eastasia; address space unchanged)
+Existing VNet (westus2; address space unchanged)
     |-- existing runner subnet --> Linux Terraform runner VM (unchanged)
     |-- existing subnets / other Storage Private Endpoints (unchanged)
     |-- NEW e2b-vm subnet --> Ubuntu E2B VMSS
