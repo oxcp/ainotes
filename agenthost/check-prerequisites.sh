@@ -97,8 +97,9 @@ has_role() {
 }
 
 action_matches_pattern() {
-  local action="${1,,}"
-  local pattern="${2,,}"
+  # Use tr for compatibility with macOS's system Bash (3.2).
+  local action="$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')"
+  local pattern="$(printf '%s' "$2" | tr '[:upper:]' '[:lower:]')"
   [[ "$action" == $pattern ]]
 }
 
@@ -113,7 +114,8 @@ has_effective_permission() {
     block_denies=false
 
     IFS='|' read -ra patterns <<< "$allowed_patterns"
-    for pattern in "${patterns[@]}"; do
+    # Bash 3.2 treats empty arrays as unset under set -u.
+    for pattern in ${patterns[@]+"${patterns[@]}"}; do
       if [[ -n "$pattern" ]] && action_matches_pattern "$required_action" "$pattern"; then
         block_allows=true
         break
@@ -123,7 +125,7 @@ has_effective_permission() {
     $block_allows || continue
 
     IFS='|' read -ra patterns <<< "$denied_patterns"
-    for pattern in "${patterns[@]}"; do
+    for pattern in ${patterns[@]+"${patterns[@]}"}; do
       if [[ -n "$pattern" ]] && action_matches_pattern "$required_action" "$pattern"; then
         block_denies=true
         break
@@ -326,7 +328,7 @@ fi
 
 if [[ -n "$CONTAINERAPP_INFO" ]]; then
   read -r CONTAINERAPP_VERSION CONTAINERAPP_PREVIEW <<< "$CONTAINERAPP_INFO"
-  if [[ "${CONTAINERAPP_PREVIEW,,}" == "true" || "$CONTAINERAPP_VERSION" =~ (a|b|rc)[0-9]+$ ]]; then
+  if [[ "$(printf '%s' "$CONTAINERAPP_PREVIEW" | tr '[:upper:]' '[:lower:]')" == "true" || "$CONTAINERAPP_VERSION" =~ (a|b|rc)[0-9]+$ ]]; then
     add_result "$GROUP_MODULE_04" "Container Apps preview extension" "Pass" "containerapp $CONTAINERAPP_VERSION (preview enabled)" ""
   else
     add_result "$GROUP_MODULE_04" "Container Apps preview extension" "Failed" "containerapp $CONTAINERAPP_VERSION is not marked as preview" "https://learn.microsoft.com/azure/container-apps/sandboxes"
