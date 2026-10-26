@@ -56,10 +56,13 @@
 可以选择以下任一种方式，准备运行研讨会脚本和命令的环境：
 
 1. **使用自己已有的环境**，例如 Linux 控制台、WSL 或 Azure Cloud Shell。请确保已安装研讨会所需的全部工具，并按下文说明运行 [check-prerequisites.sh](./check-prerequisites.sh)，检查工具安装状态及其他先决条件。Azure Cloud Shell 通常所需的设置最少，但长时间无人操作时可能会超时。因此，建议使用 Linux 控制台或 WSL 环境。
-2. **部署工具箱 VM**，避免花时间自行设置环境和安装工具。使用 [az-toolbox-vm](./az-toolbox-vm/README_CN.md) 中的模板，部署一台包含研讨会执行所需工具的 VM。方式是在 Azure 门户中打开 **部署自定义模板（Deploy a custom template）**，选择 **在编辑器中生成自己的模板（Build your own template in the editor）**，然后通过 **加载文件（Load file）** 导入 [main.json](./az-toolbox-vm/main.json)。根据部署需要提供参数，例如 VNet 和子网的 IP CIDR 范围、SSH 公钥，以及受信任的 SSH 源 IP/CIDR。完整步骤和参数说明请参阅[工具箱 VM 部署指南](./az-toolbox-vm/README_CN.md)。
+2. **部署工具箱 VM**，避免花时间自行设置环境和安装工具。使用 [az-toolbox-vm](./az-toolbox-vm/README_CN.md) 中的模板，部署一台包含研讨会执行所需工具的 VM。方式是在 Azure 门户中打开 **部署自定义模板（Deploy a custom template）**，选择 **在编辑器中生成自己的模板（Build your own template in the editor）**，然后通过 **加载文件（Load file）** 导入 [main.json](./az-toolbox-vm/main.json)。根据部署需要提供参数，例如 VNet 和子网的 IP CIDR 范围、认证方式（默认 SSH 公钥，也可使用用户名/密码而无需生成密钥），以及受信任的 SSH 源 IP/CIDR。完整步骤和参数说明请参阅[工具箱 VM 部署指南](./az-toolbox-vm/README_CN.md)。
 
 > [!IMPORTANT]
 > 即使使用模板部署工具箱 VM 并成功完成初始化，也只保证所需工具已就绪。您仍需确保 Azure 登录状态有效、已获得所需的 RBAC 权限，并满足研讨会的其他先决条件。可以在 VM 上运行 [check-prerequisites.sh](./check-prerequisites.sh) 检查这些要求，并根据未通过检查项的修复链接完成配置。
+
+> [!TIP]
+> 希望选择认证方式后只显示对应的公钥或密码输入框，请按[工具箱 VM 部署指南](./az-toolbox-vm/README_CN.md#azure-门户部署)加载配套的自定义表单。仅导入 `main.json` 的普通参数页仍会同时显示两种凭据参数。
 
 两种方式均需满足研讨会执行的先决条件。开始研讨会之前，请从 `agenthost` 目录运行先决条件检查器：
 
@@ -188,6 +191,7 @@ agenthost/
 │   ├── README_CN.md             ← 中文工具箱 VM 指南
 │   ├── main.bicep               ← Ubuntu 工具箱 VM 的基础设施源文件
 │   ├── main.json                ← 生成的 Azure 门户自定义部署模板
+│   ├── uiFormDefinition.json    ← 按认证方式动态显示凭据的门户表单
 │   ├── cloud-init.yaml          ← 首次启动时的工具安装和初始化配置
 │   └── scripts/
 │       └── verify-tools.sh      ← 验证工具版本和用户范围扩展

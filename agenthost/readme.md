@@ -56,10 +56,13 @@ This downloads the content required for the `agenthost` workshop.
 Choose one of the following ways to prepare an environment for running workshop scripts and commands:
 
 1. **Use your existing environment**, such as a Linux console, WSL, or Azure Cloud Shell. Ensure that all tools required by the workshop are installed, and run [check-prerequisites.sh](./check-prerequisites.sh) as shown below to check their installation status and other prerequisites. Azure Cloud Shell typically requires the least setup, but it may time out when left unattended. Therefore, a Linux console or WSL environment is recommended.
-2. **Deploy a toolbox VM** if you prefer not to spend time setting up an environment and installing tools yourself. Use the templates in [az-toolbox-vm](./az-toolbox-vm/README.md) to deploy a VM with the tools required to run the workshop. In Azure Portal, open **Deploy a custom template**, select **Build your own template in the editor**, and use **Load file** to import [main.json](./az-toolbox-vm/main.json). Provide the required values for your deployment, such as the VNet and subnet IP CIDR ranges, SSH public key, and trusted SSH source IP/CIDR. See [the toolbox VM deployment guide](./az-toolbox-vm/README.md) for the full steps and parameter descriptions.
+2. **Deploy a toolbox VM** if you prefer not to spend time setting up an environment and installing tools yourself. Use the templates in [az-toolbox-vm](./az-toolbox-vm/README.md) to deploy a VM with the tools required to run the workshop. In Azure Portal, open **Deploy a custom template**, select **Build your own template in the editor**, and use **Load file** to import [main.json](./az-toolbox-vm/main.json). Provide the required values for your deployment, such as the VNet and subnet IP CIDR ranges, authentication method (SSH public key by default, or username/password without generating a key), and trusted SSH source IP/CIDR. See [the toolbox VM deployment guide](./az-toolbox-vm/README.md) for the full steps and parameter descriptions.
 
 > [!IMPORTANT]
 > Even after deploying the toolbox VM from the template and completing initialization successfully, only the required tools are ready. You are still responsible for ensuring that Azure login sessions are active, the required RBAC permissions are granted, and all other workshop prerequisites are met. Run [check-prerequisites.sh](./check-prerequisites.sh) on the VM to check these requirements and follow the remediation links for any failed checks.
+
+> [!TIP]
+> To show only the public key or password fields for the selected authentication method, load the companion custom form as described in the [toolbox VM deployment guide](./az-toolbox-vm/README.md#azure-portal-deployment). The standard parameter page that imports only `main.json` still shows both credential parameters.
 
 Both options must satisfy the prerequisites for running the workshop. Before starting the workshop, run the prerequisite checker from the `agenthost` directory:
 
@@ -188,6 +191,7 @@ agenthost/
 │   ├── README_CN.md             ← Chinese toolbox VM guide
 │   ├── main.bicep               ← Infrastructure source for the Ubuntu toolbox VM
 │   ├── main.json                ← Generated template for Azure Portal custom deployment
+│   ├── uiFormDefinition.json    ← Portal form showing credentials for the selected authentication method
 │   ├── cloud-init.yaml          ← First-boot tool installation and initialization
 │   └── scripts/
 │       └── verify-tools.sh      ← Verifies tool versions and user-scoped extensions

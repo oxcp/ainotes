@@ -1,0 +1,284 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2021-09-09/uiFormDefinition.schema.json#",
+  "view": {
+    "kind": "Form",
+    "properties": {
+      "title": "Azure Linux toolbox VM",
+      "steps": [
+        {
+          "name": "basics",
+          "label": "Basics",
+          "elements": [
+            {
+              "name": "resourceScope",
+              "type": "Microsoft.Common.ResourceScope",
+              "location": {
+                "resourceTypes": [
+                  "Microsoft.Compute/virtualMachines"
+                ]
+              }
+            },
+            {
+              "name": "vmName",
+              "type": "Microsoft.Common.TextBox",
+              "label": "VM name",
+              "defaultValue": "azure-toolbox-vm",
+              "constraints": {
+                "required": true,
+                "regex": "^[a-zA-Z0-9][a-zA-Z0-9-]{0,63}$",
+                "validationMessage": "Use 1-64 letters, digits, or hyphens, starting with a letter or digit."
+              }
+            },
+            {
+              "name": "vmSize",
+              "type": "Microsoft.Common.TextBox",
+              "label": "VM size",
+              "defaultValue": "Standard_D4s_v5",
+              "toolTip": "Choose an x64 generation 2 size with quota and capacity in the selected region.",
+              "constraints": {
+                "required": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "authentication",
+          "label": "Administrator login",
+          "elements": [
+            {
+              "name": "adminUsername",
+              "type": "Microsoft.Common.TextBox",
+              "label": "Administrator username",
+              "defaultValue": "azureuser",
+              "constraints": {
+                "required": true,
+                "regex": "^[a-z_][a-z0-9_-]{0,31}$",
+                "validationMessage": "Use 1-32 lowercase letters, digits, underscores, or hyphens, starting with a letter or underscore. Azure also checks reserved usernames."
+              }
+            },
+            {
+              "name": "authenticationType",
+              "type": "Microsoft.Common.DropDown",
+              "label": "Authentication type",
+              "defaultValue": "SSH public key (recommended)",
+              "constraints": {
+                "required": true,
+                "allowedValues": [
+                  {
+                    "label": "SSH public key (recommended)",
+                    "value": "sshPublicKey"
+                  },
+                  {
+                    "label": "Username and password",
+                    "value": "password"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "sshPublicKey",
+              "type": "Microsoft.Common.TextBox",
+              "label": "SSH public key",
+              "toolTip": "Paste the complete RSA public key, not the private key.",
+              "multiLine": true,
+              "constraints": {
+                "required": "[equals(steps('authentication').authenticationType, 'sshPublicKey')]",
+                "regex": "^ssh-rsa\\s+[A-Za-z0-9+/]+={0,3}(\\s+.*)?$",
+                "validationMessage": "Enter a complete RSA public key starting with ssh-rsa."
+              },
+              "visible": "[equals(steps('authentication').authenticationType, 'sshPublicKey')]"
+            },
+            {
+              "name": "adminPassword",
+              "type": "Microsoft.Common.PasswordBox",
+              "label": {
+                "password": "Administrator password",
+                "confirmPassword": "Confirm administrator password"
+              },
+              "toolTip": "Use a unique password. Restrict SSH access to your trusted source IP/CIDR.",
+              "constraints": {
+                "required": "[equals(steps('authentication').authenticationType, 'password')]",
+                "regex": "^(?:(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])|(?=.*[A-Z])(?=.*[a-z])(?=.*[^A-Za-z0-9])|(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9])|(?=.*[a-z])(?=.*[0-9])(?=.*[^A-Za-z0-9])).{12,72}$",
+                "validationMessage": "Use 12-72 characters and at least three of uppercase letters, lowercase letters, digits, and special characters."
+              },
+              "options": {
+                "hideConfirmation": false
+              },
+              "visible": "[equals(steps('authentication').authenticationType, 'password')]"
+            }
+          ]
+        },
+        {
+          "name": "network",
+          "label": "Networking",
+          "elements": [
+            {
+              "name": "networkMode",
+              "type": "Microsoft.Common.DropDown",
+              "label": "Network mode",
+              "defaultValue": "Create a new VNet and subnet",
+              "constraints": {
+                "required": true,
+                "allowedValues": [
+                  {
+                    "label": "Create a new VNet and subnet",
+                    "value": "new"
+                  },
+                  {
+                    "label": "Use an existing VNet and subnet",
+                    "value": "existing"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "existingVnet",
+              "type": "Microsoft.Solutions.ResourceSelector",
+              "label": "Existing VNet",
+              "resourceType": "Microsoft.Network/virtualNetworks",
+              "toolTip": "Select an existing VNet in the VM's subscription and region. No network resources will be created or changed.",
+              "constraints": {
+                "required": "[equals(steps('network').networkMode, 'existing')]"
+              },
+              "scope": {
+                "subscriptionId": "[last(split(steps('basics').resourceScope.subscription.id, '/'))]",
+                "location": "[steps('basics').resourceScope.location.name]"
+              },
+              "visible": "[equals(steps('network').networkMode, 'existing')]"
+            },
+            {
+              "name": "existingSubnets",
+              "type": "Microsoft.Solutions.ArmApiControl",
+              "condition": "[and(equals(steps('network').networkMode, 'existing'), not(empty(steps('network').existingVnet.id)))]",
+              "request": {
+                "method": "GET",
+                "path": "[concat(steps('network').existingVnet.id, '/subnets?api-version=2024-05-01')]"
+              }
+            },
+            {
+              "name": "existingSubnet",
+              "type": "Microsoft.Common.DropDown",
+              "label": "Existing subnet",
+              "placeholder": "Select an existing subnet",
+              "toolTip": "Only subnets returned by the selected VNet are listed. Choose a VM-compatible IPv4 subnet with a free address. If the list is empty, check the VNet's subnets and your read permissions.",
+              "constraints": {
+                "required": "[equals(steps('network').networkMode, 'existing')]",
+                "allowedValues": "[map(steps('network').existingSubnets.value, (item) => parse(concat('{\"label\":\"', item.name, '\",\"value\":\"', item.id, '\"}')))]"
+              },
+              "visible": "[equals(steps('network').networkMode, 'existing')]"
+            },
+            {
+              "name": "vnetName",
+              "type": "Microsoft.Common.TextBox",
+              "label": "New VNet name",
+              "defaultValue": "vnet-toolbox",
+              "constraints": {
+                "required": "[equals(steps('network').networkMode, 'new')]"
+              },
+              "visible": "[equals(steps('network').networkMode, 'new')]"
+            },
+            {
+              "name": "vnetAddressPrefix",
+              "type": "Microsoft.Common.TextBox",
+              "label": "New VNet IP CIDR",
+              "defaultValue": "10.10.0.0/16",
+              "constraints": {
+                "required": "[equals(steps('network').networkMode, 'new')]"
+              },
+              "visible": "[equals(steps('network').networkMode, 'new')]"
+            },
+            {
+              "name": "newSubnetName",
+              "type": "Microsoft.Common.TextBox",
+              "label": "New subnet name",
+              "defaultValue": "default",
+              "toolTip": "Name of the subnet to create in the new VNet. Existing subnet names are never changed.",
+              "constraints": {
+                "required": "[equals(steps('network').networkMode, 'new')]",
+                "regex": "^[a-zA-Z0-9](?:[a-zA-Z0-9_.-]{0,78}[a-zA-Z0-9_])?$",
+                "validationMessage": "Use 1-80 letters, digits, underscores, periods, or hyphens. Start with a letter or digit and end with a letter, digit, or underscore."
+              },
+              "visible": "[equals(steps('network').networkMode, 'new')]"
+            },
+            {
+              "name": "subnetAddressPrefix",
+              "type": "Microsoft.Common.TextBox",
+              "label": "New subnet IP CIDR",
+              "defaultValue": "10.10.0.0/24",
+              "toolTip": "Must be within the new VNet's address space.",
+              "constraints": {
+                "required": "[equals(steps('network').networkMode, 'new')]"
+              },
+              "visible": "[equals(steps('network').networkMode, 'new')]"
+            },
+            {
+              "name": "createPublicIp",
+              "type": "Microsoft.Common.DropDown",
+              "label": "Public IP",
+              "defaultValue": "Create public IP",
+              "constraints": {
+                "required": true,
+                "allowedValues": [
+                  {
+                    "label": "Create public IP",
+                    "value": true
+                  },
+                  {
+                    "label": "Private-only VM",
+                    "value": false
+                  }
+                ]
+              }
+            },
+            {
+              "name": "sshAllowedSource",
+              "type": "Microsoft.Common.TextBox",
+              "label": "Trusted SSH source IP/CIDR or service tag",
+              "toolTip": "For public SSH enter your public IPv4 address followed by /32. For private access enter the private source CIDR or VirtualNetwork. Private routing must already exist.",
+              "constraints": {
+                "required": "[equals(steps('network').networkMode, 'new')]",
+                "regex": "^(?!\\*$)\\S+$",
+                "validationMessage": "Enter a trusted source IP/CIDR or service tag, not *. Azure validates the source value."
+              },
+              "visible": "[equals(steps('network').networkMode, 'new')]"
+            },
+            {
+              "name": "existingNatGatewayResourceId",
+              "type": "Microsoft.Common.TextBox",
+              "label": "Existing NAT gateway resource ID (optional)",
+              "defaultValue": "",
+              "toolTip": "Optional compatible existing NAT gateway for explicit outbound access; this template does not create it.",
+              "constraints": {
+                "required": false
+              },
+              "visible": "[equals(steps('network').networkMode, 'new')]"
+            }
+          ]
+        }
+      ]
+    },
+    "outputs": {
+      "kind": "ResourceGroup",
+      "resourceGroupId": "[steps('basics').resourceScope.resourceGroup.id]",
+      "location": "[steps('basics').resourceScope.location.name]",
+      "parameters": {
+        "location": "[steps('basics').resourceScope.location.name]",
+        "vmName": "[steps('basics').vmName]",
+        "vmSize": "[steps('basics').vmSize]",
+        "adminUsername": "[steps('authentication').adminUsername]",
+        "authenticationType": "[steps('authentication').authenticationType]",
+        "sshPublicKey": "[if(equals(steps('authentication').authenticationType, 'sshPublicKey'), steps('authentication').sshPublicKey, '')]",
+        "adminPassword": "[if(equals(steps('authentication').authenticationType, 'password'), steps('authentication').adminPassword, '')]",
+        "createPublicIp": "[steps('network').createPublicIp]",
+        "networkMode": "[steps('network').networkMode]",
+        "existingSubnetResourceId": "[if(equals(steps('network').networkMode, 'existing'), steps('network').existingSubnet, '')]",
+        "sshAllowedSource": "[if(equals(steps('network').networkMode, 'new'), steps('network').sshAllowedSource, 'VirtualNetwork')]",
+        "vnetName": "[if(equals(steps('network').networkMode, 'new'), steps('network').vnetName, '')]",
+        "vnetAddressPrefix": "[if(equals(steps('network').networkMode, 'new'), steps('network').vnetAddressPrefix, '')]",
+        "subnetName": "[if(equals(steps('network').networkMode, 'new'), steps('network').newSubnetName, '')]",
+        "subnetAddressPrefix": "[if(equals(steps('network').networkMode, 'new'), steps('network').subnetAddressPrefix, '')]",
+        "existingNatGatewayResourceId": "[if(equals(steps('network').networkMode, 'new'), steps('network').existingNatGatewayResourceId, '')]"
+      }
+    }
+  }
+}

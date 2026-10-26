@@ -1,4 +1,5 @@
 #cloud-config
+ssh_pwauth: __SSH_PASSWORD_AUTHENTICATION__
 package_update: true
 package_upgrade: false
 
