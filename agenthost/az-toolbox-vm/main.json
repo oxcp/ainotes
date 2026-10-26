@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.44.1.10279",
-      "templateHash": "7363872284658065907"
+      "templateHash": "590278068597455531"
     }
   },
   "parameters": {
@@ -94,7 +94,11 @@
     },
     "vnetName": {
       "type": "string",
-      "defaultValue": "vnet-toolbox"
+      "defaultValue": "vnet-toolbox",
+      "minLength": 1,
+      "metadata": {
+        "description": "Name for a new VNet. Keep a nonempty value even in existing mode because ARM validates conditional resource dependency IDs."
+      }
     },
     "vnetAddressPrefix": {
       "type": "string",
@@ -102,7 +106,8 @@
     },
     "subnetName": {
       "type": "string",
-      "defaultValue": "default"
+      "defaultValue": "default",
+      "minLength": 1
     },
     "subnetAddressPrefix": {
       "type": "string",

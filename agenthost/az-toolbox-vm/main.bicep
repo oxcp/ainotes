@@ -44,8 +44,11 @@ param networkMode string = 'new'
 @description('Required for networkMode=existing. Full resource ID of an existing subnet in the same subscription and region as the VM.')
 param existingSubnetResourceId string = ''
 
+@description('Name for a new VNet. Keep a nonempty value even in existing mode because ARM validates conditional resource dependency IDs.')
+@minLength(1)
 param vnetName string = 'vnet-toolbox'
 param vnetAddressPrefix string = '10.10.0.0/16'
+@minLength(1)
 param subnetName string = 'default'
 param subnetAddressPrefix string = '10.10.0.0/24'
 

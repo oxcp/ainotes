@@ -113,6 +113,8 @@ The existing VNet must be in the same subscription and region as the VM. Choose 
 
 For CLI deployment or the standard parameter page, set `networkMode=existing` and supply a full subnet resource ID of the form `/subscriptions/<subscription-id>/resourceGroups/<network-resource-group>/providers/Microsoft.Network/virtualNetworks/<vnet-name>/subnets/<subnet-name>`. Do not leave it empty. Creating a new subnet inside an existing VNet is not supported.
 
+In existing mode, the custom form resets hidden new-network name/CIDR parameters to the template defaults rather than empty strings. ARM still validates resource dependency IDs for conditional resources, so `vnetName` and `subnetName` must remain nonempty. These defaults do not create or select a network: the NIC uses only `existingSubnetResourceId`, and VNet/NSG creation remains disabled. With the CLI, omit the unused new-network parameters to keep their defaults.
+
 ### Private-only networking and inbound access
 
 With `createPublicIp=false`, no public IP resource or NIC public-IP association is deployed, and the public-IP output is an empty string. SSH requires an existing private route, such as peering/VPN or Bastion connectivity established separately. Setting an SSH source does not create that route.

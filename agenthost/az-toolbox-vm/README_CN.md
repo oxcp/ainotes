@@ -113,6 +113,8 @@ ssh-keygen -t rsa -b 4096 -f ~/.ssh/toolbox_rsa
 
 使用 CLI 或普通参数页时，设置 `networkMode=existing` 并提供完整子网资源 ID，格式为 `/subscriptions/<subscription-id>/resourceGroups/<network-resource-group>/providers/Microsoft.Network/virtualNetworks/<vnet-name>/subnets/<subnet-name>`，不要留空。不支持在已有 VNet 中新建子网。
 
+已有模式下，自定义表单会将隐藏的新建网络名称/CIDR 参数恢复为模板默认值，而不是空字符串。ARM 仍会检查条件资源的依赖 ID，因此 `vnetName` 和 `subnetName` 必须保持非空。这些默认值不会创建或选择网络：NIC 只使用 `existingSubnetResourceId`，VNet/NSG 创建仍被禁用。使用 CLI 时，请省略未使用的新建网络参数，以保留默认值。
+
 ### 仅专用网络与入站访问
 
 设置 `createPublicIp=false` 时，不会部署公共 IP 资源，也不会在 NIC 上关联公共 IP，公共 IP 输出为空字符串。SSH 需要现有的专用路由，例如单独建立的对等互连/VPN 或 Bastion 连接。设置 SSH 源不会创建该路由。

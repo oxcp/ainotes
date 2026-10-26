@@ -273,10 +273,10 @@
         "networkMode": "[steps('network').networkMode]",
         "existingSubnetResourceId": "[if(equals(steps('network').networkMode, 'existing'), steps('network').existingSubnet, '')]",
         "sshAllowedSource": "[if(equals(steps('network').networkMode, 'new'), steps('network').sshAllowedSource, 'VirtualNetwork')]",
-        "vnetName": "[if(equals(steps('network').networkMode, 'new'), steps('network').vnetName, '')]",
-        "vnetAddressPrefix": "[if(equals(steps('network').networkMode, 'new'), steps('network').vnetAddressPrefix, '')]",
-        "subnetName": "[if(equals(steps('network').networkMode, 'new'), steps('network').newSubnetName, '')]",
-        "subnetAddressPrefix": "[if(equals(steps('network').networkMode, 'new'), steps('network').subnetAddressPrefix, '')]",
+        "vnetName": "[if(equals(steps('network').networkMode, 'new'), steps('network').vnetName, 'vnet-toolbox')]",
+        "vnetAddressPrefix": "[if(equals(steps('network').networkMode, 'new'), steps('network').vnetAddressPrefix, '10.10.0.0/16')]",
+        "subnetName": "[if(equals(steps('network').networkMode, 'new'), steps('network').newSubnetName, 'default')]",
+        "subnetAddressPrefix": "[if(equals(steps('network').networkMode, 'new'), steps('network').subnetAddressPrefix, '10.10.0.0/24')]",
         "existingNatGatewayResourceId": "[if(equals(steps('network').networkMode, 'new'), steps('network').existingNatGatewayResourceId, '')]"
       }
     }
