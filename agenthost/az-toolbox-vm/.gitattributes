@@ -1,0 +1,2 @@
+*.sh text eol=lf
+cloud-init.yaml text eol=lf

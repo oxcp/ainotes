@@ -142,6 +142,7 @@
                 titleZh: 'Agenthost 研讨会',
                 links: [
                     ['Workshop Home', 'agenthost/readme.md', 'house', '研讨会主页'],
+                    ['Toolbox VM Setup', 'agenthost/az-toolbox-vm/README.md', 'monitor', '工具箱 VM 部署'],
                     ['Module 0: Introduction', 'agenthost/module-00/README.md', 'presentation', '模块 0：简介'],
                     ['Module 1: Infrastructure', 'agenthost/module-01/README.md', 'blocks', '模块 1：基础设施'],
                     ['Module 2: Hosted Agent', 'agenthost/module-02/README.md', 'bot', '模块 2：托管智能体'],
@@ -362,6 +363,10 @@
                     resolved = new URL(value, sourceUrl);
                 } catch {
                     return;
+                }
+                if (attribute === 'href' && resolved.origin === siteRoot.origin &&
+                    resolved.pathname === new URL('agenthost/az-toolbox-vm/', siteRoot).pathname) {
+                    resolved = new URL(`README.md${resolved.search}${resolved.hash}`, resolved);
                 }
                 if (attribute === 'href' && resolved.origin === siteRoot.origin && /\.md$/i.test(resolved.pathname)) {
                     let markdownPath = decodeURIComponent(resolved.pathname.slice(siteRoot.pathname.length));

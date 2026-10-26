@@ -1,0 +1,103 @@
+#cloud-config
+package_update: true
+package_upgrade: false
+
+packages:
+  - ca-certificates
+  - apt-transport-https
+  - gnupg
+  - lsb-release
+  - git
+  - curl
+  - jq
+  - unzip
+
+write_files:
+  - path: /etc/toolbox-admin-user
+    owner: root:root
+    permissions: '0644'
+    encoding: b64
+    content: __ADMIN_USER_BASE64__
+  - path: /usr/local/bin/verify-tools.sh
+    owner: root:root
+    permissions: '0755'
+    encoding: b64
+    content: __VERIFY_TOOLS_BASE64__
+  - path: /usr/local/sbin/install-toolbox.sh
+    owner: root:root
+    permissions: '0755'
+    content: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+
+      LOG_FILE=/var/log/toolbox-install.log
+      exec > >(tee -a "${LOG_FILE}") 2>&1
+      trap 'status=$?; printf "ERROR: toolbox installation failed at line %s (exit %s).\n" "$LINENO" "$status" >&2; exit "$status"' ERR
+      export DEBIAN_FRONTEND=noninteractive
+      export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+      if [[ "${EUID}" -ne 0 ]]; then
+        echo "ERROR: run the installer as root." >&2
+        exit 1
+      fi
+
+      rm -f /var/lib/toolbox-install-complete /var/log/toolbox-versions.log
+      ADMIN_USER="$(cat /etc/toolbox-admin-user)"
+      ADMIN_ENTRY="$(getent passwd "${ADMIN_USER}")"
+      ADMIN_HOME="$(cut -d: -f6 <<< "${ADMIN_ENTRY}")"
+      if [[ -z "${ADMIN_USER}" || "${ADMIN_USER}" == root || ! -d "${ADMIN_HOME}" ]]; then
+        echo "ERROR: toolbox admin user must exist and have a non-root home directory." >&2
+        exit 1
+      fi
+
+      as_admin() {
+        runuser -u "${ADMIN_USER}" -- env \
+          HOME="${ADMIN_HOME}" USER="${ADMIN_USER}" LOGNAME="${ADMIN_USER}" \
+          PATH="${PATH}" "$@"
+      }
+
+      echo "=== Installing base packages ==="
+      apt-get update
+      apt-get install -y ca-certificates apt-transport-https gnupg lsb-release git curl jq unzip
+
+      INSTALLER_DIR="$(mktemp -d)"
+      trap 'rm -f -- "${INSTALLER_DIR}/azure-cli.sh" "${INSTALLER_DIR}/azd.sh"; rmdir -- "${INSTALLER_DIR}"' EXIT
+
+      echo "=== Installing current stable Azure CLI ==="
+      curl --fail --silent --show-error --location --retry 5 \
+          https://aka.ms/InstallAzureCLIDeb -o "${INSTALLER_DIR}/azure-cli.sh"
+      bash "${INSTALLER_DIR}/azure-cli.sh"
+      AZ_VERSION="$(az version --output json | jq -er '."azure-cli"')"
+      if ! dpkg --compare-versions "${AZ_VERSION}" ge 2.80.0; then
+        echo "ERROR: Azure CLI ${AZ_VERSION} is older than required version 2.80.0." >&2
+        exit 1
+      fi
+
+      echo "=== Installing current stable Azure Developer CLI ==="
+      curl --fail --silent --show-error --location --retry 5 \
+          https://aka.ms/install-azd.sh -o "${INSTALLER_DIR}/azd.sh"
+      bash "${INSTALLER_DIR}/azd.sh"
+
+      echo "=== Installing Microsoft Foundry extension for ${ADMIN_USER} ==="
+      FOUNDRY_EXTENSIONS="$(as_admin azd ext list --installed --no-prompt)"
+      if awk '$1 == "microsoft.foundry" { found=1 } END { exit !found }' <<< "${FOUNDRY_EXTENSIONS}"; then
+        as_admin azd ext update microsoft.foundry --no-prompt
+      else
+        as_admin azd ext install microsoft.foundry --no-prompt
+      fi
+
+      echo "=== Installing kubectl system-wide ==="
+      az aks install-cli \
+          --install-location /usr/local/bin/kubectl \
+          --kubelogin-install-location /usr/local/bin/kubelogin
+
+      echo "=== Installing Container Apps extension with preview support for ${ADMIN_USER} ==="
+      as_admin az extension add --name containerapp --upgrade --allow-preview true --yes
+
+      echo "=== Validating required tools as ${ADMIN_USER} ==="
+      as_admin /usr/local/bin/verify-tools.sh | tee /var/log/toolbox-versions.log
+      touch /var/lib/toolbox-install-complete
+      echo "Toolbox installation completed successfully at $(date --utc --iso-8601=seconds)."
+
+runcmd:
+  - [bash, /usr/local/sbin/install-toolbox.sh]

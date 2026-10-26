@@ -36,6 +36,9 @@ This workshop introduces a practical Azure agent-hosting journey. You start with
 
 2. Clone the repository using sparse checkout, enter the generated `ainotes` directory, and check out the `agenthost` directory:
 
+> [!TIP]
+> Run Git in a Linux environment to clone the scripts and configuration required for this workshop. If Git is not installed in your current environment, install it first, or refer to the "Prerequisites" section to use the provided template to automatically create a toolbox VM with Git and the required workshop tools preinstalled.
+
   ```bash
   git clone --depth 1 --filter=blob:none --sparse https://github.com/oxcp/ainotes/
   cd ainotes
@@ -48,14 +51,15 @@ This downloads the content required for the `agenthost` workshop.
 
 ## Prerequisites (before workshop)
 
-- A Linux console, WSL environment, or Azure Cloud Shell for running workshop scripts and commands. Azure Cloud Shell typically requires the least setup, but it may time out when left unattended. Therefore, a Linux console or WSL environment is recommended.
-- Azure permissions to create workshop resources and role assignments at the subscription scope, including `Microsoft.Authorization/roleAssignments/write`. Typical options are **Owner** or **Contributor** plus **Role Based Access Control Administrator**.
-- Azure CLI `2.80.0+` installed, with an active Azure login (`az login`).
-- Any additional prerequisites listed in each module.
+Choose one of the following ways to prepare an environment for running workshop scripts and commands:
 
-> To verify the prerequisites automatically instead of checking them manually, use `check-prerequisites.sh` in the workshop folder.
+1. **Use your existing environment**, such as a Linux console, WSL, or Azure Cloud Shell. Ensure that all tools required by the workshop are installed, and run [check-prerequisites.sh](./check-prerequisites.sh) as shown below to check their installation status and other prerequisites. Azure Cloud Shell typically requires the least setup, but it may time out when left unattended. Therefore, a Linux console or WSL environment is recommended.
+2. **Deploy a toolbox VM** if you prefer not to spend time setting up an environment and installing tools yourself. Use the templates in [az-toolbox-vm](./az-toolbox-vm/) to deploy a VM with the tools required to run the workshop. In Azure Portal, open **Deploy a custom template**, select **Build your own template in the editor**, and use **Load file** to import [main.json](./az-toolbox-vm/main.json). Provide the required values for your deployment, such as the VNet and subnet IP CIDR ranges, SSH public key, and trusted SSH source IP/CIDR. See [the toolbox VM deployment guide](./az-toolbox-vm/README.md) for the full steps and parameter descriptions.
 
-Before starting the workshop, run the prerequisite checker from the `agenthost` directory:
+> [!IMPORTANT]
+> Even after deploying the toolbox VM from the template and completing initialization successfully, only the required tools are ready. You are still responsible for ensuring that Azure login sessions are active, the required RBAC permissions are granted, and all other workshop prerequisites are met. Run [check-prerequisites.sh](./check-prerequisites.sh) on the VM to check these requirements and follow the remediation links for any failed checks.
+
+Both options must satisfy the prerequisites for running the workshop. Before starting the workshop, run the prerequisite checker from the `agenthost` directory:
 
 ```bash
 cd agenthost
@@ -169,26 +173,51 @@ Fix suggestion:
 ---
 
 ## Workshop structure
+
+Key directories and files are shown below; individual screenshots and generated caches are omitted.
+
 ```
 agenthost/
 ├── readme.md                    ← Workshop overview, prerequisites, modules, and structure
+├── README_CN.md                 ← Chinese workshop guide
 ├── check-prerequisites.sh       ← Checks tools, Azure login, extensions, permissions, and RBAC roles
-├── pic/                         ← Screenshots used by the workshop guides
+├── az-toolbox-vm/
+│   ├── README.md                ← Toolbox VM deployment, verification, and troubleshooting guide
+│   ├── README_CN.md             ← Chinese toolbox VM guide
+│   ├── main.bicep               ← Infrastructure source for the Ubuntu toolbox VM
+│   ├── main.json                ← Generated template for Azure Portal custom deployment
+│   ├── cloud-init.yaml          ← First-boot tool installation and initialization
+│   └── scripts/
+│       └── verify-tools.sh      ← Verifies tool versions and user-scoped extensions
+├── pic/                         ← Workshop screenshots, including toolbox-vm-deployment.png
 ├── module-00/
 │   ├── README.md                ← Architecture decisions, scenarios, and solution comparison
-│   └── design.html              ← Interactive workshop design slides
+│   ├── README_CN.md             ← Chinese introduction guide
+│   ├── design.html              ← Interactive workshop design slides
+│   ├── index.html               ← Workshop presentation page
+│   ├── timer-en.html            ← English workshop timer
+│   ├── timer.html               ← Chinese workshop timer
+│   └── slides/                  ← Presentation slide images
 ├── module-01/
 │   ├── README.md                ← Core infrastructure setup steps
+│   ├── README_CN.md             ← Chinese infrastructure setup guide
 │   ├── setup.sh                 ← One-step wrapper: runs the main.bicep deployment (az deployment sub create)
 │   ├── main.bicep               ← Subscription-scoped Bicep entry point
 │   └── core.bicep               ← Storage, APIM, identities, Foundry project, model, Defender, and AI gateway
 ├── module-02/
 │   ├── README.md                ← Foundry hosted-agent azd deployment steps
+│   ├── README_CN.md             ← Chinese hosted-agent deployment guide
 │   ├── azure.yaml               ← Hosted-agent manifest used by azd init (references agent-src)
 │   ├── ai-gateway-inbound-policy.xml ← APIM inbound policy for the AI gateway (gateway mode)
-│   └── agent-src/               ← Agent Framework app source (main.py, requirements.txt, Dockerfile)
+│   └── agent-src/               ← Agent Framework app source
+│       ├── main.py              ← Hosted-agent application entry point
+│       ├── requirements.txt     ← Python dependencies
+│       ├── Dockerfile           ← Agent container image
+│       ├── .azdignore           ← azd packaging exclusions
+│       └── .dockerignore        ← Container build exclusions
 ├── module-03/
 │   ├── README.md                ← AKS + agent-sandbox preparation, deployment, verification, and architecture notes
+│   ├── README_CN.md             ← Chinese AKS sandbox guide
 │   ├── prepare-agent-sandbox.sh ← Prepares AKS, Kata node pool, controller, secrets, Blob CSI storage, and Sandbox manifest
 │   ├── aks.bicep                ← Baseline AKS, Blob CSI, Workload Identity federation, and application UAMI Blob RBAC
 │   ├── aks-kubelet-rbac.bicep   ← Principal-keyed AcrPull and Blob CSI RBAC for the AKS kubelet identity
@@ -197,7 +226,11 @@ agenthost/
 │   ├── agent-storage.yaml.example ← Blob CSI StorageClass, static PV, and PVC template
 │   ├── agent-sandbox.yaml.example ← Sandbox, Workload Identity service account, volume mount, and Service template
 │   └── agent-src/               ← POC agent image source (build context for the shared agent image)
-│       ├── app/                 ← Agent application package (main.py, ...)
+│       ├── app/
+│       │   ├── main.py          ← Agent application entry point
+│       │   ├── portal.html      ← Agent chat web interface
+│       │   ├── readme.md        ← Application usage notes
+│       │   └── .env.example     ← Example application environment variables
 │       ├── Dockerfile           ← Multi-stage Python image (build context = agent-src/)
 │       ├── requirements.txt     ← Python dependencies
 │       ├── lifecycle-hook.sh    ← SIGTERM pre-stop hook: state already durable in Blob (no-op log)
@@ -205,6 +238,7 @@ agenthost/
 │       └── .dockerignore        ← Container build exclusions
 ├── module-04/
 │   ├── README.md                ← Workshop path: ACA Sandboxes; optional track: Dynamic Sessions
+│   ├── README_CN.md             ← Chinese ACA sandbox guide
 │   ├── sandbox.bicep            ← Workshop path: SandboxGroup (real Sandboxes, micro-VM boundary, suspend/resume) + UAMI AcrPull role
 │   ├── sandbox-deploy.sh        ← Workshop path: reuses the Module-03 image + SandboxGroup + disk image + sandbox mgmt
 │   ├── dynamic-session-deploy.sh← Optional track: Session pool deployment (custom container)
@@ -212,7 +246,8 @@ agenthost/
 │   ├── dynamic-sessions.md       ← Optional Dynamic Sessions learning guide
 │   └── container-app.yaml       ← Legacy standard ACA manifest (reference only)
 └── module-05/
-    └── README.md                ← Comparison recap, decision guide, cost tips, and production checklist
+    ├── README.md                ← Comparison recap, decision guide, cost tips, and production checklist
+    └── README_CN.md             ← Chinese wrap-up guide
 
 ```
 

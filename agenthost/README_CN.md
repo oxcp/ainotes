@@ -36,6 +36,9 @@
 
 2. 使用稀疏签出克隆存储库，进入生成的 `ainotes` 目录，然后签出 `agenthost` 目录：
 
+> [!tip]
+> 您需要在Linux环境中运行git来clone这次研讨会所需的脚本和配置。如果您还没有在当前操作环境中安装git，您需要先安装git工具，或者请先参考"先决条件"部分，借助本研讨会提供的模板，自动创建一个用于本研讨会操作的toolbox VM，其中已预装git和本次研讨会所需的工具。
+
   ```bash
   git clone --depth 1 --filter=blob:none --sparse https://github.com/oxcp/ainotes/
   cd ainotes
@@ -48,14 +51,15 @@
 
 ## 先决条件（研讨会开始前）
 
-- 用于运行研讨会脚本和命令的 Linux 控制台、WSL 环境或 Azure Cloud Shell。Azure Cloud Shell 通常所需的设置最少，但长时间无人操作时可能会超时。因此，建议使用 Linux 控制台或 WSL 环境。
-- 在订阅范围内创建研讨会资源和角色分配的 Azure 权限，包括 `Microsoft.Authorization/roleAssignments/write`。典型选项为 **Owner**，或 **Contributor** 加 **Role Based Access Control Administrator**。
-- 已安装 Azure CLI `2.80.0+`，并且已主动登录 Azure（`az login`）。
-- 每个模块中列出的其他所有先决条件。
+可以选择以下任一种方式，准备运行研讨会脚本和命令的环境：
 
-> 若要自动验证先决条件而不是手动检查，请使用研讨会文件夹中的 `check-prerequisites.sh`。
+1. **使用自己已有的环境**，例如 Linux 控制台、WSL 或 Azure Cloud Shell。请确保已安装研讨会所需的全部工具，并按下文说明运行 [check-prerequisites.sh](./check-prerequisites.sh)，检查工具安装状态及其他先决条件。Azure Cloud Shell 通常所需的设置最少，但长时间无人操作时可能会超时。因此，建议使用 Linux 控制台或 WSL 环境。
+2. **部署工具箱 VM**，避免花时间自行设置环境和安装工具。使用 [az-toolbox-vm](./az-toolbox-vm/) 中的模板，部署一台包含研讨会执行所需工具的 VM。方式是在 Azure 门户中打开 **部署自定义模板（Deploy a custom template）**，选择 **在编辑器中生成自己的模板（Build your own template in the editor）**，然后通过 **加载文件（Load file）** 导入 [main.json](./az-toolbox-vm/main.json)。根据部署需要提供参数，例如 VNet 和子网的 IP CIDR 范围、SSH 公钥，以及受信任的 SSH 源 IP/CIDR。完整步骤和参数说明请参阅[工具箱 VM 部署指南](./az-toolbox-vm/README.md)。
 
-开始研讨会之前，请从 `agenthost` 目录运行先决条件检查器：
+> [!IMPORTANT]
+> 即使使用模板部署工具箱 VM 并成功完成初始化，也只保证所需工具已就绪。您仍需确保 Azure 登录状态有效、已获得所需的 RBAC 权限，并满足研讨会的其他先决条件。可以在 VM 上运行 [check-prerequisites.sh](./check-prerequisites.sh) 检查这些要求，并根据未通过检查项的修复链接完成配置。
+
+两种方式均需满足研讨会执行的先决条件。开始研讨会之前，请从 `agenthost` 目录运行先决条件检查器：
 
 ```bash
 cd agenthost
@@ -169,26 +173,51 @@ Fix suggestion:
 ---
 
 ## 研讨会结构
+
+以下列出主要目录和文件，省略单独的截图文件和生成的缓存。
+
 ```
 agenthost/
 ├── readme.md                    ← 研讨会概述、先决条件、模块和结构
+├── README_CN.md                 ← 中文研讨会指南
 ├── check-prerequisites.sh       ← 检查工具、Azure 登录、扩展、权限和 RBAC 角色
-├── pic/                         ← 研讨会指南使用的屏幕截图
+├── az-toolbox-vm/
+│   ├── README.md                ← 工具箱 VM 部署、验证和故障排查指南
+│   ├── README_CN.md             ← 中文工具箱 VM 指南
+│   ├── main.bicep               ← Ubuntu 工具箱 VM 的基础设施源文件
+│   ├── main.json                ← 生成的 Azure 门户自定义部署模板
+│   ├── cloud-init.yaml          ← 首次启动时的工具安装和初始化配置
+│   └── scripts/
+│       └── verify-tools.sh      ← 验证工具版本和用户范围扩展
+├── pic/                         ← 研讨会截图，包括 toolbox-vm-deployment.png
 ├── module-00/
 │   ├── README.md                ← 体系结构决策、场景和解决方案比较
-│   └── design.html              ← 交互式研讨会设计幻灯片
+│   ├── README_CN.md             ← 中文简介指南
+│   ├── design.html              ← 交互式研讨会设计幻灯片
+│   ├── index.html               ← 研讨会演示页面
+│   ├── timer-en.html            ← 英文研讨会计时器
+│   ├── timer.html               ← 中文研讨会计时器
+│   └── slides/                  ← 演示幻灯片图片
 ├── module-01/
 │   ├── README.md                ← 核心基础设施设置步骤
+│   ├── README_CN.md             ← 中文基础设施设置指南
 │   ├── setup.sh                 ← 一步式包装器：运行 main.bicep 部署 (az deployment sub create)
 │   ├── main.bicep               ← 订阅范围的 Bicep 入口点
 │   └── core.bicep               ← 存储、APIM、标识、Foundry 项目、模型、Defender 和 AI Gateway
 ├── module-02/
 │   ├── README.md                ← Foundry 托管智能体 azd 部署步骤
+│   ├── README_CN.md             ← 中文托管智能体部署指南
 │   ├── azure.yaml               ← azd init 使用的托管智能体清单（引用 agent-src）
 │   ├── ai-gateway-inbound-policy.xml ← AI Gateway 的 APIM 入站策略（网关模式）
-│   └── agent-src/               ← Agent Framework 应用源代码（main.py、requirements.txt、Dockerfile）
+│   └── agent-src/               ← Agent Framework 应用源代码
+│       ├── main.py              ← 托管智能体应用入口
+│       ├── requirements.txt     ← Python 依赖项
+│       ├── Dockerfile           ← 智能体容器映像
+│       ├── .azdignore           ← azd 打包排除项
+│       └── .dockerignore        ← 容器生成排除项
 ├── module-03/
 │   ├── README.md                ← AKS + agent-sandbox 准备、部署、验证和体系结构说明
+│   ├── README_CN.md             ← 中文 AKS 沙盒指南
 │   ├── prepare-agent-sandbox.sh ← 准备 AKS、Kata 节点池、控制器、机密、Blob CSI 存储和 Sandbox 清单
 │   ├── aks.bicep                ← 基线 AKS、Blob CSI、Workload Identity 联合和应用程序 UAMI Blob RBAC
 │   ├── aks-kubelet-rbac.bicep   ← AKS kubelet 标识的基于主体的 AcrPull 和 Blob CSI RBAC
@@ -197,7 +226,11 @@ agenthost/
 │   ├── agent-storage.yaml.example ← Blob CSI StorageClass、静态 PV 和 PVC 模板
 │   ├── agent-sandbox.yaml.example ← Sandbox、Workload Identity 服务帐户、卷装载和 Service 模板
 │   └── agent-src/               ← POC 智能体映像源代码（共享智能体映像的生成上下文）
-│       ├── app/                 ← 智能体应用程序包（main.py 等）
+│       ├── app/
+│       │   ├── main.py          ← 智能体应用入口
+│       │   ├── portal.html      ← 智能体聊天 Web 界面
+│       │   ├── readme.md        ← 应用使用说明
+│       │   └── .env.example     ← 应用环境变量示例
 │       ├── Dockerfile           ← 多阶段 Python 映像（生成上下文 = agent-src/）
 │       ├── requirements.txt     ← Python 依赖项
 │       ├── lifecycle-hook.sh    ← SIGTERM pre-stop 挂钩：状态已持久化在 Blob 中（无操作日志）
@@ -205,6 +238,7 @@ agenthost/
 │       └── .dockerignore        ← 容器生成排除项
 ├── module-04/
 │   ├── README.md                ← 研讨会路径：ACA Sandboxes；可选路径：Dynamic Sessions
+│   ├── README_CN.md             ← 中文 ACA 沙盒指南
 │   ├── sandbox.bicep            ← 研讨会路径：SandboxGroup（真正的 Sandboxes、微型 VM 边界、挂起/恢复）+ UAMI AcrPull 角色
 │   ├── sandbox-deploy.sh        ← 研讨会路径：复用模块 03 映像 + SandboxGroup + 磁盘映像 + 沙盒管理
 │   ├── dynamic-session-deploy.sh← 可选路径：会话池部署（自定义容器）
@@ -212,7 +246,8 @@ agenthost/
 │   ├── dynamic-sessions.md       ← 可选的 Dynamic Sessions 学习指南
 │   └── container-app.yaml       ← 旧版标准 ACA 清单（仅供参考）
 └── module-05/
-    └── README.md                ← 比较回顾、决策指南、成本技巧和生产环境清单
+    ├── README.md                ← 比较回顾、决策指南、成本技巧和生产环境清单
+    └── README_CN.md             ← 中文总结指南
 
 ```
 
