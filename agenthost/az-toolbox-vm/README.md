@@ -1,5 +1,7 @@
 # Azure Linux toolbox VM
 
+[中文版](./README_CN.md)
+
 Deploy an Ubuntu 24.04 LTS engineering workstation using Bicep or Azure Portal Custom Deployment. `main.bicep` is the infrastructure source of truth; `main.json` is generated and includes cloud-init and the verification script. Portal deployment needs only `main.json`, not separately hosted scripts.
 
 ## Architecture

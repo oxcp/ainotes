@@ -1,5 +1,7 @@
 # Azure Linux 工具箱虚拟机
 
+[English](./README.md)
+
 使用 Bicep 或 Azure 门户自定义部署，部署一台 Ubuntu 24.04 LTS 工程工作站。`main.bicep` 是基础设施的唯一权威来源；`main.json` 由其生成，包含 cloud-init 和验证脚本。通过门户部署时只需要 `main.json`，无需单独托管脚本。
 
 ## 架构
