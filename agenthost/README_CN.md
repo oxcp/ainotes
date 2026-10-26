@@ -39,7 +39,7 @@
 2. 使用稀疏签出克隆存储库，进入生成的 `ainotes` 目录，然后签出 `agenthost` 目录：
 
 > [!tip]
-> 您需要在 Linux 环境中运行 git 来克隆本次研讨会所需的脚本和配置。如果当前环境尚未安装 git，请先安装 git；或者参考[先决条件](#先决条件研讨会开始前)部分，使用本研讨会提供的 [toolbox VM 模板](./az-toolbox-vm/) 自动创建一台已预装 git 和本次研讨会所需工具的 VM。
+> 您需要在 Linux 环境中运行 git 来克隆本次研讨会所需的脚本和配置。如果当前环境尚未安装 git，请先安装 git；或者参考[先决条件](#先决条件研讨会开始前)部分，使用本研讨会提供的 [toolbox VM 模板](./az-toolbox-vm/README_CN.md) 自动创建一台已预装 git 和本次研讨会所需工具的 VM。
 
   ```bash
   git clone --depth 1 --filter=blob:none --sparse https://github.com/oxcp/ainotes/
@@ -56,7 +56,7 @@
 可以选择以下任一种方式，准备运行研讨会脚本和命令的环境：
 
 1. **使用自己已有的环境**，例如 Linux 控制台、WSL 或 Azure Cloud Shell。请确保已安装研讨会所需的全部工具，并按下文说明运行 [check-prerequisites.sh](./check-prerequisites.sh)，检查工具安装状态及其他先决条件。Azure Cloud Shell 通常所需的设置最少，但长时间无人操作时可能会超时。因此，建议使用 Linux 控制台或 WSL 环境。
-2. **部署工具箱 VM**，避免花时间自行设置环境和安装工具。使用 [az-toolbox-vm](./az-toolbox-vm/) 中的模板，部署一台包含研讨会执行所需工具的 VM。方式是在 Azure 门户中打开 **部署自定义模板（Deploy a custom template）**，选择 **在编辑器中生成自己的模板（Build your own template in the editor）**，然后通过 **加载文件（Load file）** 导入 [main.json](./az-toolbox-vm/main.json)。根据部署需要提供参数，例如 VNet 和子网的 IP CIDR 范围、SSH 公钥，以及受信任的 SSH 源 IP/CIDR。完整步骤和参数说明请参阅[工具箱 VM 部署指南](./az-toolbox-vm/README.md)。
+2. **部署工具箱 VM**，避免花时间自行设置环境和安装工具。使用 [az-toolbox-vm](./az-toolbox-vm/README_CN.md) 中的模板，部署一台包含研讨会执行所需工具的 VM。方式是在 Azure 门户中打开 **部署自定义模板（Deploy a custom template）**，选择 **在编辑器中生成自己的模板（Build your own template in the editor）**，然后通过 **加载文件（Load file）** 导入 [main.json](./az-toolbox-vm/main.json)。根据部署需要提供参数，例如 VNet 和子网的 IP CIDR 范围、SSH 公钥，以及受信任的 SSH 源 IP/CIDR。完整步骤和参数说明请参阅[工具箱 VM 部署指南](./az-toolbox-vm/README_CN.md)。
 
 > [!IMPORTANT]
 > 即使使用模板部署工具箱 VM 并成功完成初始化，也只保证所需工具已就绪。您仍需确保 Azure 登录状态有效、已获得所需的 RBAC 权限，并满足研讨会的其他先决条件。可以在 VM 上运行 [check-prerequisites.sh](./check-prerequisites.sh) 检查这些要求，并根据未通过检查项的修复链接完成配置。
