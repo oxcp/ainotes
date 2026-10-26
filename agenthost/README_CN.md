@@ -37,7 +37,7 @@
 2. 使用稀疏签出克隆存储库，进入生成的 `ainotes` 目录，然后签出 `agenthost` 目录：
 
 > [!tip]
-> 您需要在Linux环境中运行git来clone这次研讨会所需的脚本和配置。如果您还没有在当前操作环境中安装git，您需要先安装git工具，或者请先参考"先决条件"部分，借助本研讨会提供的模板，自动创建一个用于本研讨会操作的toolbox VM，其中已预装git和本次研讨会所需的工具。
+> 您需要在 Linux 环境中运行 git 来克隆本次研讨会所需的脚本和配置。如果当前环境尚未安装 git，请先安装 git；或者参考[先决条件](#先决条件研讨会开始前)部分，使用本研讨会提供的 [toolbox VM 模板](./az-toolbox-vm/) 自动创建一台已预装 git 和本次研讨会所需工具的 VM。
 
   ```bash
   git clone --depth 1 --filter=blob:none --sparse https://github.com/oxcp/ainotes/

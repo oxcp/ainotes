@@ -37,7 +37,7 @@ This workshop introduces a practical Azure agent-hosting journey. You start with
 2. Clone the repository using sparse checkout, enter the generated `ainotes` directory, and check out the `agenthost` directory:
 
 > [!TIP]
-> Run Git in a Linux environment to clone the scripts and configuration required for this workshop. If Git is not installed in your current environment, install it first, or refer to the "Prerequisites" section to use the provided template to automatically create a toolbox VM with Git and the required workshop tools preinstalled.
+> Run Git in a Linux environment to clone the scripts and configuration required for this workshop. If Git is not installed in your current environment, install it first, or refer to the [Prerequisites](#prerequisites-before-workshop) section and use the provided [toolbox VM template](./az-toolbox-vm/) to automatically create a VM with Git and the required workshop tools preinstalled.
 
   ```bash
   git clone --depth 1 --filter=blob:none --sparse https://github.com/oxcp/ainotes/
