@@ -306,7 +306,10 @@ az network vnet subnet show \
 
 如果所有配置均正确，请单击 **Create** 创建智能体。
 
-Sandbox 会在几秒钟内启动。在控制台中运行几条命令，验证其是否正常工作。下面的示例检查智能体使用的环境变量、文件和文件夹：
+> [!tip]
+> Sandbox 会在20~30秒钟内启动（在当前模块中，智能体使用了卷挂载和VNET连接，因此启动会相对耗时）。
+
+在控制台中运行几条命令，验证其是否正常工作。下面的示例检查智能体使用的环境变量、文件和文件夹：
 
 ![module-04-Sandbox-running](../pic/module-04-Sandbox-running.png)
 
