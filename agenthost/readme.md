@@ -36,8 +36,8 @@ Choose one of the following ways to prepare an environment for running workshop 
 3. **Azure Cloud Shell**.
 
 > [!TIP]
-> - If you do not have a regular hands-on environment, choose option 2, **Deploy a console VM**, to quickly prepare a console VM with the required tools preinstalled using the workshop's one-click deployment template. However, the VM incurs additional Azure resource costs, and creation may fail due to resource availability, quota limits, or other factors.
-> - Azure Cloud Shell typically includes the tools required for this workshop and requires the least setup, but it may time out when left unattended for an extended period. Configuration in Azure Cloud Shell will be lost after a timeout.
+> - If you do not have a regular hands-on environment, choose option 2, **Deploy a console VM**, to quickly prepare a console VM with the required tools preinstalled. The VM incurs additional Azure resource costs.
+> - Azure Cloud Shell typically includes the tools required for this workshop and requires the least setup, but it will time out if left unattended for an extended period. Configuration in Azure Cloud Shell will be lost after a timeout.
 
 Regardless of which environment you use, it must satisfy the prerequisites for running the workshop. Run `check-prerequisites.sh` as shown below to check the installation status of the required tools and other prerequisites.
 

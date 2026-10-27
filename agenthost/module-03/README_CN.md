@@ -60,9 +60,11 @@ chmod +x prepare-agent-sandbox.sh
 
 > [!tip]
 > `prepare-agent-sandbox.sh` 完成准备需要执行大约8分钟
+>
 > `prepare-agent-sandbox.sh` 在创建 AKS 集群时，默认采用以下SKU：
 > - 系统节点池： `standard_d4ads_v7`，定义在 `aks.bicep` 中
 > - Kata 节点池（用于运行Sandbox）：`Standard_D4s_v7`，定义在 `prepare-agent-sandbox.sh` 中
+>
 > 如果以上 SKU 在所选择的部署区域容量不足，请尝试其它近似规格的 SKU
 
 准备成功后，`prepare-agent-sandbox.sh` 会打印类似以下内容的输出：

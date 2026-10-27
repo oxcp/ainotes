@@ -60,9 +60,11 @@ chmod +x prepare-agent-sandbox.sh
 
 > [!TIP]
 > `prepare-agent-sandbox.sh` takes approximately 8 minutes to complete the preparation.
+>
 > `prepare-agent-sandbox.sh` uses the following default SKUs when creating the AKS cluster:
 > - System node pool: `standard_d4ads_v7`, defined in `aks.bicep`.
 > - Kata node pool (for running Sandboxes): `Standard_D4s_v7`, defined in `prepare-agent-sandbox.sh`.
+>
 > If these SKUs have insufficient capacity in your selected deployment region, try other SKUs with similar specifications.
 
 When the preparation succeeds, `prepare-agent-sandbox.sh` prints output similar to the following:
