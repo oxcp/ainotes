@@ -2,7 +2,7 @@
 
 > 🌐 语言 / Language: **English** | [中文](README_CN.md)
 
-Deploy an Ubuntu 24.04 LTS engineering workstation using Bicep or Azure Portal Custom Deployment. `main.bicep` is the infrastructure source of truth; `main.json` is generated and includes cloud-init and the verification script. The deployment button loads both `main.json` and `uiFormDefinition.json` from GitHub to show the custom deployment form; no separately hosted installation scripts are needed.
+Deploy an Ubuntu 24.04 LTS engineering workstation with the tools required for this workshop preinstalled, using Bicep or Azure Portal Custom Deployment.
 
 ## One-click deployment
 

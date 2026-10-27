@@ -3,7 +3,7 @@
 > 🌐 语言 / Language: [English](README.md) | **中文**
 
 
-使用 Bicep 或 Azure 门户自定义部署，部署一台 Ubuntu 24.04 LTS 工程工作站。`main.bicep` 是基础设施的唯一权威来源；`main.json` 由其生成，包含 cloud-init 和验证脚本。部署按钮会从 GitHub 同时加载 `main.json` 和 `uiFormDefinition.json`，显示自定义部署表单，无需单独托管安装脚本。
+使用 Bicep 或 Azure 门户自定义部署，部署一台 Ubuntu 24.04 LTS 工程工作站，其中预装了本研讨会所需的工具。
 
 
 ## 一键式部署
