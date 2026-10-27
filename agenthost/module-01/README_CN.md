@@ -222,7 +222,7 @@ export ACCESSTOKEN=$(az account get-access-token --query accessToken -o tsv | tr
 
 curl -s -X POST \
   "https://apim-agenthost-${SN}.azure-api.net/foundry/openai/v1/responses" \
-  -H "Authorization: ******" \
+  -H "Authorization: Bearer $ACCESSTOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "model":"gpt-5.4-mini",
