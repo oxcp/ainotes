@@ -2,9 +2,18 @@
 
 [中文版](./README_CN.md)
 
+Deploy an Ubuntu 24.04 LTS engineering workstation using Bicep or Azure Portal Custom Deployment. `main.bicep` is the infrastructure source of truth; `main.json` is generated and includes cloud-init and the verification script. The deployment button loads both `main.json` and `uiFormDefinition.json` from GitHub to show the custom deployment form; no separately hosted installation scripts are needed.
+
+## One-click deployment
+
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#view/Microsoft_Azure_CreateUIDef/CustomDeploymentBlade/uri/https%3A%2F%2Fraw.githubusercontent.com%2Foxcp%2Fainotes%2Fmain%2Fagenthost%2Faz-toolbox-vm%2Fmain.json/uiFormDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2Foxcp%2Fainotes%2Fmain%2Fagenthost%2Faz-toolbox-vm%2FuiFormDefinition.json)
 
-Deploy an Ubuntu 24.04 LTS engineering workstation using Bicep or Azure Portal Custom Deployment. `main.bicep` is the infrastructure source of truth; `main.json` is generated and includes cloud-init and the verification script. The button loads both `main.json` and `uiFormDefinition.json` from GitHub to show the custom deployment form; no separately hosted installation scripts are needed.
+> [!TIP]
+> The button references two files on the repository's `main` branch:
+> - `main.json` deploys the resources.
+> - The companion [uiFormDefinition.json](./uiFormDefinition.json) controls the interface.
+>
+> Before sharing the button, ensure Azure can access both files in the repository.
 
 ## Architecture
 
@@ -18,7 +27,7 @@ Resource group
 
 The image is `Canonical:ubuntu-24_04-lts:server:latest` (x64, generation 2). The template creates only the administration VM for this workshop; it does not create AKS clusters, Container Apps environments, or resources covered by the other workshop modules.
 
-Installed tools:
+## Installed tools
 
 | Component | Installation |
 | --- | --- |
@@ -38,32 +47,22 @@ Installed tools:
 - A trusted source public IP/CIDR for public SSH. The default `*` is intended only for short-lived labs; replace it before deployment.
 - Outbound DNS and HTTPS access to Ubuntu repositories, Microsoft package/install endpoints, the azd extension registry, and GitHub/Kubernetes download endpoints during first boot.
 
+## Deployment guidance
+
 ### Choosing an authentication method
 
-The template supports the following two methods. SSH public key authentication remains the default to preserve existing behavior. Both methods connect to the Linux VM over SSH; neither requires Linux or WSL on your client.
+The template supports the following two methods:
 
-Use the [custom deployment form](#azure-portal-deployment) below for the recommended experience: only the selected method's credential fields are shown, and the unused credential is automatically passed as an empty string. The instructions to leave fields empty in the table apply only to CLI deployment or the standard parameter page that loads `main.json` alone.
+| Method | When to choose it |
+| --- | --- |
+| SSH public key (default, recommended) | You prioritize security or plan to use the VM long term |
+| Username/password (optional) | You want a more convenient, quick start to the workshop without generating or managing keys |
 
-| Method | When to choose it | Template parameters |
-| --- | --- | --- |
-| SSH public key (default, recommended) | You prioritize security or plan to use the VM long term | `authenticationType=sshPublicKey`, supply `sshPublicKey`, and leave `adminPassword` empty |
-| Username/password (optional) | You want to start the workshop quickly without generating or managing keys | `authenticationType=password`, supply `adminPassword`, and leave `sshPublicKey` empty |
+If you use an SSH public key, choose any one of these ways to prepare a key:
 
-Password authentication uses `adminUsername` and `adminPassword`. It still requires an SSH client, but not `ssh-keygen`. Windows users can use the Windows **OpenSSH Client**. If PowerShell cannot find `ssh` or `ssh-keygen`, install **OpenSSH Client** from Windows Optional Features; you do not need OpenSSH Server.
+**Option A: Generate a key in Azure Portal.** Use the **SSH keys** service to generate an RSA key pair, download and securely store the private key, then copy the resource's public key into the corresponding template input.
 
-### Using a username and password
-
-Set `authenticationType=password` and enter `adminPassword`; the custom form automatically hides the public key field and passes an empty `sshPublicKey`. With the CLI or standard parameter page, leave `sshPublicKey` empty yourself. Use a unique password of 12–72 characters containing at least three of these categories: uppercase letters, lowercase letters, digits, and special characters. Azure validates the supplied credentials during deployment; do not leave the selected method's credential empty.
-
-The password is passed as an ARM secure string parameter and is not embedded in cloud-init or deployment outputs. Password authentication is enabled only when you explicitly select `password`, and cloud-init configures SSH password login accordingly. For new networks, restrict `sshAllowedSource` to your own public IP/CIDR (use `/32` for a single IPv4 address); for existing networks, enforce that restriction in their existing NSG rules. Do not expose password login to `*`.
-
-### Using an SSH public key without an existing Linux environment
-
-Choose any one of these ways to prepare a key:
-
-**Option A: Generate a key in Azure Portal.** Use the **SSH keys** service to generate an RSA key pair, download and securely store the private key, then copy the resource's public key into the template's `sshPublicKey`. This requires no local `ssh-keygen`, but connecting to the VM still requires an SSH client and the downloaded private key.
-
-**Option B: Generate a key in Windows PowerShell.** Windows OpenSSH Client includes both `ssh` and `ssh-keygen`. Run the following in PowerShell; the private key is stored in your user profile, not in the repository:
+**Option B: Generate a key in Windows PowerShell.** Windows OpenSSH Client includes both `ssh` and `ssh-keygen`. Run the following in PowerShell; the private key is stored in your user profile:
 
 ```powershell
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.ssh" | Out-Null
@@ -71,7 +70,7 @@ ssh-keygen -t rsa -b 4096 -f "$env:USERPROFILE\.ssh\toolbox_rsa"
 Get-Content "$env:USERPROFILE\.ssh\toolbox_rsa.pub"
 ```
 
-Set a private-key passphrase when prompted, and copy the complete public key displayed by the last command into `sshPublicKey`. Do not upload the private key. If that filename already exists, choose a different name rather than overwriting an existing key.
+Set a private-key passphrase when prompted, then copy the complete public key displayed by the last command into the corresponding template input. **Do not upload the private key.**
 
 **Option C: Generate a key in Linux, WSL, or Azure Cloud Shell.** Run the following in your chosen environment:
 
@@ -79,109 +78,20 @@ Set a private-key passphrase when prompted, and copy the complete public key dis
 ssh-keygen -t rsa -b 4096 -f ~/.ssh/toolbox_rsa
 ```
 
-Supply the complete contents of the generated `~/.ssh/toolbox_rsa.pub` as `sshPublicKey`, and keep the private key on the client you will use to connect. When using Cloud Shell, ensure the private key is securely saved before ending the session.
-
-## Parameters
-
-| Parameter | Default | Purpose |
-| --- | --- | --- |
-| `location` | Resource group location | Resource region |
-| `vmName` | `azure-toolbox-vm` | VM and derived resource names |
-| `adminUsername` | `azureuser` | SSH user and owner of user-scoped extensions |
-| `vmSize` | `Standard_D4s_v5` | x64 generation 2 compatible VM size |
-| `authenticationType` | `sshPublicKey` | `sshPublicKey` or `password` |
-| `sshPublicKey` | Empty | Full public key text; required for `sshPublicKey` authentication |
-| `adminPassword` | Empty | Secure string; required for `password` authentication, otherwise leave empty |
-| `createPublicIp` | `true` | Attach a public IPv4 address |
-| `networkMode` | `new` | `new` creates a VNet/subnet; `existing` attaches to an existing subnet |
-| `existingSubnetResourceId` | Empty | Full subnet resource ID; required for `networkMode=existing` |
-| `sshAllowedSource` | `*` with public IP; otherwise `VirtualNetwork` | New networks only: SSH source IP/CIDR or service tag |
-| `vnetName` | `vnet-toolbox` | New networks only: VNet name |
-| `vnetAddressPrefix` | `10.10.0.0/16` | New networks only: VNet address space |
-| `subnetName` | `default` | New networks only: subnet name |
-| `subnetAddressPrefix` | `10.10.0.0/24` | New networks only: subnet range within the VNet |
-| `existingNatGatewayResourceId` | Empty | New networks only: optional existing NAT gateway for explicit egress |
-
-Use valid Azure resource names and a valid Linux admin username/hostname. For new networks, choose nonoverlapping address ranges and unique VNet names: this mode creates and manages the VNet/subnet and must not target a shared VNet. For multiple deployments in one resource group, choose unique `vmName` values and, when creating a network, unique `vnetName` values.
+Supply the complete contents of the generated `~/.ssh/toolbox_rsa.pub` in the corresponding template input, and keep the private key on the client you will use to connect. When using Cloud Shell, ensure the private key is securely saved before ending the session.
 
 ### Choosing a new or existing network
 
-- **New VNet and subnet** (`networkMode=new`, default): creates the VNet, subnet, and NSG. Under **Network mode**, choose **Create a new VNet and subnet**, then enter the VNet/subnet names and CIDRs in the dedicated text fields. **New subnet name** defaults to `default` and is editable. An existing NAT gateway can optionally be attached.
-- **Existing VNet and existing subnet** (`networkMode=existing`): under **Network mode**, choose **Use an existing VNet and subnet**. The **Existing VNet** selector lists existing networks; the **Existing subnet** dropdown is populated from that VNet's subnet API and contains only existing subnets, with no creation option. All new-network input fields are hidden. The form passes the selected subnet's full resource ID as `existingSubnetResourceId`, including its resource group, which may differ from the VM's. The NIC joins that subnet; the template creates no VNet, subnet, or NSG and does not change the existing subnet's NSG, routes, NAT, or default outbound access. It also adds no NSG to the NIC.
+- **New VNet and subnet** (default): creates the VNet, subnet, and NSG. Enter the VNet/subnet names and CIDRs. The subnet name defaults to `default` and is editable. An existing NAT gateway can optionally be attached.
+- **Existing VNet and existing subnet**: the selector lists only existing networks. The template only joins the toolbox VM's NIC to the selected VNet/subnet; it creates no new VNet, subnet, or NSG and does not change the existing subnet's NSG, routes, NAT, or default outbound access. It also adds no NSG to the NIC.
 
-The existing VNet must be in the same subscription and region as the VM. Choose an IPv4 subnet compatible with VM NICs, with at least one free address; do not use a reserved service subnet or an incompatible delegated subnet. You must ensure that existing network security rules permit TCP/22 only from trusted sources, and that DNS/HTTPS outbound access allows first-boot downloads. Selecting a public IP does not override existing subnet security or routing rules. New-network-only parameters such as `sshAllowedSource` and `existingNatGatewayResourceId` are ignored in existing mode; they do not configure access or egress.
-
-For CLI deployment or the standard parameter page, set `networkMode=existing` and supply a full subnet resource ID of the form `/subscriptions/<subscription-id>/resourceGroups/<network-resource-group>/providers/Microsoft.Network/virtualNetworks/<vnet-name>/subnets/<subnet-name>`. Do not leave it empty. Creating a new subnet inside an existing VNet is not supported.
-
-In existing mode, the custom form resets hidden new-network name/CIDR parameters to the template defaults rather than empty strings. ARM still validates resource dependency IDs for conditional resources, so `vnetName` and `subnetName` must remain nonempty. These defaults do not create or select a network: the NIC uses only `existingSubnetResourceId`, and VNet/NSG creation remains disabled. With the CLI, omit the unused new-network parameters to keep their defaults.
+The existing VNet must be in the same subscription and region as the VM. Choose an IPv4 subnet compatible with VM NICs, with at least one free address; do not use a reserved service subnet or an incompatible delegated subnet. Ensure the existing network security rules allow outbound DNS/HTTPS access to the download endpoints required during first boot.
 
 ### Private-only networking and inbound access
 
-With `createPublicIp=false`, no public IP resource or NIC public-IP association is deployed, and the public-IP output is an empty string. SSH requires an existing private route, such as peering/VPN or Bastion connectivity established separately. Setting an SSH source does not create that route.
+If you choose not to create a public IP, no public IP resource or NIC public-IP association is deployed. Connecting to the toolbox VM over SSH requires existing private routing, such as peering/VPN or Bastion connectivity established separately.
 
-For new networks, the NSG permits inbound TCP/22 traffic only from `sshAllowedSource`, including traffic within the VNet that would otherwise be allowed by default, and explicitly denies all other inbound traffic. Default outbound NSG rules remain enabled. Existing networks retain their current security and outbound configuration, which you must verify separately.
-
-## Azure Portal deployment
-
-### Recommended: GitHub deployment button with the custom form
-
-`main.json` deploys the resources; the companion [uiFormDefinition.json](./uiFormDefinition.json) controls the interface. The standard **Deploy a custom template** page cannot dynamically hide parameters when you import `main.json` alone. Load the custom form as well.
-
-1. Select **Deploy to Azure** at the top of this README and sign in to Azure.
-2. Azure Portal loads the resource template and custom form directly from the public GitHub repository. No local downloads, CLI, sandbox editing, or Template Spec publication is required.
-3. Complete **Basics**, **Administrator login**, and **Networking** as described below. Review the configuration, then select **Create** to deploy real resources.
-
-The button references both files on the repository's `main` branch. Commit and push the generated `main.json` and matching `uiFormDefinition.json` before sharing the button; local or unpushed edits are not loaded. If the portal reports that a file cannot be loaded, check that both GitHub Raw URLs are accessible and point to the intended version. For a fixed workshop release, replace `main` in both URLs with the same Git tag or commit ID, then URL-encode the complete Raw URLs. Do not put credentials in the link or in GitHub.
-
-### Alternative: preview local changes in Form view sandbox
-
-Use this workflow to try files that have not yet been pushed to GitHub. You can load local files in Azure Portal without installing a CLI first:
-
-1. Save this directory's `main.json` and `uiFormDefinition.json` locally.
-2. Open the [Azure Portal Form view sandbox](https://aka.ms/form/sandbox), sign in to Azure, and set **Package Type** to **CustomTemplate**.
-3. Load `main.json` under **Deployment template (optional)**. If prompted to overwrite changes, select **Yes**; this generates a standard form.
-4. Replace the entire form JSON in the code editor with the complete contents of this directory's `uiFormDefinition.json`, then select **Preview**.
-5. Under **Basics**, select the subscription, resource group, region, VM name, and size.
-6. Under **Administrator login**, enter the username and choose an authentication method:
-   - **SSH public key (recommended)** shows only the SSH public key field, not password fields.
-   - **Username and password** shows only password and confirmation fields, not the SSH public key field.
-   - Even if you enter one credential and then switch methods, the unused credential is automatically passed as an empty string.
-7. Under **Networking**, choose a **new** or **existing** VNet:
-   - Choose **Create a new VNet and subnet** to display the new VNet name/CIDR and subnet name/CIDR fields. Enter the desired name in **New subnet name**. Enter a trusted SSH source and optionally an existing NAT gateway. The SSH source is required and cannot be `*`; for private connections, enter a private source CIDR or `VirtualNetwork`.
-   - Choose **Use an existing VNet and subnet**, select **Existing VNet**, then select **Existing subnet** from the dropdown. This mode uses separate existing-resource controls, not a combined create/select control. It hides all new-network inputs and offers no new-subnet action. If the subnet list is empty or fails to load, check the selected VNet's subnets and your network read permissions. Verify its security rules, routing, and outbound access yourself.
-   - Choose whether to attach a public IP. Creating a subnet within an existing VNet is not offered.
-8. Review the configuration and select **Review + create** / **Create** to deploy. The sandbox's **Preview** is not a simulated deployment: selecting **Create** creates real Azure resources and incurs charges.
-
-For a reusable team entry point, an administrator can publish the template and form together as a Template Spec using Azure CLI. Open that Template Spec in the portal and select **Deploy**. The following command publishes the specification only, not a VM; replace the resource group, location, and version:
-
-```bash
-az ts create \
-  --name toolbox-vm \
-  --version 1.0 \
-  --resource-group YOUR_TEMPLATE_SPEC_RESOURCE_GROUP \
-  --location YOUR_AZURE_REGION \
-  --template-file main.json \
-  --ui-form-definition uiFormDefinition.json
-```
-
-Run this command from this directory with permission to publish Template Specs. Deployment users need read access to the Template Spec and permission to deploy the VM resources. Keep `uiFormDefinition.json` in sync when changing parameters in `main.json`. The form's `outputs.parameters` is a deployment parameter mapping, not deployment result outputs; the password still goes to the template's `secureString` parameter.
-
-### Alternative: import only the resource template (both credential parameters remain visible)
-
-If you continue with the standard import workflow below, both public key and password parameters remain visible, and you must leave the unused credential empty yourself. Use the custom form above for automatic field visibility.
-
-1. Open Azure Portal and search for **Deploy a custom template**.
-2. Select **Build your own template in the editor**.
-3. Select **Load file** and load this directory's generated `main.json`.
-4. Select **Save**.
-5. Choose your subscription and resource group, then review the deployment parameters. Keep `networkMode=new` to create a network, or set `networkMode=existing` and supply `existingSubnetResourceId` to use an existing subnet. In existing mode, the new-network settings have no effect.
-6. Choose `authenticationType`: for `sshPublicKey`, paste the complete SSH **public** key into `sshPublicKey` and leave `adminPassword` empty; for `password`, enter `adminPassword` and leave `sshPublicKey` empty. For a new network, set `sshAllowedSource` to your trusted public IP/CIDR, not `*`, especially when using a password; for an existing subnet, ensure its existing NSG rules enforce that restriction. Change the admin username or other parameters as needed. The screenshot illustrates key authentication; the updated template also includes authentication and network-selection parameters:
-![Toolbox VM deployment in Azure Portal](../pic/toolbox-vm-deployment.png)
-
-7. Select **Review + create**, then **Create** after validation succeeds.
-8. Use the deployment outputs for the VM name, resource ID, private/public address, and admin username.
-
-Azure deployment success means the VM was provisioned, **not** that cloud-init has finished installing the tools. Wait and verify as described below.
+For new networks, the NSG supports inbound rules such as allowing TCP port 22 only from your current IP address, including traffic within the VNet that would otherwise be allowed by default, and explicitly denying other inbound traffic. Default outbound NSG rules remain enabled. Existing networks retain their current security and outbound configuration, which you must verify separately.
 
 ## Validation
 
