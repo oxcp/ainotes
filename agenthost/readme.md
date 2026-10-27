@@ -32,11 +32,11 @@ This workshop introduces a practical Azure agent-hosting journey. You start with
 Choose one of the following ways to prepare an environment for running workshop scripts and commands:
 
 1. **Use your existing environment**, such as a Linux console or WSL.
-2. **Deploy a toolbox VM** if you prefer not to set up an environment and tools yourself. Use the [toolbox VM template](./az-toolbox-vm/README.md) for one-click deployment of a console VM with the tools required to run the workshop.
+2. **Deploy a console VM** if you prefer not to set up an environment and tools yourself. Use the [console VM template](./az-toolbox-vm/README.md) for one-click deployment of a console VM with the tools required to run the workshop.
 3. **Azure Cloud Shell**.
 
 > [!TIP]
-> - If you do not have a regular hands-on environment, option 2, using the workshop's one-click deployment template, makes it quick and easy to prepare a console VM with the required tools preinstalled. However, the VM incurs additional Azure resource costs, and deployment may be constrained by resource availability, quotas, and other factors.
+> - If you do not have a regular hands-on environment, choose option 2, **Deploy a console VM**, to quickly prepare a console VM with the required tools preinstalled using the workshop's one-click deployment template. However, the VM incurs additional Azure resource costs, and creation may fail due to resource availability, quota limits, or other factors.
 > - Azure Cloud Shell typically includes the tools required for this workshop and requires the least setup, but it may time out when left unattended for an extended period. Configuration in Azure Cloud Shell will be lost after a timeout.
 
 Regardless of which environment you use, it must satisfy the prerequisites for running the workshop. Run `check-prerequisites.sh` as shown below to check the installation status of the required tools and other prerequisites.
