@@ -1,5 +1,7 @@
 # Azure 上的智能体托管研讨会设计
 
+> 🌐 语言 / Language: [English](README.md) | **中文**
+
 [返回研讨会主页](../README_CN.md)
 
 ## 概述

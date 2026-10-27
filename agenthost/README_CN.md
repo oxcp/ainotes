@@ -1,6 +1,6 @@
 # Azure 上的智能体托管研讨会
 
-[English](./readme.md)
+> 🌐 语言 / Language: [English](readme.md) | **中文**
 
 ## 研讨会简介
 

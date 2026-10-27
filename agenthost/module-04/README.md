@@ -1,5 +1,7 @@
 # Module 4 — Solution C: Container-based Agent Runtime (ACA Sandboxes, 30 min)
 
+> 🌐 语言 / Language: **English** | [中文](README_CN.md)
+
 [⬆ Back to Workshop Home](../readme.md)
 
 ## Overview

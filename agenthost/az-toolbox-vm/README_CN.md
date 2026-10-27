@@ -1,6 +1,7 @@
 # Azure Linux 工具箱虚拟机
 
-[English](./README.md)
+> 🌐 语言 / Language: [English](README.md) | **中文**
+
 
 使用 Bicep 或 Azure 门户自定义部署，部署一台 Ubuntu 24.04 LTS 工程工作站。`main.bicep` 是基础设施的唯一权威来源；`main.json` 由其生成，包含 cloud-init 和验证脚本。部署按钮会从 GitHub 同时加载 `main.json` 和 `uiFormDefinition.json`，显示自定义部署表单，无需单独托管安装脚本。
 
@@ -12,7 +13,7 @@
 > [!tip]
 > 按钮引用仓库 `main` 分支上的两份文件：
 > - `main.json` 负责部署资源
-> - 配套的 [uiFormDefinition.json](./uiFormDefinition.json) 负责界面
+> - 配套的 `uiFormDefinition.json` 负责界面
 >
 > 分享按钮前，请先确保Azure可以访问到仓库中的这两份文件。
 

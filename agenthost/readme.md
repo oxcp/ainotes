@@ -1,6 +1,6 @@
 # Agent Hosting on Azure Workshop
 
-[中文版](./README_CN.md)
+> 🌐 语言 / Language: **English** | [中文](README_CN.md)
 
 ## Workshop Introduction
 

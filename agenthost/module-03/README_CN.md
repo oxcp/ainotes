@@ -1,5 +1,7 @@
 # 模块 3 — 解决方案 B：AKS + agent-sandbox（40 分钟）
 
+> 🌐 语言 / Language: [English](README.md) | **中文**
+
 [⬆ 返回研讨会主页](../readme.md)
 
 ## 概述

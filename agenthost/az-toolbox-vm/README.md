@@ -1,6 +1,6 @@
 # Azure Linux toolbox VM
 
-[中文版](./README_CN.md)
+> 🌐 语言 / Language: **English** | [中文](README_CN.md)
 
 Deploy an Ubuntu 24.04 LTS engineering workstation using Bicep or Azure Portal Custom Deployment. `main.bicep` is the infrastructure source of truth; `main.json` is generated and includes cloud-init and the verification script. The deployment button loads both `main.json` and `uiFormDefinition.json` from GitHub to show the custom deployment form; no separately hosted installation scripts are needed.
 
@@ -11,7 +11,7 @@ Deploy an Ubuntu 24.04 LTS engineering workstation using Bicep or Azure Portal C
 > [!TIP]
 > The button references two files on the repository's `main` branch:
 > - `main.json` deploys the resources.
-> - The companion [uiFormDefinition.json](./uiFormDefinition.json) controls the interface.
+> - The companion `uiFormDefinition.json` controls the interface.
 >
 > Before sharing the button, ensure Azure can access both files in the repository.
 
