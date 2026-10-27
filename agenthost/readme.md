@@ -159,7 +159,7 @@ Fix suggestion:
   ```bash
   git clone --depth 1 --filter=blob:none --sparse https://github.com/oxcp/ainotes/
   cd ainotes
-  git sparse-checkout set agenthost
+  git sparse-checkout set --no-cone '/agenthost/'
   ```
 
 This downloads the content required for the `agenthost` workshop.
