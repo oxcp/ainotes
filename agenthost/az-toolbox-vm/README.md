@@ -1,4 +1,4 @@
-# Azure Linux toolbox VM
+# Setup Linux toolbox VM
 
 > 🌐 语言 / Language: **English** | [中文](README_CN.md)
 

@@ -1,4 +1,4 @@
-# Azure Linux 工具箱虚拟机
+# 安装 Linux 控制台虚拟机
 
 > 🌐 语言 / Language: [English](README.md) | **中文**
 

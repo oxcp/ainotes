@@ -27,44 +27,31 @@ This workshop introduces a practical Azure agent-hosting journey. You start with
 - **Implemented Features**: state persistence, scale-to-zero, isolation, Entra ID authentication, and AI Gateway integration.
 - **Workshop Schedule**: A 120-minute hands-on workshop covering core infrastructure setup, the three solutions above, and a wrap-up with cost-optimization tips and a production-hardening checklist.
 
-## How to use this workshop
-
-1. Create a local directory to store the workshop files, for example, `myworkshop`, and enter it:
-
-  ```bash
-  mkdir myworkshop
-  cd myworkshop
-  ```
-
-2. Clone the repository using sparse checkout, enter the generated `ainotes` directory, and check out the `agenthost` directory:
-
-> [!TIP]
-> Run Git in a Linux environment to clone the scripts and configuration required for this workshop. If Git is not installed in your current environment, install it first, or refer to the [Prerequisites](#prerequisites-before-workshop) section and use the provided [toolbox VM template](./az-toolbox-vm/README.md) to automatically create a VM with Git and the required workshop tools preinstalled.
-
-  ```bash
-  git clone --depth 1 --filter=blob:none --sparse https://github.com/oxcp/ainotes/
-  cd ainotes
-  git sparse-checkout set agenthost
-  ```
-
-This downloads the content required for the `agenthost` workshop.
-
----
-
 ## Prerequisites (before workshop)
 
 Choose one of the following ways to prepare an environment for running workshop scripts and commands:
 
-1. **Use your existing environment**, such as a Linux console, WSL, or Azure Cloud Shell. Ensure that all tools required by the workshop are installed, and run [check-prerequisites.sh](./check-prerequisites.sh) as shown below to check their installation status and other prerequisites. Azure Cloud Shell typically requires the least setup, but it may time out when left unattended. Therefore, a Linux console or WSL environment is recommended.
-2. **Deploy a toolbox VM** if you prefer not to spend time setting up an environment and tools yourself. Use the [toolbox VM template](./az-toolbox-vm/README.md) for one-click deployment of a VM with the tools required to run the workshop. The VM incurs additional Azure resource costs.
+1. **Use your existing environment**, such as a Linux console or WSL.
+2. **Deploy a toolbox VM** if you prefer not to set up an environment and tools yourself. Use the [toolbox VM template](./az-toolbox-vm/README.md) for one-click deployment of a console VM with the tools required to run the workshop.
+3. **Azure Cloud Shell**.
 
-> [!IMPORTANT]
-> Even after deploying the toolbox VM from the template and completing initialization successfully, only the required tools are ready. You are still responsible for ensuring that Azure login sessions are active, the required RBAC permissions are granted, and all other workshop prerequisites are met. Run [check-prerequisites.sh](./check-prerequisites.sh) on the VM to check these requirements and follow the remediation links for any failed checks.
+> [!TIP]
+> - If you do not have a regular hands-on environment, option 2, using the workshop's one-click deployment template, makes it quick and easy to prepare a console VM with the required tools preinstalled. However, the VM incurs additional Azure resource costs, and deployment may be constrained by resource availability, quotas, and other factors.
+> - Azure Cloud Shell typically includes the tools required for this workshop and requires the least setup, but it may time out when left unattended for an extended period. Configuration in Azure Cloud Shell will be lost after a timeout.
 
-Both options must satisfy the prerequisites for running the workshop. Before starting the workshop, run the prerequisite checker from the `agenthost` directory:
+Regardless of which environment you use, it must satisfy the prerequisites for running the workshop. Run `check-prerequisites.sh` as shown below to check the installation status of the required tools and other prerequisites.
+
+Sign in to your working environment and download the prerequisite checker, `check-prerequisites.sh`, from the workshop's GitHub repository to a local file:
 
 ```bash
-cd agenthost
+curl -fsSL https://raw.githubusercontent.com/oxcp/ainotes/main/agenthost/check-prerequisites.sh -o check-prerequisites.sh
+```
+> [!TIP]
+> If curl is not installed yet, open the URL above in a browser, copy the contents of `check-prerequisites.sh`, and save them to a local file named `check-prerequisites.sh`.
+
+Run the checker to see the tool installation status and other prerequisite check results:
+
+```bash
 chmod +x check-prerequisites.sh
 bash check-prerequisites.sh
 ```
@@ -158,6 +145,26 @@ Fix suggestion:
 
 ---
 
+## How to use this workshop
+
+1. Create a local directory to store the workshop files, for example, `myworkshop`, and enter it:
+
+  ```bash
+  mkdir myworkshop
+  cd myworkshop
+  ```
+
+2. Clone the repository using sparse checkout, enter the generated `ainotes` directory, and check out the `agenthost` directory:
+
+  ```bash
+  git clone --depth 1 --filter=blob:none --sparse https://github.com/oxcp/ainotes/
+  cd ainotes
+  git sparse-checkout set agenthost
+  ```
+
+This downloads the content required for the `agenthost` workshop.
+
+---
 
 ## Workshop Modules
 

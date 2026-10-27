@@ -27,44 +27,31 @@
 - **已实现的功能**：状态持久化、缩容到零、隔离、Entra ID 身份验证以及 AI Gateway 集成。
 - **研讨会日程**：120 分钟的动手研讨会，涵盖核心基础设施设置、上述三种解决方案，以及包含成本优化技巧和生产环境强化清单的总结。
 
-## 如何使用本研讨会
-
-1. 创建一个用于存储研讨会文件的本地目录（例如 `myworkshop`），然后进入该目录：
-
-  ```bash
-  mkdir myworkshop
-  cd myworkshop
-  ```
-
-2. 使用稀疏签出克隆存储库，进入生成的 `ainotes` 目录，然后签出 `agenthost` 目录：
-
-> [!tip]
-> 您需要在 Linux 环境中运行 git 来克隆本次研讨会所需的脚本和配置。如果当前环境尚未安装 git，请先安装 git；或者参考[先决条件](#先决条件研讨会开始前)部分，使用本研讨会提供的 [toolbox VM 模板](./az-toolbox-vm/README_CN.md) 自动创建一台已预装 git 和本次研讨会所需工具的 VM。
-
-  ```bash
-  git clone --depth 1 --filter=blob:none --sparse https://github.com/oxcp/ainotes/
-  cd ainotes
-  git sparse-checkout set agenthost
-  ```
-
-这将下载 `agenthost` 研讨会所需的内容。
-
----
-
 ## 先决条件（研讨会开始前）
 
 可以选择以下任一种方式，准备运行研讨会脚本和命令的环境：
 
-1. **使用自己已有的环境**，例如 Linux 控制台、WSL 或 Azure Cloud Shell。请确保已安装研讨会所需的全部工具，并按下文说明运行 [check-prerequisites.sh](./check-prerequisites.sh)，检查工具安装状态及其他先决条件。Azure Cloud Shell 通常所需的设置最少，但长时间无人操作时可能会超时。因此，建议使用 Linux 控制台或 WSL 环境。
-2. **部署工具箱 VM**，如果不希望花时间自行设置环境和工具，可以使用 [toolbox VM 模板](./az-toolbox-vm/README_CN.md) 中的模板，一键式部署一台包含研讨会执行所需工具的 VM。VM会额外产生Azure资源消耗。
+1. **使用自己已有的环境**，例如 Linux 控制台、WSL
+2. **部署工具箱 VM**，如果不打算自行设置环境和工具，可以借助 [控制台 VM 模板](./az-toolbox-vm/README_CN.md) 中的模板，一键式部署一台包含研讨会执行所需工具的 控制台VM
+3. **Azure Cloud Shell**
 
-> [!IMPORTANT]
-> 即使使用模板部署工具箱 VM 并成功完成初始化，也只保证所需工具已就绪。您仍需确保 Azure 登录状态有效、已获得所需的 RBAC 权限，并满足研讨会的其他先决条件。可以在 VM 上运行 [check-prerequisites.sh](./check-prerequisites.sh) 检查这些要求，并根据未通过检查项的修复链接完成配置。
+> [!tip]
+> - 如果没有常用的动手操作环境，选择方式2 - 借助研讨会提供的一键式部署模板，快速简单地准备控制台 VM，其中预装了所需的工具，但安装的控制台 VM 会额外产生Azure资源消耗，以及可能受限于资源可用性和配额限制等因素
+> - Azure Cloud Shell 通常包含了本研讨会所需的工具，所需设置最少，但长时间无人操作时可能会超时。超时后在Azure Cloud Shell中的已做配置将随之丢失
 
-两种方式均需满足研讨会执行的先决条件。开始研讨会之前，请从 `agenthost` 目录运行先决条件检查器：
+无论使用哪种环境，均需满足研讨会执行的先决条件。按下文说明运行  `check-prerequisites.sh`，检查所需工具安装状态及其他先决条件。
+
+请登入您的操作环境，从研讨会的 GitHub 仓库中获取检查器 `check-prerequisites.sh` 到本地：
 
 ```bash
-cd agenthost
+curl -fsSL https://raw.githubusercontent.com/oxcp/ainotes/main/agenthost/check-prerequisites.sh -o check-prerequisites.sh
+```
+> [!tip]
+> 如果暂时还没有安装工具curl，请从浏览器中访问以上地址，复制 `check-prerequisites.sh` 的内容，并保存到本地文件 `check-prerequisites.sh`。
+
+运行检查器，获取工具安装状态及其他先决条件检查结果：
+
+```bash
 chmod +x check-prerequisites.sh
 bash check-prerequisites.sh
 ```
@@ -158,6 +145,26 @@ Fix suggestion:
 
 ---
 
+## 如何使用本研讨会
+
+1. 创建一个用于存储研讨会文件的本地目录（例如 `myworkshop`），然后进入该目录：
+
+  ```bash
+  mkdir myworkshop
+  cd myworkshop
+  ```
+
+2. 使用稀疏签出克隆存储库，进入生成的 `ainotes` 目录，然后签出 `agenthost` 目录：
+
+  ```bash
+  git clone --depth 1 --filter=blob:none --sparse https://github.com/oxcp/ainotes/
+  cd ainotes
+  git sparse-checkout set agenthost
+  ```
+
+这将下载 `agenthost` 研讨会所需的内容。
+
+---
 
 ## 研讨会模块
 
