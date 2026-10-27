@@ -64,10 +64,21 @@ write_files:
       INSTALLER_DIR="$(mktemp -d)"
       trap 'rm -f -- "${INSTALLER_DIR}/azure-cli.sh" "${INSTALLER_DIR}/azd.sh"; rmdir -- "${INSTALLER_DIR}"' EXIT
 
-      echo "=== Installing current stable Azure CLI ==="
+      echo "=== Installing latest stable Azure CLI from Microsoft's APT repository ==="
       curl --fail --silent --show-error --location --retry 5 \
           https://aka.ms/InstallAzureCLIDeb -o "${INSTALLER_DIR}/azure-cli.sh"
       bash "${INSTALLER_DIR}/azure-cli.sh"
+      AZ_PACKAGE_CANDIDATE="$(LC_ALL=C apt-cache policy azure-cli | awk '$1 == "Candidate:" { print $2 }')"
+      if [[ -z "${AZ_PACKAGE_CANDIDATE}" || "${AZ_PACKAGE_CANDIDATE}" == '(none)' ]]; then
+        echo "ERROR: no Azure CLI package candidate is available from the configured APT repositories." >&2
+        exit 1
+      fi
+      AZ_PACKAGE_INSTALLED="$(dpkg-query --show --showformat='${Version}' azure-cli)"
+      if ! dpkg --compare-versions "${AZ_PACKAGE_INSTALLED}" eq "${AZ_PACKAGE_CANDIDATE}"; then
+        echo "ERROR: installed Azure CLI package ${AZ_PACKAGE_INSTALLED} does not match the latest APT candidate ${AZ_PACKAGE_CANDIDATE}." >&2
+        exit 1
+      fi
+      printf 'Azure CLI package matches the latest APT candidate: %s\n' "${AZ_PACKAGE_INSTALLED}"
       AZ_VERSION="$(az version --output json | jq -er '."azure-cli"')"
       if ! dpkg --compare-versions "${AZ_VERSION}" ge 2.80.0; then
         echo "ERROR: Azure CLI ${AZ_VERSION} is older than required version 2.80.0." >&2

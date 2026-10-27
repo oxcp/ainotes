@@ -31,7 +31,7 @@ The image is `Canonical:ubuntu-24_04-lts:server:latest` (x64, generation 2). The
 
 | Component | Installation |
 | --- | --- |
-| Azure CLI | Current stable Microsoft release, checked against minimum 2.80.0 |
+| Azure CLI | Latest stable release available from Microsoft's APT repository at installation time; verifies the installed package matches the current APT candidate and meets the workshop minimum of 2.80.0 (not a pinned version) |
 | Git, curl, jq | Ubuntu packages |
 | Azure Developer CLI (`azd`) | Current stable Microsoft release |
 | Microsoft Foundry extension | `microsoft.foundry`, installed for the configured admin user |
@@ -151,7 +151,7 @@ sudo bash /usr/local/sbin/install-toolbox.sh
 /usr/local/bin/verify-tools.sh
 ```
 
-The installer refreshes base packages, installs current stable CLIs, installs or upgrades Foundry, upgrades Container Apps with preview releases allowed, reinstalls kubectl, and revalidates. It does not duplicate profile entries. Do not run concurrent installers. Retrying the installer does not clear an earlier cloud-init error status; inspect the new logs and marker independently. Avoid `cloud-init clean` on a deployed VM unless you intend to repeat all first-boot processing.
+The installer refreshes base packages, installs or upgrades Azure CLI to the latest stable release available from Microsoft's APT repository at that time, verifies that its package version matches the current APT candidate, installs the current stable azd, installs or upgrades Foundry, upgrades Container Apps with preview releases allowed, reinstalls kubectl, and revalidates. Azure CLI is not pinned to 2.80.0; that version is only the workshop compatibility minimum checked by the installer and `verify-tools.sh`. The verification script does not check for new releases or upgrade tools. The installer does not duplicate profile entries. Do not run concurrent installers. Retrying the installer does not clear an earlier cloud-init error status; inspect the new logs and marker independently. Avoid `cloud-init clean` on a deployed VM unless you intend to repeat all first-boot processing.
 
 ## Security and lifecycle
 

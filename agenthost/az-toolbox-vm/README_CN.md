@@ -33,7 +33,7 @@
 
 | 组件 | 安装方式 |
 | --- | --- |
-| Azure CLI | Microsoft 当前稳定版本，并检查是否满足最低版本 2.80.0 |
+| Azure CLI | 安装时 Microsoft APT 仓库中可用的最新稳定版；验证已安装的软件包与当前 APT 候选版本一致，并满足研讨会最低版本 2.80.0（并非固定安装版本） |
 | Git、curl、jq | Ubuntu 软件包 |
 | Azure Developer CLI（`azd`） | Microsoft 当前稳定版本 |
 | Microsoft Foundry 扩展 | `microsoft.foundry`，为配置的管理员用户安装 |
@@ -156,7 +156,7 @@ sudo bash /usr/local/sbin/install-toolbox.sh
 /usr/local/bin/verify-tools.sh
 ```
 
-安装程序会刷新基础软件包，安装当前稳定版 CLI，安装或升级 Foundry，在允许预览版本的情况下升级 Container Apps，重新安装 kubectl，并重新验证。它不会重复添加 profile 条目。不要并发运行多个安装程序。重试安装程序不会清除先前的 cloud-init 错误状态；请单独检查新日志和标记。除非打算重新执行所有首次启动处理，否则不要在已部署的 VM 上运行 `cloud-init clean`。
+安装程序会刷新基础软件包，将 Azure CLI 安装或升级到当时 Microsoft APT 仓库中可用的最新稳定版，验证其软件包版本与当前 APT 候选版本一致，安装当前稳定版 azd，安装或升级 Foundry，在允许预览版本的情况下升级 Container Apps，重新安装 kubectl，并重新验证。Azure CLI 不会固定安装为 2.80.0；该版本仅是安装程序和 `verify-tools.sh` 检查的研讨会兼容性下限。验证脚本不会检查新版本或升级工具。安装程序不会重复添加 profile 条目。不要并发运行多个安装程序。重试安装程序不会清除先前的 cloud-init 错误状态；请单独检查新日志和标记。除非打算重新执行所有首次启动处理，否则不要在已部署的 VM 上运行 `cloud-init clean`。
 
 ## 安全与生命周期
 
