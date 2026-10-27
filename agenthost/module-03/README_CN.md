@@ -58,13 +58,20 @@ chmod +x prepare-agent-sandbox.sh
 ./prepare-agent-sandbox.sh
 ```
 
+> [!tip]
+> `prepare-agent-sandbox.sh` 完成准备需要执行大约8分钟
+> `prepare-agent-sandbox.sh` 在创建 AKS 集群时，默认采用以下SKU：
+> - 系统节点池： `standard_d4ads_v7`，定义在 `aks.bicep` 中
+> - Kata 节点池（用于运行Sandbox）：`Standard_D4s_v7`，定义在 `prepare-agent-sandbox.sh` 中
+> 如果以上 SKU 在所选择的部署区域容量不足，请尝试其它近似规格的 SKU
+
 准备成功后，`prepare-agent-sandbox.sh` 会打印类似以下内容的输出：
 ```text
 ==> Solution B infrastructure prepared. Continue with README: Deploy agent in Sandbox.
     SN            : acf0a3
     AKS           : aks-agenthost-acf0a3
     Namespace     : agent
-    Kata pool     : kata (Standard_D4s_v3, AzureLinux, KataVmIsolation)
+    Kata pool     : kata (Standard_D4s_v7, AzureLinux, KataVmIsolation)
     agent-sandbox : v0.5.2 (ns agent-sandbox-system)
     ACR           : acragenthostacf0a3.azurecr.io
     APIM          : https://apim-agenthost-acf0a3.azure-api.net/foundry
@@ -98,7 +105,9 @@ chmod +x prepare-agent-sandbox.sh
 
 <a id="manual-steps-equivalent-to-prepare-agent-sandboxsh"></a>
 
-## 等效于 prepare-agent-sandbox.sh 的手动步骤准备
+<details>
+<summary><strong>等效于 prepare-agent-sandbox.sh 的手动步骤准备</strong>（单击展开）</summary>
+
 > [!warning]
 > **单命令部署的替代方案：** 仅当选择手动部署路径时才执行这些步骤。
 >
@@ -165,7 +174,7 @@ az aks get-credentials -g "$RESOURCE_GROUP" -n "$AKS_NAME" --overwrite-existing
 
 ```bash
 KATA_NODEPOOL_NAME="kata"
-KATA_NODE_VM_SIZE="Standard_D4s_v3"
+KATA_NODE_VM_SIZE="Standard_D4s_v7"
 
 if az aks nodepool show --resource-group "$RESOURCE_GROUP" --cluster-name "$AKS_NAME" --name "$KATA_NODEPOOL_NAME" --output none 2>/dev/null; then
   echo "    Node pool $KATA_NODEPOOL_NAME already exists; reusing it"
@@ -273,6 +282,8 @@ sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|${IMAGE_TAG}|g; s|<NAMESPACE>|${N
 
 - 如果 Storage 帐户已禁用公共网络访问，请继续前往[配置 Blob Private Link](#configure-blob-private-link)。
 - 否则，直接前往[在 Sandbox 中部署代理](#deploy-agent-in-sandbox)。
+
+</details>
 
 ---
 <a id="configure-blob-private-link"></a>

@@ -118,7 +118,7 @@ Container Apps preview extension         | Pass       | containerapp 1.3.0b4 (pr
 SandboxGroup Data Owner role             | Failed     | Role assignment not found for the current subscription
 
 Fix suggestion:
-- SandboxGroup Data Owner role: https://learn.microsoft.com/azure/container-apps/sandboxes
+- SandboxGroup Data Owner role: https://learn.microsoft.com/en-us/azure/container-apps/sandboxes-get-started#before-you-start
 
 Summary: 11 passed, 1 skipped, 2 failed
 Workshop readiness: Ready to start.

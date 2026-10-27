@@ -366,13 +366,13 @@
                 }
                 if (attribute === 'href' && resolved.origin === siteRoot.origin &&
                     resolved.pathname === new URL('agenthost/az-toolbox-vm/', siteRoot).pathname) {
-                    resolved = new URL(`README.md${resolved.search}${resolved.hash}`, resolved);
+                    const readme = file?.toLowerCase().startsWith('agenthost/')
+                        ? getAgenthostPath('README.md', getAgenthostLanguage())
+                        : 'README.md';
+                    resolved = new URL(`${readme}${resolved.search}${resolved.hash}`, resolved);
                 }
                 if (attribute === 'href' && resolved.origin === siteRoot.origin && /\.md$/i.test(resolved.pathname)) {
-                    let markdownPath = decodeURIComponent(resolved.pathname.slice(siteRoot.pathname.length));
-                    if (file?.toLowerCase().startsWith('agenthost/') && markdownPath.toLowerCase().startsWith('agenthost/')) {
-                        markdownPath = getAgenthostPath(markdownPath, getAgenthostLanguage());
-                    }
+                    const markdownPath = decodeURIComponent(resolved.pathname.slice(siteRoot.pathname.length));
                     const viewerUrl = new URL('markdown-viewer.html', siteRoot);
                     viewerUrl.searchParams.set('file', markdownPath);
                     viewerUrl.hash = resolved.hash;

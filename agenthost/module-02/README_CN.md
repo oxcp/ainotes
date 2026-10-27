@@ -153,7 +153,7 @@ sed -i "s/<SN>/$SN/g" ./azure.yaml
 
 ## 步骤 3 — 绑定 azd 环境（跳过预配）
 
-将 azd 环境指向现有项目，使 `azd deploy`（步骤 5）直接以它为目标：
+将 azd 环境指向现有项目，使 `azd deploy`（步骤 4）直接以它为目标：
 
 ```bash
 azd env set AZURE_TENANT_ID $(az account show --query tenantId -o tsv | tr -d "\r\n")
@@ -168,6 +168,7 @@ azd env get-values
 
 ```
 
+<!--
 ## 步骤 4 — 在本地运行代理
 
 > [!tip]
@@ -196,8 +197,9 @@ Stopping agent...
 ~/workshop/module-02/maf-agent$ Agent stopped.
 ``` 
 现在已验证代理能够端到端工作。接下来，将代理部署到 Microsoft Foundry（托管代理）。
+-->
 
-## 步骤 5 — 部署托管代理
+## 步骤 4 — 部署托管代理
 
 ```bash
 azd deploy
@@ -219,7 +221,7 @@ azd deploy
 
 每次部署都会在 Foundry 中创建新的托管代理版本。
 
-## 步骤 6 — 调用已部署的代理
+## 步骤 5 — 调用已部署的代理
 
 ```bash
 azd ai agent invoke "Hi"
@@ -232,7 +234,7 @@ azd ai agent invoke "Hi"
 ![module-02-hosted-agent-playground](../pic/module-02-hosted-agent-playground.png)
 
 
-## 步骤 7 — 在托管代理 Playground 中切换路由模式
+## 步骤 6 — 在托管代理 Playground 中切换路由模式
 
 可以在 Foundry 门户中创建托管代理的新版本并更改其环境变量，而无需修改之前部署的版本。使用此步骤测试之前未选择的路由模式（例如，如果使用 `azd deploy` 时选择了 `direct` 模式，可以在下面测试 `gateway` 模式，反之亦然）。
 

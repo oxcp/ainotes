@@ -329,17 +329,17 @@ if [[ -n "$CONTAINERAPP_INFO" ]]; then
   if [[ "${CONTAINERAPP_PREVIEW,,}" == "true" || "$CONTAINERAPP_VERSION" =~ (a|b|rc)[0-9]+$ ]]; then
     add_result "$GROUP_MODULE_04" "Container Apps preview extension" "Pass" "containerapp $CONTAINERAPP_VERSION (preview enabled)" ""
   else
-    add_result "$GROUP_MODULE_04" "Container Apps preview extension" "Failed" "containerapp $CONTAINERAPP_VERSION is not marked as preview" "https://learn.microsoft.com/azure/container-apps/sandboxes"
+    add_result "$GROUP_MODULE_04" "Container Apps preview extension" "Failed" "containerapp $CONTAINERAPP_VERSION is not marked as preview" "https://learn.microsoft.com/azure/container-apps/sandboxes-overview"
   fi
 else
-  add_result "$GROUP_MODULE_04" "Container Apps preview extension" "Failed" "Run az extension add --name containerapp --upgrade --allow-preview true -y" "https://learn.microsoft.com/azure/container-apps/sandboxes"
+  add_result "$GROUP_MODULE_04" "Container Apps preview extension" "Failed" "Run az extension add --name containerapp --upgrade --allow-preview true -y" "https://learn.microsoft.com/azure/container-apps/sandboxes-overview"
 fi
 
 show_progress "Container Apps SandboxGroup Data Owner role"
 if [[ -n "$IDENTITY_OBJECT_ID" ]] && has_role "Container Apps SandboxGroup Data Owner"; then
   add_result "$GROUP_MODULE_04" "SandboxGroup Data Owner role" "Pass" "Role assignment found for the current subscription" ""
 else
-  add_result "$GROUP_MODULE_04" "SandboxGroup Data Owner role" "Failed" "Role assignment not found for the current subscription" "https://learn.microsoft.com/azure/container-apps/sandboxes"
+  add_result "$GROUP_MODULE_04" "SandboxGroup Data Owner role" "Failed" "Role assignment not found for the current subscription" "https://learn.microsoft.com/en-us/azure/container-apps/sandboxes-get-started#before-you-start"
 fi
 
 print_group() {

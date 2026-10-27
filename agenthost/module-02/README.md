@@ -153,7 +153,7 @@ sed -i "s/<SN>/$SN/g" ./azure.yaml
 
 ## Step 3 — Bind the azd environment (skip provision)
 
-Point the azd environment at the existing project so `azd deploy` (Step 5) targets it directly:
+Point the azd environment at the existing project so `azd deploy` (Step 4) targets it directly:
 
 ```bash
 azd env set AZURE_TENANT_ID $(az account show --query tenantId -o tsv | tr -d "\r\n")
@@ -168,6 +168,7 @@ azd env get-values
 
 ```
 
+<!--
 ## Step 4 — Run the agent locally
 
 > [!TIP]
@@ -196,8 +197,9 @@ Stopping agent...
 ~/workshop/module-02/maf-agent$ Agent stopped.
 ``` 
 Now we verified the agent can work through end-to-end. Next we will deploy the agent to Microsoft Foundry (Hosted Agent).
+-->
 
-## Step 5 — Deploy the hosted agent
+## Step 4 — Deploy the hosted agent
 
 ```bash
 azd deploy
@@ -219,7 +221,7 @@ In the Foundry portal, open your Foundry project and go to the **Build → Agent
 
 Each deployment creates a new hosted-agent version in Foundry. 
 
-## Step 6 — Invoke the deployed agent
+## Step 5 — Invoke the deployed agent
 
 ```bash
 azd ai agent invoke "Hi"
@@ -232,7 +234,7 @@ Try the agent in Playground; it should work there as well:
 ![module-02-hosted-agent-playground](../pic/module-02-hosted-agent-playground.png)
 
 
-## Step 7 — Switch the routing mode in the hosted agent playground
+## Step 6 — Switch the routing mode in the hosted agent playground
 
 You can create a new version of the hosted agent in the Foundry portal and change its environment variables without modifying the previously deployed version. Use this step to test the routing mode that you did not select earlier (for example if you use `direct` mode when use `azd deploy`, you can test `gateway` mode below, or vice versa).
 

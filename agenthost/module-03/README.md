@@ -58,13 +58,20 @@ chmod +x prepare-agent-sandbox.sh
 ./prepare-agent-sandbox.sh
 ```
 
+> [!TIP]
+> `prepare-agent-sandbox.sh` takes approximately 8 minutes to complete the preparation.
+> `prepare-agent-sandbox.sh` uses the following default SKUs when creating the AKS cluster:
+> - System node pool: `standard_d4ads_v7`, defined in `aks.bicep`.
+> - Kata node pool (for running Sandboxes): `Standard_D4s_v7`, defined in `prepare-agent-sandbox.sh`.
+> If these SKUs have insufficient capacity in your selected deployment region, try other SKUs with similar specifications.
+
 When the preparation succeeds, `prepare-agent-sandbox.sh` prints output similar to the following:
 ```text
 ==> Solution B infrastructure prepared. Continue with README: Deploy agent in Sandbox.
     SN            : acf0a3
     AKS           : aks-agenthost-acf0a3
     Namespace     : agent
-    Kata pool     : kata (Standard_D4s_v3, AzureLinux, KataVmIsolation)
+    Kata pool     : kata (Standard_D4s_v7, AzureLinux, KataVmIsolation)
     agent-sandbox : v0.5.2 (ns agent-sandbox-system)
     ACR           : acragenthostacf0a3.azurecr.io
     APIM          : https://apim-agenthost-acf0a3.azure-api.net/foundry
@@ -97,7 +104,9 @@ After `prepare-agent-sandbox.sh` completes, open the resource group in the Azure
 ---
 
 <a id="manual-steps-equivalent-to-prepare-agent-sandboxsh"></a>
-## Manual Steps Preparation (equivalent to prepare-agent-sandbox.sh)
+<details>
+<summary><strong>Manual Steps Preparation (equivalent to prepare-agent-sandbox.sh)</strong> (click to expand)</summary>
+
 > [!warning]
 > **Alternative to One-Command Deployment:** follow these steps only if you chose
 > the manual deployment path.
@@ -165,7 +174,7 @@ az aks get-credentials -g "$RESOURCE_GROUP" -n "$AKS_NAME" --overwrite-existing
 
 ```bash
 KATA_NODEPOOL_NAME="kata"
-KATA_NODE_VM_SIZE="Standard_D4s_v3"
+KATA_NODE_VM_SIZE="Standard_D4s_v7"
 
 if az aks nodepool show --resource-group "$RESOURCE_GROUP" --cluster-name "$AKS_NAME" --name "$KATA_NODEPOOL_NAME" --output none 2>/dev/null; then
   echo "    Node pool $KATA_NODEPOOL_NAME already exists; reusing it"
@@ -273,6 +282,8 @@ sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|${IMAGE_TAG}|g; s|<NAMESPACE>|${N
 
 - If your Storage account has public network access disabled, continue to [Configure Blob Private Link](#configure-blob-private-link).
 - Otherwise, go directly to [Deploy agent in Sandbox](#deploy-agent-in-sandbox).
+
+</details>
 
 ---
 <a id="configure-blob-private-link"></a>
