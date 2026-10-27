@@ -6,20 +6,20 @@
 
 ## 概述
 
-使用 **Azure Kubernetes Service (AKS)**，在 **Azure Linux** Kata 节点池上通过**官方 AKS Pod Sandboxing** 部署代理。**[agent-sandbox](https://github.com/kubernetes-sigs/agent-sandbox)**（一个 Kubernetes SIG 项目）通过 `Sandbox` 自定义资源管理代理生命周期。这是可控性和可自定义性最高的选项，既支持具有企业特定技术要求的 **ToB** 场景，也支持需要成本和性能优化的 **ToC** 场景。
+使用 **Azure Kubernetes Service (AKS)**，在 **Azure Linux** Kata 节点池上通过**官方 AKS Pod Sandboxing** 部署 Agent。**[agent-sandbox](https://github.com/kubernetes-sigs/agent-sandbox)**（一个 Kubernetes SIG 项目）通过 `Sandbox` 自定义资源管理 Agent 生命周期。这是可控性和可自定义性最高的选项，既支持具有企业特定技术要求的 **ToB** 场景，也支持需要成本和性能优化的 **ToC** 场景。
 
 > [!Note]
-> 与解决方案 A 中运行于 Microsoft Foundry 托管环境的托管代理不同，解决方案 B 在 AKS Pod Sandboxing 中托管代理。
+> 与解决方案 A 中运行于 Microsoft Foundry 托管环境的托管 Agent 不同，解决方案 B 在 AKS Pod Sandboxing 中托管 Agent。
 >
-> **为什么选择 agent-sandbox？** `agent-sandbox` 是一个 CNCF/Kubernetes SIG 项目，提供 `Sandbox` CRD 和控制器，用于管理隔离、有状态、单实例的代理 Pod，并提供**稳定标识**、**持久存储**和**生命周期管理**（创建、暂停、恢复和休眠）。其内置休眠功能提供了本模块使用的缩容到零机制。
+> **为什么选择 agent-sandbox？** `agent-sandbox` 是一个 CNCF/Kubernetes SIG 项目，提供 `Sandbox` CRD 和控制器，用于管理隔离、有状态、单实例的 Agent Pod，并提供**稳定标识**、**持久存储**和**生命周期管理**（创建、暂停、恢复和休眠）。其内置休眠功能提供了本模块使用的缩容到零机制。
 
 本模块**重用模块 1 创建的资源**，而不是重新创建这些资源，并在**同一资源组**中预配 AKS 群集：
 
 | 从模块 1 重用 | 名称模式 | 用途 |
 |---|---|---|
-| Azure Container Registry | `acragenthost<SN>` | 拉取代理映像（kubelet 的 AcrPull） |
+| Azure Container Registry | `acragenthost<SN>` | 拉取 Agent 映像（kubelet 的 AcrPull） |
 | 用户分配的托管标识 | `id-agenthost-<SN>` | Pod 的 Workload Identity 联合 |
-| Azure Blob Storage | `stcagenthost<SN>` | 代理状态存储（每个代理一个 JSON，容器 `agent-state`） |
+| Azure Blob Storage | `stcagenthost<SN>` | Agent 状态存储（每个 Agent 一个 JSON，容器 `agent-state`） |
 | API Management | `apim-agenthost-<SN>` | 模型调用的 AI 网关 (`/foundry`) |
 
 `<SN>` 是存储在模块 1 资源组的 `deploymentSN` 标记中的部署后缀。`prepare-agent-sandbox.sh` 会自动读取它。
@@ -27,8 +27,8 @@
 ## 学习目标
 
 - 预配带有 OIDC 颁发者和 Workload Identity 的 AKS，然后在 Azure Linux 节点池上启用 AKS Pod Sandboxing
-- 从发布清单安装 `agent-sandbox` 控制器，并将代理作为 `Sandbox` CR 运行
-- 将代理连接到模块 1 的 Blob Storage 帐户和 APIM 网关
+- 从发布清单安装 `agent-sandbox` 控制器，并将 Agent 作为 `Sandbox` CR 运行
+- 将 Agent 连接到模块 1 的 Blob Storage 帐户和 APIM 网关
 - 观察 agent-sandbox 生命周期（暂停、恢复和休眠）如何用作缩容到零机制
 
 ---
@@ -85,9 +85,9 @@ chmod +x prepare-agent-sandbox.sh
 > [!note]
 > `prepare-agent-sandbox.sh` 会进行以下关键更改：
 >
-> 1. 在现有 ACR 中生成代理映像，并将其作为 `agent-host:<IMAGE_TAG>` 推送。生成在 ACR 中运行，因此不需要本地 Docker 守护程序。
+> 1. 在现有 ACR 中生成 Agent 映像，并将其作为 `agent-host:<IMAGE_TAG>` 推送。生成在 ACR 中运行，因此不需要本地 Docker 守护程序。
 > 2. 创建启用了 OIDC、Workload Identity 和 Blob CSI 驱动程序的 AKS 群集。向 kubelet 标识授予 AcrPull，并授予其节点侧 CSI 驱动程序访问现有 Storage 帐户的权限。
-> 3. 添加启用了自动缩放且使用 `KataVmIsolation` 的 Azure Linux 节点池。这会提供用于在轻量级 VM 中隔离代理 Pod 的 `kata-vm-isolation` 运行时。
+> 3. 添加启用了自动缩放且使用 `KataVmIsolation` 的 Azure Linux 节点池。这会提供用于在轻量级 VM 中隔离 Agent Pod 的 `kata-vm-isolation` 运行时。
 > 4. 安装 `agent-sandbox` CRD 和控制器，它们管理 Sandbox 的创建和生命周期转换，例如运行和挂起状态。
 > 5. 为现有 `agent-state` 容器创建 StorageClass、静态 PV 和 PVC，然后呈现 `agent-sandbox.yaml`，其中 PVC 挂载在 `/app/app/data`。该脚本不会部署 Sandbox。
 
@@ -101,7 +101,7 @@ chmod +x prepare-agent-sandbox.sh
 **下一步：**
 
 - 如果 Storage 帐户已禁用公共网络访问，请继续前往[配置 Blob Private Link](#configure-blob-private-link)。
-- 否则，直接前往[在 Sandbox 中部署代理](#deploy-agent-in-sandbox)。
+- 否则，直接前往[在 Sandbox 中部署 Agent](#deploy-agent-in-sandbox)。
 
 ---
 
@@ -148,7 +148,7 @@ az acr build \
 ```
 > **💡 提示**
 >
-> 代理应用程序位于 [`agent-src/`](./agent-src/README.md)。它是一个简单的反思循环代理，演示了：
+> Agent 应用程序位于 [`agent-src/`](./agent-src/README.md)。它是一个简单的反思循环 Agent，演示了：
 > - LLM 终结点配置
 > - `Authorization: Bearer` 令牌身份验证
 > - Blob 状态持久化和恢复
@@ -286,7 +286,7 @@ sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|${IMAGE_TAG}|g; s|<NAMESPACE>|${N
 **下一步：**
 
 - 如果 Storage 帐户已禁用公共网络访问，请继续前往[配置 Blob Private Link](#configure-blob-private-link)。
-- 否则，直接前往[在 Sandbox 中部署代理](#deploy-agent-in-sandbox)。
+- 否则，直接前往[在 Sandbox 中部署 Agent](#deploy-agent-in-sandbox)。
 
 </details>
 
@@ -305,7 +305,7 @@ sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|${IMAGE_TAG}|g; s|<NAMESPACE>|${N
 > 设置会显示其当前状态：
 >![module-03-storageaccount-disable-public-network-access](../pic/module-03-storageaccount-disable-public-network-access.png)
 
-如果 Storage 帐户已禁用公共网络访问，则在代理可以读取或写入其持久化状态之前，AKS 托管 VNet 需要与 Blob 终结点建立专用连接。
+如果 Storage 帐户已禁用公共网络访问，则在 Agent 可以读取或写入其持久化状态之前，AKS 托管 VNet 需要与 Blob 终结点建立专用连接。
 
 运行以下脚本，在 AKS 托管 VNet 和 Storage 帐户之间建立专用连接：
 
@@ -370,9 +370,9 @@ storage-private-link-acf0a3  Succeeded  2026-09-05T16:49:31.354280+00:00  Increm
 ---
 <a id="deploy-agent-in-sandbox"></a>
 
-## 在 Sandbox 中部署代理
+## 在 Sandbox 中部署 Agent
 
-基础设施、存储、网络和 Sandbox 清单准备就绪后，部署代理并检查生成的 Sandbox 和 Pod：
+基础设施、存储、网络和 Sandbox 清单准备就绪后，部署 Agent 并检查生成的 Sandbox 和 Pod：
 
 ```bash
 export NAMESPACE="${NAMESPACE:-agent}"
@@ -414,7 +414,7 @@ pod/agent-host condition met
 NAME                                        READY   STATUS    RESTARTS   AGE
 agent-sandbox-controller-76885c8b6c-gjbk7   1/1     Running   0          117m
 ```
-### 验证代理是否正常工作
+### 验证 Agent 是否正常工作
 
 运行以下命令：
 
@@ -432,10 +432,10 @@ NAME                    TYPE           CLUSTER-IP    EXTERNAL-IP     PORT(S)    
 service/agent-host      ClusterIP      None          <none>          <none>         10m
 service/agent-host-lb   LoadBalancer   10.0.164.26   135.**.**.251   80:32234/TCP   10m
 ```
-在浏览器中打开 `http://<EXTERNAL-IP>`。应出现聊天窗口。提出几个问题以确认代理正常工作：
+在浏览器中打开 `http://<EXTERNAL-IP>`。应出现聊天窗口。提出几个问题以确认 Agent 正常工作：
 
 > [!tip]
-> **请确保 URL 包含 `http://`。否则，浏览器可能会默认使用 HTTPS，而本研讨会代理尚未实现 HTTPS。***
+> **请确保 URL 包含 `http://`。否则，浏览器可能会默认使用 HTTPS，而本研讨会 Agent 尚未实现 HTTPS。***
 
 ![module-03-agent-chat-portal](../pic/module-03-agent-chat-portal.png)
 
@@ -445,7 +445,7 @@ service/agent-host-lb   LoadBalancer   10.0.164.26   135.**.**.251   80:32234/TC
 `agent-state` Blob 容器中。
 
 Blob 容器挂载在 Sandbox Pod 中的 `/app/app/data`，因此可以
-直接从 Pod 检查持久化状态。首先，标识代理 Pod
+直接从 Pod 检查持久化状态。首先，标识 Agent Pod
 并列出挂载卷中的文件：
 
 ```bash
@@ -494,7 +494,7 @@ kubectl exec -n "$NAMESPACE" "$AGENT_POD" -- \
 }
 ```
 
-### 验证代理在沙盒中运行
+### 验证 Agent 在沙盒中运行
 
 运行以下命令，确认 Pod 正在运行时类为 **`kata-vm-isolation`** 的 Sandbox 中运行：
 
@@ -532,7 +532,7 @@ Containers:
 
 ### 验证 Pod Sandboxing 内核隔离
 
-在沙盒化的代理 Pod 内使用 `uname -r`，确认它使用
+在沙盒化的 Agent Pod 内使用 `uname -r`，确认它使用
 AKS Pod Sandboxing 运行时。然后将其内核与群集上普通 Pod 的内核进行比较。
 
 ```bash
@@ -581,22 +581,22 @@ kubectl exec -it -n "$NAMESPACE" normal-pod -- uname -r
 kubectl delete pod normal-pod -n "$NAMESPACE"
 ```
 > [!tip]
-> 如果代理 Pod 报告的内核与普通 Pod 不同，并且使用 `runtimeClassName: kata-vm-isolation`，即可确认工作负载正在 AKS Pod Sandboxing 内运行。
+> 如果 Agent Pod 报告的内核与普通 Pod 不同，并且使用 `runtimeClassName: kata-vm-isolation`，即可确认工作负载正在 AKS Pod Sandboxing 内运行。
 
-<!-- ### 验证代理是否在 Foundry 中注册为“prompt”代理
+<!-- ### 验证 Agent 是否在 Foundry 中注册为“prompt”Agent
 
-在 Foundry 门户中打开 Foundry 项目并转到 **Agents** 选项卡。代理
+在 Foundry 门户中打开 Foundry 项目并转到 **Agents** 选项卡。Agent
 `agenthost-reflection-agent`（在 `.env` 中定义）应已成功注册，其
 类型为 `prompt`：
 
 ![module-03-agent-in-foundry-portal](../pic/module-03-agent-in-foundry-portal.png) -->
 
-### 验证代理在恢复后重新加载其状态
+### 验证 Agent 在恢复后重新加载其状态
 
-在 Azure 门户中打开 AKS 群集，转到 **Workloads**，选择代理 Pod，然后单击 **Delete**：
+在 Azure 门户中打开 AKS 群集，转到 **Workloads**，选择 Agent Pod，然后单击 **Delete**：
 ![module-03-delete-agent-pod-to-verify-load-state](../pic/module-03-delete-agent-pod-to-verify-load-state.png)
 
-在浏览器中刷新代理聊天窗口。Pod 重启期间，代理会暂时不可用。
+在浏览器中刷新 Agent 聊天窗口。Pod 重启期间，Agent 会暂时不可用。
 Pod 恢复运行后，再次刷新页面。之前的聊天历史记录应已还原。
 
 ### 生命周期（空闲挂起/恢复模型）
@@ -614,13 +614,13 @@ Sandbox 清单设置了 `spec.operatingMode: Running` 和 `spec.service: true`�
 `Sandbox` CRD 提供 `Running` / `Suspended` 状态转换，但它
 不提供 `idleTimeout` 字段，无法检查应用程序请求，
 也无法确定用户会话何时变为空闲。当前的公共 `LoadBalancer` Service
-还会将流量直接路由到代理 Pod。当该 Pod 挂起时，Service 没有
+还会将流量直接路由到 Agent Pod。当该 Pod 挂起时，Service 没有
 就绪终结点，无法保留请求、修补 Sandbox、等待启动，然后重试
 该请求。因此，仅使用 Sandbox 清单无法实现
 “空闲 15 分钟，然后在下一个 HTTP 请求到达时唤醒”的行为。
 
 KEDA 可用于根据指标缩放 Deployment 或 `SandboxWarmPool` 容量，
-但它本身无法实现此单实例代理所需的按 Sandbox 会话路由和
+但它本身无法实现此单实例 Agent 所需的按 Sandbox 会话路由和
 转发前唤醒行为。
 
 </details>
@@ -636,7 +636,7 @@ Sandbox LoadBalancer。网关和清理程序使用 Kubernetes RBAC，
 控制流如下：
 
 1. 网关记录每个 Sandbox 上次完成请求的时间。
-  将此信息存储在代理 Pod 之外，例如 Redis 或数据库中，
+  将此信息存储在 Agent Pod 之外，例如 Redis 或数据库中，
   因为 Pod 挂起时会消失。
 2. 空闲清理程序定期查找没有活动请求且
    15 分钟内无流量的 Sandbox，然后将 `spec.operatingMode` 修补为 `Suspended`。
@@ -706,7 +706,7 @@ agent-host   False   SandboxSuspended   62m
 3. Sandbox 状态为 `False/SandboxSuspended`，表示它尚未就绪。
 
 如果在浏览器中刷新 Agent Chat UI，它将无法访问。
-如果在 AKS 门户中刷新 **Workloads -> Pods**，代理 Pod `agent-host` 会消失。
+如果在 AKS 门户中刷新 **Workloads -> Pods**，Agent Pod `agent-host` 会消失。
 
 接下来，恢复 Pod 和 Sandbox，以模拟流量回归：
 
@@ -767,14 +767,14 @@ agent-host   True    DependenciesReady   71m
 kubectl describe sandbox agent-host -n "$NAMESPACE"
 ```
 > [!tip]
-> 有关 agent-sandbox 代理生命周期管理的更多详细信息，请参阅 [agent-sandbox 文档](https://agent-sandbox.sigs.k8s.io/docs/)，了解暂停/恢复、计划删除和 `SandboxWarmPool` 模式。
+> 有关 agent-sandbox Agent 生命周期管理的更多详细信息，请参阅 [agent-sandbox 文档](https://agent-sandbox.sigs.k8s.io/docs/)，了解暂停/恢复、计划删除和 `SandboxWarmPool` 模式。
 
 ---
 
 ## 体系结构
 
-- AKS 在 Azure Linux Kata 节点池上运行代理，通过 `kata-vm-isolation` 提供 Pod 级微型 VM 隔离。
-- `agent-sandbox` 控制器管理有状态代理 Pod、稳定的服务标识以及挂起/恢复生命周期。
+- AKS 在 Azure Linux Kata 节点池上运行 Agent，通过 `kata-vm-isolation` 提供 Pod 级微型 VM 隔离。
+- `agent-sandbox` 控制器管理有状态 Agent Pod、稳定的服务标识以及挂起/恢复生命周期。
 - Workload Identity 提供无密码访问，Blob CSI 挂载持久状态，APIM 则将模型请求路由到 Foundry。
 - 重用模块 01 资源，包括 ACR、托管标识、Blob Storage、APIM 和 Foundry 模型。
 
@@ -800,7 +800,7 @@ https://github.com/user-attachments/assets/7dd698c4-7eb4-49f6-afea-3b413d69d991
 | `agent-storage.yaml` | 由 `prepare-agent-sandbox.sh` 生成，其中包含 Storage 帐户、资源组、kubelet 标识和命名空间值。 |
 | `agent-sandbox.yaml.example` | 清单模板，其中包含 ACR、映像标记、命名空间和标识值的占位符。 |
 | `agent-sandbox.yaml` | 在部署期间从 `agent-sandbox.yaml.example` 生成，然后应用它来创建使用 AKS `kata-vm-isolation` 的 ServiceAccount、`Sandbox` CR 和 Service。 |
-| `agent-src/` | POC 代理源代码：`app/main.py`（ReflectionAgent HTTP 服务器）、`Dockerfile`、`requirements.txt`、`lifecycle-hook.sh` 和使用说明 `README.md`。这是作为 Sandbox 生成和部署的映像。 |
+| `agent-src/` | POC Agent 源代码：`app/main.py`（ReflectionAgent HTTP 服务器）、`Dockerfile`、`requirements.txt`、`lifecycle-hook.sh` 和使用说明 `README.md`。这是作为 Sandbox 生成和部署的映像。 |
 
 ---
 

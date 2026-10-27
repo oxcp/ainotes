@@ -44,11 +44,13 @@ cd agenthost/module-04
 chmod +x sandbox-deploy.sh
 ./sandbox-deploy.sh
 ```
+> [!tip]
+> `sandbox-deploy.sh` 完成配置需要运行大约 2 分钟。
 
 > [!note]
 > 完成后，`sandbox-deploy.sh` 已应用所需的 Sandbox 资源和权限：
 >
-> - 创建 Azure Container Apps SandboxGroup（`Microsoft.App/SandboxGroups`，预览版）。
+> - 创建 Azure Container Apps SandboxGroup（`Microsoft.App/SandboxGroups`）。
 > - 将 Module-01 用户分配的托管标识分配给 SandboxGroup，用作工作负载标识。
 > - 配置 SandboxGroup 注册表绑定，使 sandbox 能够使用现有 ACR 映像。
 > - 通过 `sandbox.bicep` 向 Module-01 托管标识授予 ACR 上的 `AcrPull`。
@@ -82,11 +84,10 @@ Documentation:
 ## 可选 — 通过 Private Link 将 SandboxGroup 连接到 Blob
 
 > [!important]
-> **如果 Module-01 Storage account 已禁用公共网络访问，那么在智能体能够读取或写入其持久化状态之前，ACA SandboxGroup 必须具有到 Blob endpoint 的专用网络连接。**
+> **如果 Module-01 中创建的 Storage account 禁用公共网络访问，那么在智能体能够读取或写入其持久化状态之前，ACA SandboxGroup 必须具有到 Blob endpoint 的专用网络连接。**
 
-为方便研讨会操作，请复用 Module-03 中发现的 AKS 托管 VNet。
-Module-03 已将 AKS managed VNet 链接到 Blob Private DNS zone，并创建了 Blob Private Endpoint。我们不会为 Module-04 再创建一个 Blob Private Endpoint。
-而是在 AKS managed VNet 中为 ACA Sandboxes 创建一个新的专用子网，并将 SandboxGroup 连接到该子网：
+为方便研讨会操作，请复用 Module-03 中创建的 AKS 托管 VNet。
+Module-03 已将 AKS managed VNet 链接到 Blob Private DNS zone，并创建了 Blob Private Endpoint。我们在 Module-04 复用这个 Blob Private Endpoint。我们将在 AKS managed VNet 中为 ACA Sandboxes 创建一个新的专用子网，并将 SandboxGroup 连接到该子网：
 
 1. 在 Azure 门户中打开 **AKS node resource group**，然后选择 Module-03 使用的 AKS-managed VNet。
 2. 创建名为 `aca-subnet` 的新子网。使用空闲且不重叠的地址范围，并使其与 AKS node subnet 和 `snet-private-endpoints` 保持分离。
@@ -98,9 +99,14 @@ Module-03 已将 AKS managed VNet 链接到 Blob Private DNS zone，并创建了
 
 现在将子网 `aca-subnet` 委派给 Azure Container Apps，使其可供 Container Apps environment 使用。
 
-**运行（将 `--resource-group` 和 `--vnet-name` 的值替换为你自己的值）：**
+**运行委派：**
 
 ```bash
+RESOURCE_GROUP="rg-agenthost-workshop"
+
+SN=$(az group show --resource-group "$RESOURCE_GROUP" --query "tags.deploymentSN" --output tsv 2>/dev/null | tr -d "\r\n" || echo "")
+AKS_NAME="aks-agenthost-${SN}"
+
 NODE_RESOURCE_GROUP=$(az aks show --resource-group "$RESOURCE_GROUP" --name "$AKS_NAME" --query nodeResourceGroup --output tsv | tr -d "\r\n")
 
 VNET_NAME=$(az network vnet list --resource-group "$NODE_RESOURCE_GROUP" --query "[0].name" --output tsv | tr -d "\r\n")
@@ -149,13 +155,9 @@ az network vnet subnet update \
 "serviceName": "Microsoft.App/environments"
 ```
 
-**运行（将 `--resource-group` 和 `--vnet-name` 的值替换为你自己的值）：**
+**检查委派：**
 
 ```bash
-NODE_RESOURCE_GROUP=$(az aks show --resource-group "$RESOURCE_GROUP" --name "$AKS_NAME" --query nodeResourceGroup --output tsv | tr -d "\r\n")
-
-VNET_NAME=$(az network vnet list --resource-group "$NODE_RESOURCE_GROUP" --query "[0].name" --output tsv | tr -d "\r\n")
-
 az network vnet subnet show \
   --resource-group $NODE_RESOURCE_GROUP \
   --vnet-name $VNET_NAME \

@@ -50,10 +50,13 @@ chmod +x sandbox-deploy.sh
 ./sandbox-deploy.sh
 ```
 
+> [!TIP]
+> `sandbox-deploy.sh` takes approximately 2 minutes to complete the configuration.
+
 > [!note]
 > On completion, `sandbox-deploy.sh` has applied the required Sandbox resources and permissions:
 > 
-> - Creates the Azure Container Apps SandboxGroup (`Microsoft.App/SandboxGroups`, preview).
+> - Creates the Azure Container Apps SandboxGroup (`Microsoft.App/SandboxGroups`).
 > - Assigns the Module-01 user-assigned managed identity to the SandboxGroup for workload identity.
 > - Configures the SandboxGroup registry binding so sandboxes can use the existing ACR image.
 > - Grants `AcrPull` on the ACR to the Module-01 managed identity through `sandbox.bicep`.
@@ -87,12 +90,12 @@ In the Azure portal, open your resource group to confirm the SandboxGroup was cr
 ## Optional — Connect the SandboxGroup to Blob through Private Link
 
 > [!important]
-> **If the Module-01 Storage account has public network access disabled, the ACA SandboxGroup must have private network connectivity to the Blob endpoint before the agent can read or write its persisted state.**
+> **If the Storage account created in Module-01 has public network access disabled, the ACA SandboxGroup must have private network connectivity to the Blob endpoint before the agent can read or write its persisted state.**
 
-For workshop convenience, reuse the AKS-managed VNet discovered in Module-03.
+For workshop convenience, reuse the AKS-managed VNet created in Module-03.
 Module-03 already linked AKS managed VNet to the Blob Private DNS zone and created the
-Blob Private Endpoint. We do not create another Blob Private Endpoint for Module-04.
-Instead, create a new, dedicated subnet for ACA Sandboxes in the AKS managed VNet and connect
+Blob Private Endpoint. We reuse this Blob Private Endpoint in Module-04.
+Create a new, dedicated subnet for ACA Sandboxes in the AKS managed VNet and connect
 the SandboxGroup to that subnet:
 
 1. In the Azure portal, open the **AKS node resource group** and select the
@@ -108,9 +111,14 @@ After creating the subnet, you should see `aca-subnet` in the subnet list:
 
 Now delegate the subnet `aca-subnet` to Azure Container Apps so it can be used by a Container Apps environment.
 
-**Run (replace the `--resource-group` and `--vnet-name` value with your ones):**
+**Configure the delegation:**
 
 ```bash
+RESOURCE_GROUP="rg-agenthost-workshop"
+
+SN=$(az group show --resource-group "$RESOURCE_GROUP" --query "tags.deploymentSN" --output tsv 2>/dev/null | tr -d "\r\n" || echo "")
+AKS_NAME="aks-agenthost-${SN}"
+
 NODE_RESOURCE_GROUP=$(az aks show --resource-group "$RESOURCE_GROUP" --name "$AKS_NAME" --query nodeResourceGroup --output tsv | tr -d "\r\n")
 
 VNET_NAME=$(az network vnet list --resource-group "$NODE_RESOURCE_GROUP" --query "[0].name" --output tsv | tr -d "\r\n")
@@ -160,13 +168,9 @@ Verify that the `Microsoft.App/environments` service delegation was added. In th
 ```
 
 
-**Run (replace the `--resource-group` and `--vnet-name` value with your ones):**
+**Check the delegation:**
 
 ```bash
-NODE_RESOURCE_GROUP=$(az aks show --resource-group "$RESOURCE_GROUP" --name "$AKS_NAME" --query nodeResourceGroup --output tsv | tr -d "\r\n")
-
-VNET_NAME=$(az network vnet list --resource-group "$NODE_RESOURCE_GROUP" --query "[0].name" --output tsv | tr -d "\r\n")
-
 az network vnet subnet show \
   --resource-group $NODE_RESOURCE_GROUP \
   --vnet-name $VNET_NAME \
