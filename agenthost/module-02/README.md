@@ -53,7 +53,7 @@ echo $SN
 
 ### Set Foundry project environment variables
 > [!NOTE]
-> The module-01 already created the Foundry account, the `maf-agent-prj` project, and the `gpt-5.4-mini` deployment. In this module-01, to **reuse** them instead of provisioning new ones, we initialize the agent with the existing project's **Endpoint** and **ARM resource ID** (`--project-id`). We can get the project endpoint and project ID from the Foundry portal.
+> The module-01 already created the Foundry account, the `maf-agent-prj` project, and the `gpt-5.4-mini` deployment. In this module, to **reuse** them instead of provisioning new ones, we initialize the agent with the existing project's **Endpoint** and **ARM resource ID** (`--project-id`). We can get the project endpoint and project ID from the Foundry portal.
 
 In the Foundry portal, in the top-left drop down menu, select **"View all resources"**, and then in the resources list enter your project `maf-agent-prj` whose Parent resource is `foundry-agenthost-<SN>`:
 ![module-02-resource_list_in_foundry](../pic/module-02-resource_list_in_foundry.png)
@@ -74,8 +74,8 @@ echo "$PROJECT_ENDPOINT"
 ### Initialize the agent bound to Foundry project
 
 ```bash
-azd auth login
-# Or use: azd auth login --tenant-id <your_tenant_id>, if you have multiple tenants
+azd auth login --use-device-code
+# Sign in interactively through your browser using the device code shown by the command.
 
 azd ai agent init -m <your_cloned_module-02_path>/azure.yaml --project-id "$PROJECT_ID"
 # note: you need pointing to the right location of azure.yaml file (in the module-02 folder), for example: <your_clone_path>/ainotes/agenthost/module-02/azure.yaml
@@ -169,6 +169,10 @@ azd env get-values
 ```
 
 ## Step 4 — Run the agent locally
+
+> [!TIP]
+> - This step runs and tests the agent locally, so Python 3.13+ must be installed in your environment.
+> - If this requirement is not met, install a compatible Python version or skip this local testing step and proceed directly to the next step.
 
 ```bash
 azd ai agent run

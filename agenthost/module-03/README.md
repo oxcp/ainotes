@@ -96,6 +96,7 @@ After `prepare-agent-sandbox.sh` completes, open the resource group in the Azure
 
 ---
 
+<a id="manual-steps-equivalent-to-prepare-agent-sandboxsh"></a>
 ## Manual Steps Preparation (equivalent to prepare-agent-sandbox.sh)
 > [!warning]
 > **Alternative to One-Command Deployment:** follow these steps only if you chose

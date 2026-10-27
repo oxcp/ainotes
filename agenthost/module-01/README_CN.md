@@ -2,7 +2,7 @@
 
 > 🌐 语言 / Language: [English](README.md) | **中文**
 
-[⬆ 返回研讨会主页](../readme.md)
+[⬆ 返回研讨会主页](../README_CN.md)
 
 ## 概述
 
@@ -42,7 +42,7 @@ Foundry 帐户附带：
 > [!IMPORTANT]
 > **注意：** 请从本模块的根目录（`agenthost/module-01/`）运行此 README 中的所有命令。
 
-- 完成[研讨会通用先决条件](../readme.md#prerequisites-before-workshop)。
+- 完成[研讨会通用先决条件](../README_CN.md#先决条件研讨会开始前)。
 - 已安装 `curl`
 - 已安装 `jq`
 - 拥有为本模块部署的资源创建角色分配的权限（`Microsoft.Authorization/roleAssignments/write`）。典型选项为 **Owner**，或 **Contributor** 加 **Role Based Access Control Administrator**。
@@ -306,8 +306,8 @@ curl -s -X POST \
 ---
 ## 下一步
 
-继续前往[模块 2 — 解决方案 A：Foundry 托管智能体](../module-02/README.md)，使用 `azd` 针对在此预配的 Foundry 项目部署托管智能体。
+继续前往[模块 2 — 解决方案 A：Foundry 托管智能体](../module-02/README_CN.md)，使用 `azd` 针对在此预配的 Foundry 项目部署托管智能体。
 
 ---
 
-[⬆ 返回研讨会主页](../readme.md)
+[⬆ 返回研讨会主页](../README_CN.md)

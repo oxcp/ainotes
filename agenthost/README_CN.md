@@ -11,14 +11,14 @@
 > 打开[简介](https://oxcp.github.io/ainotes/agenthost/module-00/)，逐步浏览研讨会内容。 -->
 
 > [!TIP]
-> 为获得更好的阅读和导航体验，请使用 [Azure 上的智能体托管研讨会指南](https://oxcp.github.io/ainotes/markdown-viewer.html?file=agenthost/readme.md)。
+> 为获得更好的阅读和导航体验，请使用 [Azure 上的智能体托管研讨会指南](https://oxcp.github.io/ainotes/markdown-viewer.html?file=agenthost/README_CN.md)。
 
 ---
 
 ## 研讨会大纲
 
 - **目标场景**：ToB 企业场景和 ToC 消费者场景，两者在隔离、扩展、身份验证和成本方面各有不同的优先级。
-- **解决方案（有关详细信息，请参阅[研讨会简介](./module-00/README.md)）**：
+- **解决方案（有关详细信息，请参阅[研讨会简介](./module-00/README_CN.md)）**：
   - **解决方案 A**：Azure AI Foundry Hosted Agent（ToB 托管）— 最快捷的入门路径，提供原生状态和身份验证，以及强大的治理和安全性。
   - **解决方案 B**：AKS + agent-sandbox（ToB / ToC）— 高度可定制：满足 ToB 特有的企业技术要求，或针对 ToC 优化成本和性能。
   - **解决方案 C**：ACA 容器运行时选项（ToC / ToB）：
@@ -170,12 +170,12 @@ Fix suggestion:
 
 | 模块 | 主题 | 时长 | 目的 |
 |---|---|---|---|
-| [module-00](./module-00/README.md) | 简介 | 10 分钟 | 了解目标场景、智能体状态模式和三种托管解决方案。 |
-| [module-01](./module-01/README.md) | 核心基础设施设置 | 20 分钟 | 部署所有托管解决方案共用的 Azure 基础设施。 |
-| [module-02](./module-02/README.md) | 解决方案 A：Foundry Hosted Agent | 30 分钟 | 部署具有原生状态、身份验证、治理和 AI Gateway 集成的托管 Foundry 智能体。 |
-| [module-03](./module-03/README.md) | 解决方案 B：AKS + agent-sandbox | 40 分钟 | 在 AKS 上部署可定制的智能体运行时，具备沙盒隔离、持久状态和工作负载标识。 |
-| [module-04](./module-04/README.md) | 解决方案 C：ACA Sandboxes（研讨会路径） | 30 分钟 | 在 ACA Sandboxes 中部署具有微型 VM 隔离及挂起/恢复功能的智能体，并探索作为可选路径的 Dynamic Sessions。 |
-| [module-05](./module-05/README.md) | 总结和问答 | 5 分钟 | 比较解决方案，并查看选择指南、成本优化和生产环境强化建议。 |
+| [module-00](./module-00/README_CN.md) | 简介 | 10 分钟 | 了解目标场景、智能体状态模式和三种托管解决方案。 |
+| [module-01](./module-01/README_CN.md) | 核心基础设施设置 | 20 分钟 | 部署所有托管解决方案共用的 Azure 基础设施。 |
+| [module-02](./module-02/README_CN.md) | 解决方案 A：Foundry Hosted Agent | 30 分钟 | 部署具有原生状态、身份验证、治理和 AI Gateway 集成的托管 Foundry 智能体。 |
+| [module-03](./module-03/README_CN.md) | 解决方案 B：AKS + agent-sandbox | 40 分钟 | 在 AKS 上部署可定制的智能体运行时，具备沙盒隔离、持久状态和工作负载标识。 |
+| [module-04](./module-04/README_CN.md) | 解决方案 C：ACA Sandboxes（研讨会路径） | 30 分钟 | 在 ACA Sandboxes 中部署具有微型 VM 隔离及挂起/恢复功能的智能体，并探索作为可选路径的 Dynamic Sessions。 |
+| [module-05](./module-05/README_CN.md) | 总结和问答 | 5 分钟 | 比较解决方案，并查看选择指南、成本优化和生产环境强化建议。 |
 
 > **研讨会总时长：**135 分钟。
 > **动手练习（模块 01–04）：**120 分钟。

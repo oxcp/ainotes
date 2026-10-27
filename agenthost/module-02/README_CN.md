@@ -2,7 +2,7 @@
 
 > 🌐 语言 / Language: [English](README.md) | **中文**
 
-[⬆ 返回研讨会主页](../readme.md)
+[⬆ 返回研讨会主页](../README_CN.md)
 
 ## 概述
 
@@ -301,4 +301,4 @@ https://github.com/user-attachments/assets/5cf37256-1fc1-43e4-bf64-5d1108b893a0
 
 ---
 
-[⬆ 返回研讨会主页](../readme.md)
+[⬆ 返回研讨会主页](../README_CN.md)

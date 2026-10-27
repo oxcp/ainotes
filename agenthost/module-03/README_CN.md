@@ -2,7 +2,7 @@
 
 > 🌐 语言 / Language: [English](README.md) | **中文**
 
-[⬆ 返回研讨会主页](../readme.md)
+[⬆ 返回研讨会主页](../README_CN.md)
 
 ## 概述
 
@@ -790,8 +790,8 @@ https://github.com/user-attachments/assets/7dd698c4-7eb4-49f6-afea-3b413d69d991
 
 ## 后续步骤
 
-继续前往[模块 4 — 解决方案 C：ACA Sandboxes](../module-04/README.md)。
+继续前往[模块 4 — 解决方案 C：ACA Sandboxes](../module-04/README_CN.md)。
 
 ---
 
-[⬆ 返回研讨会主页](../readme.md)
+[⬆ 返回研讨会主页](../README_CN.md)
