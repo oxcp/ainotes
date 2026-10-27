@@ -56,7 +56,7 @@ chmod +x check-prerequisites.sh
 bash check-prerequisites.sh
 ```
 
-The checker groups the results by module, clearly identifies passed and failed requirements, and provides a remediation link for each failed check.
+The checker groups the results by module, clearly identifies passed and failed requirements, and provides a reference link for remediation guidance for each failed check.
 
 The output will look similar to the following:
 > [!TIP]
@@ -130,7 +130,7 @@ Module notice: Re-run this check after Module 01 to validate the skipped ACR per
 > 1. If **Common prerequisites for all modules** and **Module 01** contain no failed checks, the script reports `Workshop readiness: Ready to start`, and you can begin the workshop.
 > 2. Failed checks under **Module 02** through **Module 04** do not prevent you from starting the workshop. Follow the reported details and fix suggestions, then run `check-prerequisites.sh` again before starting the corresponding module. Begin that module only after all of its prerequisites are satisfied.
 > 3. Before the workshop starts, Azure Container Registry has not yet been deployed, so `check-prerequisites.sh` reports the **ACR remote build permissions** check as `Skipped`. Run the checker again after completing Module 01 to verify these permissions. Module 03 uses `az acr build`. Assigning **Contributor** at the registry scope is sufficient for the build and image push operations.
-> 4. **Module 03** and **Module 04** share the same Azure Container Registry and container image. Therefore, a deployed and accessible ACR is a prerequisite for both Module 03 and Module 04, even though the ACR permission check is displayed under Module 03.
+> 4. **Module 03** and **Module 04** share the same Azure Container Registry and container image. Therefore, a deployed and accessible ACR is a shared prerequisite for Module 03 and Module 04.
 
 If the "Workshop deployment permissions" check finds that any actions required for workshop deployment are not permitted, the checker lists each missing ARM action, as shown below:
 
@@ -177,7 +177,8 @@ This downloads the content required for the `agenthost` workshop.
 | [module-04](./module-04/README.md) | Solution C: ACA Sandboxes (workshop path) | 30 min | Deploy an agent in ACA Sandboxes with micro-VM isolation and suspend/resume, and explore Dynamic Sessions as an optional track. |
 | [module-05](./module-05/README.md) | Wrap-up and Q&A | 5 min | Compare the solutions and review selection guidance, cost optimization, and production-hardening recommendations. |
 
-**Total workshop duration:** 135 minutes. **Hands-on exercises (Modules 01–04):** 120 minutes.
+> **Total workshop duration:** 135 minutes.
+> **Hands-on exercises (Modules 01–04):** 120 minutes.
 
 ---
 

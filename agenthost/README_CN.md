@@ -56,7 +56,7 @@ chmod +x check-prerequisites.sh
 bash check-prerequisites.sh
 ```
 
-检查器按模块对结果进行分组，清晰标识已通过和未通过的要求，并为每个失败的检查提供修复链接。
+检查器按模块对结果进行分组，清晰标识已通过和未通过的要求，并为每个失败的检查提供修复参考链接。
 
 输出将类似于以下内容：
 > [!TIP]
@@ -130,7 +130,7 @@ Module notice: Re-run this check after Module 01 to validate the skipped ACR per
 > 1. 如果**所有模块的通用先决条件**和**模块 01**中没有失败的检查，脚本会报告 `Workshop readiness: Ready to start`，此时你可以开始研讨会。
 > 2. **模块 02** 到**模块 04**中的失败检查不会阻止你开始研讨会。请按照报告的详细信息和修复建议进行处理，然后在开始对应模块之前再次运行 `check-prerequisites.sh`。只有在该模块的所有先决条件均得到满足后，才开始该模块。
 > 3. 在研讨会开始之前，Azure Container Registry 尚未部署，因此 `check-prerequisites.sh` 会将 **ACR 远程生成权限**检查报告为 `Skipped`。完成模块 01 后，请再次运行检查器以验证这些权限。模块 03 使用 `az acr build`。在注册表范围内分配 **Contributor** 足以执行生成和映像推送操作。
-> 4. **模块 03** 和**模块 04**共享同一个 Azure Container Registry 和容器映像。因此，已部署且可访问的 ACR 是模块 03 和模块 04 的先决条件，即使 ACR 权限检查显示在模块 03 下也是如此。
+> 4. **模块 03** 和**模块 04**共享同一个 Azure Container Registry 和容器映像。因此，已部署且可访问的 ACR 是模块 03 和模块 04 的共同先决条件。
 
 如果“研讨会部署权限”检查发现研讨会部署所需的任何操作不被允许，检查器将列出每个缺失的 ARM 操作，如下所示：
 
@@ -177,7 +177,8 @@ Fix suggestion:
 | [module-04](./module-04/README.md) | 解决方案 C：ACA Sandboxes（研讨会路径） | 30 分钟 | 在 ACA Sandboxes 中部署具有微型 VM 隔离及挂起/恢复功能的智能体，并探索作为可选路径的 Dynamic Sessions。 |
 | [module-05](./module-05/README.md) | 总结和问答 | 5 分钟 | 比较解决方案，并查看选择指南、成本优化和生产环境强化建议。 |
 
-**研讨会总时长：**135 分钟。**动手练习（模块 01–04）：**120 分钟。
+> **研讨会总时长：**135 分钟。
+> **动手练习（模块 01–04）：**120 分钟。
 
 ---
 
