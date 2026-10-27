@@ -105,6 +105,7 @@ chmod +x prepare-agent-sandbox.sh
 
 <a id="manual-steps-equivalent-to-prepare-agent-sandboxsh"></a>
 
+## 手动步骤
 <details>
 <summary><strong>等效于 prepare-agent-sandbox.sh 的手动步骤准备</strong>（单击展开）</summary>
 
