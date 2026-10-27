@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.44.1.10279",
-      "templateHash": "15636571835602874816"
+      "templateHash": "6691448521340016858"
     }
   },
   "parameters": {
@@ -152,19 +152,6 @@
               "sourcePortRange": "*",
               "destinationPortRange": "22",
               "sourceAddressPrefix": "[parameters('sshAllowedSource')]",
-              "destinationAddressPrefix": "*"
-            }
-          },
-          {
-            "name": "DenyOtherInbound",
-            "properties": {
-              "priority": 200,
-              "direction": "Inbound",
-              "access": "Deny",
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "*",
-              "sourceAddressPrefix": "*",
               "destinationAddressPrefix": "*"
             }
           }

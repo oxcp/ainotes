@@ -94,7 +94,9 @@ ssh-keygen -t rsa -b 4096 -f ~/.ssh/toolbox_rsa
 
 选择不创建Public IP时，不会部署公共 IP 资源，也不会在 NIC 上关联公共 IP。通过SSH 连接到toolbox VM，需要依赖现有的专用路由，例如单独建立的对等互连/VPN 或 Bastion 连接。
 
-新建网络时，NSG 可以设置入站规则，例如仅允许来自当前IP地址的，入站22端口 TCP 入站流量，包括原本默认允许的 VNet 范围内入站流量，并显式拒绝其他入站流量。默认出站 NSG 规则保持启用。使用已有网络，会保留原有安全与出站配置，需要单独确认。
+新建网络时，模板添加一条入站规则，允许配置的 SSH 源 IP/CIDR 访问 TCP 22 端口。其它 Azure 默认 NSG 入站规则保持不变，例如：允许来自 `VirtualNetwork` 和 `AzureLoadBalancer` 服务标记的入站流量，其他未匹配允许规则的入站流量仍由默认的 `DenyAllInBound` 规则拒绝。默认出站 NSG 规则保持启用。
+
+使用已有网络时，会保留原有 NSG 出入站规则配置，需要单独确认是否影响 toolbox VM 的工具安装。
 
 
 ## 验证

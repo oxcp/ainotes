@@ -87,19 +87,6 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2024-05-01' = if (networkM
           destinationAddressPrefix: '*'
         }
       }
-      {
-        name: 'DenyOtherInbound'
-        properties: {
-          priority: 200
-          direction: 'Inbound'
-          access: 'Deny'
-          protocol: '*'
-          sourcePortRange: '*'
-          destinationPortRange: '*'
-          sourceAddressPrefix: '*'
-          destinationAddressPrefix: '*'
-        }
-      }
     ]
   }
 }

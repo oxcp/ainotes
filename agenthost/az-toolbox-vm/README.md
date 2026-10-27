@@ -10,7 +10,7 @@ Deploy an Ubuntu 24.04 LTS engineering workstation with the tools required for t
 - Sufficient regional quota and capacity for the selected x64 Generation 2 VM size. The default is `Standard_D4s_v5`.
 - When using an existing subnet, permission to read its VNet and subnet and to perform `Microsoft.Network/virtualNetworks/subnets/join/action`, including when the network is in another resource group.
 - Choose an authentication method: **SSH public key** (the default and recommended option) or **username/password**. Password authentication does not require key generation. For key-based authentication, provide only the public key and keep the private key on your client. Use a 4096-bit RSA key for compatibility with Azure Linux VM provisioning.
-- A trusted source public IP address or CIDR range for public SSH access, typically your current public IP address(es). For quick access, you can use `0.0.0.0/0` to allow inbound traffic from any source. This is intended only for short-lived labs; restrict access as soon as possible.
+- A trusted source public IP address or CIDR range for public SSH access, typically your current public IP address(es). For quick access, you can use `0.0.0.0/0` to allow inbound SSH traffic from any source, but this is intended only for short-lived labs; replace it with a trusted source IP/CIDR as soon as possible.
 - Outbound DNS and HTTPS access during first boot to Ubuntu repositories, Microsoft package and installation endpoints, the azd extension registry, and GitHub and Kubernetes download endpoints.
 
 ## One-click deployment
@@ -91,7 +91,9 @@ The existing VNet must be in the same subscription and region as the VM. Choose 
 
 If you choose not to create a public IP, no public IP resource or NIC public-IP association is deployed. Connecting to the toolbox VM over SSH requires existing private routing, such as peering/VPN or Bastion connectivity established separately.
 
-For new networks, the NSG supports inbound rules such as allowing TCP port 22 only from your current IP address, including traffic within the VNet that would otherwise be allowed by default, and explicitly denying other inbound traffic. Default outbound NSG rules remain enabled. Existing networks retain their current security and outbound configuration, which you must verify separately.
+For new networks, the template adds an inbound rule allowing TCP port 22 from the configured SSH source IP/CIDR. Other Azure default NSG inbound rules remain unchanged: for example, inbound traffic from the `VirtualNetwork` and `AzureLoadBalancer` service tags is allowed, while inbound traffic that does not match an allow rule is still denied by the default `DenyAllInBound` rule. Default outbound NSG rules remain enabled.
+
+When using an existing network, its current NSG inbound and outbound rules are preserved. Check separately whether these rules affect tool installation on the toolbox VM.
 
 ## Validation
 
