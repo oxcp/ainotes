@@ -40,12 +40,12 @@ The image is `Canonical:ubuntu-24_04-lts:server:latest` (x64, generation 2). The
 
 ## Prerequisites
 
-- An Azure subscription and permission to deploy compute/network resources into the target resource group, including a system-assigned identity.
-- Regional quota and capacity for the selected x64 generation 2 VM size; the default is `Standard_D4s_v5`.
-- When using an existing subnet, permission to read its VNet/subnet and perform `Microsoft.Network/virtualNetworks/subnets/join/action`, including when the network is in another resource group.
-- Choose an authentication method: **SSH public key** (default, recommended) or **username/password**. Password authentication requires no key generation or existing Linux environment. For key authentication, supply only the public key and keep the private key on your client; use a 4096-bit RSA key for compatibility with Azure Linux VM provisioning.
-- A trusted source public IP/CIDR for public SSH. The default `*` is intended only for short-lived labs; replace it before deployment.
-- Outbound DNS and HTTPS access to Ubuntu repositories, Microsoft package/install endpoints, the azd extension registry, and GitHub/Kubernetes download endpoints during first boot.
+- An Azure subscription and permission to deploy compute and network resources to the target resource group, including permission to create a system-assigned identity.
+- Sufficient regional quota and capacity for the selected x64 Generation 2 VM size. The default is `Standard_D4s_v5`.
+- When using an existing subnet, permission to read its VNet and subnet and to perform `Microsoft.Network/virtualNetworks/subnets/join/action`, including when the network is in another resource group.
+- Choose an authentication method: **SSH public key** (the default and recommended option) or **username/password**. Password authentication does not require key generation. For key-based authentication, provide only the public key and keep the private key on your client. Use a 4096-bit RSA key for compatibility with Azure Linux VM provisioning.
+- A trusted source public IP address or CIDR range for public SSH access, typically your current public IP address(es). For quick access, you can use `0.0.0.0/0` to allow inbound traffic from any source. This is intended only for short-lived labs; restrict access as soon as possible.
+- Outbound DNS and HTTPS access during first boot to Ubuntu repositories, Microsoft package and installation endpoints, the azd extension registry, and GitHub and Kubernetes download endpoints.
 
 ## Deployment guidance
 
