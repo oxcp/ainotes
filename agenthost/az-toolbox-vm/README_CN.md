@@ -5,6 +5,14 @@
 
 使用 Bicep 或 Azure 门户自定义部署，部署一台 Ubuntu 24.04 LTS 工程工作站，其中预装了本研讨会所需的工具。
 
+## 前提条件
+
+- 拥有 Azure 订阅，以及在目标资源组中部署计算和网络资源（包括系统分配的标识）的权限。
+- 所选 x64 第 2 代 VM 大小在目标区域具有足够的配额和容量；默认大小为 `Standard_D4s_v5`。
+- 使用已有子网时，需要读取其 VNet/子网以及执行 `Microsoft.Network/virtualNetworks/subnets/join/action` 的权限，包括网络位于其他资源组的情况。
+- 选择认证方式：**SSH 公钥**（默认，推荐）或**用户名/密码**。密码认证无需生成密钥。使用公钥认证时，仅提供公钥，将私钥保留在客户端；为兼容 Azure Linux VM 预配，请使用 4096 位 RSA 密钥。
+- 为公共 SSH 访问提供受信任的源公共 IP/CIDR，通常应填写你当前的公共 IP 地址。为便于快速访问，可以使用 `0.0.0.0/0` 允许任意源地址的 SSH 入站访问，但这仅适用于短期实验环境；请尽早将其替换为受信任的源 IP/CIDR。
+- 首次启动期间，需要通过出站 DNS 和 HTTPS 访问 Ubuntu 软件源、Microsoft 软件包和安装端点、azd 扩展注册表，以及 GitHub/Kubernetes 下载端点。
 
 ## 一键式部署
 
@@ -39,15 +47,6 @@
 | Microsoft Foundry 扩展 | `microsoft.foundry`，为配置的管理员用户安装 |
 | kubectl | 通过 `az aks install-cli` 安装到 `/usr/local/bin`（同时安装配套的 kubelogin） |
 | Container Apps 扩展 | 使用 `--upgrade --allow-preview true` 为管理员用户安装 |
-
-## 前提条件
-
-- 拥有 Azure 订阅，以及在目标资源组中部署计算和网络资源（包括系统分配的标识）的权限。
-- 所选 x64 第 2 代 VM 大小在目标区域具有足够的配额和容量；默认大小为 `Standard_D4s_v5`。
-- 使用已有子网时，需要读取其 VNet/子网以及执行 `Microsoft.Network/virtualNetworks/subnets/join/action` 的权限，包括网络位于其他资源组的情况。
-- 选择认证方式：**SSH 公钥**（默认，推荐）或**用户名/密码**。密码认证无需生成密钥。使用公钥认证时，仅提供公钥，将私钥保留在客户端；为兼容 Azure Linux VM 预配，请使用 4096 位 RSA 密钥。
-- 为公共 SSH 访问提供受信任的源公共 IP/CIDR，通常应填写你当前的公共 IP 地址。为便于快速访问，可以使用 `0.0.0.0/0` 允许任意源地址的 SSH 入站访问，但这仅适用于短期实验环境；请尽早将其替换为受信任的源 IP/CIDR。
-- 首次启动期间，需要通过出站 DNS 和 HTTPS 访问 Ubuntu 软件源、Microsoft 软件包和安装端点、azd 扩展注册表，以及 GitHub/Kubernetes 下载端点。
 
 
 ## 部署说明
