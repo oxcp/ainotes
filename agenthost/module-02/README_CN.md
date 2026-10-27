@@ -74,8 +74,8 @@ echo "$PROJECT_ENDPOINT"
 ### 初始化绑定到 Foundry 项目的代理
 
 ```bash
-azd auth login
-# Or use: azd auth login --tenant-id <your_tenant_id>, if you have multiple tenants
+azd auth login --use-device-code
+# 通过浏览器交互式登录，需输入命令提示的device code
 
 azd ai agent init -m <your_cloned_module-02_path>/azure.yaml --project-id "$PROJECT_ID"
 # note: you need pointing to the right location of azure.yaml file (in the module-02 folder), for example: <your_clone_path>/ainotes/agenthost/module-02/azure.yaml
@@ -169,6 +169,10 @@ azd env get-values
 ```
 
 ## 步骤 4 — 在本地运行代理
+
+> [!tip]
+> - 此步骤在本地运行和测试代理，因此需要环境中安装Python 3.13+。
+> - 如不满足条件，需要安装符合条件的Python，或者跳过此步骤的本地安装测试，直接进入下一步骤
 
 ```bash
 azd ai agent run

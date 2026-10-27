@@ -21,7 +21,7 @@ NAMESPACE="${NAMESPACE:-agent}"
 SERVICE_ACCOUNT="${SERVICE_ACCOUNT:-agent-sa}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 KATA_NODEPOOL_NAME="${KATA_NODEPOOL_NAME:-kata}"
-KATA_NODE_VM_SIZE="${KATA_NODE_VM_SIZE:-Standard_D4s_v3}"
+KATA_NODE_VM_SIZE="${KATA_NODE_VM_SIZE:-Standard_D4s_v7}"
 # LLM model deployment name. In foundry mode the persistent agent uses this model;
 # inference routes through APIM via the Module 1 Foundry AI Gateway connection.
 LLM_MODEL="${LLM_MODEL:-gpt-5.4-mini}"
