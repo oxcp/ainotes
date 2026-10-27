@@ -106,13 +106,13 @@ chmod +x prepare-agent-sandbox.sh
 <a id="manual-steps-equivalent-to-prepare-agent-sandboxsh"></a>
 
 ## 手动步骤
-<details>
-<summary><strong>等效于 prepare-agent-sandbox.sh 的手动步骤准备</strong>（单击展开）</summary>
-
 > [!warning]
 > **单命令部署的替代方案：** 仅当选择手动部署路径时才执行这些步骤。
->
 > **运行 `./prepare-agent-sandbox.sh` 后请勿再运行这些步骤**。
+>
+
+<details>
+<summary><strong>等效于 prepare-agent-sandbox.sh 的手动步骤准备</strong>（单击展开）</summary>
 
 ### 步骤 1 — 检索部署序列号 (SN) 并构造相关环境变量
 
@@ -144,7 +144,8 @@ az acr build \
   --image "agent-host:${IMAGE_TAG}" \
   agent-src/
 ```
-> [!tip]
+> **💡 提示**
+>
 > 代理应用程序位于 [`agent-src/`](./agent-src/README.md)。它是一个简单的反思循环代理，演示了：
 > - LLM 终结点配置
 > - `Authorization: Bearer` 令牌身份验证
@@ -213,7 +214,8 @@ kata-vm-isolation   kata      7m21s
 
 ### 步骤 5 — 安装 agent-sandbox 控制器（发布清单）
 
-> [!tip]
+> **💡 提示**
+>
 > 从 https://github.com/kubernetes-sigs/agent-sandbox/releases 选择一个已发布版本，并使用所选版本在 AKS 中安装 agent-sandbox。
 
 ```bash

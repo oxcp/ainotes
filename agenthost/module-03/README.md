@@ -106,14 +106,14 @@ After `prepare-agent-sandbox.sh` completes, open the resource group in the Azure
 <a id="manual-steps-equivalent-to-prepare-agent-sandboxsh"></a>
 
 ## Manul Steps
-<details>
-<summary><strong>Manual Steps Preparation (equivalent to prepare-agent-sandbox.sh)</strong> (click to expand)</summary>
-
 > [!warning]
 > **Alternative to One-Command Deployment:** follow these steps only if you chose
 > the manual deployment path.
->
 > **Do not run them after `./prepare-agent-sandbox.sh`**.
+>
+
+<details>
+<summary><strong>Manual Steps Preparation (equivalent to prepare-agent-sandbox.sh)</strong> (click to expand)</summary>
 
 ### Step 1 — Retrieve the deployment serial number (SN) and construct related environment variables
 
@@ -145,7 +145,8 @@ az acr build \
   --image "agent-host:${IMAGE_TAG}" \
   agent-src/
 ```
-> [!tip]
+> **💡 Tip**
+>
 > The agent application lives in [`agent-src/`](./agent-src/README.md). It is a simple reflection-loop agent that demonstrates:
 > - LLM endpoint configuration
 > - `Authorization: Bearer` token authentication
@@ -214,7 +215,8 @@ kata-vm-isolation   kata      7m21s
 
 ### Step 5 — Install the agent-sandbox controller (release manifest)
 
-> [!tip]
+> **💡 Tip**
+>
 > Pick a released version from https://github.com/kubernetes-sigs/agent-sandbox/releases, and use the selected version to install the agent-sandbox in AKS.
 
 ```bash
