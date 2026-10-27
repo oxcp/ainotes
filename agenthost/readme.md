@@ -56,7 +56,7 @@ This downloads the content required for the `agenthost` workshop.
 Choose one of the following ways to prepare an environment for running workshop scripts and commands:
 
 1. **Use your existing environment**, such as a Linux console, WSL, or Azure Cloud Shell. Ensure that all tools required by the workshop are installed, and run [check-prerequisites.sh](./check-prerequisites.sh) as shown below to check their installation status and other prerequisites. Azure Cloud Shell typically requires the least setup, but it may time out when left unattended. Therefore, a Linux console or WSL environment is recommended.
-2. **Deploy a toolbox VM** if you prefer not to spend time setting up an environment and installing tools yourself. Use the [toolbox VM template](./az-toolbox-vm/README.md) for one-click deployment of a VM with the tools required to run the workshop. The VM incurs additional Azure resource costs.
+2. **Deploy a toolbox VM** if you prefer not to spend time setting up an environment and tools yourself. Use the [toolbox VM template](./az-toolbox-vm/README.md) for one-click deployment of a VM with the tools required to run the workshop. The VM incurs additional Azure resource costs.
 
 > [!IMPORTANT]
 > Even after deploying the toolbox VM from the template and completing initialization successfully, only the required tools are ready. You are still responsible for ensuring that Azure login sessions are active, the required RBAC permissions are granted, and all other workshop prerequisites are met. Run [check-prerequisites.sh](./check-prerequisites.sh) on the VM to check these requirements and follow the remediation links for any failed checks.
