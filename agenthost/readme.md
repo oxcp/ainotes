@@ -23,7 +23,7 @@ This workshop introduces a practical Azure agent-hosting journey. You start with
   - **Solution B**: AKS + agent-sandbox (ToB / ToC) — high customization: meet enterprise-specific technical requirements for ToB, or tune cost and performance for ToC.
   - **Solution C**: ACA container runtime options (ToC / ToB):
     - **Workshop path**: ACA Sandboxes — service-managed sandbox isolation (micro-VM boundary), suspend/resume.
-    - **Optional learning track**: ACA Dynamic Sessions — Hyper-V isolated session pools for low-latency ephemeral execution.
+    <!-- - **Optional learning track**: ACA Dynamic Sessions — Hyper-V isolated session pools for low-latency ephemeral execution. -->
 - **Implemented Features**: state persistence, scale-to-zero, isolation, Entra ID authentication, and AI Gateway integration.
 - **Workshop Schedule**: A 120-minute hands-on workshop covering core infrastructure setup, the three solutions above, and a wrap-up with cost-optimization tips and a production-hardening checklist.
 
@@ -174,7 +174,7 @@ This downloads the content required for the `agenthost` workshop.
 | [module-01](./module-01/README.md) | Core Infrastructure Setup | 20 min | Deploy the shared Azure infrastructure used by all hosting solutions. |
 | [module-02](./module-02/README.md) | Solution A: Foundry Hosted Agent | 30 min | Deploy a managed Foundry hosted agent with native state, authentication, governance, and AI Gateway integration. |
 | [module-03](./module-03/README.md) | Solution B: AKS + agent-sandbox | 40 min | Deploy a customizable agent runtime on AKS with sandbox isolation, persistent state, and workload identity. |
-| [module-04](./module-04/README.md) | Solution C: ACA Sandboxes (workshop path) | 30 min | Deploy an agent in ACA Sandboxes with micro-VM isolation and suspend/resume, and explore Dynamic Sessions as an optional track. |
+| [module-04](./module-04/README.md) | Solution C: ACA Sandboxes (workshop path) | 30 min | Deploy an agent in ACA Sandboxes with micro-VM isolation and suspend/resume.<!-- , and explore Dynamic Sessions as an optional track. --> |
 | [module-05](./module-05/README.md) | Wrap-up and Q&A | 5 min | Compare the solutions and review selection guidance, cost optimization, and production-hardening recommendations. |
 
 > **Total workshop duration:** 135 minutes.
@@ -248,18 +248,22 @@ agenthost/
 │       ├── README.md            ← agent-src usage notes
 │       └── .dockerignore        ← Container build exclusions
 ├── module-04/
-│   ├── README.md                ← Workshop path: ACA Sandboxes; optional track: Dynamic Sessions
+│   ├── README.md                ← Workshop path: ACA Sandboxes
 │   ├── README_CN.md             ← Chinese ACA sandbox guide
 │   ├── sandbox.bicep            ← Workshop path: SandboxGroup (real Sandboxes, micro-VM boundary, suspend/resume) + UAMI AcrPull role
 │   ├── sandbox-deploy.sh        ← Workshop path: reuses the Module-03 image + SandboxGroup + disk image + sandbox mgmt
-│   ├── dynamic-session-deploy.sh← Optional track: Session pool deployment (custom container)
-│   ├── dynamic-session-invoke.sh← Optional track: Minimal invoke example for session pool endpoint
-│   ├── dynamic-sessions.md       ← Optional Dynamic Sessions learning guide
 │   └── container-app.yaml       ← Legacy standard ACA manifest (reference only)
 └── module-05/
     ├── README.md                ← Comparison recap, decision guide, cost tips, and production checklist
     └── README_CN.md             ← Chinese wrap-up guide
 
 ```
+
+<!--
+│   ├── README.md                ← Workshop path: ACA Sandboxes; optional track: Dynamic Sessions
+│   ├── dynamic-session-deploy.sh← Optional track: Session pool deployment (custom container)
+│   ├── dynamic-session-invoke.sh← Optional track: Minimal invoke example for session pool endpoint
+│   ├── dynamic-sessions.md       ← Optional Dynamic Sessions learning guide
+-->
 
 ---

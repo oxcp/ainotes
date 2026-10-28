@@ -10,11 +10,14 @@
 
 > [!important]
 > **研讨会主要路径：** ACA Sandboxes。
+
+<!--
 >
 > 对于希望探索另一种执行模型的学习者，另行提供了可选学习路径 [ACA Dynamic Sessions](./dynamic-sessions.md)。
 
 > [!caution]
 > **ACA Dynamic Sessions** 可选学习路径尚未准备就绪。
+-->
 
 ---
 
@@ -195,11 +198,7 @@ az network vnet subnet show \
 
 3. 在 `https://sandboxes.azure.com/` 的 ACA Sandbox 门户中，打开研讨会 SandboxGroup，并将其连接到 AKS-managed VNet 和 `aca-subnet`。
 
-使用你的 Azure 标识登录 `https://sandboxes.azure.com/` 并打开 ACA Sandbox 门户：
-
-![module-04-Goto-ACA-sandbox-portal](../pic/module-04-Goto-ACA-sandbox-portal.png)
-
-切换到你的 sandbox group：
+使用你的 Azure 标识登录 `https://sandboxes.azure.com/` 打开 ACA Sandbox 门户，并切换到你的 sandbox group：
 
 ![module-04-ACA-sandbox-portal-switch-to-your-SG](../pic/module-04-ACA-sandbox-portal-switch-to-your-SG.png)
 
@@ -321,11 +320,21 @@ UI 顶部会出现一个超链接。单击该链接，在浏览器中打开智�
 ![module-04-agent-in-foundry-portal](../pic/module-04-agent-in-foundry-portal.png) -->
 
 进行几轮对话后，返回智能体 sandbox 控制台，验证聊天历史记录是否已正确保存。
+
 在智能体 Bash 窗口中运行以下命令：
+```bash
+ls -lrt /app/app/data
+```
+可以看到在目录下，新增了一个 `agent-host-on-aca.json`，它是我们当前 ACA sandbox 智能体用于保持运行状态的文件，采用我们之前设置的环境变量 `AGENT_ID` 作为文件名：
+
+![module-04-Sandbox-running](../pic/module-04-Sandbox-running2.png)
+
+查看 `agent-host-on-aca.json` 文件内容：
+
 ```bash
 cat /app/app/data/agent-host-on-aca.json
 ```
-聊天历史记录应如下所示：
+保持的历史记录类似如下：
 ![module-04-Sandbox-agent-chat-history](../pic/module-04-Sandbox-agent-chat-history.png)
 
 上面的示例表明智能体将其状态存储在 Blob 卷中。Azure Container Apps Sandbox 提供两种便捷的挂起模式来保留智能体状态：Memory 和 Disk。在此配置中，我们选择了 Memory 模式，该模式使用快照同时保留磁盘状态和内存状态。要验证此行为，请等待空闲超时；超时后，智能体会自动进入 `Stopped` 状态：
@@ -342,10 +351,12 @@ cat /app/app/data/agent-host-on-aca.json
 
 ---
 
+<!--
 <details>
 <summary><strong>可选学习路径 — ACA Dynamic Sessions</strong>（单击展开）</summary>
 
 本节为**可选内容**，面向提前完成 Sandbox 主要路径并希望比较另一种 Azure Container Apps 执行模型的学习者。
+-->
 
 > [!IMPORTANT]
 > **Dynamic Sessions 并不是运行智能体的理想主机。**
@@ -355,12 +366,14 @@ cat /app/app/data/agent-host-on-aca.json
 > 请参阅官方比较：
 > [Sandboxes 与 Dynamic Sessions 的比较](https://learn.microsoft.com/en-us/azure/container-apps/sandboxes-overview#sandboxes-vs-dynamic-sessions)。
 
+<!--
 **此学习路径仍在开发中，将很快更新。**
 
 查看 Dynamic Sessions 内容：
 [ACA Dynamic Sessions 学习路径](./dynamic-sessions.md)。
 
 </details>
+-->
 
 ---
 
@@ -402,7 +415,10 @@ https://github.com/user-attachments/assets/35d74a64-f960-4e20-93c1-63d318f947fe
 | `README.md` | 在 ACA Sandboxes 上部署和运行智能体运行时的说明。 |
 | `sandbox-deploy.sh` | 部署 ACA SandboxGroup 和所需角色分配。 |
 | `sandbox.bicep` | 定义 ACA SandboxGroup 及其配置的 Bicep 模板。 |
+
+<!--
 | `dynamic-sessions.md` | ACA Dynamic Sessions 的可选学习路径。 |
+-->
 
 ---
 

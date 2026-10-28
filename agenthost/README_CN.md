@@ -23,7 +23,7 @@
   - **解决方案 B**：AKS + agent-sandbox（ToB / ToC）— 高度可定制：满足 ToB 特有的企业技术要求，或针对 ToC 优化成本和性能。
   - **解决方案 C**：ACA 容器运行时选项（ToC / ToB）：
     - **研讨会路径**：ACA Sandboxes — 服务托管的沙盒隔离（微型 VM 边界），支持挂起/恢复。
-    - **可选学习路径**：ACA Dynamic Sessions — 使用 Hyper-V 隔离的会话池，实现低延迟的临时执行。
+    <!-- - **可选学习路径**：ACA Dynamic Sessions — 使用 Hyper-V 隔离的会话池，实现低延迟的临时执行。 -->
 - **已实现的功能**：状态持久化、缩容到零、隔离、Entra ID 身份验证以及 AI Gateway 集成。
 - **研讨会日程**：120 分钟的动手研讨会，涵盖核心基础设施设置、上述三种解决方案，以及包含成本优化技巧和生产环境强化清单的总结。
 
@@ -174,7 +174,7 @@ Fix suggestion:
 | [module-01](./module-01/README_CN.md) | 核心基础设施设置 | 20 分钟 | 部署所有托管解决方案共用的 Azure 基础设施。 |
 | [module-02](./module-02/README_CN.md) | 解决方案 A：Foundry Hosted Agent | 30 分钟 | 部署具有原生状态、身份验证、治理和 AI Gateway 集成的托管 Foundry 智能体。 |
 | [module-03](./module-03/README_CN.md) | 解决方案 B：AKS + agent-sandbox | 40 分钟 | 在 AKS 上部署可定制的智能体运行时，具备沙盒隔离、持久状态和工作负载标识。 |
-| [module-04](./module-04/README_CN.md) | 解决方案 C：ACA Sandboxes（研讨会路径） | 30 分钟 | 在 ACA Sandboxes 中部署具有微型 VM 隔离及挂起/恢复功能的智能体，并探索作为可选路径的 Dynamic Sessions。 |
+| [module-04](./module-04/README_CN.md) | 解决方案 C：ACA Sandboxes（研讨会路径） | 30 分钟 | 在 ACA Sandboxes 中部署具有微型 VM 隔离及挂起/恢复功能的智能体。<!-- ，并探索作为可选路径的 Dynamic Sessions。 --> |
 | [module-05](./module-05/README_CN.md) | 总结和问答 | 5 分钟 | 比较解决方案，并查看选择指南、成本优化和生产环境强化建议。 |
 
 > **研讨会总时长：**135 分钟。
@@ -248,18 +248,22 @@ agenthost/
 │       ├── README.md            ← agent-src 使用说明
 │       └── .dockerignore        ← 容器生成排除项
 ├── module-04/
-│   ├── README.md                ← 研讨会路径：ACA Sandboxes；可选路径：Dynamic Sessions
+│   ├── README.md                ← 研讨会路径：ACA Sandboxes
 │   ├── README_CN.md             ← 中文 ACA 沙盒指南
 │   ├── sandbox.bicep            ← 研讨会路径：SandboxGroup（真正的 Sandboxes、微型 VM 边界、挂起/恢复）+ UAMI AcrPull 角色
 │   ├── sandbox-deploy.sh        ← 研讨会路径：复用模块 03 映像 + SandboxGroup + 磁盘映像 + 沙盒管理
-│   ├── dynamic-session-deploy.sh← 可选路径：会话池部署（自定义容器）
-│   ├── dynamic-session-invoke.sh← 可选路径：会话池终结点的最小调用示例
-│   ├── dynamic-sessions.md       ← 可选的 Dynamic Sessions 学习指南
 │   └── container-app.yaml       ← 旧版标准 ACA 清单（仅供参考）
 └── module-05/
     ├── README.md                ← 比较回顾、决策指南、成本技巧和生产环境清单
     └── README_CN.md             ← 中文总结指南
 
 ```
+
+<!--
+│   ├── README.md                ← 研讨会路径：ACA Sandboxes；可选路径：Dynamic Sessions
+│   ├── dynamic-session-deploy.sh← 可选路径：会话池部署（自定义容器）
+│   ├── dynamic-session-invoke.sh← 可选路径：会话池终结点的最小调用示例
+│   ├── dynamic-sessions.md       ← 可选的 Dynamic Sessions 学习指南
+-->
 
 ---

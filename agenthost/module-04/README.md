@@ -14,12 +14,15 @@ state continuity.
 
 > [!important]
 > **Primary workshop path:** ACA Sandboxes.
+
+<!--
 >
 > An optional learning track, [ACA Dynamic Sessions](./dynamic-sessions.md), is
 > documented separately for those who wish to explore an alternative execution model.
 
 > [!caution]
 > The optional learning track for **ACA Dynamic Sessions** has not been ready yet.
+-->
 
 ---
 
@@ -210,11 +213,7 @@ The output must include:
 3. In the ACA Sandbox portal at `https://sandboxes.azure.com/`, open the workshop
 	SandboxGroup and connect it to the AKS-managed VNet and `aca-subnet`.
 
-Sign in to `https://sandboxes.azure.com/` with your Azure identity and open the ACA Sandbox portal:
-
-![module-04-Goto-ACA-sandbox-portal](../pic/module-04-Goto-ACA-sandbox-portal.png)
-
-Switch to your sandbox group:
+Sign in to `https://sandboxes.azure.com/` with your Azure identity to open the ACA Sandbox portal, and switch to your sandbox group:
 
 ![module-04-ACA-sandbox-portal-switch-to-your-SG](../pic/module-04-ACA-sandbox-portal-switch-to-your-SG.png)
 
@@ -336,7 +335,10 @@ After the configuration above, press **Create** in the top right corner, and you
 If everything is configured correctly, click **Create** to create your agent.
 
 
-The sandbox launches within seconds. Run several commands in the console to verify that it is working. The example below inspects the environment variables and the files and folders used by the agent:
+> [!tip]
+> The Sandbox starts within 20–30 seconds. In this module, the agent uses a mounted volume and a VNET connection, so startup takes relatively longer.
+
+Run several commands in the console to verify that it is working. The example below inspects the environment variables and the files and folders used by the agent:
 
 ![module-04-Sandbox-running](../pic/module-04-Sandbox-running.png)
 
@@ -348,11 +350,21 @@ A hyperlink appears at the top of the UI. Click it to open the agent chat interf
 ![module-04-agent-in-foundry-portal](../pic/module-04-agent-in-foundry-portal.png) -->
 
 After several rounds of conversation, return to the agent sandbox console and verify that the chat history has been saved correctly.
+
 In the agent Bash window, run the following command:
+```bash
+ls -lrt /app/app/data
+```
+You should see a new `agent-host-on-aca.json` file in the directory. This file stores the state of the current ACA Sandbox agent, and its name is based on the `AGENT_ID` environment variable configured earlier:
+
+![module-04-Sandbox-running](../pic/module-04-Sandbox-running2.png)
+
+View the contents of `agent-host-on-aca.json`:
+
 ```bash
 cat /app/app/data/agent-host-on-aca.json
 ```
-The chat history should appear as shown below:
+The saved chat history should look similar to the following:
 ![module-04-Sandbox-agent-chat-history](../pic/module-04-Sandbox-agent-chat-history.png)
 
 The example above shows that the agent stores its state in the Blob volume. Azure Container Apps Sandbox provides two convenient suspend modes for preserving agent state: Memory and Disk. In this configuration, we selected Memory mode, which preserves both disk and in-memory state by using a snapshot. To verify this behavior, wait for the idle timeout, after which the agent automatically enters the `Stopped` state:
@@ -369,12 +381,14 @@ Click **Resume** in the Sandbox console, and then refresh the chat window. The p
 
 ---
 
+<!--
 <details>
 <summary><strong>Optional Learning Track — ACA Dynamic Sessions</strong> (click to expand)</summary>
 
 This section is **optional**. It is provided for learners who complete the main
 Sandbox path early and want to compare a different Azure Container Apps execution
 model.
+-->
 
 > [!IMPORTANT]
 > **Dynamic Sessions is not an ideal host for running an agent.**
@@ -390,12 +404,14 @@ model.
 > See the official comparison:
 > [Sandboxes vs. Dynamic Sessions](https://learn.microsoft.com/en-us/azure/container-apps/sandboxes-overview#sandboxes-vs-dynamic-sessions).
 
+<!--
 **This learning track is still under development and will be updated soon.**
 
 Check the Dynamic Sessions content:
 [ACA Dynamic Sessions learning track](./dynamic-sessions.md).
 
 </details>
+-->
 
 ---
 
@@ -437,7 +453,10 @@ https://github.com/user-attachments/assets/35d74a64-f960-4e20-93c1-63d318f947fe
 | `README.md` | Instructions for deploying and running the agent runtime on ACA Sandboxes. |
 | `sandbox-deploy.sh` | Deploys the ACA SandboxGroup and required role assignments. |
 | `sandbox.bicep` | Bicep template that defines the ACA SandboxGroup and its configuration. |
+
+<!--
 | `dynamic-sessions.md` | Optional learning track for ACA Dynamic Sessions. |
+-->
 
 ---
 

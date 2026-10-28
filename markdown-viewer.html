@@ -334,7 +334,8 @@
 
             const repositoryLink = document.createElement('a');
             repositoryLink.className = 'sidebar-link';
-            repositoryLink.href = repositoryUrl;
+            const repositoryFilePath = new URL(file, siteRoot).pathname.slice(siteRoot.pathname.length);
+            repositoryLink.href = `${repositoryUrl}/blob/main/${repositoryFilePath}`;
             repositoryLink.target = '_blank';
             repositoryLink.rel = 'noopener noreferrer';
             repositoryLink.innerHTML = `<i data-lucide="github"></i><span>${isChinese ? 'GitHub 仓库' : 'GitHub Repository'}</span>`;
