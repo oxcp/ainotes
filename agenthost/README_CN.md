@@ -47,11 +47,15 @@
 curl -fsSL https://raw.githubusercontent.com/oxcp/ainotes/main/agenthost/check-prerequisites.sh -o check-prerequisites.sh
 ```
 > [!tip]
-> 如果暂时还没有安装工具curl，请从浏览器中访问以上地址，复制 `check-prerequisites.sh` 的内容，并保存到本地文件 `check-prerequisites.sh`。
+> 如果暂时还没有安装工具curl，请从浏览器中访问以上地址，复制 `check-prerequisites.sh` 的内容，并保存到您登录的操作环境的本地文件 `check-prerequisites.sh`。
 
 运行检查器，获取工具安装状态及其他先决条件检查结果：
 
+> [!tip]
+> 通过浏览器复制下来的 `check-prerequisites.sh` 内容，可能需要把其中 Windows 的 CRLF (\r\n) 转成 Linux 的 LF (\n)。
+
 ```bash
+sed -i 's/\r$//' check-prerequisites.sh # 只在需要把 Windows CRLF (\r\n) 转成 Linux 的 LF (\n) 时运行
 chmod +x check-prerequisites.sh
 bash check-prerequisites.sh
 ```

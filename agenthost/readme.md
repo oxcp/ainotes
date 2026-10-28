@@ -47,11 +47,15 @@ Sign in to your working environment and download the prerequisite checker, `chec
 curl -fsSL https://raw.githubusercontent.com/oxcp/ainotes/main/agenthost/check-prerequisites.sh -o check-prerequisites.sh
 ```
 > [!TIP]
-> If curl is not installed yet, open the URL above in a browser, copy the contents of `check-prerequisites.sh`, and save them to a local file named `check-prerequisites.sh`.
+> If curl is not installed yet, open the URL above in a browser, copy the contents of `check-prerequisites.sh`, and save them to a local file named `check-prerequisites.sh` in the working environment you signed in to.
 
 Run the checker to see the tool installation status and other prerequisite check results:
 
+> [!TIP]
+> If you copied the contents of `check-prerequisites.sh` from a browser, you may need to convert Windows CRLF (\r\n) line endings to Linux LF (\n).
+
 ```bash
+sed -i 's/\r$//' check-prerequisites.sh # Run only if Windows CRLF (\r\n) line endings need to be converted to Linux LF (\n)
 chmod +x check-prerequisites.sh
 bash check-prerequisites.sh
 ```
