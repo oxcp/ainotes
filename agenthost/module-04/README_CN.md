@@ -84,12 +84,13 @@ Documentation:
 
 ![module-04-ACA-sandboxgroup-in-RG](../pic/module-04-ACA-sandboxgroup-in-RG.png)
 
-## 可选 — 通过 Private Link 将 SandboxGroup 连接到 Blob
+## （视情况可选）通过 Private Link 将 SandboxGroup 连接到 Blob
 
 > [!important]
 > **如果 Module-01 中创建的 Storage account 禁用公共网络访问，那么在智能体能够读取或写入其持久化状态之前，ACA SandboxGroup 必须具有到 Blob endpoint 的专用网络连接。**
 
-为方便研讨会操作，请复用 Module-03 中创建的 AKS 托管 VNet。
+为简化研讨会操作，我们复用 Module-03 中创建的 AKS 托管 VNet，不为本模块新建 VNet。
+
 Module-03 已将 AKS managed VNet 链接到 Blob Private DNS zone，并创建了 Blob Private Endpoint。我们在 Module-04 复用这个 Blob Private Endpoint。我们将在 AKS managed VNet 中为 ACA Sandboxes 创建一个新的专用子网，并将 SandboxGroup 连接到该子网：
 
 1. 在 Azure 门户中打开 **AKS node resource group**，然后选择 Module-03 使用的 AKS-managed VNet。
