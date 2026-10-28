@@ -90,6 +90,25 @@
       margin-inline: auto;
     }
 
+    .language-link {
+      position: absolute;
+      top: 1.25rem;
+      right: 1.5rem;
+      z-index: 2;
+      padding: 0.5rem 0.8rem;
+      border: 1px solid var(--line);
+      border-radius: 0.5rem;
+      color: var(--cyan);
+      text-decoration: none;
+    }
+
+    .language-link:hover,
+    .language-link:focus-visible {
+      background: var(--panel-2);
+      outline: 2px solid var(--cyan);
+      outline-offset: 3px;
+    }
+
     .eyebrow {
       margin: 0 0 0.75rem;
       color: var(--cyan);
@@ -862,6 +881,7 @@
 
   <main>
     <section class="slide" id="slide-1">
+      <a class="language-link" href="design_CN.html" lang="zh-CN" hreflang="zh-CN">中文</a>
       <div class="hero-mark reveal-scale" aria-hidden="true"></div>
       <div class="content">
         <p class="eyebrow reveal">Azure AI Agent Hosting Workshop</p>
