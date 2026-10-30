@@ -38,6 +38,12 @@ The easiest way to explore the repository is through the [AI Notes site](https:/
 |---|---|---|
 | AKS + Azure Elastic SAN: 120K-Scale AI Agent Infrastructure Test | Scale validation of 120,000 Pods with persistent volumes, covering resource and capacity design, deployment limits and measured rates, test methodology, per-round volume provisioning and Pod readiness results, and production deployment recommendations. | [English](test-report/AKS+ESAN-AIAgent-benchmark-report-en.md) · [简体中文](test-report/AKS+ESAN-AIAgent-benchmark-report-cn.md) |
 
+### Web Slides
+
+| Slides | Description |
+|---|---|
+| [Azure Container Apps Sandboxes](web-slides/Azure_Container_Apps_Sandboxes.html) | A browser-based technical introduction to Azure Container Apps Sandboxes. |
+
 ## Repository Structure
 
 ```text
@@ -53,6 +59,7 @@ istio-on-aks/                    AKS Istio observability guidance
 models-healthcare/               Healthcare and medical-model evaluations
 multi-k8s-mgmt/                  Kubernetes multi-cluster management notes
 test-report/                     AI infrastructure benchmark and scale-test reports
+web-slides/                      Browser-based HTML slide decks
 index.html                       GitHub Pages landing page
 markdown-viewer.html             Shared Markdown renderer for the site
 ```

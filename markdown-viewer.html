@@ -135,6 +135,12 @@
         const siteRoot = new URL('./', window.location.href);
         const file = new URLSearchParams(window.location.search).get('file');
         const repositoryUrl = 'https://github.com/oxcp/ainotes';
+        const webSlidesSection = {
+            title: 'Web Slides',
+            links: [
+                ['Azure Container Apps Sandboxes', 'web-slides/Azure_Container_Apps_Sandboxes.html', 'presentation']
+            ]
+        };
         const navigationSections = [
             {
                 root: 'agenthost/',
@@ -310,8 +316,8 @@
         }
 
         function configureSidebar() {
-            const section = navigationSections.find(({ root }) => file?.toLowerCase().startsWith(root.toLowerCase()));
-            if (!section) return;
+            if (!file) return;
+            const section = navigationSections.find(({ root }) => file?.toLowerCase().startsWith(root.toLowerCase())) ?? webSlidesSection;
 
             const sidebar = document.querySelector('.sidebar');
             const links = sidebar.querySelector('.sidebar-links');
@@ -327,6 +333,20 @@
             });
             localLinks.forEach((link) => links.append(link));
             const currentLink = markCurrentSidebarLink(localLinks);
+
+            if (section !== webSlidesSection) {
+                const slidesDivider = document.createElement('hr');
+                slidesDivider.className = 'sidebar-divider';
+                links.append(slidesDivider);
+
+                const slidesTitle = document.createElement('h2');
+                slidesTitle.className = 'sidebar-title';
+                slidesTitle.textContent = webSlidesSection.title;
+                links.append(slidesTitle);
+                webSlidesSection.links.forEach(([label, path, icon]) => {
+                    links.append(createSidebarLink(label, path, icon));
+                });
+            }
 
             const divider = document.createElement('hr');
             divider.className = 'sidebar-divider';
