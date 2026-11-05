@@ -12,6 +12,10 @@ packages:
   - curl
   - jq
   - unzip
+  - bash
+  - openssl
+  - coreutils
+  - tar
 
 write_files:
   - path: /etc/toolbox-admin-user
@@ -59,10 +63,11 @@ write_files:
 
       echo "=== Installing base packages ==="
       apt-get update
-      apt-get install -y ca-certificates apt-transport-https gnupg lsb-release git curl jq unzip
+      apt-get install -y ca-certificates apt-transport-https gnupg lsb-release git curl jq unzip bash openssl coreutils tar
 
-      INSTALLER_DIR="$(mktemp -d)"
-      trap 'rm -f -- "${INSTALLER_DIR}/azure-cli.sh" "${INSTALLER_DIR}/azd.sh"; rmdir -- "${INSTALLER_DIR}"' EXIT
+      INSTALLER_DIR=/var/lib/toolbox-installers
+      install -d -m 0700 "${INSTALLER_DIR}"
+      trap 'rm -f -- "${INSTALLER_DIR}/azure-cli.sh" "${INSTALLER_DIR}/azd.sh" "${INSTALLER_DIR}/aca.sh"; rmdir -- "${INSTALLER_DIR}"' EXIT
 
       echo "=== Installing latest stable Azure CLI from Microsoft's APT repository ==="
       curl --fail --silent --show-error --location --retry 5 \
@@ -84,6 +89,17 @@ write_files:
         echo "ERROR: Azure CLI ${AZ_VERSION} is older than required version 2.80.0." >&2
         exit 1
       fi
+
+      echo "=== Installing Bicep 0.48.1 for ${ADMIN_USER} ==="
+      as_admin az bicep install --version v0.48.1
+
+      echo "=== Installing independent aca CLI system-wide (upstream SHA-256 verified) ==="
+      curl --fail --silent --show-error --location --retry 5 \
+          https://aka.ms/aca-cli-install -o "${INSTALLER_DIR}/aca.sh"
+      # The official installer reads its release pin and requires a matching archive checksum.
+      # INSTALL_DIR is supported; --version and ACA_VERSION are not supported by this installer.
+      INSTALL_DIR=/usr/local/bin sh "${INSTALLER_DIR}/aca.sh"
+      test -x /usr/local/bin/aca
 
       echo "=== Installing current stable Azure Developer CLI ==="
       curl --fail --silent --show-error --location --retry 5 \

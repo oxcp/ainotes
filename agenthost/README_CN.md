@@ -4,9 +4,11 @@
 
 ## 研讨会简介
 
-本研讨会将带你踏上一段实用的 Azure 智能体托管之旅。你将从共享基础设施入手，比较适用于企业和消费者场景的三种部署方案，最后了解成本和生产环境强化指南。
+本研讨会将带你踏上一段实用的 Azure 智能体托管之旅：
+- 基础部分：你将从共享基础设施入手，比较和动手练习适用于企业和消费者场景的三种部署方案，最后了解成本和生产环境强化指南。
+- 扩展部分：你将把在**基础部分**掌握的智能体部署经验，结合多智能体编排、智能体通信、向量化存储和检索等高级技术，组合为完整的模拟业务流程，包括数据处理、企业知识库、多智能体协作、业务分析和计划等。
 
-<!-- > 📊 **更喜欢幻灯片？** 
+<!-- > 📊 **更喜欢幻灯片？**
 >
 > 打开[简介](https://oxcp.github.io/ainotes/agenthost/module-00/)，逐步浏览研讨会内容。 -->
 
@@ -17,6 +19,7 @@
 
 ## 研讨会大纲
 
+### 基础部分：
 - **目标场景**：ToB 企业场景和 ToC 消费者场景，两者在隔离、扩展、身份验证和成本方面各有不同的优先级。
 - **解决方案（有关详细信息，请参阅[研讨会简介](./module-00/README_CN.md)）**：
   - **解决方案 A**：Azure AI Foundry Hosted Agent（ToB 托管）— 最快捷的入门路径，提供原生状态和身份验证，以及强大的治理和安全性。
@@ -25,7 +28,9 @@
     - **研讨会路径**：ACA Sandboxes — 服务托管的沙盒隔离（微型 VM 边界），支持挂起/恢复。
     <!-- - **可选学习路径**：ACA Dynamic Sessions — 使用 Hyper-V 隔离的会话池，实现低延迟的临时执行。 -->
 - **已实现的功能**：状态持久化、缩容到零、隔离、Entra ID 身份验证以及 AI Gateway 集成。
-- **研讨会日程**：120 分钟的动手研讨会，涵盖核心基础设施设置、上述三种解决方案，以及包含成本优化技巧和生产环境强化清单的总结。
+
+### 扩展部分：
+- **[Module 06：多智能体业务场景](./module-06/readme_CN.md)**：将 5 个具有实际业务能力的智能体托管，结合 A2A、LangGraph、Azure HorizonDB，构建为完整的业务流程，包括数据处理、企业知识库、多智能体协作、业务分析和计划。
 
 ## 先决条件（研讨会开始前）
 
@@ -37,9 +42,20 @@
 
 > [!tip]
 > - 如果没有常用的动手操作环境，选择方式2 **部署控制台 VM** 以快速准备控制台 VM，并预装所需的工具。安装的控制台 VM 会额外产生Azure资源消耗
-> - Azure Cloud Shell 通常包含了本研讨会所需的工具，所需设置最少，但如果长时间无人操作会超时。超时后在Azure Cloud Shell中的已做配置将随之丢失
+> - Azure Cloud Shell 已包含本研讨会大部分所需工具，但 Module 06 所需的 `aca` CLI 可能仍需单独安装。使用Azure Cloud Shell 需要注意空闲导致会话超时。会话超时将导致会话变量和临时安装的工具丢失，但已配置持久存储上的内容则可以保留。
 
-无论使用哪种环境，均需满足研讨会执行的先决条件。按下文说明运行  `check-prerequisites.sh`，检查所需工具安装状态及其他先决条件。
+
+以下是本研讨会各个练习模块所需满足的先决条件清单：
+
+| 范围 | 要求 |
+|---|---|
+| 通用 / Module 01 | Linux/WSL、Bash 4+，Azure CLI 2.80.0+、有效 Azure 登录、研讨会部署所需的 26 项 ARM 操作权限、`git`、`curl`、`jq` 和 Bicep 0.48.1+。 |
+| Module 02 | Azure Developer CLI（`azd`）、有效 azd 登录、`microsoft.foundry` 扩展和 Foundry User 角色。 |
+| Module 03 | `kubectl`、ACR 远程生成/推送权限，以及支持 AKS Pod Sandboxing 的 Azure CLI。 |
+| Module 04 | Container Apps 预览扩展和 Container Apps SandboxGroup Data Owner 角色；复用 Module 03 的 ACR/镜像。 |
+| Module 06 | 复用前面模块已准备的工具，增加： `aca` CLI、ACA 认证、`openssl` 和 GNU coreutils 的 `timeout`。 |
+
+无论使用哪种环境，均需检查并满足研讨会执行的先决条件。按下文说明运行  `check-prerequisites.sh`，检查所需工具安装状态及其他先决条件。
 
 请登入您的操作环境，从研讨会的 GitHub 仓库中获取检查器 `check-prerequisites.sh` 到本地：
 
@@ -59,8 +75,9 @@ sed -i 's/\r$//' check-prerequisites.sh # 只在需要把 Windows CRLF (\r\n) �
 chmod +x check-prerequisites.sh
 bash check-prerequisites.sh
 ```
-
 检查器按模块对结果进行分组，清晰标识已通过和未通过的要求，并为每个失败的检查提供修复参考链接。
+
+输出将类似于以下内容：
 
 输出将类似于以下内容：
 > [!TIP]
@@ -69,20 +86,25 @@ bash check-prerequisites.sh
 ```text
 Agent Hosting on Azure Workshop - Prerequisite Check
 ------
-[01/14] Checking Azure CLI 2.80.0+...
-[02/14] Checking active Azure login...
-[03/14] Checking workshop deployment permissions...
-[04/14] Checking curl installation...
-[05/14] Checking jq installation...
-[06/14] Checking Azure Developer CLI installation...
-[07/14] Checking active azd login...
-[08/14] Checking Microsoft Foundry azd extension...
-[09/14] Checking Foundry User role...
-[10/14] Checking kubectl installation...
-[11/14] Checking ACR remote build permissions...
-[12/14] Checking Azure CLI support for AKS Pod Sandboxing...
-[13/14] Checking Container Apps preview extension...
-[14/14] Checking Container Apps SandboxGroup Data Owner role...
+[01/19] Checking Azure CLI 2.80.0+...
+[02/19] Checking active Azure login...
+[03/19] Checking workshop deployment permissions...
+[04/19] Checking curl installation...
+[05/19] Checking jq installation...
+[06/19] Checking Bicep 0.48.1+...
+[07/19] Checking Azure Developer CLI installation...
+[08/19] Checking active azd login...
+[09/19] Checking Microsoft Foundry azd extension...
+[10/19] Checking Foundry User role...
+[11/19] Checking kubectl installation...
+[12/19] Checking ACR remote build permissions...
+[13/19] Checking Azure CLI support for AKS Pod Sandboxing...
+[14/19] Checking Container Apps preview extension...
+[15/19] Checking Container Apps SandboxGroup Data Owner role...
+[16/19] Checking independent ACA CLI...
+[17/19] Checking ACA authentication...
+[18/19] Checking OpenSSL installation...
+[19/19] Checking GNU timeout installation...
 
 Common prerequisites for all modules
 Prerequisite                             | Result     | Details
@@ -96,6 +118,7 @@ Prerequisite                             | Result     | Details
 -----------------------------------------+------------+-----------------------------------------
 curl installed                           | Pass       | Installed: 8.15.0
 jq installed                             | Pass       | Installed: 1.8.1
+Bicep 0.48.1+                            | Pass       | Installed: 0.48.1
 
 Module 02
 Prerequisite                             | Result     | Details
@@ -103,38 +126,40 @@ Prerequisite                             | Result     | Details
 Azure Developer CLI installed            | Pass       | Installed: 1.27.0
 Active azd login                         | Pass       | azd authentication is active
 Microsoft Foundry azd extension          | Pass       | microsoft.foundry is installed
-Foundry User role                        | Failed     | Role assignment not found for the current subscription
-
-Fix suggestion:
-- Foundry User role: https://learn.microsoft.com/azure/ai-foundry/concepts/rbac-azure-ai-foundry
+Foundry User role                        | Pass       | Role assignment found for the current subscription
 
 Module 03
 Prerequisite                             | Result     | Details
 -----------------------------------------+------------+-----------------------------------------
 kubectl installed                        | Pass       | Installed: v1.35.0
-ACR remote build permissions             | Skipped    | No container registry was found in rg-agenthost-workshop; check again after deploying Module 01
+ACR remote build permissions             | Pass       | All 4 required ACR build and push actions are allowed
 Azure CLI for AKS Pod Sandboxing         | Pass       | Installed: 2.85.0
 
 Module 04
 Prerequisite                             | Result     | Details
 -----------------------------------------+------------+-----------------------------------------
 Container Apps preview extension         | Pass       | containerapp 1.3.0b4 (preview enabled)
-SandboxGroup Data Owner role             | Failed     | Role assignment not found for the current subscription
+SandboxGroup Data Owner role             | Pass       | Role assignment found for the current subscription
 
-Fix suggestion:
-- SandboxGroup Data Owner role: https://learn.microsoft.com/en-us/azure/container-apps/sandboxes-get-started#before-you-start
+Module 06
+Prerequisite                             | Result     | Details
+-----------------------------------------+------------+-----------------------------------------
+Independent ACA CLI                      | Pass       | aca 1.0.0-preview.5; required manifest/disk commands available
+ACA authentication                       | Pass       | aca authentication is active; guest identity still needs separate configuration
+OpenSSL installed                        | Pass       | OpenSSL 3.0.0
+GNU timeout installed                    | Pass       | timeout (GNU coreutils) 9.4
 
-Summary: 11 passed, 1 skipped, 2 failed
+Summary: 19 passed, 0 skipped, 0 failed
 Workshop readiness: Ready to start.
-Module notice: Resolve the failed Module 02 prerequisite(s) before starting that module.
-Module notice: Resolve the failed Module 04 prerequisite(s) before starting that module.
-Module notice: Re-run this check after Module 01 to validate the skipped ACR permission before Module 03.
+Module 06: follow its guide to reuse earlier resources; this checker does not repeat resource discovery or permission checks for that module.
+Preflight does not verify secrets, model/Blob calls or live Agent health. Follow the Module 06 deployment and business-flow checks.
 ```
 > [!TIP]
 > 1. 如果**所有模块的通用先决条件**和**模块 01**中没有失败的检查，脚本会报告 `Workshop readiness: Ready to start`，此时你可以开始研讨会。
-> 2. **模块 02** 到**模块 04**中的失败检查不会阻止你开始研讨会。请按照报告的详细信息和修复建议进行处理，然后在开始对应模块之前再次运行 `check-prerequisites.sh`。只有在该模块的所有先决条件均得到满足后，才开始该模块。
+> 2. 默认模式下，**Modules 02–04 或 06**的失败不阻止开始 Module 01。通用/Module 01 检查失败时默认退出码为 `1`，否则为 `0`；`--strict` 遇到**任何 Failed 或 Skipped** 都返回 `1`。未知参数返回 `2`。“Ready to start” 不代表 Module 06 部署/健康验收通过。
 > 3. 在研讨会开始之前，Azure Container Registry 尚未部署，因此 `check-prerequisites.sh` 会将 **ACR 远程生成权限**检查报告为 `Skipped`。完成模块 01 后，请再次运行检查器以验证这些权限。模块 03 使用 `az acr build`。在注册表范围内分配 **Contributor** 足以执行生成和映像推送操作。
 > 4. **模块 03** 和**模块 04**共享同一个 Azure Container Registry 和容器映像。因此，已部署且可访问的 ACR 是模块 03 和模块 04 的共同先决条件。
+> 5. **模块 06** 需复用 **模块 03** 和**模块 04** 使用的ACR，但会上传新创建的智能体镜像。
 
 如果“研讨会部署权限”检查发现研讨会部署所需的任何操作不被允许，检查器将列出每个缺失的 ARM 操作，如下所示：
 
@@ -180,9 +205,11 @@ Fix suggestion:
 | [module-03](./module-03/README_CN.md) | 解决方案 B：AKS + agent-sandbox | 40 分钟 | 在 AKS 上部署可定制的智能体运行时，具备沙盒隔离、持久状态和工作负载标识。 |
 | [module-04](./module-04/README_CN.md) | 解决方案 C：ACA Sandboxes（研讨会路径） | 30 分钟 | 在 ACA Sandboxes 中部署具有微型 VM 隔离及挂起/恢复功能的智能体。<!-- ，并探索作为可选路径的 Dynamic Sessions。 --> |
 | [module-05](./module-05/README_CN.md) | 总结和问答 | 5 分钟 | 比较解决方案，并查看选择指南、成本优化和生产环境强化建议。 |
+| [module-06](./module-06/readme_CN.md) | 扩展练习：多智能体业务场景 | 额外安排 | 以 Product Launch Studio 为示例，复用 Modules 01/04；部署 HorizonDB 和五个 ACA Sandboxes，然后上传/处理/向量化数据并通过 Chat UI 查询。 |
 
 > **研讨会总时长：**135 分钟。
 > **动手练习（模块 01–04）：**120 分钟。
+> **Module 06：多智能体业务场景**为额外扩展练习，不计入 135 分钟的核心研讨会。
 
 ---
 
@@ -201,7 +228,7 @@ agenthost/
 │   ├── main.bicep               ← Ubuntu 工具箱 VM 的基础设施源文件
 │   ├── main.json                ← 生成的 Azure 门户自定义部署模板
 │   ├── uiFormDefinition.json    ← 按认证方式动态显示凭据的门户表单
-│   ├── cloud-init.yaml          ← 首次启动时的工具安装和初始化配置
+│   ├── cloud-init.yaml          ← 首次启动配置与统一工具验证
 │   └── scripts/
 │       └── verify-tools.sh      ← 验证工具版本和用户范围扩展
 ├── pic/                         ← 研讨会截图，包括 toolbox-vm-deployment.png
@@ -257,9 +284,22 @@ agenthost/
 │   ├── sandbox.bicep            ← 研讨会路径：SandboxGroup（真正的 Sandboxes、微型 VM 边界、挂起/恢复）+ UAMI AcrPull 角色
 │   ├── sandbox-deploy.sh        ← 研讨会路径：复用模块 03 映像 + SandboxGroup + 磁盘映像 + 沙盒管理
 │   └── container-app.yaml       ← 旧版标准 ACA 清单（仅供参考）
-└── module-05/
-    ├── README.md                ← 比较回顾、决策指南、成本技巧和生产环境清单
-    └── README_CN.md             ← 中文总结指南
+├── module-05/
+│   ├── README.md                ← 比较回顾、决策指南、成本技巧和生产环境清单
+│   └── README_CN.md             ← 中文总结指南
+└── module-06/
+    ├── readme.md                ← 多智能体业务场景：完整安装、部署、上传/向量化和聊天操作指南
+    ├── readme_CN.md             ← 中文多智能体业务场景指南
+    ├── prompt/                 ← 原始需求/设计输入
+    └── agent-src/
+        ├── chat_agent/         ← Chat UI 和聊天 API
+        ├── orchestrator_agent/ ← LangGraph 编排和 A2A 路由
+        ├── data_processing_agent/ ← 上传、提取和向量化
+        ├── rag_agent/          ← 向量检索
+        ├── sql_agent/          ← 结构化查询
+        ├── sample-data/        ← 合成演示数据集
+        ├── deploy/             ← HorizonDB Bash/Bicep、ACR 远程生成和 ACA CLI 部署
+        └── docs/               ← 八份详细设计/运维指南及其 _CN 对应版本
 
 ```
 

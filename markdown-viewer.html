@@ -136,6 +136,7 @@
         const file = new URLSearchParams(window.location.search).get('file');
         const repositoryUrl = 'https://github.com/oxcp/ainotes';
         const webSlidesSection = {
+            root: 'web-slides/',
             title: 'Web Slides',
             links: [
                 ['Azure Container Apps Sandboxes', 'web-slides/Azure_Container_Apps_Sandboxes.html', 'presentation']
@@ -154,7 +155,8 @@
                     ['Module 2: Hosted Agent', 'agenthost/module-02/README.md', 'bot', '模块 2：托管智能体'],
                     ['Module 3: AKS Sandbox', 'agenthost/module-03/README.md', 'container', '模块 3：AKS 沙箱'],
                     ['Module 4: ACA Sandbox', 'agenthost/module-04/README.md', 'box', '模块 4：ACA 沙箱'],
-                    ['Module 5: Wrap-up', 'agenthost/module-05/README.md', 'circle-check-big', '模块 5：总结']
+                    ['Module 5: Wrap-up', 'agenthost/module-05/README.md', 'circle-check-big', '模块 5：总结'],
+                    ['Module 6: Multi-Agent Business Scenarios', 'agenthost/module-06/readme.md', 'workflow', '模块 6：多智能体业务场景']
                 ]
             },
             {
@@ -241,6 +243,27 @@
             }
         ];
 
+        const module06Navigation = {
+            root: 'agenthost/module-06/',
+            title: 'Multi-Agent Business Scenarios resources',
+            titleZh: '多智能体业务场景资源',
+            links: [
+                ['Chat Agent', 'agenthost/module-06/agent-src/chat_agent/README.md', 'messages-square', '聊天智能体'],
+                ['Orchestrator Agent', 'agenthost/module-06/agent-src/orchestrator_agent/README.md', 'workflow', '编排智能体'],
+                ['Data Processing Agent', 'agenthost/module-06/agent-src/data_processing_agent/README.md', 'file-input', '数据处理智能体'],
+                ['RAG Agent', 'agenthost/module-06/agent-src/rag_agent/README.md', 'search', 'RAG 智能体'],
+                ['SQL Agent', 'agenthost/module-06/agent-src/sql_agent/README.md', 'database', 'SQL 智能体'],
+                ['HorizonDB + ACA CLI deployment', 'agenthost/module-06/agent-src/docs/cli-deployment.md', 'terminal', 'HorizonDB + ACA CLI 部署'],
+                ['AKS / ACA deployment', 'agenthost/module-06/agent-src/docs/sandbox-deployment.md', 'container', 'AKS / ACA 部署'],
+                ['Workshop guide', 'agenthost/module-06/agent-src/docs/workshop-guide.md', 'presentation', '演示指南'],
+                ['Architecture', 'agenthost/module-06/agent-src/docs/architecture.md', 'network', '架构'],
+                ['Orchestration', 'agenthost/module-06/agent-src/docs/orchestration.md', 'workflow', '编排'],
+                ['Data processing', 'agenthost/module-06/agent-src/docs/data-processing.md', 'file-input', '数据处理'],
+                ['Security and operations', 'agenthost/module-06/agent-src/docs/security.md', 'shield-check', '安全与运维'],
+                ['Implementation and acceptance', 'agenthost/module-06/agent-src/docs/implementation-report.md', 'clipboard-check', '实现与验收']
+            ]
+        };
+
         function createSidebarLink(label, path, icon) {
             const link = document.createElement('a');
             link.className = 'sidebar-link';
@@ -254,13 +277,32 @@
         }
 
         function getAgenthostLanguage() {
-            return /(?:^|\/)README_CN\.md$/i.test(file ?? '') ? 'zh-CN' : 'en';
+            return /_CN\.md$/i.test(file ?? '') ? 'zh-CN' : 'en';
         }
 
         function getAgenthostPath(path, language) {
             const normalizedPath = path.toLowerCase();
             if (normalizedPath === 'agenthost/readme.md' || normalizedPath === 'agenthost/readme_cn.md') {
                 return language === 'zh-CN' ? 'agenthost/README_CN.md' : 'agenthost/readme.md';
+            }
+            if (/^agenthost\/module-06\/readme(?:_cn)?\.md$/.test(normalizedPath)) {
+                return language === 'zh-CN'
+                    ? 'agenthost/module-06/readme_CN.md'
+                    : 'agenthost/module-06/readme.md';
+            }
+            if (/^agenthost\/module-06\/agent-src\/readme(?:_cn)?\.md$/.test(normalizedPath)) {
+                return language === 'zh-CN'
+                    ? 'agenthost/module-06/agent-src/readme_CN.md'
+                    : 'agenthost/module-06/agent-src/README.md';
+            }
+            const documentPath = normalizedPath.replace(/_cn\.md$/, '.md');
+            if (documentPath.startsWith('agenthost/module-06/agent-src/docs/') &&
+                module06Navigation.links.some(([, target]) => target === documentPath)) {
+                return language === 'zh-CN' ? documentPath.replace(/\.md$/, '_CN.md') : documentPath;
+            }
+            if (normalizedPath.startsWith(module06Navigation.root) &&
+                !/\/(?:chat_agent|orchestrator_agent|data_processing_agent|rag_agent|sql_agent)\/readme(?:_cn)?\.md$/.test(normalizedPath)) {
+                return path;
             }
             if (language === 'zh-CN') {
                 return path.replace(/(?:readme|README)\.md$/i, 'README_CN.md');
@@ -269,6 +311,7 @@
         }
 
         function createLanguageSwitch(sidebar, language) {
+            if (getAgenthostPath(file, 'en') === getAgenthostPath(file, 'zh-CN')) return;
             const switcher = document.createElement('nav');
             switcher.className = 'language-switch';
             switcher.setAttribute('aria-label', 'Document language');
@@ -317,7 +360,9 @@
 
         function configureSidebar() {
             if (!file) return;
-            const section = navigationSections.find(({ root }) => file?.toLowerCase().startsWith(root.toLowerCase())) ?? webSlidesSection;
+            const section = [...navigationSections, webSlidesSection]
+                .find(({ root }) => file.toLowerCase().startsWith(root.toLowerCase()));
+            if (!section) return;
 
             const sidebar = document.querySelector('.sidebar');
             const links = sidebar.querySelector('.sidebar-links');
@@ -332,21 +377,21 @@
                 return createSidebarLink(isChinese && labelZh ? labelZh : label, localizedPath, icon);
             });
             localLinks.forEach((link) => links.append(link));
-            const currentLink = markCurrentSidebarLink(localLinks);
-
-            if (section !== webSlidesSection) {
-                const slidesDivider = document.createElement('hr');
-                slidesDivider.className = 'sidebar-divider';
-                links.append(slidesDivider);
-
-                const slidesTitle = document.createElement('h2');
-                slidesTitle.className = 'sidebar-title';
-                slidesTitle.textContent = webSlidesSection.title;
-                links.append(slidesTitle);
-                webSlidesSection.links.forEach(([label, path, icon]) => {
-                    links.append(createSidebarLink(label, path, icon));
+            if (file.toLowerCase().startsWith(module06Navigation.root)) {
+                const divider = document.createElement('hr');
+                divider.className = 'sidebar-divider';
+                links.append(divider);
+                const title = document.createElement('h2');
+                title.className = 'sidebar-title';
+                title.textContent = isChinese ? module06Navigation.titleZh : module06Navigation.title;
+                links.append(title);
+                module06Navigation.links.forEach(([label, path, icon, labelZh]) => {
+                    const link = createSidebarLink(isChinese ? labelZh : label, getAgenthostPath(path, language), icon);
+                    links.append(link);
+                    localLinks.push(link);
                 });
             }
+            const currentLink = markCurrentSidebarLink(localLinks);
 
             const divider = document.createElement('hr');
             divider.className = 'sidebar-divider';

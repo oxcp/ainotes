@@ -34,18 +34,25 @@ Resource group
         cloud-init -> system tools + admin-user extensions -> verification
 ```
 
-The image is `Canonical:ubuntu-24_04-lts:server:latest` (x64, generation 2). The template creates only the administration VM for this workshop; it does not create AKS clusters, Container Apps environments, or resources covered by the other workshop modules.
+The image is `Canonical:ubuntu-24_04-lts:server:latest` (x64, generation 2). The template creates only the administration VM and its selected networking for this workshop; it does not create AKS clusters, Container Apps environments, registries, sandbox groups, databases, or resources covered by the other workshop modules. First boot installs and checks tools only: it does not sign in, assign workshop roles, or deploy workshop resources.
 
 ## Installed tools
 
 | Component | Installation |
 | --- | --- |
 | Azure CLI | Latest stable release available from Microsoft's APT repository at installation time; verifies the installed package matches the current APT candidate and meets the workshop minimum of 2.80.0 (not a pinned version) |
-| Git, curl, jq | Ubuntu packages |
+| Bash, Git, curl, jq, OpenSSL, GNU timeout | Ubuntu packages; `timeout` and SHA-256 utilities come from `coreutils` |
+| Bicep | Required from Module 01 onward; `az bicep install --version v0.48.1` installs it in the admin user's Azure CLI directory. Verified through `az bicep version`; the workshop baseline 0.48.1 also covers Module-06 resource types. |
+| Independent ACA sandbox CLI (`aca`) | Official `https://aka.ms/aca-cli-install` installer, system-wide in `/usr/local/bin`; follows the upstream preview release pin and verifies its archive SHA-256; minimum verified version `1.0.0-preview.5` |
 | Azure Developer CLI (`azd`) | Current stable Microsoft release |
 | Microsoft Foundry extension | `microsoft.foundry`, installed for the configured admin user |
 | kubectl | `az aks install-cli`, installed in `/usr/local/bin` (also installs its kubelogin companion) |
 | Container Apps extension | Installed for the admin user with `--upgrade --allow-preview true` |
+
+> [!TIP]
+> - The independent `aca` CLI is **not** the Azure CLI `containerapp` extension.
+> - Installed tools are on the normal `/usr/local/bin`/`/usr/bin` PATH.
+> - No Python/venv installation is provided. Ubuntu or Azure CLI may include a Python runtime as a system dependency; those dependencies are not removed.
 
 ## Deployment guidance
 
@@ -97,6 +104,8 @@ When using an existing network, its current NSG inbound and outbound rules are p
 
 ## Validation
 
+### 1. Connect to the VM and verify tool installation
+
 SSH using the deployment output address and configured username (replace `azureuser` if you changed it). Windows users can run these commands in PowerShell with the Windows OpenSSH Client; WSL is not required. If `ssh` is unavailable, install **OpenSSH Client** from Windows Optional Features.
 
 For password authentication, run the following and enter the password at the prompt (do not put it in the command):
@@ -127,6 +136,39 @@ cloud-init status --wait
 test -f /var/lib/toolbox-install-complete && echo "READY" || echo "NOT READY"
 ```
 
+### 2. Sign in and check workshop prerequisites
+
+After tool installation verification passes, continue on the remote VM as the configured admin user. First boot does not sign in automatically; sign in to Azure and select the workshop subscription:
+
+```bash
+az login
+az account set --subscription "<subscription-id>"
+```
+
+Module 02 also requires azd sign-in:
+
+```bash
+azd auth login --use-device-code
+```
+
+[Module 06: Multi-Agent Business Scenarios](../module-06/readme.md) also requires checking ACA authentication and signing in if needed. Use `aca doctor` to diagnose sandbox access; select or configure the workshop sandbox group separately as directed by the module guide:
+
+```bash
+aca auth status >/dev/null 2>&1 || aca auth login
+aca doctor
+```
+
+Download and run the shared checker as described in the [top-level guide](../readme.md#prerequisites-before-workshop). Run the `sed` command below only if the file needs Windows CRLF-to-Linux LF conversion:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/oxcp/ainotes/main/agenthost/check-prerequisites.sh -o check-prerequisites.sh
+sed -i 's/\r$//' check-prerequisites.sh
+chmod +x check-prerequisites.sh
+bash check-prerequisites.sh
+```
+
+The checker reports tools, authentication, extensions, permissions, and RBAC roles by module, with remediation links for failures.
+
 ## Troubleshooting
 
 > [!TIP]
@@ -155,12 +197,14 @@ sudo bash /usr/local/sbin/install-toolbox.sh
 
 The installer refreshes base packages, installs or upgrades Azure CLI to the latest stable release available from Microsoft's APT repository at that time, verifies that its package version matches the current APT candidate, installs the current stable azd, installs or upgrades Foundry, upgrades Container Apps with preview releases allowed, reinstalls kubectl, and revalidates. Azure CLI is not pinned to 2.80.0; that version is only the workshop compatibility minimum checked by the installer and `verify-tools.sh`. The verification script does not check for new releases or upgrade tools. The installer does not duplicate profile entries. Do not run concurrent installers. Retrying the installer does not clear an earlier cloud-init error status; inspect the new logs and marker independently. Avoid `cloud-init clean` on a deployed VM unless you intend to repeat all first-boot processing.
 
+It also installs Bicep **0.48.1** and refreshes the independent ACA CLI using the upstream checksum-verified release pin. No check silently installs a missing tool. An installer download, checksum, version or PATH failure prevents the success marker. Run the same `verify-tools.sh` after a retry.
+
 ## Security and lifecycle
 
 - SSH password login is disabled by default and enabled only when `authenticationType=password`. The password is passed as an ARM `secureString` parameter, never embedded in cloud-init or deployment outputs. Do not commit private keys, passwords, tokens, or parameter files containing credentials.
 - Restrict public SSH to a trusted CIDR. A private-only VM plus existing private routing and explicit NAT egress is preferred for longer-lived environments.
-- Tool binaries are installed system-wide. Azure CLI and azd extensions are configured in the chosen admin user's home, not just `/root`; additional users must configure their own extensions.
-- Installers download official Microsoft scripts over HTTPS and execute them as root. Review upstream installers and network requirements for your environment; tool versions intentionally follow current stable releases, so rebuilds are not bit-for-bit reproducible.
+- System tools (including `aca`) are installed system-wide. Bicep, Azure CLI extensions, and azd extensions are configured in the chosen admin user's home, not just `/root`; additional users must configure their own user-scoped tools.
+- Installers download official Microsoft scripts over HTTPS and execute them as root. Review upstream installers and network requirements for your environment; most tools follow current stable releases, Bicep is pinned to 0.48.1, and ACA follows the upstream checksum-verified preview release pin. Rebuilds are not bit-for-bit reproducible.
 - No unattended full OS upgrade is performed. Maintain OS security patches and tool updates according to your operational policy.
 - Changing source files or redeploying does not rerun cloud-init on an existing VM. Redeploying is not a tool-upgrade mechanism; retry the installer or recreate the VM as appropriate.
 - VM compute, disk, and optional public IP incur charges.

@@ -1,1 +1,11 @@
 .vscode/
+agenthost/module-06/agent-src/
+agenthost/module-06/prompt/
+agenthost/module-06/sample-data/
+agenthost/tests/
+*copy*
+.github/
+.copilot*
+copilot-worktrees/
+IMPLEMENTATION_INSTRUCTIONS.md
+

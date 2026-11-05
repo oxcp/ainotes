@@ -3,16 +3,44 @@
 
 set -u
 
+if ((BASH_VERSINFO[0] < 4)); then
+  printf 'Error: Bash 4+ is required (use Linux or WSL).\n' >&2
+  exit 1
+fi
+STRICT=false
+while (($#)); do
+  case "$1" in
+    --strict) STRICT=true ;;
+    --help)
+      cat <<'HELP'
+Usage: bash check-prerequisites.sh [--strict]
+Read-only checks for Modules 01-04 and 06; never installs tools, logs in or deploys.
+Environment: SUBSCRIPTION_ID (otherwise current az account), RESOURCE_GROUP
+(rg-agenthost-workshop, used by the Module 03 ACR check).
+Module 06 checks tools/authentication only; shared resources are reused per its guide.
+Default exit: 1 for failed Common/Module 01 checks; 0 otherwise.
+--strict: exit 1 for any Failed or Skipped check, including later-module prerequisites.
+Exit 2: invalid arguments. Pass is preflight evidence, not cloud/business acceptance.
+HELP
+      exit 0 ;;
+    *) printf 'Unknown argument: %s. Use --help.\n' "$1" >&2; exit 2 ;;
+  esac
+  shift
+done
 MIN_AZ_VERSION="2.80.0"
-TOTAL_CHECKS=14
+MIN_BICEP_VERSION="0.48.1"
+TOTAL_CHECKS=19
 CURRENT_CHECK=0
 RESOURCE_GROUP="${RESOURCE_GROUP:-rg-agenthost-workshop}"
+REQUESTED_SUBSCRIPTION="${SUBSCRIPTION_ID:-}"
 
 GROUP_COMMON="Common prerequisites for all modules"
 GROUP_MODULE_01="Module 01"
 GROUP_MODULE_02="Module 02"
 GROUP_MODULE_03="Module 03"
 GROUP_MODULE_04="Module 04"
+GROUP_MODULE_06="Module 06"
+MODULE_06_GUIDE="https://oxcp.github.io/ainotes/markdown-viewer.html?file=agenthost/module-06/readme.md"
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -79,6 +107,7 @@ version_at_least() {
   local actual_major actual_minor actual_patch
   local required_major required_minor required_patch
 
+  [[ "$actual" =~ ^[0-9]+(\.[0-9]+){0,2}$ && "$required" =~ ^[0-9]+(\.[0-9]+){0,2}$ ]] || return 1
   IFS=. read -r actual_major actual_minor actual_patch <<< "$actual"
   IFS=. read -r required_major required_minor required_patch <<< "$required"
   actual_minor="${actual_minor:-0}"
@@ -166,7 +195,10 @@ fi
 
 show_progress "active Azure login"
 if $AZ_INSTALLED; then
+  account_args=()
+  [[ -z "$REQUESTED_SUBSCRIPTION" ]] || account_args=(--subscription "$REQUESTED_SUBSCRIPTION")
   ACCOUNT_INFO="$(az account show \
+    "${account_args[@]}" \
     --query '{subscriptionId:id, subscriptionName:name, accountType:user.type, accountName:user.name}' \
     --output tsv 2>/dev/null | tr -d '\r')"
   if [[ -n "$ACCOUNT_INFO" ]]; then
@@ -240,6 +272,17 @@ else
   add_result "$GROUP_MODULE_01" "jq installed" "Failed" "jq was not found" "https://jqlang.github.io/jq/download/"
 fi
 
+show_progress "Bicep $MIN_BICEP_VERSION+"
+BICEP_VERSION=""
+if $AZ_INSTALLED; then
+  BICEP_VERSION="$(az bicep version 2>/dev/null | sed -n 's/^Bicep CLI version \([0-9.]*\).*/\1/p')"
+fi
+if version_at_least "$BICEP_VERSION" "$MIN_BICEP_VERSION"; then
+  add_result "$GROUP_MODULE_01" "Bicep $MIN_BICEP_VERSION+" "Pass" "Installed: $BICEP_VERSION" ""
+else
+  add_result "$GROUP_MODULE_01" "Bicep $MIN_BICEP_VERSION+" "Failed" "Installed: ${BICEP_VERSION:-not available}; install/update Bicep before Module 01" "https://learn.microsoft.com/azure/azure-resource-manager/bicep/install"
+fi
+
 # Module 02
 show_progress "Azure Developer CLI installation"
 if command -v azd >/dev/null 2>&1; then
@@ -283,7 +326,7 @@ show_progress "ACR remote build permissions"
 ACR_ID=""
 ACR_PERMISSION_BLOCKS=""
 if $AZ_LOGGED_IN; then
-  ACR_ID="$(az acr list --resource-group "$RESOURCE_GROUP" --query '[0].id' --output tsv 2>/dev/null | tr -d '\r')"
+  ACR_ID="$(az acr list --subscription "$SUBSCRIPTION_ID" --resource-group "$RESOURCE_GROUP" --query '[0].id' --output tsv 2>/dev/null | tr -d '\r')"
   if [[ -n "$ACR_ID" ]]; then
     ACR_PERMISSION_BLOCKS="$(az rest \
       --method get \
@@ -342,6 +385,39 @@ else
   add_result "$GROUP_MODULE_04" "SandboxGroup Data Owner role" "Failed" "Role assignment not found for the current subscription" "https://learn.microsoft.com/en-us/azure/container-apps/sandboxes-get-started#before-you-start"
 fi
 
+# Module 06: additional host tools and authentication.
+show_progress "independent ACA CLI"
+ACA_AVAILABLE=false
+if command -v aca >/dev/null 2>&1 && ACA_VERSION="$(aca --version 2>/dev/null)" &&
+  aca sandbox validate --help >/dev/null 2>&1 && aca sandboxgroup disk create --help >/dev/null 2>&1; then
+  ACA_AVAILABLE=true
+  add_result "$GROUP_MODULE_06" "Independent ACA CLI" "Pass" "$ACA_VERSION; required manifest/disk commands available" ""
+else
+  add_result "$GROUP_MODULE_06" "Independent ACA CLI" "Failed" "Install aca (not az containerapp); validated workshop version: 1.0.0-preview.5" "https://aka.ms/aca-cli-install"
+fi
+
+show_progress "ACA authentication"
+if $ACA_AVAILABLE && aca auth status >/dev/null 2>&1; then
+  add_result "$GROUP_MODULE_06" "ACA authentication" "Pass" "aca authentication is active; guest identity still needs separate configuration" ""
+else
+  add_result "$GROUP_MODULE_06" "ACA authentication" "Failed" "Check az login, then aca auth status; run aca auth login only if needed" "$MODULE_06_GUIDE"
+fi
+
+show_progress "OpenSSL installation"
+if command -v openssl >/dev/null 2>&1 && OPENSSL_VERSION="$(openssl version 2>/dev/null)"; then
+  add_result "$GROUP_MODULE_06" "OpenSSL installed" "Pass" "$OPENSSL_VERSION" ""
+else
+  add_result "$GROUP_MODULE_06" "OpenSSL installed" "Failed" "Install openssl for credential/deployment ID generation" "$MODULE_06_GUIDE"
+fi
+
+show_progress "GNU timeout installation"
+if command -v timeout >/dev/null 2>&1 && TIMEOUT_VERSION="$(timeout --version 2>/dev/null)" &&
+  [[ "$TIMEOUT_VERSION" == *"GNU coreutils"* ]]; then
+  add_result "$GROUP_MODULE_06" "GNU timeout installed" "Pass" "${TIMEOUT_VERSION%%$'\n'*}" ""
+else
+  add_result "$GROUP_MODULE_06" "GNU timeout installed" "Failed" "Install GNU coreutils; required for bounded ACA operations" "https://www.gnu.org/software/coreutils/"
+fi
+
 print_group() {
   local group="$1"
   local index result_color has_failures=false
@@ -393,6 +469,7 @@ print_group "$GROUP_MODULE_01"
 print_group "$GROUP_MODULE_02"
 print_group "$GROUP_MODULE_03"
 print_group "$GROUP_MODULE_04"
+print_group "$GROUP_MODULE_06"
 
 FAILED_COUNT=0
 SKIPPED_COUNT=0
@@ -420,7 +497,7 @@ else
   printf '%bWorkshop readiness: Ready to start.%b\n' "$GREEN" "$RESET"
 fi
 
-for group in "$GROUP_MODULE_02" "$GROUP_MODULE_03" "$GROUP_MODULE_04"; do
+for group in "$GROUP_MODULE_02" "$GROUP_MODULE_03" "$GROUP_MODULE_04" "$GROUP_MODULE_06"; do
   group_has_failures=false
   for index in "${!RESULTS[@]}"; do
     if [[ "${RESULT_GROUPS[$index]}" == "$group" && "${RESULTS[$index]}" == "Failed" ]]; then
@@ -434,9 +511,13 @@ for group in "$GROUP_MODULE_02" "$GROUP_MODULE_03" "$GROUP_MODULE_04"; do
 done
 
 if ((SKIPPED_COUNT > 0)); then
-  printf '%bModule notice: Re-run this check after Module 01 to validate the skipped ACR permission before Module 03.%b\n' "$YELLOW" "$RESET"
+  printf '%bModule notice: Re-run after Module 01 to validate the skipped ACR permission before Module 03.%b\n' "$YELLOW" "$RESET"
 fi
 
-if ((START_BLOCKER_COUNT > 0)); then
+printf 'Module 06: follow its guide to reuse earlier resources; this checker does not repeat resource discovery or permission checks for that module.\n'
+printf 'Preflight does not verify secrets, model/Blob calls or live Agent health. Follow the Module 06 deployment and business-flow checks.\n'
+
+if ((START_BLOCKER_COUNT > 0)) || { $STRICT && ((FAILED_COUNT + SKIPPED_COUNT > 0)); }; then
   exit 1
 fi
+exit 0

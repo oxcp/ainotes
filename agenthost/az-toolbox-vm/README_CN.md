@@ -35,19 +35,25 @@
         cloud-init -> 系统工具 + 管理员用户扩展 -> 验证
 ```
 
-使用的镜像为 `Canonical:ubuntu-24_04-lts:server:latest`（x64，第 2 代）。模板只创建本研讨会的操作VM，不会创建 AKS 群集、Container Apps 环境等本Workshop中其它module的内容。
+使用的镜像为 `Canonical:ubuntu-24_04-lts:server:latest`（x64，第 2 代）。模板只创建本研讨会的操作 VM 及所选网络，不会创建 AKS 群集、Container Apps 环境、镜像注册表、沙盒组、数据库或其他模块的资源。首次启动仅安装和检查工具：不会登录、分配研讨会角色或部署研讨会资源。
 
 ## 安装的工具
 
 | 组件 | 安装方式 |
 | --- | --- |
 | Azure CLI | 安装时 Microsoft APT 仓库中可用的最新稳定版；验证已安装的软件包与当前 APT 候选版本一致，并满足研讨会最低版本 2.80.0（并非固定安装版本） |
-| Git、curl、jq | Ubuntu 软件包 |
+| Bash、Git、curl、jq、OpenSSL、GNU timeout | Ubuntu 软件包；`timeout` 和 SHA-256 工具由 `coreutils` 提供 |
+| Bicep | 从 Module 01 起就需要；通过 `az bicep install --version v0.48.1` 安装到管理员用户的 Azure CLI 目录。使用 `az bicep version` 验证；研讨会统一基线 0.48.1 同时覆盖 Module-06 资源类型。 |
+| 独立 ACA 沙盒 CLI（`aca`） | 通过官方 `https://aka.ms/aca-cli-install` 安装程序安装到系统级 `/usr/local/bin`；跟随上游预览版发布锁定清单并验证归档 SHA-256；最低验证版本为 `1.0.0-preview.5` |
 | Azure Developer CLI（`azd`） | Microsoft 当前稳定版本 |
 | Microsoft Foundry 扩展 | `microsoft.foundry`，为配置的管理员用户安装 |
 | kubectl | 通过 `az aks install-cli` 安装到 `/usr/local/bin`（同时安装配套的 kubelogin） |
 | Container Apps 扩展 | 使用 `--upgrade --allow-preview true` 为管理员用户安装 |
 
+> [!tip]
+> - 独立的 `aca` CLI **不是** Azure CLI 的 `containerapp` 扩展
+> - 安装的工具位于常规 `/usr/local/bin`/`/usr/bin` PATH 中
+> - 不提供 Python/venv 安装。Ubuntu 或 Azure CLI 可能自带作为系统依赖的 Python 运行时；不会移除这些依赖。
 
 ## 部署说明
 
@@ -101,6 +107,8 @@ ssh-keygen -t rsa -b 4096 -f ~/.ssh/toolbox_rsa
 
 ## 验证
 
+### 1. 连接 VM 并验证工具安装
+
 使用部署输出中的地址和配置的用户名通过 SSH 连接（如修改了用户名，请替换 `azureuser`）。Windows 用户可以在 PowerShell 中使用 Windows OpenSSH 客户端运行以下命令，无需 WSL。如果没有 `ssh` 命令，请从 Windows“可选功能”安装 **OpenSSH 客户端**。
 
 使用密码认证时，运行以下命令，并在提示时输入密码（不要将密码写入命令）：
@@ -131,6 +139,40 @@ cloud-init status --wait
 test -f /var/lib/toolbox-install-complete && echo "READY" || echo "NOT READY"
 ```
 
+### 2. 登录并检查研讨会先决条件
+
+工具安装验证通过后，继续在远程 VM 中以配置的管理员用户身份操作。首次启动不会自动登录；先登录 Azure 并选择研讨会订阅：
+
+```bash
+az login
+az account set --subscription "<subscription-id>"
+```
+
+Module 02 还需要 azd 登录：
+
+```bash
+azd auth login --use-device-code
+```
+
+[Module 06：多智能体业务场景](../module-06/readme_CN.md)还需要检查 ACA 认证，必要时登录。`aca doctor` 用于诊断沙盒访问；研讨会沙盒组仍需按模块指南另外选择或配置：
+
+```bash
+aca auth status >/dev/null 2>&1 || aca auth login
+aca doctor
+```
+
+按照[顶层指南](../README_CN.md#先决条件研讨会开始前)，下载并运行统一检查器。下面的 `sed` 命令仅在文件需要从 Windows CRLF 转为 Linux LF 时运行：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/oxcp/ainotes/main/agenthost/check-prerequisites.sh -o check-prerequisites.sh
+sed -i 's/\r$//' check-prerequisites.sh
+chmod +x check-prerequisites.sh
+bash check-prerequisites.sh
+```
+
+检查器按模块报告工具、登录、扩展、权限和 RBAC 角色，并为失败项提供修复参考链接。
+
+
 ## 故障排查
 
 > [!tip]
@@ -159,12 +201,14 @@ sudo bash /usr/local/sbin/install-toolbox.sh
 
 安装程序会刷新基础软件包，将 Azure CLI 安装或升级到当时 Microsoft APT 仓库中可用的最新稳定版，验证其软件包版本与当前 APT 候选版本一致，安装当前稳定版 azd，安装或升级 Foundry，在允许预览版本的情况下升级 Container Apps，重新安装 kubectl，并重新验证。Azure CLI 不会固定安装为 2.80.0；该版本仅是安装程序和 `verify-tools.sh` 检查的研讨会兼容性下限。验证脚本不会检查新版本或升级工具。安装程序不会重复添加 profile 条目。不要并发运行多个安装程序。重试安装程序不会清除先前的 cloud-init 错误状态；请单独检查新日志和标记。除非打算重新执行所有首次启动处理，否则不要在已部署的 VM 上运行 `cloud-init clean`。
 
+安装程序还会安装 Bicep **0.48.1**，通过上游发布锁定清单和校验值更新独立 ACA CLI。验证过程不会静默安装缺失工具。安装下载、校验值、版本或 PATH 检查失败时，不会生成成功标记。重试后仍运行同一个 `verify-tools.sh`。
+
 ## 安全与生命周期
 
 - 默认禁用 SSH 密码登录，仅在 `authenticationType=password` 时启用。密码通过 ARM `secureString` 参数传递，不会嵌入 cloud-init 或部署输出。不要提交私钥、密码、令牌或包含凭据的参数文件。
 - 将公共 SSH 访问限制为受信任的 CIDR。对于长期使用的环境，优先采用仅专用网络 VM，并配合现有专用路由和显式 NAT 出站访问。
-- 工具二进制文件安装在系统范围内。Azure CLI 和 azd 扩展配置在所选管理员用户的主目录中，而不仅是 `/root`；其他用户必须配置自己的扩展。
-- 安装程序通过 HTTPS 下载 Microsoft 官方脚本，并以 root 身份执行。请根据环境要求审查上游安装程序和网络需求；工具版本有意跟随当前稳定版本，因此重新构建无法保证逐比特一致。
+- 系统工具（包括 `aca`）安装在系统范围内。Bicep、Azure CLI 扩展和 azd 扩展配置在所选管理员用户的主目录中，而不仅是 `/root`；其他用户必须配置自己的用户级工具。
+- 安装程序通过 HTTPS 下载 Microsoft 官方脚本，并以 root 身份执行。请根据环境要求审查上游安装程序和网络需求；大多数工具跟随当前稳定版本，Bicep 固定为 0.48.1，ACA 跟随上游校验值验证的预览版发布锁定清单。重新构建无法保证逐比特一致。
 - 不会执行无人值守的完整操作系统升级。请根据运维策略维护操作系统安全补丁和工具更新。
 - 更改源文件或重新部署不会在现有 VM 上重新运行 cloud-init。重新部署不是工具升级机制；请根据情况重试安装程序或重新创建 VM。
 - VM 计算资源、磁盘和可选的公共 IP 会产生费用。
