@@ -8,8 +8,7 @@
 
 ## 浏览内容
 
-浏览本仓库最便捷的方式是访问 [AI Notes 网站](https://oxcp.github.io/ainotes/)。网站中的 Markdown 阅读器支持类似 GitHub 的渲染效果、代码快速复制、嵌入式视频，以及多模块 Workshop 导航。
-模块 06 导航将五个 Agent 指南与分组展示的设计及部署文档分开组织。
+浏览本仓库最便捷的方式是访问 [AI Notes 网站](https://oxcp.github.io/ainotes/)。网站中的 Markdown 阅读器支持类似 GitHub 的渲染效果、代码快速复制、嵌入式视频、长文章目录展示和点击跳转，以及多模块 Workshop 导航。
 
 ### Workshop 与动手指南
 

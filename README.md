@@ -8,8 +8,7 @@ The repository combines runnable scripts and infrastructure templates with detai
 
 ## Browse the Content
 
-The easiest way to explore the repository is through the [AI Notes site](https://oxcp.github.io/ainotes/). Its Markdown viewer provides GitHub-style rendering, code-copy controls, embedded videos, and navigation for multi-module workshops.
-Module 06 navigation separates the five Agent guides from a grouped set of design and deployment documents.
+The easiest way to explore the repository is through the [AI Notes site](https://oxcp.github.io/ainotes/). Its Markdown viewer provides GitHub-style rendering, code-copy controls, embedded videos, a clickable table of contents for long articles, and navigation for multi-module workshops.
 
 ### Workshops and Hands-on Guides
 
