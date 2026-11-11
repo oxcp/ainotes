@@ -885,6 +885,9 @@
     .extension-diagram .wire { fill: none; stroke: var(--cyan); stroke-width: 2; }
     .extension-diagram .data-wire { fill: none; stroke: var(--green); stroke-width: 2; stroke-dasharray: 6 4; }
     .extension-diagram .model-wire { fill: none; stroke: var(--orange); stroke-width: 2; stroke-dasharray: 3 4; }
+    #slide-16 .wire-label { font-size: 13px; font-weight: 700; text-anchor: middle; paint-order: stroke; stroke: var(--panel); stroke-width: 5px; stroke-linejoin: round; }
+    #slide-16 .data-label { fill: var(--green); }
+    #slide-16 .model-label { fill: var(--orange); }
     .extension-diagram marker path { fill: var(--cyan); }
     .extension-diagram #m6-data path { fill: var(--green); }
     .extension-diagram #m6-model path { fill: var(--orange); }
@@ -1325,10 +1328,13 @@
             <path class="data-wire" d="M565 210 V410" marker-end="url(#m6-data)"/>
             <path class="data-wire" d="M1110 100 H1150 V382 H700 V410" marker-end="url(#m6-data)"/>
             <path class="data-wire" d="M1110 199 H1150 M1110 299 H1150"/>
-            <text class="svg-label" x="425" y="370">工作区 / 运行记录</text>
-            <text class="svg-label" x="800" y="373">Processing 写入；RAG / SQL 读取</text>
             <path class="model-wire" d="M650 207 H680 V357 H1015 V410" marker-end="url(#m6-model)"/>
             <path class="model-wire" d="M1110 122 H1128 V357 H1015 M1110 222 H1128 M1110 322 H1128"/>
+            <text class="wire-label data-label" x="233" y="300" transform="rotate(-90 233 300)">上传文件</text>
+            <text class="wire-label data-label" x="398" y="376" transform="rotate(-90 398 376)">读取 Blob 文件</text>
+            <text class="wire-label data-label" x="553" y="292" transform="rotate(-90 553 292)">保存工作区 / 运行记录</text>
+            <text class="wire-label data-label" x="925" y="399">Processing 写入；RAG / SQL 读取</text>
+            <text class="wire-label model-label" x="855" y="352">经 APIM 调用通用模型 / 嵌入模型</text>
             <rect class="box" x="20" y="124" width="125" height="76" rx="12"/><text x="82" y="157" text-anchor="middle">浏览器</text><text class="svg-small" x="82" y="181" text-anchor="middle">HTTPS</text>
             <rect class="box agent-box" x="200" y="124" width="180" height="76" rx="12"/><text class="svg-title" x="290" y="153" text-anchor="middle">Chat</text><text class="svg-small" x="290" y="179" text-anchor="middle">FastAPI / UI / 上传</text>
             <rect class="box agent-box" x="455" y="114" width="200" height="96" rx="12"/><text class="svg-title" x="555" y="150" text-anchor="middle">Orchestrator</text><text class="svg-small" x="555" y="178" text-anchor="middle">LangGraph / 工作区授权</text>
