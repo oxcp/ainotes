@@ -158,6 +158,12 @@ aca auth status >/dev/null 2>&1 || aca auth login
 aca doctor
 ```
 
+Module-06 deploys its database separately with `deploy-database.sh`: `DB_PROVIDER=horizondb` is the default,
+or choose `DB_PROVIDER=postgresql` (Azure PostgreSQL Flexible Server).
+Both use generic `DB_*` configuration and one psycopg repository; check provider registration, permissions
+and capacity in the chosen region. Keep passwords in protected files, never CLI arguments or tracing logs.
+The toolbox does not automatically create a database.
+
 Download and run the shared checker as described in the [top-level guide](../readme.md#prerequisites-before-workshop). Run the `sed` command below only if the file needs Windows CRLF-to-Linux LF conversion:
 
 ```bash

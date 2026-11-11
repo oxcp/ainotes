@@ -1,4 +1,4 @@
-# 模块 1 — 核心基础设施设置（20 分钟）
+# 模块 1 — 核心基础设施设置（30 分钟）
 
 > 🌐 语言 / Language: [English](README.md) | **中文**
 
@@ -175,7 +175,7 @@ Next:
 > [!NOTE]
 > **供参考，该模板将部署和配置以下资源：**
 > 1. 供后续模块中的工作负载使用的**用户分配的托管标识 (UAMI)**。它将获得 Foundry 推理和智能体状态存储帐户的访问权限。
-> 2. 使用 Standard LRS 和 Cool 访问层的 **Azure 存储帐户**，仅允许 HTTPS 访问、使用 TLS 1.2，并禁用公共 Blob 访问。启用 Blob 版本控制，并创建专用 `agent-state` 容器来持久保存智能体状态。
+> 2. 使用 Standard LRS 和 Cool 访问层的 **Azure 存储帐户**，仅允许 HTTPS 访问、使用 TLS 1.2，并禁用公共 Blob 访问。启用 Blob 版本控制，并创建专用容器 `agent-state` 用于持久保存智能体状态。Module 06 在该已有账户中创建自己的私有 `data` 容器；Module 01 不创建它，也不删除任何已有容器或数据。
 > 3. 使用 Standard 层的 **Azure Key Vault**，启用 RBAC 授权、软删除、清除保护和公共网络访问。
 > 4. 使用 Standard 层且禁用管理员帐户的 **Azure 容器注册表 (ACR)**。
 > 5. 类型为 `AIServices` 的 **Microsoft Foundry 帐户** `foundry-agenthost-<deploymentSN>`，配有系统分配的托管标识，禁用本地密钥身份验证，启用项目管理和公共网络访问。

@@ -9,18 +9,19 @@
     @import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap");
 
     :root {
-      --ink: #eaf6ff;
-      --muted: #94abc0;
-      --navy: #07121d;
-      --panel: #0d2030;
-      --panel-2: #112b3e;
-      --cyan: #52d3ff;
-      --cyan-soft: #9ae7ff;
-      --orange: #ff9f43;
-      --green: #76e6a6;
-      --red: #ff7188;
-      --line: rgba(154, 231, 255, 0.18);
-      --shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+      color-scheme: light;
+      --ink: #172f43;
+      --muted: #52677b;
+      --navy: #f5f8fc;
+      --panel: #ffffff;
+      --panel-2: #eaf2f8;
+      --cyan: #00749b;
+      --cyan-soft: #00678b;
+      --orange: #a64b08;
+      --green: #167347;
+      --red: #bd2945;
+      --line: rgba(38, 85, 118, 0.2);
+      --shadow: 0 24px 80px rgba(35, 65, 95, 0.09);
       --title-size: clamp(2.45rem, 7vw, 6.7rem);
       --section-size: clamp(2rem, 4.4vw, 4.4rem);
       --body-size: clamp(0.86rem, 1.45vw, 1.22rem);
@@ -57,8 +58,8 @@
       isolation: isolate;
       scroll-snap-align: start;
       background:
-        radial-gradient(circle at 88% 10%, rgba(82, 211, 255, 0.12), transparent 27%),
-        linear-gradient(135deg, #07121d 0%, #0a1926 100%);
+        radial-gradient(circle at 88% 10%, rgba(0, 116, 155, 0.08), transparent 27%),
+        linear-gradient(135deg, #ffffff 0%, #edf4fa 100%);
     }
 
     .slide::after {
@@ -68,21 +69,10 @@
       z-index: -2;
       opacity: 0.3;
       background-image:
-        linear-gradient(rgba(154, 231, 255, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(154, 231, 255, 0.05) 1px, transparent 1px);
+        linear-gradient(rgba(38, 85, 118, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(38, 85, 118, 0.08) 1px, transparent 1px);
       background-size: 48px 48px;
       mask-image: linear-gradient(to bottom, black, transparent 92%);
-    }
-
-    .slide[data-theme] {
-      --ink: #eaf6ff;
-      --muted: #94abc0;
-      --panel: #0d2030;
-      --panel-2: #112b3e;
-      --line: rgba(154, 231, 255, 0.18);
-      background:
-        radial-gradient(circle at 88% 10%, rgba(82, 211, 255, 0.12), transparent 27%),
-        linear-gradient(135deg, #07121d 0%, #0a1926 100%);
     }
 
     .content {
@@ -311,7 +301,7 @@
       height: 2.8rem;
       margin-bottom: 1rem;
       border-radius: 10px;
-      color: #04121d;
+      color: #ffffff;
       background: var(--cyan);
       font: 700 1.2rem/1 "DM Mono", monospace;
     }
@@ -409,7 +399,7 @@
       margin-bottom: 0.35rem;
       padding: 0.25rem 0.45rem;
       border-radius: 5px;
-      color: #04121d;
+      color: #ffffff;
       background: var(--cyan);
       font: 700 0.66rem/1 "DM Mono", monospace;
     }
@@ -448,7 +438,7 @@
       width: 32px;
       height: 32px;
       border-radius: 8px;
-      color: #04121d;
+      color: #ffffff;
       background: var(--cyan);
       font: 700 0.78rem/1 "DM Mono", monospace;
     }
@@ -464,21 +454,21 @@
       font-size: clamp(1.65rem, 3.5vw, 3.5rem);
     }
 
-    .blueprint-foundry { --blueprint-accent: #39b6ff; }
-    .blueprint-aks { --blueprint-accent: #b79aff; }
-    .blueprint-aca { --blueprint-accent: #4de0c1; }
+    .blueprint-foundry { --blueprint-accent: #00749b; }
+    .blueprint-aks { --blueprint-accent: #7351b5; }
+    .blueprint-aca { --blueprint-accent: #087c68; }
     .blueprint-slide .eyebrow { color: var(--blueprint-accent); }
 
     .blueprint {
       position: relative;
       height: min(53vh, 470px);
       overflow: hidden;
-      border: 1px solid color-mix(in srgb, var(--blueprint-accent) 35%, #294663);
+      border: 1px solid color-mix(in srgb, var(--blueprint-accent) 35%, #d5e2ed);
       border-radius: 22px;
       background:
         radial-gradient(circle at center, color-mix(in srgb, var(--blueprint-accent) 8%, transparent), transparent 46%),
-        rgba(3, 13, 24, 0.72);
-      box-shadow: inset 0 0 70px rgba(0, 0, 0, 0.28), var(--shadow);
+        #f6f9fc;
+      box-shadow: inset 0 0 70px rgba(35, 65, 95, 0.04), var(--shadow);
     }
 
     .blueprint::after {
@@ -502,7 +492,7 @@
 
     .bp-wires > path {
       fill: none;
-      stroke: color-mix(in srgb, var(--blueprint-accent) 75%, white);
+      stroke: var(--blueprint-accent);
       stroke-width: 2.2;
       stroke-linecap: round;
       stroke-linejoin: round;
@@ -517,6 +507,8 @@
       opacity: 0.58;
     }
 
+    .bp-wires marker path { fill: var(--blueprint-accent); }
+
     @keyframes wireFlow { to { stroke-dashoffset: -32; } }
 
     .bp-node {
@@ -527,12 +519,12 @@
       min-height: clamp(62px, 9vh, 88px);
       padding: clamp(0.5rem, 0.85vw, 0.78rem);
       place-items: center;
-      border: 1px solid color-mix(in srgb, var(--blueprint-accent) 55%, #35516d);
+      border: 1px solid color-mix(in srgb, var(--blueprint-accent) 55%, #d5e2ed);
       border-radius: 15px;
-      background: linear-gradient(145deg, rgba(17, 42, 67, 0.95), rgba(7, 25, 43, 0.95));
+      background: linear-gradient(145deg, #ffffff, #eaf2f8);
       color: var(--ink);
       text-align: center;
-      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.3), inset 0 1px rgba(255, 255, 255, 0.06);
+      box-shadow: 0 14px 34px rgba(35, 65, 95, 0.1), inset 0 1px #ffffff;
     }
 
     .bp-node strong {
@@ -545,7 +537,7 @@
     .bp-node span {
       display: block;
       margin-top: 0.28rem;
-      color: #9fbbd2;
+      color: var(--muted);
       font-size: clamp(0.52rem, 0.68vw, 0.7rem);
       line-height: 1.22;
     }
@@ -554,12 +546,12 @@
       border-width: 2px;
       box-shadow:
         0 0 0 7px color-mix(in srgb, var(--blueprint-accent) 7%, transparent),
-        0 16px 45px rgba(0, 0, 0, 0.35);
+        0 16px 45px rgba(35, 65, 95, 0.12);
     }
 
     .bp-node.satellite {
       border-style: dashed;
-      background: rgba(8, 29, 48, 0.84);
+      background: var(--panel-2);
     }
 
     .bp-path {
@@ -569,7 +561,7 @@
       border: 1px solid color-mix(in srgb, var(--blueprint-accent) 65%, white);
       border-radius: 999px;
       color: var(--blueprint-accent);
-      background: #071526;
+      background: var(--panel);
       font: 700 clamp(0.5rem, 0.65vw, 0.68rem)/1 "DM Mono", monospace;
       letter-spacing: 0.06em;
     }
@@ -583,10 +575,10 @@
 
     .bp-caption div {
       padding: 0.55rem 0.7rem;
-      border: 1px solid color-mix(in srgb, var(--blueprint-accent) 24%, #294663);
+      border: 1px solid color-mix(in srgb, var(--blueprint-accent) 24%, #d5e2ed);
       border-radius: 10px;
-      color: #a9c2d8;
-      background: rgba(8, 28, 47, 0.72);
+      color: var(--muted);
+      background: var(--panel-2);
       font-size: clamp(0.58rem, 0.75vw, 0.78rem);
     }
 
@@ -700,7 +692,7 @@
       height: 2.25rem;
       margin: 0 auto 0.7rem;
       border-radius: 50%;
-      color: #04121d;
+      color: #ffffff;
       background: var(--cyan);
       font: 700 0.8rem/1 "DM Mono", monospace;
     }
@@ -771,10 +763,10 @@
       width: 2.3rem;
       height: 2.3rem;
       padding: 0;
-      border: 1px solid rgba(154, 231, 255, 0.22);
+      border: 1px solid var(--line);
       border-radius: 50%;
       color: var(--ink);
-      background: rgba(7, 18, 29, 0.7);
+      background: rgba(255, 255, 255, 0.9);
       backdrop-filter: blur(10px);
       cursor: pointer;
       font: 500 1rem/1 "DM Mono", monospace;
@@ -859,6 +851,71 @@
       .reveal, .reveal-left, .reveal-scale { opacity: 1; transform: none; }
     }
 
+    .extension-slide { padding-block: clamp(2.5rem, 5vh, 4rem); }
+    .extension-slide h2 { font-size: clamp(1.7rem, 3.6vw, 3.4rem); }
+    .extension-slide .lede { max-width: 90ch; font-size: clamp(0.9rem, 1.4vw, 1.1rem); }
+    .extension-slide a { color: var(--cyan-soft); text-underline-offset: 0.2em; }
+    .extension-slide code { overflow-wrap: anywhere; }
+    .extension-slide .card p { font-size: clamp(0.8rem, 1.15vw, 1rem); }
+    .extension-slide .callout { font-size: clamp(0.78rem, 1.05vw, 0.95rem); }
+    .callout a { color: var(--cyan-soft); text-underline-offset: 0.2em; }
+    .extension-source { margin: 0.7rem 0 0; color: var(--muted); font-size: var(--small-size); }
+    .extension-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+    .extension-table { width: 100%; border-collapse: collapse; font-size: clamp(0.76rem, 1.05vw, 0.95rem); }
+    .extension-table caption { padding: 0.65rem 0.85rem; text-align: left; color: var(--cyan-soft); background: var(--panel-2); font-weight: 700; }
+    .extension-table th, .extension-table td { padding: 0.65rem 0.85rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    .extension-table thead th { color: var(--cyan-soft); background: rgba(82, 211, 255, 0.06); }
+    .extension-table tbody th { width: 21%; color: var(--ink); }
+    .extension-table td { color: var(--muted); }
+    .extension-table tr:last-child > * { border-bottom: 0; }
+    .extension-table td strong { color: var(--ink); }
+    .extension-diagram { margin: 0; overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); }
+    .extension-diagram svg { display: block; width: 100%; height: auto; max-height: 53vh; }
+    .extension-diagram figcaption { padding: 0.6rem 0.9rem; color: var(--muted); font-size: var(--small-size); border-top: 1px solid var(--line); }
+    .extension-diagram text { font-family: "Manrope", sans-serif; fill: var(--ink); font-size: 16px; }
+    .extension-diagram .svg-title { font-size: 19px; font-weight: 800; }
+    .extension-diagram .svg-small { font-size: 14px; fill: var(--muted); }
+    .extension-diagram .svg-label { font-size: 13px; fill: var(--cyan-soft); }
+    .extension-diagram .box { fill: var(--panel-2); stroke: var(--cyan); stroke-width: 1.5; }
+    .extension-diagram .agent-box { fill: #f0eafa; stroke: #7351b5; stroke-width: 2; }
+    .extension-diagram .agent-box + .svg-title { fill: #7351b5; }
+    .extension-diagram .boundary { fill: rgba(82, 211, 255, 0.025); stroke: var(--muted); stroke-dasharray: 6 5; }
+    .extension-diagram .data-box { fill: #e8f5ed; stroke: var(--green); stroke-width: 1.5; }
+    .extension-diagram .model-box { fill: #fff1e5; stroke: var(--orange); stroke-width: 1.5; }
+    .extension-diagram .wire { fill: none; stroke: var(--cyan); stroke-width: 2; }
+    .extension-diagram .data-wire { fill: none; stroke: var(--green); stroke-width: 2; stroke-dasharray: 6 4; }
+    .extension-diagram .model-wire { fill: none; stroke: var(--orange); stroke-width: 2; stroke-dasharray: 3 4; }
+    .extension-diagram marker path { fill: var(--cyan); }
+    .extension-diagram #m6-data path { fill: var(--green); }
+    .extension-diagram #m6-model path { fill: var(--orange); }
+    .extension-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 0.55rem; margin: 1rem 0; }
+    .extension-strip span { padding: 0.55rem 0.8rem; border: 1px solid var(--line); border-radius: 9px; background: var(--panel-2); font-size: var(--small-size); }
+    .extension-strip b { color: var(--orange); }
+    .extension-note { margin: 0.7rem 0 0; color: var(--muted); font-size: var(--small-size); }
+    .extension-note strong { color: var(--green); }
+
+    @media (min-width: 901px) and (max-height: 800px) {
+      .extension-slide { padding-block: 2rem; }
+      .extension-slide h2 { margin-bottom: 0.8rem; font-size: clamp(1.7rem, 3.2vw, 2.8rem); }
+      .extension-slide h3 { font-size: 1.2rem; }
+      .extension-slide .card { padding: 0.85rem 1rem; }
+      .extension-slide .card p { font-size: 0.85rem; }
+      .extension-table { font-size: 0.82rem; }
+      .extension-table th, .extension-table td { padding: 0.45rem 0.65rem; }
+      .extension-diagram svg { max-height: 48vh; }
+    }
+
+    @media (max-width: 900px), (max-height: 700px) {
+      html { scroll-snap-type: y proximity; }
+      .extension-slide { height: auto; min-height: 100vh; min-height: 100dvh; overflow: visible; padding-block: 3rem; }
+      .extension-slide .grid.three { grid-template-columns: 1fr; }
+      .extension-slide .content { min-width: 0; }
+      .extension-diagram svg { min-width: 850px; max-height: none; }
+      .extension-table { min-width: 660px; }
+      .extension-slide .extension-table-wrap:focus-visible,
+      .extension-slide .extension-diagram:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+    }
+
     @media print {
       @page { size: landscape; margin: 0; }
       html, body { background: #fff; }
@@ -869,6 +926,10 @@
       }
       .nav, .progress { display: none; }
       .reveal, .reveal-left, .reveal-scale { opacity: 1; transform: none; }
+      .extension-slide { height: 100vh; min-height: 0; overflow: hidden; padding-block: 2rem; }
+      .extension-slide .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .extension-diagram svg { min-width: 0; max-height: 53vh; }
+      .extension-table { min-width: 0; }
     }
   </style>
 </head>
@@ -886,7 +947,7 @@
       <div class="content">
         <p class="eyebrow reveal">Azure AI Agent Hosting Workshop</p>
         <h1 class="reveal">Choose the right <span class="accent">hosting model</span> for your agent.</h1>
-        <p class="lede reveal">A practical decision framework for managed hosting, high-customization sandboxes, identity, durable state, and scale-to-zero.</p>
+        <p class="lede reveal">A practical decision framework for managed hosting, high-customization sandboxes, identity, durable state, and scale-to-zero. Extend it with a five-agent business workflow in Module 06.</p>
         <div class="tag-row stagger">
           <span class="tag reveal">Foundry Hosted Agent</span>
           <span class="tag reveal">AKS + agent-sandbox</span>
@@ -894,7 +955,7 @@
         </div>
       </div>
       <span class="footer">AGENT HOSTING ON AZURE</span>
-      <span class="slide-number">01 / 12</span>
+      <span class="slide-number">01 / 21</span>
     </section>
 
     <section class="slide" id="slide-2">
@@ -911,7 +972,7 @@
           <article class="card reveal"><h3><span class="accent">07</span> Economics</h3><p>Idle cost, cold start, capacity model, and operational overhead.</p></article>
         </div>
       </div>
-      <span class="slide-number">02 / 12</span>
+      <span class="slide-number">02 / 21</span>
     </section>
 
     <section class="slide" id="slide-3">
@@ -949,7 +1010,7 @@
           </article>
         </div>
       </div>
-      <span class="slide-number">03 / 12</span>
+      <span class="slide-number">03 / 21</span>
     </section>
 
     <section class="slide" id="slide-4">
@@ -967,7 +1028,7 @@
         </div>
         <p class="callout reveal"><strong>Key distinction:</strong> Dynamic Sessions fit one-time execution; ACA Sandbox adds lifecycle control for persistent, long-running agents.</p>
       </div>
-      <span class="slide-number">04 / 12</span>
+      <span class="slide-number">04 / 21</span>
     </section>
 
     <section class="slide" id="slide-5">
@@ -999,7 +1060,7 @@
         </div>
 
       </div>
-      <span class="slide-number">05 / 12</span>
+      <span class="slide-number">05 / 21</span>
     </section>
 
     <section class="slide" id="slide-6">
@@ -1015,7 +1076,7 @@
         </div>
         <p class="callout reveal"><strong>Single source of truth:</strong> <code>&lt;AGENT_ID&gt;.json</code> in Blob Cool tier with versioning. No separate Redis hot cache.</p>
       </div>
-      <span class="slide-number">06 / 12</span>
+      <span class="slide-number">06 / 21</span>
     </section>
 
     <section class="slide" id="slide-7">
@@ -1030,7 +1091,7 @@
           <article class="policy reveal"><code>cache-lookup/store</code><h3>Reduce cost</h3><p>Cache safe, identical requests where the workload permits.</p><span class="status todo">TO BE ADDED</span></article>
         </div>
       </div>
-      <span class="slide-number">07 / 12</span>
+      <span class="slide-number">07 / 21</span>
     </section>
 
     <section class="slide" id="slide-8">
@@ -1058,7 +1119,7 @@
           </div>
         </div>
       </div>
-      <span class="slide-number">08 / 12</span>
+      <span class="slide-number">08 / 21</span>
     </section>
 
     <section class="slide blueprint-slide blueprint-foundry" id="slide-9">
@@ -1092,7 +1153,7 @@
           <div class="reveal"><b>Path 2</b> - agent to Foundry project to registered APIM AI gateway to model.</div>
         </div>
       </div>
-      <span class="slide-number">09 / 12</span>
+      <span class="slide-number">09 / 21</span>
     </section>
 
     <section class="slide blueprint-slide blueprint-aks" id="slide-10">
@@ -1127,7 +1188,7 @@
           <div class="reveal"><b>Lifecycle</b> - stable Sandbox identity while compute can pause or disappear.</div>
         </div>
       </div>
-      <span class="slide-number">10 / 12</span>
+      <span class="slide-number">10 / 21</span>
     </section>
 
     <section class="slide blueprint-slide blueprint-aca" id="slide-11">
@@ -1161,27 +1222,279 @@
           <div class="reveal"><b>Positioning</b> - persistent agents; Dynamic Sessions remains the short-lived option.</div>
         </div>
       </div>
-      <span class="slide-number">11 / 12</span>
+      <span class="slide-number">11 / 21</span>
     </section>
 
     <section class="slide" id="slide-12">
       <div class="content">
-        <p class="eyebrow reveal">Workshop flow - 135 minutes total</p>
-        <h2 class="reveal">Six modules. Three implementations. One decision framework.</h2>
+        <p class="eyebrow reveal">Core workshop - 145 minutes + Module 06 - 60 minutes = 205 minutes total</p>
+        <h2 class="reveal">Six core modules. Then put agents to work together.</h2>
         <div class="timeline stagger">
           <article class="module reveal"><h3>00<br>Introduction</h3><p>Problem framing and architecture overview.</p><span class="time">10 MIN</span></article>
-          <article class="module reveal"><h3>01<br>Core infra</h3><p>Resource group, Blob, APIM, Entra ID, Key Vault.</p><span class="time">20 MIN</span></article>
+          <article class="module reveal"><h3>01<br>Core infra</h3><p>Resource group, Blob, APIM, Entra ID, Key Vault.</p><span class="time">30 MIN</span></article>
           <article class="module reveal"><h3>02<br>Foundry</h3><p>Managed host agent, state, and scale-to-zero.</p><span class="time">30 MIN</span></article>
           <article class="module reveal"><h3>03<br>AKS</h3><p>Kata isolation and Sandbox CRD lifecycle.</p><span class="time">40 MIN</span></article>
           <article class="module reveal"><h3>04<br>ACA</h3><p>Service-managed sandbox isolation and scaling.</p><span class="time">30 MIN</span></article>
           <article class="module reveal"><h3>05<br>Wrap-up</h3><p>Selection guidance and cost optimization.</p><span class="time">5 MIN</span></article>
         </div>
+        <p class="callout reveal"><strong>Optional extension 06 (60 minutes):</strong> <a href="#slide-13">Multi-Agent Business Scenarios</a> builds on Modules 01/04: five ACA Sandboxes, A2A collaboration, LangGraph orchestration, and relational + vector data.</p>
+      </div>
+      <span class="slide-number">12 / 21</span>
+    </section>
+
+    <section class="slide extension-slide" id="slide-13">
+      <div class="hero-mark reveal-scale" aria-hidden="true"></div>
+      <div class="content">
+        <p class="eyebrow reveal">Part 02 / Optional extension / 60 minutes</p>
+        <h2 class="reveal">From agent hosting to<br><span class="accent">multi-agent collaboration.</span></h2>
+        <p class="lede reveal">Module 06 &mdash; Multi-Agent Business Scenarios</p>
+        <p class="extension-note reveal">The core hosting foundation is complete. Now combine communication, orchestration, and business data into one coordinated solution.</p>
         <div class="tag-row reveal">
-          <span class="tag">Source: oxcp/ainotes - agenthost/agenthost.md</span>
-          <span class="tag">Document version 1.0</span>
+          <span class="tag">A2A communication</span>
+          <span class="tag">LangGraph orchestration</span>
+          <span class="tag">Azure-hosted agents</span>
         </div>
       </div>
-      <span class="slide-number">12 / 12</span>
+      <span class="slide-number">13 / 21</span>
+    </section>
+
+    <section class="slide extension-slide" id="slide-14">
+      <div class="content">
+        <p class="eyebrow reveal">Extension / Module 06 - Goals &amp; business scenario</p>
+        <h2 class="reveal">From hosting one agent to delivering <span class="accent">a grounded business decision.</span></h2>
+        <p class="lede reveal"><strong>Product Launch Studio:</strong> combine consumer reports, customer reviews, and sales data to recommend a launch market, product positioning, and priorities. Recommendations must distinguish evidence from interpretation.</p>
+        <div class="grid three stagger">
+          <article class="card reveal"><span class="big-number">01</span><h3>Host collaborating agents</h3><p>Run five independent services in five ACA Sandbox micro-VMs. Understand runtime, identity, network, and data boundaries.</p></article>
+          <article class="card orange-top reveal"><span class="big-number">02</span><h3>Orchestrate the work</h3><p>Use A2A for remote calls and LangGraph for typed planning, parallel RAG/SQL work, synthesis, evidence review, and one bounded revision.</p></article>
+          <article class="card green-top reveal"><span class="big-number">03</span><h3>Unify text and numbers</h3><p>Use HorizonDB or PostgreSQL Flexible Server for relational data and vectors: retrieve supporting passages and calculate exact business metrics.</p></article>
+        </div>
+        <div class="extension-strip reveal" aria-label="Business scenario">
+          <span>Reports + reviews + sales</span><b aria-hidden="true">&rarr;</b><span>Qualitative evidence + quantitative facts</span><b aria-hidden="true">&rarr;</b><span>Launch recommendation + citations + charts</span>
+        </div>
+        <p class="extension-source reveal">Prerequisites: Modules 01 and 04. <a href="../module-06/readme.md">Open the Module 06 walkthrough</a>. This extends the hosting workshop; it is not a fourth hosting product.</p>
+      </div>
+      <span class="slide-number">14 / 21</span>
+    </section>
+
+    <section class="slide extension-slide" id="slide-15">
+      <div class="content">
+        <p class="eyebrow reveal">Module 06 - Inputs, questions &amp; routing</p>
+        <h2 class="reveal">Choose the route by <span class="accent">the data the answer needs.</span></h2>
+        <p class="lede reveal">PDF reports provide market evidence; review CSVs provide customer language and structured attributes; sales CSVs provide exact totals and rankings. Upload them into one persistent Session (the UI name for a workspace).</p>
+        <div class="extension-table-wrap reveal" tabindex="0" role="region" aria-label="Question routing examples">
+          <table class="extension-table">
+            <caption>One business scenario, four execution modes</caption>
+            <thead><tr><th scope="col">Mode</th><th scope="col">Example question</th><th scope="col">Execution / evidence</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">DIRECT</th><td>Write three taglines for a repairable speaker.</td><td>General model only; <strong>no workspace data retrieved</strong>.</td></tr>
+              <tr><th scope="row">RAG</th><td>According to the uploaded reports, which consumer needs matter most?</td><td>Retrieve report/review passages; return source, page/section, and semantic score where applicable.</td></tr>
+              <tr><th scope="row">SQL</th><td>Which country has the highest total profit in the uploaded sales data?</td><td>Schema-aware generation + validated read-only query; return executed SQL and result rows.</td></tr>
+              <tr><th scope="row">HYBRID</th><td>Combine consumer trends and sales performance to recommend a launch market.</td><td><strong>RAG and SQL in parallel</strong>; combine qualitative evidence and calculated facts before review.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="callout reveal"><strong>Do not confuse retrieval with statistics:</strong> a bounded review overview is not a representative sample. Counts, sentiment distributions, and financial totals require SQL over stored rows, not counts inferred from retrieved passages.</p>
+        <p class="extension-source reveal"><a href="../module-06/agent-src/docs/workshop-guide.md">Demo guide</a> &middot; <a href="../module-06/agent-src/docs/data-processing.md">Data handling</a></p>
+      </div>
+      <span class="slide-number">15 / 21</span>
+    </section>
+
+    <section class="slide extension-slide" id="slide-16">
+      <div class="content">
+        <p class="eyebrow reveal">Module 06 - Azure deployment architecture</p>
+        <h2 class="reveal">Five Agents. <span class="accent">One coordinated solution.</span></h2>
+        <figure class="extension-diagram reveal" tabindex="0" aria-label="Multi-agent Azure architecture; scroll horizontally on small screens">
+          <svg viewBox="0 0 1200 560" role="img" aria-labelledby="m6-arch-title m6-arch-desc">
+            <title id="m6-arch-title">Five-agent deployment in the existing ACA SandboxGroup</title>
+            <desc id="m6-arch-desc">Browser calls Chat. Chat writes private Blob and calls Orchestrator over A2A. Orchestrator calls Processing, RAG and SQL, which do not call each other. Processing reads Blob and writes relational data and vectors. RAG and SQL read the database. Orchestrator stores workspace and run records. Orchestrator and SQL use the general model; Processing and RAG use embeddings, all through APIM.</desc>
+            <defs>
+              <marker id="m6-a2a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10Z" fill="#52d3ff"/></marker>
+              <marker id="m6-data" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10Z" fill="#76e6a6"/></marker>
+              <marker id="m6-model" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10Z" fill="#ff9f43"/></marker>
+            </defs>
+            <rect class="boundary" x="170" y="18" width="1005" height="330" rx="18"/>
+            <text class="svg-label" x="190" y="44">EXISTING MODULE-04 SANDBOXGROUP / ONE MICRO-VM PER AGENT</text>
+            <path class="wire" d="M145 162 H200" marker-end="url(#m6-a2a)"/>
+            <path class="wire" d="M380 162 H455" marker-end="url(#m6-a2a)"/>
+            <path class="wire" d="M655 162 H720 V99 H790" marker-end="url(#m6-a2a)"/>
+            <path class="wire" d="M720 162 V199 H790" marker-end="url(#m6-a2a)"/>
+            <path class="wire" d="M720 199 V299 H790" marker-end="url(#m6-a2a)"/>
+            <text class="svg-label" x="405" y="147">A2A</text><text class="svg-label" x="728" y="83">A2A</text>
+            <path class="data-wire" d="M245 200 V410" marker-end="url(#m6-data)"/>
+            <path class="data-wire" d="M365 442 H410 V322 H765 V115 H790" marker-end="url(#m6-data)"/>
+            <path class="data-wire" d="M565 210 V410" marker-end="url(#m6-data)"/>
+            <path class="data-wire" d="M1110 100 H1150 V382 H700 V410" marker-end="url(#m6-data)"/>
+            <path class="data-wire" d="M1110 199 H1150 M1110 299 H1150"/>
+            <text class="svg-label" x="425" y="370">Workspace / runs</text>
+            <text class="svg-label" x="800" y="373">Processing writes; RAG / SQL read</text>
+            <path class="model-wire" d="M650 207 H680 V357 H1015 V410" marker-end="url(#m6-model)"/>
+            <path class="model-wire" d="M1110 122 H1128 V357 H1015 M1110 222 H1128 M1110 322 H1128"/>
+            <rect class="box" x="20" y="124" width="125" height="76" rx="12"/><text x="82" y="157" text-anchor="middle">Browser</text><text class="svg-small" x="82" y="181" text-anchor="middle">HTTPS</text>
+            <rect class="box agent-box" x="200" y="124" width="180" height="76" rx="12"/><text class="svg-title" x="290" y="153" text-anchor="middle">Chat</text><text class="svg-small" x="290" y="179" text-anchor="middle">FastAPI / UI / uploads</text>
+            <rect class="box agent-box" x="455" y="114" width="200" height="96" rx="12"/><text class="svg-title" x="555" y="150" text-anchor="middle">Orchestrator</text><text class="svg-small" x="555" y="178" text-anchor="middle">LangGraph / authorization</text>
+            <rect class="box agent-box" x="790" y="62" width="320" height="74" rx="12"/><text class="svg-title" x="810" y="92">Data Processing</text><text class="svg-small" x="810" y="117">Extract / classify / chunk / embed</text>
+            <rect class="box agent-box" x="790" y="162" width="320" height="74" rx="12"/><text class="svg-title" x="810" y="192">RAG</text><text class="svg-small" x="810" y="217">Workspace-scoped evidence retrieval</text>
+            <rect class="box agent-box" x="790" y="262" width="320" height="74" rx="12"/><text class="svg-title" x="810" y="292">SQL</text><text class="svg-small" x="810" y="317">Validated, bounded read-only queries</text>
+            <rect class="data-box" x="150" y="410" width="215" height="84" rx="12"/><text class="svg-title" x="170" y="442">Private Blob: data</text><text class="svg-small" x="170" y="470">Original uploaded files</text>
+            <rect class="data-box" x="445" y="410" width="330" height="84" rx="12"/><text class="svg-title" x="465" y="442">HorizonDB / PostgreSQL</text><text class="svg-small" x="465" y="470">Relational data + vectors + run records</text>
+            <rect class="model-box" x="850" y="410" width="330" height="84" rx="12"/><text class="svg-title" x="870" y="442">APIM &rarr; Microsoft Foundry</text><text class="svg-small" x="870" y="470">Responses + Embeddings via OpenAI SDK</text>
+            <text class="svg-small" x="20" y="535">Solid cyan: A2A / HTTPS</text><text class="svg-small" x="310" y="535">Dashed green: data access</text><text class="svg-small" x="660" y="535">Dotted orange: governed model access</text>
+          </svg>
+          <figcaption>Model callers: Orchestrator + SQL &rarr; general model; Processing + RAG &rarr; embeddings. All use APIM. Chat has no direct worker, model, or database calls; workers never call each other.</figcaption>
+        </figure>
+        <p class="extension-note reveal">Only Chat and Processing also mount the existing private Blob container read-only at <code>/kb-data</code> via a group-level <code>AzureBlobByo</code> volume. Application file access still uses the Blob SDK.</p>
+        <p class="extension-source reveal"><a href="../module-06/agent-src/docs/architecture.md">Architecture and trust boundaries</a></p>
+      </div>
+      <span class="slide-number">16 / 21</span>
+    </section>
+
+    <section class="slide extension-slide" id="slide-17">
+      <div class="content">
+        <p class="eyebrow reveal">Module 06 - Responsibility &amp; communication contracts</p>
+        <h2 class="reveal">A2A connects services. <span class="accent">LangGraph coordinates tasks.</span></h2>
+        <div class="extension-table-wrap reveal" tabindex="0" role="region" aria-label="Agent responsibilities and contracts">
+          <table class="extension-table">
+            <caption>Each Agent owns an image, process, entrypoint, and sandbox</caption>
+            <thead><tr><th scope="col">Agent</th><th scope="col">Owns</th><th scope="col">Input &rarr; output / boundary</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Chat</th><td>UI/API, upload validation, private Blob upload, progress display.</td><td>Browser request &rarr; Orchestrator A2A. Sends a registered <strong>FileRef</strong>, not raw file bytes, across the Agent boundary.</td></tr>
+              <tr><th scope="row">Orchestrator</th><td>Owner/workspace checks, planning, fan-out/fan-in, synthesis, charts, review, run persistence.</td><td>Question or file reference &rarr; typed worker tasks &rarr; evidence-backed answer. Graph state stays in this sandbox.</td></tr>
+              <tr><th scope="row">Data Processing</th><td>Extract, infer schema, chunk useful text, embed, commit ingestion.</td><td>Verified FileRef &rarr; datasets/vectors + counts, skipped records, warnings.</td></tr>
+              <tr><th scope="row">RAG</th><td>Workspace-filtered cosine search; bounded review overview when requested.</td><td>Query + filters &rarr; up to five evidence passages, provenance, coverage warnings.</td></tr>
+              <tr><th scope="row">SQL</th><td>Schema-aware SQL proposal, AST validation, workspace rewrite, restricted execution.</td><td>Question + catalog &rarr; executed SELECT, columns, rows, row count. No mutations.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="callout reveal"><strong>Trust before dispatch:</strong> configured peer URL &rarr; authenticated Agent Card &rarr; verify role, skill, A2A 1.0, streaming support, and exact endpoint &rarr; JSON-RPC/SSE. Typed artifacts carry results; status updates carry progress; unavailable peers return explicit errors, never local-worker fallbacks.</p>
+        <p class="extension-source reveal"><a href="../module-06/agent-src/shared/a2a_transport.py">A2A transport</a> &middot; <a href="../module-06/agent-src/orchestrator_agent/agent.py">LangGraph implementation</a></p>
+      </div>
+      <span class="slide-number">17 / 21</span>
+    </section>
+
+    <section class="slide extension-slide" id="slide-18">
+      <div class="content">
+        <p class="eyebrow reveal">Module 06 - Azure service map</p>
+        <h2 class="reveal">Reuse the foundation. <span class="accent">Add only the missing capabilities.</span></h2>
+        <div class="extension-table-wrap reveal" tabindex="0" role="region" aria-label="Azure service usage and deployment changes">
+          <table class="extension-table">
+            <caption>Primary cloud path: Bash / Bicep + the standalone aca CLI</caption>
+            <thead><tr><th scope="col">Azure service</th><th scope="col">Role in the solution</th><th scope="col">Reuse / Module 06 change</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">ACA Sandboxes</th><td>Hardware-isolated runtime for five independent Agents.</td><td>Reuse Module-04 SandboxGroup and its existing VNet connection; create five sandboxes from Agent disk images.</td></tr>
+              <tr><th scope="row">Azure Container Registry</th><td>Build and distribute one image per Agent.</td><td>Reuse Module-01 ACR; <strong>ACR Tasks</strong> builds remotely, without local Docker.</td></tr>
+              <tr><th scope="row">Microsoft Foundry</th><td>General reasoning / SQL generation; embeddings for ingestion and retrieval.</td><td>Reuse account, project, general model; add <code>text-embedding-3-small</code> (default 1536 dimensions).</td></tr>
+              <tr><th scope="row">API Management</th><td>Entra-authenticated model gateway for Responses and Embeddings.</td><td>Keep existing Responses route; add <code>POST /openai/v1/embeddings</code> under the existing <code>/foundry</code> API and a separate account-level backend.</td></tr>
+              <tr><th scope="row">Blob Storage</th><td>Private original files, retained independently of Agent compute.</td><td>Reuse storage account; create private <code>data</code> only. Read-only mount is an additional filesystem view, not the upload path.</td></tr>
+              <tr><th scope="row">HorizonDB / PostgreSQL Flexible Server</th><td>Shared SQL + vector store; workspaces, document metadata, datasets, evidence, completed runs.</td><td>Deploy <strong>one selected provider</strong>: HorizonDB by default, PostgreSQL as alternative. Same repository and migrations.</td></tr>
+              <tr><th scope="row">Entra ID / managed identities</th><td>Tokens for model, Blob, database, and image access.</td><td>Reuse Module-01 UAMI for all Agents; primary deployment uses Entra database auth. A2A separately uses a server-side peer key.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="extension-note reveal"><strong>Embedding identity path:</strong> Agent UAMI &rarr; APIM validates caller <code>oid</code> and <code>ai.azure.com</code> audience &rarr; APIM's existing <em>system-assigned</em> identity &rarr; Foundry account endpoint. No silent direct-endpoint fallback.</p>
+        <p class="extension-source reveal"><a href="../module-06/readme.md">Deployment prerequisites and resource reuse</a> &middot; <a href="../module-06/deploy.sh">Staged deployment entrypoint</a></p>
+      </div>
+      <span class="slide-number">18 / 21</span>
+    </section>
+
+    <section class="slide extension-slide" id="slide-19">
+      <div class="content">
+        <p class="eyebrow reveal">Module 06 - Workflow 1 / ingest once, query repeatedly</p>
+        <h2 class="reveal">Keep originals. <span class="accent">Store numbers and meaning differently.</span></h2>
+        <figure class="extension-diagram reveal" tabindex="0" aria-label="File ingestion workflow; scroll horizontally on small screens">
+          <svg viewBox="0 0 1200 300" role="img" aria-labelledby="m6-ingest-title m6-ingest-desc">
+            <title id="m6-ingest-title">Upload validation, private storage, extraction, and atomic ingestion</title>
+            <desc id="m6-ingest-desc">Chat validates and stores the original Blob with checksum. Orchestrator authorizes and registers the reference, then dispatches Processing by A2A. Processing revalidates the file and extracts content. Structured rows become relational tables; useful text is chunked and embedded through APIM. Both commit in one transaction. Failure rolls back database ingestion and duplicate checksums reuse completed processing.</desc>
+            <defs><marker id="m6-ingest-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10Z" fill="#52d3ff"/></marker></defs>
+            <path class="wire" d="M195 130 H235" marker-end="url(#m6-ingest-arrow)"/>
+            <path class="wire" d="M425 130 H465" marker-end="url(#m6-ingest-arrow)"/>
+            <path class="wire" d="M665 130 H705 V65 H755" marker-end="url(#m6-ingest-arrow)"/>
+            <path class="wire" d="M705 130 V210 H755" marker-end="url(#m6-ingest-arrow)"/>
+            <path class="wire" d="M995 65 H1020 V130 H1045" marker-end="url(#m6-ingest-arrow)"/>
+            <path class="wire" d="M995 210 H1020 V130 H1045" marker-end="url(#m6-ingest-arrow)"/>
+            <rect class="box" x="15" y="82" width="180" height="96" rx="12"/><text class="svg-title" x="30" y="112">1 / Chat</text><text x="30" y="138">Validate + upload</text><text class="svg-small" x="30" y="161">Private Blob / SHA-256</text>
+            <rect class="box" x="235" y="82" width="190" height="96" rx="12"/><text class="svg-title" x="250" y="112">2 / Orchestrator</text><text x="250" y="138">Authorize + register</text><text class="svg-small" x="250" y="161">FileRef via A2A</text>
+            <rect class="box" x="465" y="82" width="200" height="96" rx="12"/><text class="svg-title" x="480" y="112">3 / Processing</text><text x="480" y="138">Revalidate + extract</text><text class="svg-small" x="480" y="161">Bytes / scope / checksum</text>
+            <rect class="data-box" x="755" y="22" width="240" height="86" rx="12"/><text class="svg-title" x="770" y="54">4a / Structured rows</text><text class="svg-small" x="770" y="81">Infer types / relational tables</text>
+            <rect class="model-box" x="755" y="167" width="240" height="86" rx="12"/><text class="svg-title" x="770" y="199">4b / Useful text</text><text class="svg-small" x="770" y="226">Chunk / APIM embeddings</text>
+            <rect class="data-box" x="1045" y="82" width="140" height="96" rx="12"/><text class="svg-title" x="1060" y="112">5 / Commit</text><text x="1060" y="138">One DB txn</text><text class="svg-small" x="1060" y="161">Counts / warnings</text>
+            <text class="svg-small" x="20" y="282">Registered references cross Agent boundaries; original file bytes remain in private Blob.</text>
+          </svg>
+          <figcaption>Supported inputs: PDF, DOCX, TXT, MD, CSV, XLSX, JSON. Scanned/encrypted PDFs fail explicitly; OCR is not implemented. XLSX ingestion supports one populated worksheet.</figcaption>
+        </figure>
+        <div class="grid three stagger" style="margin-top: 1rem">
+          <article class="card reveal"><h3>Reports &rarr; vectors</h3><p>Page/section-aware text chunks, by default 400 tokens with 60-token overlap. Preserve source IDs and provenance.</p></article>
+          <article class="card orange-top reveal"><h3>Sales &rarr; SQL tables</h3><p>Normalize columns and infer types across all rows. Pure financial numeric rows are stored relationally, never embedded.</p></article>
+          <article class="card green-top reveal"><h3>Reviews &rarr; both</h3><p>Keep relational rows; embed useful review text with row linkage. Skip/count blank, short, or duplicate text without removing distinct rows.</p></article>
+        </div>
+        <p class="extension-note reveal"><strong>Idempotency:</strong> workspace + checksum prevents duplicate committed datasets. Failed ingestion rolls back rows/vectors and marks the document failed; original uploaded Blobs may remain and require retention cleanup.</p>
+      </div>
+      <span class="slide-number">19 / 21</span>
+    </section>
+
+    <section class="slide extension-slide" id="slide-20">
+      <div class="content">
+        <p class="eyebrow reveal">Module 06 - Workflow 2 / plan, execute, ground, review</p>
+        <h2 class="reveal">Parallel evidence gathering. <span class="accent">Bounded answer review.</span></h2>
+        <figure class="extension-diagram reveal" tabindex="0" aria-label="LangGraph question workflow; scroll horizontally on small screens">
+          <svg viewBox="0 0 1200 490" role="img" aria-labelledby="m6-flow-title m6-flow-desc">
+            <title id="m6-flow-title">Four routing modes, parallel HYBRID execution, and a one-revision review loop</title>
+            <desc id="m6-flow-desc">Authorize and plan. DIRECT calls the general model. RAG or SQL calls the corresponding remote worker. HYBRID dispatches both workers in the same graph superstep and joins their results. Synthesize, prepare grounded charts, and review the actual draft. Approved answers persist before completion. Revise once, regenerate and review again, or block with explicit limitations. Partial worker failures remain visible.</desc>
+            <defs><marker id="m6-flow-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10Z" fill="#52d3ff"/></marker></defs>
+            <path class="wire" d="M190 200 H230" marker-end="url(#m6-flow-arrow)"/>
+            <path class="wire" d="M440 200 H475 V80 H520" marker-end="url(#m6-flow-arrow)"/>
+            <path class="wire" d="M475 200 H520" marker-end="url(#m6-flow-arrow)"/>
+            <path class="wire" d="M475 200 V315 H520" marker-end="url(#m6-flow-arrow)"/>
+            <path class="wire" d="M735 80 H805 V180" marker-end="url(#m6-flow-arrow)"/>
+            <path class="wire" d="M735 200 H755 V246 H780" marker-end="url(#m6-flow-arrow)"/>
+            <path class="wire" d="M735 315 H755 V246 H780" marker-end="url(#m6-flow-arrow)"/>
+            <path class="wire" d="M880 246 H925" marker-end="url(#m6-flow-arrow)"/>
+            <path class="wire" d="M1012 292 V320 H900 V372 H880" marker-end="url(#m6-flow-arrow)"/>
+            <path class="wire" d="M1100 246 H1140 V374 H1110" marker-end="url(#m6-flow-arrow)"/>
+            <path class="wire" d="M1080 292 V310 H1180 V444 H1110" marker-end="url(#m6-flow-arrow)"/>
+            <path class="wire" d="M1050 420 V403" marker-end="url(#m6-flow-arrow)"/>
+            <path class="wire" d="M780 366 H765 V160 H805 V180" marker-end="url(#m6-flow-arrow)"/>
+            <text class="svg-label" x="480" y="44">DIRECT</text><text class="svg-label" x="485" y="160">RAG / SQL / HYBRID</text>
+            <rect class="box" x="15" y="153" width="175" height="94" rx="12"/><text class="svg-title" x="30" y="187">Receive request</text><text class="svg-small" x="30" y="216">Owner / workspace</text>
+            <rect class="box" x="230" y="153" width="210" height="94" rx="12"/><text class="svg-title" x="245" y="187">Classify + plan</text><text class="svg-small" x="245" y="216">Validated typed plan</text>
+            <rect class="model-box" x="520" y="45" width="215" height="70" rx="12"/><text class="svg-title" x="535" y="74">Direct model</text><text class="svg-small" x="535" y="99">No retrieval</text>
+            <rect class="box" x="520" y="165" width="215" height="70" rx="12"/><text class="svg-title" x="535" y="194">RAG / A2A</text><text class="svg-small" x="535" y="219">Passages + sources</text>
+            <rect class="box" x="520" y="280" width="215" height="70" rx="12"/><text class="svg-title" x="535" y="309">SQL / A2A</text><text class="svg-small" x="535" y="334">Exact calculated rows</text>
+            <text class="svg-label" x="525" y="263">HYBRID: same-superstep fan-out</text>
+            <rect class="box" x="780" y="180" width="100" height="112" rx="12"/><text x="794" y="214">Join *</text><text x="794" y="241">Synthesize</text><text class="svg-small" x="794" y="271">Charts</text>
+            <rect class="model-box" x="925" y="200" width="175" height="92" rx="12"/><text class="svg-title" x="940" y="233">Review draft</text><text class="svg-small" x="940" y="262">Claims / citations</text>
+            <rect class="box" x="780" y="342" width="100" height="60" rx="12"/><text x="792" y="367">Revise</text><text class="svg-small" x="792" y="390">Once only</text>
+            <text class="svg-label" x="899" y="334">revise</text>
+            <rect class="data-box" x="995" y="345" width="115" height="58" rx="12"/><text x="1008" y="369">Persist run</text><text class="svg-small" x="1008" y="391">Then emit</text>
+            <text class="svg-label" x="1108" y="232">approved</text>
+            <rect class="model-box" x="995" y="420" width="115" height="48" rx="12"/><text x="1008" y="449">Limitations</text>
+            <text class="svg-label" x="675" y="446">blocked / second review not approved</text>
+            <text class="svg-small" x="20" y="474">* DIRECT bypasses aggregation; RAG / SQL join before synthesis. No usable worker result &rarr; explicit failure.</text>
+          </svg>
+          <figcaption>Review happens after drafting and chart preparation. One revision returns to synthesis, chart preparation, and review; a second non-approved review blocks the answer. Uploads follow the separate ingestion path.</figcaption>
+        </figure>
+        <p class="extension-note reveal"><strong>Grounded output:</strong> evidence, calculated facts, interpretation, recommendations, limitations, and an expandable evidence panel. Charts use SQL rows, quotation-anchored report figures, or explicitly user-provided values; the server validates source mappings, and misleading charts are removed.</p>
+        <p class="extension-source reveal"><a href="../module-06/agent-src/docs/orchestration.md">Orchestration and bounded execution</a></p>
+      </div>
+      <span class="slide-number">20 / 21</span>
+    </section>
+
+    <section class="slide extension-slide" id="slide-21">
+      <div class="content">
+        <p class="eyebrow reveal">Module 06 - Delivery, evidence &amp; operating boundaries</p>
+        <h2 class="reveal">Make the result inspectable. <span class="accent">Do not overclaim the platform.</span></h2>
+        <div class="grid three stagger">
+          <article class="card reveal"><h3>Data and SQL guardrails</h3><p>Uploaded content is untrusted evidence, not instructions. Retrieval enforces workspace scope; SQL AST checks restrict tables/functions and rewrite physical tables with workspace filters, row limits, and read-only execution.</p></article>
+          <article class="card orange-top reveal"><h3>Failure and durability</h3><p>Expose weak evidence and partial worker failures. Safe reads may retry once; answer revision is limited to one. Completed runs persist in <code>agent_runs</code>, but interrupted LangGraph workflows do <strong>not</strong> automatically resume.</p></article>
+          <article class="card green-top reveal"><h3>Workshop, not multi-tenancy</h3><p>The browser API is keyless: anyone with the Chat URL can access deployment data. The stable owner seed stays server-side; A2A uses a separate peer key. The default DB firewall allows all IPv4 sources; restrict access for production.</p></article>
+        </div>
+        <div class="extension-strip reveal" aria-label="Primary deployment stages">
+          <span>Preflight</span><b aria-hidden="true">&rarr;</b><span>storage</span><b aria-hidden="true">&rarr;</b><span>models</span><b aria-hidden="true">&rarr;</b><span>database</span><b aria-hidden="true">&rarr;</b><span>config</span><b aria-hidden="true">&rarr;</b><span>images</span><b aria-hidden="true">&rarr;</b><span>aca</span>
+        </div>
+        <p class="extension-note reveal">The Bash deployment uses <code>aca</code>, not <code>az containerapp sandbox</code> or Dynamic Sessions. Auto-suspend is disabled by default for the collaborating services. Database/knowledge survives compute restarts; this is not durable in-flight scheduling.</p>
+        <p class="callout reveal"><strong>Learning checkpoint:</strong> upload data &rarr; inspect ingestion counts &rarr; exercise all four modes &rarr; inspect citations and executed SQL &rarr; demonstrate an explicit missing-data/worker limitation. Verify real Azure connectivity and permissions; a generated manifest or process health check alone is not end-to-end acceptance.</p>
+        <p class="extension-source reveal"><a href="../module-06/readme.md">Start Module 06</a> &middot; <a href="../module-06/agent-src/docs/security.md">Security boundaries</a> &middot; <a href="#slide-12">Back to the workshop roadmap</a></p>
+      </div>
+      <span class="slide-number">21 / 21</span>
     </section>
   </main>
 
@@ -1190,6 +1503,7 @@
       const slides = [...document.querySelectorAll(".slide")];
       const progress = document.querySelector(".progress");
       let current = 0;
+      let touchStartX = 0;
       let touchStartY = 0;
 
       const show = (index) => {
@@ -1207,7 +1521,7 @@
           progress.style.width = `${((current + 1) / slides.length) * 100}%`;
           history.replaceState(null, "", `#slide-${current + 1}`);
         });
-      }, { threshold: 0.6 });
+      }, { threshold: 0, rootMargin: "-20% 0px -65% 0px" });
 
       slides.forEach((slide) => observer.observe(slide));
 
@@ -1215,6 +1529,7 @@
       document.getElementById("next").addEventListener("click", () => show(current + 1));
 
       document.addEventListener("keydown", (event) => {
+        if (event.target.closest(".extension-table-wrap, .extension-diagram")) return;
         if (["ArrowDown", "ArrowRight", "PageDown", " "].includes(event.key)) {
           event.preventDefault();
           show(current + 1);
@@ -1228,12 +1543,15 @@
       });
 
       document.addEventListener("touchstart", (event) => {
+        touchStartX = event.changedTouches[0].screenX;
         touchStartY = event.changedTouches[0].screenY;
       }, { passive: true });
 
       document.addEventListener("touchend", (event) => {
         const delta = touchStartY - event.changedTouches[0].screenY;
-        if (Math.abs(delta) < 45) return;
+        const horizontal = touchStartX - event.changedTouches[0].screenX;
+        if (Math.abs(delta) < 45 || Math.abs(horizontal) > Math.abs(delta)) return;
+        if (event.target.closest(".extension-slide")) return;
         show(current + (delta > 0 ? 1 : -1));
       }, { passive: true });
 

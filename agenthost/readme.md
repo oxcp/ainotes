@@ -6,7 +6,7 @@
 
 This workshop takes you on a practical Azure agent-hosting journey:
 - Core section: Start with shared infrastructure, compare and practice three deployment options for enterprise and consumer scenarios, and finish with cost and production-hardening guidance.
-- Extended section: Combine the agent deployment experience gained in the **core section** with advanced techniques such as multi-agent orchestration, agent communication, vector storage and retrieval to build complete simulated business workflows, including data processing, enterprise knowledge bases, multi-agent collaboration, business analysis and planning.
+- Extended section: Combine the agent deployment experience gained in the **core section** with hands-on practice in multi-agent orchestration, agent communication, vector storage and retrieval to build complete simulated business workflows.
 
 <!-- > 📊 **Prefer slides?**
 >
@@ -32,7 +32,8 @@ This workshop takes you on a practical Azure agent-hosting journey:
 
 ### Extended section:
 
-- **[Module 06: Multi-Agent Business Scenarios](./module-06/readme.md)**: Host five agents with practical business capabilities and combine A2A, LangGraph and Azure HorizonDB into complete business workflows, including data processing, enterprise knowledge bases, multi-agent collaboration, business analysis and planning.
+- **[Module 06: Multi-Agent Business Scenarios](./module-06/readme.md)**: Host five agents simultaneously, using A2A inter-agent communication and LangGraph orchestration to coordinate them in simulated business scenarios, including data processing, enterprise knowledge bases, business analysis and planning.
+- Choose **Azure HorizonDB** (default) or **Azure Database for PostgreSQL Flexible Server** for structured data and vector storage and retrieval.
 
 ## Prerequisites (before workshop)
 
@@ -156,7 +157,7 @@ Preflight does not verify secrets, model/Blob calls or live Agent health. Follow
 ```
 > [!TIP]
 > 1. If **Common prerequisites for all modules** and **Module 01** contain no failed checks, the script reports `Workshop readiness: Ready to start`, and you can begin the workshop.
-> 2. In default mode, failures in **Modules 02–04 or 06** do not prevent starting Module 01. The default exit code is `1` for failed Common/Module 01 checks, otherwise `0`; `--strict` returns `1` for **any Failed or Skipped** check. Unknown arguments return `2`. “Ready to start” is not a Module 06 deployment/health acceptance result.
+> 2. In default mode, failures in **Modules 02–04 or 06** do not prevent starting Module 01.
 > 3. Before the workshop starts, Azure Container Registry has not yet been deployed, so `check-prerequisites.sh` reports the **ACR remote build permissions** check as `Skipped`. Run the checker again after completing Module 01 to verify these permissions. Module 03 uses `az acr build`. Assigning **Contributor** at the registry scope is sufficient for the build and image push operations.
 > 4. **Module 03** and **Module 04** share the same Azure Container Registry and container image. Therefore, a deployed and accessible ACR is a shared prerequisite for Module 03 and Module 04.
 > 5. **Module 06** must reuse the ACR used by **Module 03** and **Module 04**, but uploads newly created agent images.
@@ -200,22 +201,26 @@ This downloads the content required for the `agenthost` workshop.
 | Module | Topic | Duration | Purpose |
 |---|---|---|---|
 | [module-00](./module-00/README.md) | Introduction | 10 min | Understand the target scenarios, agent state pattern, and the three hosting solutions. |
-| [module-01](./module-01/README.md) | Core Infrastructure Setup | 20 min | Deploy the shared Azure infrastructure used by all hosting solutions. |
+| [module-01](./module-01/README.md) | Core Infrastructure Setup | 30 min | Deploy the shared Azure infrastructure used by all hosting solutions. |
 | [module-02](./module-02/README.md) | Solution A: Foundry Hosted Agent | 30 min | Deploy a managed Foundry hosted agent with native state, authentication, governance, and AI Gateway integration. |
 | [module-03](./module-03/README.md) | Solution B: AKS + agent-sandbox | 40 min | Deploy a customizable agent runtime on AKS with sandbox isolation, persistent state, and workload identity. |
 | [module-04](./module-04/README.md) | Solution C: ACA Sandboxes (workshop path) | 30 min | Deploy an agent in ACA Sandboxes with micro-VM isolation and suspend/resume.<!-- , and explore Dynamic Sessions as an optional track. --> |
 | [module-05](./module-05/README.md) | Wrap-up and Q&A | 5 min | Compare the solutions and review selection guidance, cost optimization, and production-hardening recommendations. |
-| [module-06](./module-06/readme.md) | Extended practice: Multi-Agent Business Scenarios | Additional time | Use Product Launch Studio as an example; reuse Modules 01/04, deploy HorizonDB and five ACA Sandboxes, then upload/process/vectorize data and query through Chat UI. |
+| [module-06](./module-06/readme.md) | Extended practice: Multi-Agent Business Scenarios | 60 min | Simulate a business scenario: deploy five agents that orchestrate and collaborate to process uploaded business data, then use it for intelligent analysis and planning. |
 
-> **Total workshop duration:** 135 minutes.
-> **Hands-on exercises (Modules 01–04):** 120 minutes.
-> **Module 06: Multi-Agent Business Scenarios** is additional extended practice, not included in the 135-minute core workshop.
+> [!NOTE]
+> - **Core workshop (Modules 00–05)**: 145 minutes, including **hands-on exercises (Modules 01–04)**: 130 minutes.
+> - **Module 06: Multi-Agent Business Scenarios**: allow an additional 60 minutes.
+> - **Total including Module 06**: 205 minutes (3 hours 25 minutes).
 
 ---
 
 ## Workshop structure
 
-Key directories and files are shown below; individual screenshots and generated caches are omitted.
+Key directories and files are shown below according to the current ignore rules and intended GitHub
+publication layout. This does not stage, upload or untrack files. Individual screenshots, repetitive
+source files and generated caches are omitted; wildcards group workshop sample parts and English/`_CN`
+documentation pairs.
 
 ```
 agenthost/
@@ -233,13 +238,13 @@ agenthost/
 │       └── verify-tools.sh      ← Verifies tool versions and user-scoped extensions
 ├── pic/                         ← Workshop screenshots, including toolbox-vm-deployment.png
 ├── module-00/
+│   ├── .gitignore               ← Excludes the old index.html, slides/ and *notused* files
 │   ├── README.md                ← Architecture decisions, scenarios, and solution comparison
 │   ├── README_CN.md             ← Chinese introduction guide
 │   ├── design.html              ← Interactive workshop design slides
-│   ├── index.html               ← Workshop presentation page
+│   ├── design_CN.html           ← Chinese design slides, including the 60-minute Module-06 extension
 │   ├── timer-en.html            ← English workshop timer
-│   ├── timer.html               ← Chinese workshop timer
-│   └── slides/                  ← Presentation slide images
+│   └── timer.html               ← Chinese workshop timer
 ├── module-01/
 │   ├── README.md                ← Core infrastructure setup steps
 │   ├── README_CN.md             ← Chinese infrastructure setup guide
@@ -290,16 +295,58 @@ agenthost/
 └── module-06/
     ├── readme.md                ← Multi-Agent Business Scenarios: complete installation, deployment, upload/vectorization and chat walkthrough
     ├── readme_CN.md             ← Chinese Multi-Agent Business Scenarios guide
-    ├── prompt/                 ← Original requirements/design inputs
-    └── agent-src/
-        ├── chat_agent/         ← Chat UI and chat API
-        ├── orchestrator_agent/ ← LangGraph orchestration and A2A routing
-        ├── data_processing_agent/ ← Upload, extraction and vectorization
-        ├── rag_agent/          ← Vector retrieval
-        ├── sql_agent/          ← Structured queries
-        ├── sample-data/        ← Synthetic demonstration datasets
-        ├── deploy/             ← HorizonDB Bash/Bicep, ACR remote builds and ACA CLI deployment
-        └── docs/               ← Eight detailed design/operations guides and their _CN counterparts
+    ├── deploy.sh                ← Direct deployment, common-setting discovery and stage selection
+    ├── deploy-storage.sh        ← Private data container only, in existing Module-01 storage; incremental ARM
+    ├── deploy-models.sh         ← Deploy embeddings and extend existing APIM routes; existing authorization unchanged
+    ├── deploy-database.sh       ← Database validation/provisioning and HorizonDB configuration/admin helpers
+    ├── build-images.sh          ← Five remote ACR builds sharing the agent-src build context
+    ├── deploy-aca.sh            ← Five-Sandbox configuration, mounts, migration, startup and readiness checks
+    ├── bicep/
+    │   ├── storage.bicep        ← Private data container; existing account/blob service
+    │   ├── embedding.bicep      ← Embedding model and APIM operation/backend/policy; no RBAC changes
+    │   ├── database.bicep       ← Unified provider choice; no duplicated shared resources
+    │   ├── horizondb.bicep      ← HorizonDB backend
+    │   └── postgresql.bicep     ← PostgreSQL Flexible Server backend
+    ├── common/
+    │   ├── aca-config.jq        ← Shared protected five-role configuration validation
+    │   └── resolve-identity.sh  ← Resolve Module-01 UAMI IDs for all stages
+    ├── sample-data/             ← Actual business samples, outside Agent images
+    │   ├── 01_capgemini_consumer_trends_2025-pages-*.pdf ← Capgemini report, 5 parts
+    │   ├── 02_ryder_ecommerce_consumer_study_2025-pages-*.pdf ← Ryder report, 5 parts
+    │   ├── 03_customer_reviews-rows-*.csv ← Customer reviews, 21 parts
+    │   ├── 04_financial_sample-rows-000001-000700.csv ← Financial data, 700 rows
+    │   ├── manifest.json        ← Maps parts to originals and page/row ranges; not an upload input
+    │   ├── split_samples.py     ← Optional splitter; requires the installed agent-src package
+    │   └── raw/                 ← Four unsplit originals; do not upload alongside their parts in one workspace
+    └── agent-src/               ← Shared image build context for all five Agents
+        ├── README.md            ← English source and runtime guide
+        ├── readme_CN.md         ← Chinese source and runtime guide
+        ├── pyproject.toml       ← Python dependencies, packaging and development tools
+        ├── MANIFEST.in          ← Python source-distribution asset inclusion/exclusion rules
+        ├── .dockerignore       ← Docker build-context exclusions
+        ├── .env.example        ← Local development environment example; not sandbox deployment configuration
+        ├── .gitignore          ← Excludes local environments, credentials and generated files
+        ├── .gitattributes      ← Source-file attributes and line-ending rules
+        ├── compose.yaml        ← Optional local development Compose configuration
+        ├── compose.agents.yaml ← Optional five-Agent local Compose configuration
+        ├── chat_agent/         ← Chat UI/API, Dockerfile and bilingual READMEs; static/ contains frontend assets
+        ├── orchestrator_agent/ ← LangGraph orchestration, A2A routing, Dockerfile and bilingual READMEs
+        ├── data_processing_agent/ ← Extraction/vectorization, Dockerfile and bilingual READMEs
+        ├── rag_agent/          ← Vector retrieval, Dockerfile and bilingual READMEs
+        ├── sql_agent/          ← Read-only structured queries, Dockerfile and bilingual READMEs
+        ├── docs/               ← Eight English/Chinese documentation pairs (16 Markdown files)
+        │   ├── architecture*.md ← Architecture and component responsibilities
+        │   ├── cli-deployment*.md ← Unified CLI deployment and configuration
+        │   ├── data-processing*.md ← Upload, ingestion and vectorization
+        │   ├── implementation-report*.md ← Historical implementation/acceptance report
+        │   ├── orchestration*.md ← LangGraph planning, A2A collaboration and review
+        │   ├── sandbox-deployment*.md ← AKS / ACA deployment paths
+        │   ├── security*.md     ← Authentication, data boundaries and operations
+        │   └── workshop-guide*.md ← Workshop data and demonstration guide
+        ├── shared/             ← Shared Agent configuration, A2A, database, model, storage and chart code
+        └── migrations/
+            ├── __init__.py
+            └── 001_initial.sql ← Initial schema; executed by the migration command in the Orchestrator sandbox
 
 ```
 
@@ -309,5 +356,3 @@ agenthost/
 │   ├── dynamic-session-invoke.sh← Optional track: Minimal invoke example for session pool endpoint
 │   ├── dynamic-sessions.md       ← Optional Dynamic Sessions learning guide
 -->
-
----

@@ -9,18 +9,19 @@
     @import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap");
 
     :root {
-      --ink: #eaf6ff;
-      --muted: #94abc0;
-      --navy: #07121d;
-      --panel: #0d2030;
-      --panel-2: #112b3e;
-      --cyan: #52d3ff;
-      --cyan-soft: #9ae7ff;
-      --orange: #ff9f43;
-      --green: #76e6a6;
-      --red: #ff7188;
-      --line: rgba(154, 231, 255, 0.18);
-      --shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+      color-scheme: light;
+      --ink: #172f43;
+      --muted: #52677b;
+      --navy: #f5f8fc;
+      --panel: #ffffff;
+      --panel-2: #eaf2f8;
+      --cyan: #00749b;
+      --cyan-soft: #00678b;
+      --orange: #a64b08;
+      --green: #167347;
+      --red: #bd2945;
+      --line: rgba(38, 85, 118, 0.2);
+      --shadow: 0 24px 80px rgba(35, 65, 95, 0.09);
       --title-size: clamp(2.45rem, 7vw, 6.7rem);
       --section-size: clamp(2rem, 4.4vw, 4.4rem);
       --body-size: clamp(0.86rem, 1.45vw, 1.22rem);
@@ -57,8 +58,8 @@
       isolation: isolate;
       scroll-snap-align: start;
       background:
-        radial-gradient(circle at 88% 10%, rgba(82, 211, 255, 0.12), transparent 27%),
-        linear-gradient(135deg, #07121d 0%, #0a1926 100%);
+        radial-gradient(circle at 88% 10%, rgba(0, 116, 155, 0.08), transparent 27%),
+        linear-gradient(135deg, #ffffff 0%, #edf4fa 100%);
     }
 
     .slide::after {
@@ -68,21 +69,10 @@
       z-index: -2;
       opacity: 0.3;
       background-image:
-        linear-gradient(rgba(154, 231, 255, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(154, 231, 255, 0.05) 1px, transparent 1px);
+        linear-gradient(rgba(38, 85, 118, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(38, 85, 118, 0.08) 1px, transparent 1px);
       background-size: 48px 48px;
       mask-image: linear-gradient(to bottom, black, transparent 92%);
-    }
-
-    .slide[data-theme] {
-      --ink: #eaf6ff;
-      --muted: #94abc0;
-      --panel: #0d2030;
-      --panel-2: #112b3e;
-      --line: rgba(154, 231, 255, 0.18);
-      background:
-        radial-gradient(circle at 88% 10%, rgba(82, 211, 255, 0.12), transparent 27%),
-        linear-gradient(135deg, #07121d 0%, #0a1926 100%);
     }
 
     .content {
@@ -311,7 +301,7 @@
       height: 2.8rem;
       margin-bottom: 1rem;
       border-radius: 10px;
-      color: #04121d;
+      color: #ffffff;
       background: var(--cyan);
       font: 700 1.2rem/1 "DM Mono", monospace;
     }
@@ -409,7 +399,7 @@
       margin-bottom: 0.35rem;
       padding: 0.25rem 0.45rem;
       border-radius: 5px;
-      color: #04121d;
+      color: #ffffff;
       background: var(--cyan);
       font: 700 0.66rem/1 "DM Mono", monospace;
     }
@@ -448,7 +438,7 @@
       width: 32px;
       height: 32px;
       border-radius: 8px;
-      color: #04121d;
+      color: #ffffff;
       background: var(--cyan);
       font: 700 0.78rem/1 "DM Mono", monospace;
     }
@@ -464,21 +454,21 @@
       font-size: clamp(1.65rem, 3.5vw, 3.5rem);
     }
 
-    .blueprint-foundry { --blueprint-accent: #39b6ff; }
-    .blueprint-aks { --blueprint-accent: #b79aff; }
-    .blueprint-aca { --blueprint-accent: #4de0c1; }
+    .blueprint-foundry { --blueprint-accent: #00749b; }
+    .blueprint-aks { --blueprint-accent: #7351b5; }
+    .blueprint-aca { --blueprint-accent: #087c68; }
     .blueprint-slide .eyebrow { color: var(--blueprint-accent); }
 
     .blueprint {
       position: relative;
       height: min(53vh, 470px);
       overflow: hidden;
-      border: 1px solid color-mix(in srgb, var(--blueprint-accent) 35%, #294663);
+      border: 1px solid color-mix(in srgb, var(--blueprint-accent) 35%, #d5e2ed);
       border-radius: 22px;
       background:
         radial-gradient(circle at center, color-mix(in srgb, var(--blueprint-accent) 8%, transparent), transparent 46%),
-        rgba(3, 13, 24, 0.72);
-      box-shadow: inset 0 0 70px rgba(0, 0, 0, 0.28), var(--shadow);
+        #f6f9fc;
+      box-shadow: inset 0 0 70px rgba(35, 65, 95, 0.04), var(--shadow);
     }
 
     .blueprint::after {
@@ -502,7 +492,7 @@
 
     .bp-wires > path {
       fill: none;
-      stroke: color-mix(in srgb, var(--blueprint-accent) 75%, white);
+      stroke: var(--blueprint-accent);
       stroke-width: 2.2;
       stroke-linecap: round;
       stroke-linejoin: round;
@@ -517,6 +507,8 @@
       opacity: 0.58;
     }
 
+    .bp-wires marker path { fill: var(--blueprint-accent); }
+
     @keyframes wireFlow { to { stroke-dashoffset: -32; } }
 
     .bp-node {
@@ -527,12 +519,12 @@
       min-height: clamp(62px, 9vh, 88px);
       padding: clamp(0.5rem, 0.85vw, 0.78rem);
       place-items: center;
-      border: 1px solid color-mix(in srgb, var(--blueprint-accent) 55%, #35516d);
+      border: 1px solid color-mix(in srgb, var(--blueprint-accent) 55%, #d5e2ed);
       border-radius: 15px;
-      background: linear-gradient(145deg, rgba(17, 42, 67, 0.95), rgba(7, 25, 43, 0.95));
+      background: linear-gradient(145deg, #ffffff, #eaf2f8);
       color: var(--ink);
       text-align: center;
-      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.3), inset 0 1px rgba(255, 255, 255, 0.06);
+      box-shadow: 0 14px 34px rgba(35, 65, 95, 0.1), inset 0 1px #ffffff;
     }
 
     .bp-node strong {
@@ -545,7 +537,7 @@
     .bp-node span {
       display: block;
       margin-top: 0.28rem;
-      color: #9fbbd2;
+      color: var(--muted);
       font-size: clamp(0.52rem, 0.68vw, 0.7rem);
       line-height: 1.22;
     }
@@ -554,12 +546,12 @@
       border-width: 2px;
       box-shadow:
         0 0 0 7px color-mix(in srgb, var(--blueprint-accent) 7%, transparent),
-        0 16px 45px rgba(0, 0, 0, 0.35);
+        0 16px 45px rgba(35, 65, 95, 0.12);
     }
 
     .bp-node.satellite {
       border-style: dashed;
-      background: rgba(8, 29, 48, 0.84);
+      background: var(--panel-2);
     }
 
     .bp-path {
@@ -569,7 +561,7 @@
       border: 1px solid color-mix(in srgb, var(--blueprint-accent) 65%, white);
       border-radius: 999px;
       color: var(--blueprint-accent);
-      background: #071526;
+      background: var(--panel);
       font: 700 clamp(0.5rem, 0.65vw, 0.68rem)/1 "DM Mono", monospace;
       letter-spacing: 0.06em;
     }
@@ -583,10 +575,10 @@
 
     .bp-caption div {
       padding: 0.55rem 0.7rem;
-      border: 1px solid color-mix(in srgb, var(--blueprint-accent) 24%, #294663);
+      border: 1px solid color-mix(in srgb, var(--blueprint-accent) 24%, #d5e2ed);
       border-radius: 10px;
-      color: #a9c2d8;
-      background: rgba(8, 28, 47, 0.72);
+      color: var(--muted);
+      background: var(--panel-2);
       font-size: clamp(0.58rem, 0.75vw, 0.78rem);
     }
 
@@ -700,7 +692,7 @@
       height: 2.25rem;
       margin: 0 auto 0.7rem;
       border-radius: 50%;
-      color: #04121d;
+      color: #ffffff;
       background: var(--cyan);
       font: 700 0.8rem/1 "DM Mono", monospace;
     }
@@ -771,10 +763,10 @@
       width: 2.3rem;
       height: 2.3rem;
       padding: 0;
-      border: 1px solid rgba(154, 231, 255, 0.22);
+      border: 1px solid var(--line);
       border-radius: 50%;
       color: var(--ink);
-      background: rgba(7, 18, 29, 0.7);
+      background: rgba(255, 255, 255, 0.9);
       backdrop-filter: blur(10px);
       cursor: pointer;
       font: 500 1rem/1 "DM Mono", monospace;
@@ -859,6 +851,71 @@
       .reveal, .reveal-left, .reveal-scale { opacity: 1; transform: none; }
     }
 
+    .extension-slide { padding-block: clamp(2.5rem, 5vh, 4rem); }
+    .extension-slide h2 { font-size: clamp(1.7rem, 3.6vw, 3.4rem); }
+    .extension-slide .lede { max-width: 90ch; font-size: clamp(0.9rem, 1.4vw, 1.1rem); }
+    .extension-slide a { color: var(--cyan-soft); text-underline-offset: 0.2em; }
+    .extension-slide code { overflow-wrap: anywhere; }
+    .extension-slide .card p { font-size: clamp(0.8rem, 1.15vw, 1rem); }
+    .extension-slide .callout { font-size: clamp(0.78rem, 1.05vw, 0.95rem); }
+    .callout a { color: var(--cyan-soft); text-underline-offset: 0.2em; }
+    .extension-source { margin: 0.7rem 0 0; color: var(--muted); font-size: var(--small-size); }
+    .extension-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+    .extension-table { width: 100%; border-collapse: collapse; font-size: clamp(0.76rem, 1.05vw, 0.95rem); }
+    .extension-table caption { padding: 0.65rem 0.85rem; text-align: left; color: var(--cyan-soft); background: var(--panel-2); font-weight: 700; }
+    .extension-table th, .extension-table td { padding: 0.65rem 0.85rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    .extension-table thead th { color: var(--cyan-soft); background: rgba(82, 211, 255, 0.06); }
+    .extension-table tbody th { width: 21%; color: var(--ink); }
+    .extension-table td { color: var(--muted); }
+    .extension-table tr:last-child > * { border-bottom: 0; }
+    .extension-table td strong { color: var(--ink); }
+    .extension-diagram { margin: 0; overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); }
+    .extension-diagram svg { display: block; width: 100%; height: auto; max-height: 53vh; }
+    .extension-diagram figcaption { padding: 0.6rem 0.9rem; color: var(--muted); font-size: var(--small-size); border-top: 1px solid var(--line); }
+    .extension-diagram text { font-family: "Manrope", sans-serif; fill: var(--ink); font-size: 16px; }
+    .extension-diagram .svg-title { font-size: 19px; font-weight: 800; }
+    .extension-diagram .svg-small { font-size: 14px; fill: var(--muted); }
+    .extension-diagram .svg-label { font-size: 13px; fill: var(--cyan-soft); }
+    .extension-diagram .box { fill: var(--panel-2); stroke: var(--cyan); stroke-width: 1.5; }
+    .extension-diagram .agent-box { fill: #f0eafa; stroke: #7351b5; stroke-width: 2; }
+    .extension-diagram .agent-box + .svg-title { fill: #7351b5; }
+    .extension-diagram .boundary { fill: rgba(82, 211, 255, 0.025); stroke: var(--muted); stroke-dasharray: 6 5; }
+    .extension-diagram .data-box { fill: #e8f5ed; stroke: var(--green); stroke-width: 1.5; }
+    .extension-diagram .model-box { fill: #fff1e5; stroke: var(--orange); stroke-width: 1.5; }
+    .extension-diagram .wire { fill: none; stroke: var(--cyan); stroke-width: 2; }
+    .extension-diagram .data-wire { fill: none; stroke: var(--green); stroke-width: 2; stroke-dasharray: 6 4; }
+    .extension-diagram .model-wire { fill: none; stroke: var(--orange); stroke-width: 2; stroke-dasharray: 3 4; }
+    .extension-diagram marker path { fill: var(--cyan); }
+    .extension-diagram #m6-data path { fill: var(--green); }
+    .extension-diagram #m6-model path { fill: var(--orange); }
+    .extension-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 0.55rem; margin: 1rem 0; }
+    .extension-strip span { padding: 0.55rem 0.8rem; border: 1px solid var(--line); border-radius: 9px; background: var(--panel-2); font-size: var(--small-size); }
+    .extension-strip b { color: var(--orange); }
+    .extension-note { margin: 0.7rem 0 0; color: var(--muted); font-size: var(--small-size); }
+    .extension-note strong { color: var(--green); }
+
+    @media (min-width: 901px) and (max-height: 800px) {
+      .extension-slide { padding-block: 2rem; }
+      .extension-slide h2 { margin-bottom: 0.8rem; font-size: clamp(1.7rem, 3.2vw, 2.8rem); }
+      .extension-slide h3 { font-size: 1.2rem; }
+      .extension-slide .card { padding: 0.85rem 1rem; }
+      .extension-slide .card p { font-size: 0.85rem; }
+      .extension-table { font-size: 0.82rem; }
+      .extension-table th, .extension-table td { padding: 0.45rem 0.65rem; }
+      .extension-diagram svg { max-height: 48vh; }
+    }
+
+    @media (max-width: 900px), (max-height: 700px) {
+      html { scroll-snap-type: y proximity; }
+      .extension-slide { height: auto; min-height: 100vh; min-height: 100dvh; overflow: visible; padding-block: 3rem; }
+      .extension-slide .grid.three { grid-template-columns: 1fr; }
+      .extension-slide .content { min-width: 0; }
+      .extension-diagram svg { min-width: 850px; max-height: none; }
+      .extension-table { min-width: 660px; }
+      .extension-slide .extension-table-wrap:focus-visible,
+      .extension-slide .extension-diagram:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+    }
+
     @media print {
       @page { size: landscape; margin: 0; }
       html, body { background: #fff; }
@@ -869,6 +926,10 @@
       }
       .nav, .progress { display: none; }
       .reveal, .reveal-left, .reveal-scale { opacity: 1; transform: none; }
+      .extension-slide { height: 100vh; min-height: 0; overflow: hidden; padding-block: 2rem; }
+      .extension-slide .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .extension-diagram svg { min-width: 0; max-height: 53vh; }
+      .extension-table { min-width: 0; }
     }
   </style>
 </head>
@@ -886,7 +947,7 @@
       <div class="content">
         <p class="eyebrow reveal">Azure AI Agent 托管研讨会</p>
         <h1 class="reveal">为你的 Agent 选择合适的<span class="accent">托管方案</span></h1>
-        <p class="lede reveal">实用的选型框架，涵盖托管服务、高度定制的 Sandbox、身份、持久状态和缩容到零。</p>
+        <p class="lede reveal">实用的选型框架，涵盖托管服务、高度定制的 Sandbox、身份、持久状态和缩容到零，并在 Module 06 中进阶到五 Agent 协作的业务工作流。</p>
         <div class="tag-row stagger">
           <span class="tag reveal">Foundry Hosted Agent</span>
           <span class="tag reveal">AKS + agent-sandbox</span>
@@ -894,7 +955,7 @@
         </div>
       </div>
       <span class="footer">AZURE 上的 AGENT 托管</span>
-      <span class="slide-number">01 / 12</span>
+      <span class="slide-number">01 / 21</span>
     </section>
 
     <section class="slide" id="slide-2">
@@ -911,7 +972,7 @@
           <article class="card reveal"><h3><span class="accent">07</span> 成本效益</h3><p>空闲成本、冷启动、容量模型和运维开销。</p></article>
         </div>
       </div>
-      <span class="slide-number">02 / 12</span>
+      <span class="slide-number">02 / 21</span>
     </section>
 
     <section class="slide" id="slide-3">
@@ -949,7 +1010,7 @@
           </article>
         </div>
       </div>
-      <span class="slide-number">03 / 12</span>
+      <span class="slide-number">03 / 21</span>
     </section>
 
     <section class="slide" id="slide-4">
@@ -967,7 +1028,7 @@
         </div>
         <p class="callout reveal"><strong>关键区别：</strong> Dynamic Sessions 适合一次性执行；ACA Sandbox 则为持久、长时间运行的 Agent 提供生命周期控制。</p>
       </div>
-      <span class="slide-number">04 / 12</span>
+      <span class="slide-number">04 / 21</span>
     </section>
 
     <section class="slide" id="slide-5">
@@ -999,7 +1060,7 @@
         </div>
 
       </div>
-      <span class="slide-number">05 / 12</span>
+      <span class="slide-number">05 / 21</span>
     </section>
 
     <section class="slide" id="slide-6">
@@ -1015,7 +1076,7 @@
         </div>
         <p class="callout reveal"><strong>唯一事实来源：</strong> <code>&lt;AGENT_ID&gt;.json</code> 存储于启用版本控制的 Blob Cool 层，不使用独立的 Redis 热缓存。</p>
       </div>
-      <span class="slide-number">06 / 12</span>
+      <span class="slide-number">06 / 21</span>
     </section>
 
     <section class="slide" id="slide-7">
@@ -1030,7 +1091,7 @@
           <article class="policy reveal"><code>cache-lookup/store</code><h3>降低成本</h3><p>在工作负载允许时，缓存安全且相同的请求。</p><span class="status todo">待添加</span></article>
         </div>
       </div>
-      <span class="slide-number">07 / 12</span>
+      <span class="slide-number">07 / 21</span>
     </section>
 
     <section class="slide" id="slide-8">
@@ -1058,7 +1119,7 @@
           </div>
         </div>
       </div>
-      <span class="slide-number">08 / 12</span>
+      <span class="slide-number">08 / 21</span>
     </section>
 
     <section class="slide blueprint-slide blueprint-foundry" id="slide-9">
@@ -1092,7 +1153,7 @@
           <div class="reveal"><b>路径 2</b> - Agent 经 Foundry 项目和已注册的 APIM AI 网关访问模型。</div>
         </div>
       </div>
-      <span class="slide-number">09 / 12</span>
+      <span class="slide-number">09 / 21</span>
     </section>
 
     <section class="slide blueprint-slide blueprint-aks" id="slide-10">
@@ -1127,7 +1188,7 @@
           <div class="reveal"><b>生命周期</b> - 计算资源可暂停或消失，但 Sandbox 标识保持稳定。</div>
         </div>
       </div>
-      <span class="slide-number">10 / 12</span>
+      <span class="slide-number">10 / 21</span>
     </section>
 
     <section class="slide blueprint-slide blueprint-aca" id="slide-11">
@@ -1161,27 +1222,279 @@
           <div class="reveal"><b>定位</b> - 面向持久运行的 Agent；短期执行仍可选择 Dynamic Sessions。</div>
         </div>
       </div>
-      <span class="slide-number">11 / 12</span>
+      <span class="slide-number">11 / 21</span>
     </section>
 
     <section class="slide" id="slide-12">
       <div class="content">
-        <p class="eyebrow reveal">研讨会流程 - 共 135 分钟</p>
-        <h2 class="reveal">六个模块，三种实现，一个选型框架。</h2>
+        <p class="eyebrow reveal">核心研讨会 145 分钟 + Module 06 扩展 60 分钟 = 合计 205 分钟</p>
+        <h2 class="reveal">六个核心模块，再进阶到多 Agent 协作。</h2>
         <div class="timeline stagger">
           <article class="module reveal"><h3>00<br>简介</h3><p>问题定义与体系结构概览。</p><span class="time">10 分钟</span></article>
-          <article class="module reveal"><h3>01<br>核心基础设施</h3><p>资源组、Blob、APIM、Entra ID、Key Vault。</p><span class="time">20 分钟</span></article>
+          <article class="module reveal"><h3>01<br>核心基础设施</h3><p>资源组、Blob、APIM、Entra ID、Key Vault。</p><span class="time">30 分钟</span></article>
           <article class="module reveal"><h3>02<br>Foundry</h3><p>托管 Agent、状态与缩容到零。</p><span class="time">30 分钟</span></article>
           <article class="module reveal"><h3>03<br>AKS</h3><p>Kata 隔离与 Sandbox CRD 生命周期。</p><span class="time">40 分钟</span></article>
           <article class="module reveal"><h3>04<br>ACA</h3><p>服务托管的 Sandbox 隔离与扩缩容。</p><span class="time">30 分钟</span></article>
           <article class="module reveal"><h3>05<br>总结</h3><p>选型指导与成本优化。</p><span class="time">5 分钟</span></article>
         </div>
+        <p class="callout reveal"><strong>可选扩展 06（60 分钟）：</strong><a href="#slide-13">多智能体业务场景</a>基于 Modules 01/04，将五个 ACA Sandbox、A2A 通信、LangGraph 编排和关系型 + 向量数据组合成业务方案。</p>
+      </div>
+      <span class="slide-number">12 / 21</span>
+    </section>
+
+    <section class="slide extension-slide" id="slide-13">
+      <div class="hero-mark reveal-scale" aria-hidden="true"></div>
+      <div class="content">
+        <p class="eyebrow reveal">第二部分 / 可选扩展 / 60 分钟</p>
+        <h2 class="reveal">从 Agent 托管，进阶到<br><span class="accent">多 Agent 协作。</span></h2>
+        <p class="lede reveal">Module 06 &mdash; 多智能体业务场景</p>
+        <p class="extension-note reveal">基础托管部分已完成。接下来，将通信、编排和业务数据组合成一个协同解决方案。</p>
         <div class="tag-row reveal">
-          <span class="tag">来源：oxcp/ainotes - agenthost/agenthost.md</span>
-          <span class="tag">文档版本 1.0</span>
+          <span class="tag">A2A 通信</span>
+          <span class="tag">LangGraph 编排</span>
+          <span class="tag">Azure 托管 Agent</span>
         </div>
       </div>
-      <span class="slide-number">12 / 12</span>
+      <span class="slide-number">13 / 21</span>
+    </section>
+
+    <section class="slide extension-slide" id="slide-14">
+      <div class="content">
+        <p class="eyebrow reveal">扩展 / Module 06 - 学习目标与业务场景</p>
+        <h2 class="reveal">从托管单个 Agent，进阶到<span class="accent">有据可依的业务决策。</span></h2>
+        <p class="lede reveal"><strong>Product Launch Studio（产品上市分析工作台）：</strong>整合消费者报告、客户评论和销售数据，推荐上市市场、产品定位和行动优先级。明确区分来源证据、计算事实与业务解读。</p>
+        <div class="grid three stagger">
+          <article class="card reveal"><span class="big-number">01</span><h3>托管协作的 Agent</h3><p>五个独立服务运行在五个 ACA Sandbox micro-VM 中，理解运行时、身份、网络和数据边界。</p></article>
+          <article class="card orange-top reveal"><span class="big-number">02</span><h3>编排多 Agent 工作流</h3><p>A2A 承担远程通信；LangGraph 实现类型化规划、RAG/SQL 并行执行、综合、证据审核和最多一次修订。</p></article>
+          <article class="card green-top reveal"><span class="big-number">03</span><h3>融合文本与精确计算</h3><p>使用 HorizonDB 或 PostgreSQL Flexible Server 存储关系型数据与向量：既检索支撑观点的原文，也准确计算业务指标。</p></article>
+        </div>
+        <div class="extension-strip reveal" aria-label="业务场景">
+          <span>报告 + 评论 + 销售数据</span><b aria-hidden="true">&rarr;</b><span>定性证据 + 定量事实</span><b aria-hidden="true">&rarr;</b><span>上市建议 + 引用 + 图表</span>
+        </div>
+        <p class="extension-source reveal">前置模块：Modules 01 和 04。<a href="../module-06/readme_CN.md">打开 Module 06 操作指南</a>。这是托管实践的业务扩展，而不是第四种托管产品。</p>
+      </div>
+      <span class="slide-number">14 / 21</span>
+    </section>
+
+    <section class="slide extension-slide" id="slide-15">
+      <div class="content">
+        <p class="eyebrow reveal">Module 06 - 输入、问题与路由</p>
+        <h2 class="reveal">按<span class="accent">答案需要什么数据</span>选择执行路径。</h2>
+        <p class="lede reveal">PDF 报告提供市场证据；评论 CSV 提供客户原话和结构化属性；销售 CSV 提供精确总量与排名。将它们上传到同一个持久 Session（界面中的工作区名称）。</p>
+        <div class="extension-table-wrap reveal" tabindex="0" role="region" aria-label="问题路由示例">
+          <table class="extension-table">
+            <caption>同一个业务场景，四种执行模式</caption>
+            <thead><tr><th scope="col">模式</th><th scope="col">示例问题</th><th scope="col">执行方式 / 证据</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">DIRECT</th><td>为一款可维修音箱写三条宣传语。</td><td>仅调用通用模型；<strong>不检索工作区数据</strong>。</td></tr>
+              <tr><th scope="row">RAG</th><td>根据上传的报告，消费者最关注哪些需求？</td><td>检索报告/评论原文；返回来源、页码/章节，以及适用时的语义相似度。</td></tr>
+              <tr><th scope="row">SQL</th><td>上传的销售数据中，哪个国家的总利润最高？</td><td>感知表结构生成 SQL，验证后只读执行；返回实际 SQL 与结果行。</td></tr>
+              <tr><th scope="row">HYBRID</th><td>结合消费者趋势和销售表现，推荐产品上市市场。</td><td><strong>并行执行 RAG 和 SQL</strong>；融合定性证据与计算事实，再审核答案。</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="callout reveal"><strong>检索不等于统计：</strong>有界的评论概览不是具有代表性的样本。评论总数、情感分布和财务汇总应通过 SQL 统计已存储的行，不能按检索片段数量推断。</p>
+        <p class="extension-source reveal"><a href="../module-06/agent-src/docs/workshop-guide_CN.md">演示指南</a> &middot; <a href="../module-06/agent-src/docs/data-processing_CN.md">数据处理</a></p>
+      </div>
+      <span class="slide-number">15 / 21</span>
+    </section>
+
+    <section class="slide extension-slide" id="slide-16">
+      <div class="content">
+        <p class="eyebrow reveal">Module 06 - Azure 部署架构</p>
+        <h2 class="reveal">五个Agent，<span class="accent">一个协同解决方案。</span></h2>
+        <figure class="extension-diagram reveal" tabindex="0" aria-label="多 Agent Azure 架构，小屏幕可横向滚动">
+          <svg viewBox="0 0 1200 560" role="img" aria-labelledby="m6-arch-title m6-arch-desc">
+            <title id="m6-arch-title">复用 ACA SandboxGroup 中的五 Agent 部署</title>
+            <desc id="m6-arch-desc">浏览器调用 Chat；Chat 写入私有 Blob，并通过 A2A 调用 Orchestrator。Orchestrator 调用 Processing、RAG 和 SQL，工作 Agent 互不调用。Processing 读取 Blob 并写入关系型数据与向量；RAG 和 SQL 读取数据库；Orchestrator 保存工作区和运行记录。Orchestrator 与 SQL 使用通用模型，Processing 与 RAG 使用嵌入模型，全部经过 APIM。</desc>
+            <defs>
+              <marker id="m6-a2a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10Z" fill="#52d3ff"/></marker>
+              <marker id="m6-data" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10Z" fill="#76e6a6"/></marker>
+              <marker id="m6-model" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10Z" fill="#ff9f43"/></marker>
+            </defs>
+            <rect class="boundary" x="170" y="18" width="1005" height="330" rx="18"/>
+            <text class="svg-label" x="190" y="44">复用 MODULE-04 SANDBOXGROUP / 每个 AGENT 独享一个 MICRO-VM</text>
+            <path class="wire" d="M145 162 H200" marker-end="url(#m6-a2a)"/>
+            <path class="wire" d="M380 162 H455" marker-end="url(#m6-a2a)"/>
+            <path class="wire" d="M655 162 H720 V99 H790" marker-end="url(#m6-a2a)"/>
+            <path class="wire" d="M720 162 V199 H790" marker-end="url(#m6-a2a)"/>
+            <path class="wire" d="M720 199 V299 H790" marker-end="url(#m6-a2a)"/>
+            <text class="svg-label" x="405" y="147">A2A</text><text class="svg-label" x="728" y="83">A2A</text>
+            <path class="data-wire" d="M245 200 V410" marker-end="url(#m6-data)"/>
+            <path class="data-wire" d="M365 442 H410 V322 H765 V115 H790" marker-end="url(#m6-data)"/>
+            <path class="data-wire" d="M565 210 V410" marker-end="url(#m6-data)"/>
+            <path class="data-wire" d="M1110 100 H1150 V382 H700 V410" marker-end="url(#m6-data)"/>
+            <path class="data-wire" d="M1110 199 H1150 M1110 299 H1150"/>
+            <text class="svg-label" x="425" y="370">工作区 / 运行记录</text>
+            <text class="svg-label" x="800" y="373">Processing 写入；RAG / SQL 读取</text>
+            <path class="model-wire" d="M650 207 H680 V357 H1015 V410" marker-end="url(#m6-model)"/>
+            <path class="model-wire" d="M1110 122 H1128 V357 H1015 M1110 222 H1128 M1110 322 H1128"/>
+            <rect class="box" x="20" y="124" width="125" height="76" rx="12"/><text x="82" y="157" text-anchor="middle">浏览器</text><text class="svg-small" x="82" y="181" text-anchor="middle">HTTPS</text>
+            <rect class="box agent-box" x="200" y="124" width="180" height="76" rx="12"/><text class="svg-title" x="290" y="153" text-anchor="middle">Chat</text><text class="svg-small" x="290" y="179" text-anchor="middle">FastAPI / UI / 上传</text>
+            <rect class="box agent-box" x="455" y="114" width="200" height="96" rx="12"/><text class="svg-title" x="555" y="150" text-anchor="middle">Orchestrator</text><text class="svg-small" x="555" y="178" text-anchor="middle">LangGraph / 工作区授权</text>
+            <rect class="box agent-box" x="790" y="62" width="320" height="74" rx="12"/><text class="svg-title" x="810" y="92">Data Processing</text><text class="svg-small" x="810" y="117">提取 / 分类 / 分块 / 嵌入</text>
+            <rect class="box agent-box" x="790" y="162" width="320" height="74" rx="12"/><text class="svg-title" x="810" y="192">RAG</text><text class="svg-small" x="810" y="217">限定工作区的证据检索</text>
+            <rect class="box agent-box" x="790" y="262" width="320" height="74" rx="12"/><text class="svg-title" x="810" y="292">SQL</text><text class="svg-small" x="810" y="317">经验证、有界、只读的查询</text>
+            <rect class="data-box" x="150" y="410" width="215" height="84" rx="12"/><text class="svg-title" x="170" y="442">私有 Blob：data</text><text class="svg-small" x="170" y="470">上传的原始文件</text>
+            <rect class="data-box" x="445" y="410" width="330" height="84" rx="12"/><text class="svg-title" x="465" y="442">HorizonDB / PostgreSQL</text><text class="svg-small" x="465" y="470">关系型数据 + 向量 + 运行记录</text>
+            <rect class="model-box" x="850" y="410" width="330" height="84" rx="12"/><text class="svg-title" x="870" y="442">APIM &rarr; Microsoft Foundry</text><text class="svg-small" x="870" y="470">OpenAI SDK：Responses + Embeddings</text>
+            <text class="svg-small" x="20" y="535">青色实线：A2A / HTTPS</text><text class="svg-small" x="310" y="535">绿色虚线：数据访问</text><text class="svg-small" x="660" y="535">橙色点线：经网关治理的模型调用</text>
+          </svg>
+          <figcaption>模型调用：Orchestrator + SQL &rarr; 通用模型；Processing + RAG &rarr; 嵌入模型，全部经过 APIM。Chat 不直连工作 Agent、模型或数据库；工作 Agent 互不调用。</figcaption>
+        </figure>
+        <p class="extension-note reveal">仅 Chat 和 Processing 还通过组级 <code>AzureBlobByo</code> 卷，将已有私有 Blob 容器只读挂载到 <code>/kb-data</code>；应用层文件访问仍使用 Blob SDK。</p>
+        <p class="extension-source reveal"><a href="../module-06/agent-src/docs/architecture_CN.md">架构与信任边界</a></p>
+      </div>
+      <span class="slide-number">16 / 21</span>
+    </section>
+
+    <section class="slide extension-slide" id="slide-17">
+      <div class="content">
+        <p class="eyebrow reveal">Module 06 - 职责分工与通信契约</p>
+        <h2 class="reveal">A2A 连接服务，<span class="accent">LangGraph 协调任务。</span></h2>
+        <div class="extension-table-wrap reveal" tabindex="0" role="region" aria-label="Agent 职责与输入输出契约">
+          <table class="extension-table">
+            <caption>每个 Agent 都有独立镜像、进程、启动入口和沙箱</caption>
+            <thead><tr><th scope="col">Agent</th><th scope="col">负责什么</th><th scope="col">输入 &rarr; 输出 / 边界</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Chat</th><td>UI/API、上传验证、写入私有 Blob、展示进度。</td><td>浏览器请求 &rarr; Orchestrator A2A。跨 Agent 边界发送已登记的 <strong>FileRef</strong>，而非原始文件字节。</td></tr>
+              <tr><th scope="row">Orchestrator</th><td>所有者/工作区校验、规划、分发/汇合、综合、图表、审核和运行持久化。</td><td>问题或文件引用 &rarr; 类型化工作任务 &rarr; 有证据支撑的答案。图状态保留在本沙箱内。</td></tr>
+              <tr><th scope="row">Data Processing</th><td>提取、推断表结构、分块有效文本、生成嵌入、提交摄取。</td><td>经验证的 FileRef &rarr; 数据集/向量 + 计数、跳过记录与警告。</td></tr>
+              <tr><th scope="row">RAG</th><td>限定工作区的余弦检索；按需提供有界评论概览。</td><td>查询 + 过滤条件 &rarr; 最多五个证据片段、来源信息和覆盖范围警告。</td></tr>
+              <tr><th scope="row">SQL</th><td>感知结构生成 SQL、AST 验证、工作区重写和受限执行。</td><td>问题 + 数据目录 &rarr; 已执行 SELECT、列、结果行和行数。不允许修改数据。</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="callout reveal"><strong>先验证，再调度：</strong>配置的对等 URL &rarr; 经认证的 Agent Card &rarr; 校验角色、技能、A2A 1.0、流式支持和精确端点 &rarr; JSON-RPC/SSE。类型化产物返回结果，状态更新返回进度；对等服务不可达时显式报错，不回退到本地工作 Agent。</p>
+        <p class="extension-source reveal"><a href="../module-06/agent-src/shared/a2a_transport.py">A2A 传输实现</a> &middot; <a href="../module-06/agent-src/orchestrator_agent/agent.py">LangGraph 实现</a></p>
+      </div>
+      <span class="slide-number">17 / 21</span>
+    </section>
+
+    <section class="slide extension-slide" id="slide-18">
+      <div class="content">
+        <p class="eyebrow reveal">Module 06 - Azure 服务映射</p>
+        <h2 class="reveal">复用基础设施，<span class="accent">只补齐缺少的能力。</span></h2>
+        <div class="extension-table-wrap reveal" tabindex="0" role="region" aria-label="Azure 服务用途与部署变更">
+          <table class="extension-table">
+            <caption>云端主路径：Bash / Bicep + 独立的 aca CLI</caption>
+            <thead><tr><th scope="col">Azure 服务</th><th scope="col">在方案中的作用</th><th scope="col">复用 / Module 06 新增</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">ACA Sandboxes</th><td>为五个独立 Agent 提供硬件隔离的运行环境。</td><td>复用 Module-04 SandboxGroup 及其已有 VNet 连接；从 Agent 磁盘镜像创建五个沙箱。</td></tr>
+              <tr><th scope="row">Azure Container Registry</th><td>为每个 Agent 构建并分发独立镜像。</td><td>复用 Module-01 ACR；通过 <strong>ACR Tasks</strong> 云端构建，不需要本地 Docker。</td></tr>
+              <tr><th scope="row">Microsoft Foundry</th><td>通用推理 / SQL 生成；摄取与检索所需的嵌入。</td><td>复用账户、项目和通用模型；新增 <code>text-embedding-3-small</code>，默认 1536 维。</td></tr>
+              <tr><th scope="row">API Management</th><td>使用 Entra 认证，治理 Responses 和 Embeddings 调用。</td><td>保留已有 Responses 路由；在现有 <code>/foundry</code> API 下增加 <code>POST /openai/v1/embeddings</code> 和独立的账户级后端。</td></tr>
+              <tr><th scope="row">Blob Storage</th><td>私有原始文件，独立于 Agent 计算生命周期保留。</td><td>复用存储账户，仅创建私有 <code>data</code> 容器。只读挂载是额外的文件系统视图，不是上传通道。</td></tr>
+              <tr><th scope="row">HorizonDB / PostgreSQL Flexible Server</th><td>共享 SQL + 向量存储，保存工作区、文档元数据、数据集、证据和已完成运行。</td><td><strong>二选一部署</strong>：默认 HorizonDB，PostgreSQL 为替代方案；使用同一仓储实现与迁移。</td></tr>
+              <tr><th scope="row">Entra ID / 托管身份</th><td>为模型、Blob、数据库和镜像访问提供令牌。</td><td>五个 Agent 复用 Module-01 UAMI；主部署使用 Entra 数据库认证。A2A 另用服务端对等密钥。</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="extension-note reveal"><strong>嵌入调用身份链：</strong>Agent UAMI &rarr; APIM 校验调用者 <code>oid</code> 和 <code>ai.azure.com</code> 受众 &rarr; APIM 已有的<em>系统分配身份</em> &rarr; Foundry 账户端点。不会静默回退到直连模型端点。</p>
+        <p class="extension-source reveal"><a href="../module-06/readme_CN.md">部署前提与资源复用</a> &middot; <a href="../module-06/deploy.sh">分阶段部署入口</a></p>
+      </div>
+      <span class="slide-number">18 / 21</span>
+    </section>
+
+    <section class="slide extension-slide" id="slide-19">
+      <div class="content">
+        <p class="eyebrow reveal">Module 06 - 工作流程一 / 一次摄取，多次查询</p>
+        <h2 class="reveal">保留原始文件，<span class="accent">分别存储数字与语义。</span></h2>
+        <figure class="extension-diagram reveal" tabindex="0" aria-label="文件摄取流程，小屏幕可横向滚动">
+          <svg viewBox="0 0 1200 300" role="img" aria-labelledby="m6-ingest-title m6-ingest-desc">
+            <title id="m6-ingest-title">上传校验、私有存储、内容提取与事务摄取</title>
+            <desc id="m6-ingest-desc">Chat 校验文件并将原始 Blob 与校验和保存。Orchestrator 授权并登记引用，再通过 A2A 调用 Processing。Processing 重新校验文件并提取内容；结构化行形成关系型表，有用文本分块后经 APIM 生成嵌入，两者在同一事务提交。失败回滚数据库摄取；相同校验和复用已完成处理。</desc>
+            <defs><marker id="m6-ingest-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10Z" fill="#52d3ff"/></marker></defs>
+            <path class="wire" d="M195 130 H235" marker-end="url(#m6-ingest-arrow)"/>
+            <path class="wire" d="M425 130 H465" marker-end="url(#m6-ingest-arrow)"/>
+            <path class="wire" d="M665 130 H705 V65 H755" marker-end="url(#m6-ingest-arrow)"/>
+            <path class="wire" d="M705 130 V210 H755" marker-end="url(#m6-ingest-arrow)"/>
+            <path class="wire" d="M995 65 H1020 V130 H1045" marker-end="url(#m6-ingest-arrow)"/>
+            <path class="wire" d="M995 210 H1020 V130 H1045" marker-end="url(#m6-ingest-arrow)"/>
+            <rect class="box" x="15" y="82" width="180" height="96" rx="12"/><text class="svg-title" x="30" y="112">1 / Chat</text><text x="30" y="138">校验 + 上传</text><text class="svg-small" x="30" y="161">私有 Blob / SHA-256</text>
+            <rect class="box" x="235" y="82" width="190" height="96" rx="12"/><text class="svg-title" x="250" y="112">2 / Orchestrator</text><text x="250" y="138">授权 + 登记</text><text class="svg-small" x="250" y="161">经 A2A 传递 FileRef</text>
+            <rect class="box" x="465" y="82" width="200" height="96" rx="12"/><text class="svg-title" x="480" y="112">3 / Processing</text><text x="480" y="138">重新校验 + 提取</text><text class="svg-small" x="480" y="161">字节 / 工作区 / 校验和</text>
+            <rect class="data-box" x="755" y="22" width="240" height="86" rx="12"/><text class="svg-title" x="770" y="54">4a / 结构化数据行</text><text class="svg-small" x="770" y="81">类型推断 / 关系型表</text>
+            <rect class="model-box" x="755" y="167" width="240" height="86" rx="12"/><text class="svg-title" x="770" y="199">4b / 有用文本</text><text class="svg-small" x="770" y="226">分块 / APIM 嵌入</text>
+            <rect class="data-box" x="1045" y="82" width="140" height="96" rx="12"/><text class="svg-title" x="1060" y="112">5 / 提交</text><text x="1060" y="138">同一数据库事务</text><text class="svg-small" x="1060" y="161">计数 / 警告</text>
+            <text class="svg-small" x="20" y="282">跨 Agent 边界传递已登记的引用；原始文件字节保留在私有 Blob 中。</text>
+          </svg>
+          <figcaption>支持 PDF、DOCX、TXT、MD、CSV、XLSX、JSON。扫描/加密 PDF 显式失败，未实现 OCR；XLSX 摄取支持一个有数据的工作表。</figcaption>
+        </figure>
+        <div class="grid three stagger" style="margin-top: 1rem">
+          <article class="card reveal"><h3>报告 &rarr; 向量</h3><p>按页/章节边界分块，默认 400 token、重叠 60 token，保留来源 ID 和溯源元数据。</p></article>
+          <article class="card orange-top reveal"><h3>销售 &rarr; SQL 表</h3><p>规范化列名，基于全部行推断类型。纯财务数值行只保存为关系型数据，不生成嵌入。</p></article>
+          <article class="card green-top reveal"><h3>评论 &rarr; 两者兼有</h3><p>保留关系型行，为有效评论文本生成关联原行的嵌入。空白、过短或重复文本跳过并计数，不删除独立数据行。</p></article>
+        </div>
+        <p class="extension-note reveal"><strong>幂等性：</strong>工作区 + 校验和防止重复提交数据集。摄取失败时回滚数据行/向量并将文档标记为失败；原始上传 Blob 可能保留，需要纳入保留与清理策略。</p>
+      </div>
+      <span class="slide-number">19 / 21</span>
+    </section>
+
+    <section class="slide extension-slide" id="slide-20">
+      <div class="content">
+        <p class="eyebrow reveal">Module 06 - 工作流程二 / 规划、执行、溯源、审核</p>
+        <h2 class="reveal">并行收集证据，<span class="accent">有界审核答案。</span></h2>
+        <figure class="extension-diagram reveal" tabindex="0" aria-label="LangGraph 问答流程，小屏幕可横向滚动">
+          <svg viewBox="0 0 1200 490" role="img" aria-labelledby="m6-flow-title m6-flow-desc">
+            <title id="m6-flow-title">四种路由、HYBRID 并行执行和一次修订的审核循环</title>
+            <desc id="m6-flow-desc">授权后规划。DIRECT 调用通用模型；RAG 或 SQL 调用对应远程工作 Agent；HYBRID 在同一图超步并行调度两者，随后汇合结果。综合、准备有据可依的图表并审核实际草稿；审核通过后先持久化再完成。最多修订一次，重新生成并审核，否则返回明确限制。保留部分工作 Agent 失败信息。</desc>
+            <defs><marker id="m6-flow-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10Z" fill="#52d3ff"/></marker></defs>
+            <path class="wire" d="M190 200 H230" marker-end="url(#m6-flow-arrow)"/>
+            <path class="wire" d="M440 200 H475 V80 H520" marker-end="url(#m6-flow-arrow)"/>
+            <path class="wire" d="M475 200 H520" marker-end="url(#m6-flow-arrow)"/>
+            <path class="wire" d="M475 200 V315 H520" marker-end="url(#m6-flow-arrow)"/>
+            <path class="wire" d="M735 80 H805 V180" marker-end="url(#m6-flow-arrow)"/>
+            <path class="wire" d="M735 200 H755 V246 H780" marker-end="url(#m6-flow-arrow)"/>
+            <path class="wire" d="M735 315 H755 V246 H780" marker-end="url(#m6-flow-arrow)"/>
+            <path class="wire" d="M880 246 H925" marker-end="url(#m6-flow-arrow)"/>
+            <path class="wire" d="M1012 292 V320 H900 V372 H880" marker-end="url(#m6-flow-arrow)"/>
+            <path class="wire" d="M1100 246 H1140 V374 H1110" marker-end="url(#m6-flow-arrow)"/>
+            <path class="wire" d="M1080 292 V310 H1180 V444 H1110" marker-end="url(#m6-flow-arrow)"/>
+            <path class="wire" d="M1050 420 V403" marker-end="url(#m6-flow-arrow)"/>
+            <path class="wire" d="M780 366 H765 V160 H805 V180" marker-end="url(#m6-flow-arrow)"/>
+            <text class="svg-label" x="480" y="44">DIRECT</text><text class="svg-label" x="485" y="160">RAG / SQL / HYBRID</text>
+            <rect class="box" x="15" y="153" width="175" height="94" rx="12"/><text class="svg-title" x="30" y="187">接收请求</text><text class="svg-small" x="30" y="216">所有者 / 工作区校验</text>
+            <rect class="box" x="230" y="153" width="210" height="94" rx="12"/><text class="svg-title" x="245" y="187">分类 + 规划</text><text class="svg-small" x="245" y="216">经验证的类型化计划</text>
+            <rect class="model-box" x="520" y="45" width="215" height="70" rx="12"/><text class="svg-title" x="535" y="74">直接调用模型</text><text class="svg-small" x="535" y="99">不执行检索</text>
+            <rect class="box" x="520" y="165" width="215" height="70" rx="12"/><text class="svg-title" x="535" y="194">RAG / A2A</text><text class="svg-small" x="535" y="219">原文片段 + 来源</text>
+            <rect class="box" x="520" y="280" width="215" height="70" rx="12"/><text class="svg-title" x="535" y="309">SQL / A2A</text><text class="svg-small" x="535" y="334">精确计算结果行</text>
+            <text class="svg-label" x="525" y="263">HYBRID：在同一超步并行分发</text>
+            <rect class="box" x="780" y="180" width="100" height="112" rx="12"/><text x="794" y="214">汇合 *</text><text x="794" y="241">综合答案</text><text class="svg-small" x="794" y="271">准备图表</text>
+            <rect class="model-box" x="925" y="200" width="175" height="92" rx="12"/><text class="svg-title" x="940" y="233">审核实际草稿</text><text class="svg-small" x="940" y="262">事实 / 计算 / 引用</text>
+            <rect class="box" x="780" y="342" width="100" height="60" rx="12"/><text x="792" y="367">修订</text><text class="svg-small" x="792" y="390">最多一次</text>
+            <text class="svg-label" x="899" y="334">需修订</text>
+            <rect class="data-box" x="995" y="345" width="115" height="58" rx="12"/><text x="1008" y="369">持久化运行</text><text class="svg-small" x="1008" y="391">再返回结果</text>
+            <text class="svg-label" x="1108" y="232">通过</text>
+            <rect class="model-box" x="995" y="420" width="115" height="48" rx="12"/><text x="1008" y="449">明确限制</text>
+            <text class="svg-label" x="675" y="446">阻止 / 第二次审核仍未通过</text>
+            <text class="svg-small" x="20" y="474">* DIRECT 跳过结果汇总；RAG / SQL 先汇合再综合。无可用工作 Agent 结果时显式失败。</text>
+          </svg>
+          <figcaption>先生成草稿和准备图表，再审核。一次修订回到综合、图表准备与审核；第二次审核仍不通过则阻止答案。上传请求走独立的摄取路径。</figcaption>
+        </figure>
+        <p class="extension-note reveal"><strong>可溯源输出：</strong>证据、计算事实、解读、建议、限制和可展开的证据面板。图表使用 SQL 行、带原文引用锚点的报告数字，或用户明确提供的值；服务端校验来源映射，并移除具有误导性的图表。</p>
+        <p class="extension-source reveal"><a href="../module-06/agent-src/docs/orchestration_CN.md">编排与有界执行</a></p>
+      </div>
+      <span class="slide-number">20 / 21</span>
+    </section>
+
+    <section class="slide extension-slide" id="slide-21">
+      <div class="content">
+        <p class="eyebrow reveal">Module 06 - 交付、证据与运行边界</p>
+        <h2 class="reveal">让结果可检查，<span class="accent">不夸大平台能力。</span></h2>
+        <div class="grid three stagger">
+          <article class="card reveal"><h3>数据与 SQL 防护</h3><p>上传内容是不可信证据，不是指令。检索限定工作区；SQL AST 校验限制表和函数，并为物理表重写工作区过滤、施加行数限制和只读执行。</p></article>
+          <article class="card orange-top reveal"><h3>失败处理与持久化</h3><p>明确暴露弱证据和部分工作 Agent 失败。安全读取最多重试一次，答案最多修订一次。已完成结果写入 <code>agent_runs</code>；中断的 LangGraph 工作流<strong>不会</strong>自动续跑。</p></article>
+          <article class="card green-top reveal"><h3>研讨会不等于多租户</h3><p>浏览器 API 免密，持有 Chat URL 的人均可访问部署内数据。稳定所有者种子仅保留在服务端，A2A 另用对等密钥。默认数据库防火墙允许所有 IPv4 来源，生产环境必须收紧访问。</p></article>
+        </div>
+        <div class="extension-strip reveal" aria-label="主部署阶段">
+          <span>前置检查</span><b aria-hidden="true">&rarr;</b><span>storage</span><b aria-hidden="true">&rarr;</b><span>models</span><b aria-hidden="true">&rarr;</b><span>database</span><b aria-hidden="true">&rarr;</b><span>config</span><b aria-hidden="true">&rarr;</b><span>images</span><b aria-hidden="true">&rarr;</b><span>aca</span>
+        </div>
+        <p class="extension-note reveal">Bash 部署使用 <code>aca</code>，不是 <code>az containerapp sandbox</code> 或 Dynamic Sessions。协作服务默认禁用自动挂起。数据库/知识库可跨计算重启保留，但这不代表运行中工作流具备持久调度能力。</p>
+        <p class="callout reveal"><strong>学习验收：</strong>上传数据 &rarr; 检查摄取计数 &rarr; 验证四种模式 &rarr; 检查引用与实际 SQL &rarr; 演示缺失数据/工作 Agent 异常的明确限制。实际验证 Azure 连通性与权限；仅生成清单或进程健康检查不等于端到端验收。</p>
+        <p class="extension-source reveal"><a href="../module-06/readme_CN.md">开始 Module 06</a> &middot; <a href="../module-06/agent-src/docs/security_CN.md">安全边界</a> &middot; <a href="#slide-12">返回研讨会路线图</a></p>
+      </div>
+      <span class="slide-number">21 / 21</span>
     </section>
   </main>
 
@@ -1190,6 +1503,7 @@
       const slides = [...document.querySelectorAll(".slide")];
       const progress = document.querySelector(".progress");
       let current = 0;
+      let touchStartX = 0;
       let touchStartY = 0;
 
       const show = (index) => {
@@ -1207,7 +1521,7 @@
           progress.style.width = `${((current + 1) / slides.length) * 100}%`;
           history.replaceState(null, "", `#slide-${current + 1}`);
         });
-      }, { threshold: 0.6 });
+      }, { threshold: 0, rootMargin: "-20% 0px -65% 0px" });
 
       slides.forEach((slide) => observer.observe(slide));
 
@@ -1215,6 +1529,7 @@
       document.getElementById("next").addEventListener("click", () => show(current + 1));
 
       document.addEventListener("keydown", (event) => {
+        if (event.target.closest(".extension-table-wrap, .extension-diagram")) return;
         if (["ArrowDown", "ArrowRight", "PageDown", " "].includes(event.key)) {
           event.preventDefault();
           show(current + 1);
@@ -1228,12 +1543,15 @@
       });
 
       document.addEventListener("touchstart", (event) => {
+        touchStartX = event.changedTouches[0].screenX;
         touchStartY = event.changedTouches[0].screenY;
       }, { passive: true });
 
       document.addEventListener("touchend", (event) => {
         const delta = touchStartY - event.changedTouches[0].screenY;
-        if (Math.abs(delta) < 45) return;
+        const horizontal = touchStartX - event.changedTouches[0].screenX;
+        if (Math.abs(delta) < 45 || Math.abs(horizontal) > Math.abs(delta)) return;
+        if (event.target.closest(".extension-slide")) return;
         show(current + (delta > 0 ? 1 : -1));
       }, { passive: true });
 

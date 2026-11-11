@@ -6,7 +6,7 @@
 
 本研讨会将带你踏上一段实用的 Azure 智能体托管之旅：
 - 基础部分：你将从共享基础设施入手，比较和动手练习适用于企业和消费者场景的三种部署方案，最后了解成本和生产环境强化指南。
-- 扩展部分：你将把在**基础部分**掌握的智能体部署经验，结合多智能体编排、智能体通信、向量化存储和检索等高级技术，组合为完整的模拟业务流程，包括数据处理、企业知识库、多智能体协作、业务分析和计划等。
+- 扩展部分：你将把在**基础部分**掌握的智能体部署经验，结合多智能体编排、智能体通信、向量化存储和检索等技术练习，实现完整的模拟业务流程。
 
 <!-- > 📊 **更喜欢幻灯片？**
 >
@@ -30,7 +30,8 @@
 - **已实现的功能**：状态持久化、缩容到零、隔离、Entra ID 身份验证以及 AI Gateway 集成。
 
 ### 扩展部分：
-- **[Module 06：多智能体业务场景](./module-06/readme_CN.md)**：将 5 个具有实际业务能力的智能体托管，结合 A2A、LangGraph、Azure HorizonDB，构建为完整的业务流程，包括数据处理、企业知识库、多智能体协作、业务分析和计划。
+- **[Module 06：多智能体业务场景](./module-06/readme_CN.md)**：同时托管 5 个智能体，并使用 A2A 智能体间通信和 LangGraph 编排协作五个智能体，实现模拟的业务场景，包括数据处理、企业知识库、业务分析和计划等。
+- 支持选择 **Azure HorizonDB**（默认）或 **Azure Database for PostgreSQL Flexible Server** 作为结构化数据与向量的存储和检索。
 
 ## 先决条件（研讨会开始前）
 
@@ -156,7 +157,7 @@ Preflight does not verify secrets, model/Blob calls or live Agent health. Follow
 ```
 > [!TIP]
 > 1. 如果**所有模块的通用先决条件**和**模块 01**中没有失败的检查，脚本会报告 `Workshop readiness: Ready to start`，此时你可以开始研讨会。
-> 2. 默认模式下，**Modules 02–04 或 06**的失败不阻止开始 Module 01。通用/Module 01 检查失败时默认退出码为 `1`，否则为 `0`；`--strict` 遇到**任何 Failed 或 Skipped** 都返回 `1`。未知参数返回 `2`。“Ready to start” 不代表 Module 06 部署/健康验收通过。
+> 2. 默认模式下，**Modules 02–04 或 06**的失败不阻止开始 Module 01。
 > 3. 在研讨会开始之前，Azure Container Registry 尚未部署，因此 `check-prerequisites.sh` 会将 **ACR 远程生成权限**检查报告为 `Skipped`。完成模块 01 后，请再次运行检查器以验证这些权限。模块 03 使用 `az acr build`。在注册表范围内分配 **Contributor** 足以执行生成和映像推送操作。
 > 4. **模块 03** 和**模块 04**共享同一个 Azure Container Registry 和容器映像。因此，已部署且可访问的 ACR 是模块 03 和模块 04 的共同先决条件。
 > 5. **模块 06** 需复用 **模块 03** 和**模块 04** 使用的ACR，但会上传新创建的智能体镜像。
@@ -200,22 +201,24 @@ Fix suggestion:
 | 模块 | 主题 | 时长 | 目的 |
 |---|---|---|---|
 | [module-00](./module-00/README_CN.md) | 简介 | 10 分钟 | 了解目标场景、智能体状态模式和三种托管解决方案。 |
-| [module-01](./module-01/README_CN.md) | 核心基础设施设置 | 20 分钟 | 部署所有托管解决方案共用的 Azure 基础设施。 |
+| [module-01](./module-01/README_CN.md) | 核心基础设施设置 | 30 分钟 | 部署所有托管解决方案共用的 Azure 基础设施。 |
 | [module-02](./module-02/README_CN.md) | 解决方案 A：Foundry Hosted Agent | 30 分钟 | 部署具有原生状态、身份验证、治理和 AI Gateway 集成的托管 Foundry 智能体。 |
 | [module-03](./module-03/README_CN.md) | 解决方案 B：AKS + agent-sandbox | 40 分钟 | 在 AKS 上部署可定制的智能体运行时，具备沙盒隔离、持久状态和工作负载标识。 |
 | [module-04](./module-04/README_CN.md) | 解决方案 C：ACA Sandboxes（研讨会路径） | 30 分钟 | 在 ACA Sandboxes 中部署具有微型 VM 隔离及挂起/恢复功能的智能体。<!-- ，并探索作为可选路径的 Dynamic Sessions。 --> |
 | [module-05](./module-05/README_CN.md) | 总结和问答 | 5 分钟 | 比较解决方案，并查看选择指南、成本优化和生产环境强化建议。 |
-| [module-06](./module-06/readme_CN.md) | 扩展练习：多智能体业务场景 | 额外安排 | 以 Product Launch Studio 为示例，复用 Modules 01/04；部署 HorizonDB 和五个 ACA Sandboxes，然后上传/处理/向量化数据并通过 Chat UI 查询。 |
+| [module-06](./module-06/readme_CN.md) | 扩展练习：多智能体业务场景 | 60 分钟 | 模拟业务场景，部署 5个 智能体，通过多智能体间的编排和协作，处理上传的业务数据，并据此做智能分析和计划。 |
 
-> **研讨会总时长：**135 分钟。
-> **动手练习（模块 01–04）：**120 分钟。
-> **Module 06：多智能体业务场景**为额外扩展练习，不计入 135 分钟的核心研讨会。
+> [!NOTE]
+> - **核心研讨会（模块 00–05）**：145 分钟，包含 **动手练习（模块 01–04）**：130 分钟。
+> - **Module 06 多智能体业务场景**：建议额外安排 60 分钟。
+> - **包含 Module 06 的总时长**：205 分钟（3 小时 25 分钟）。
 
 ---
 
 ## 研讨会结构
 
-以下列出主要目录和文件，省略单独的截图文件和生成的缓存。
+以下按当前忽略规则及预期 GitHub 发布结构，列出主要目录和文件；这不会暂存、上传或取消跟踪文件。
+省略单独的截图、重复的源码文件和生成的缓存；用通配符合并展示研讨会样本分片及英文/`_CN` 文档对。
 
 ```
 agenthost/
@@ -233,13 +236,13 @@ agenthost/
 │       └── verify-tools.sh      ← 验证工具版本和用户范围扩展
 ├── pic/                         ← 研讨会截图，包括 toolbox-vm-deployment.png
 ├── module-00/
+│   ├── .gitignore               ← 排除旧 index.html、slides/ 及 *notused* 文件
 │   ├── README.md                ← 体系结构决策、场景和解决方案比较
 │   ├── README_CN.md             ← 中文简介指南
 │   ├── design.html              ← 交互式研讨会设计幻灯片
-│   ├── index.html               ← 研讨会演示页面
+│   ├── design_CN.html           ← 中文设计幻灯片，含 60 分钟 Module-06 扩展部分
 │   ├── timer-en.html            ← 英文研讨会计时器
-│   ├── timer.html               ← 中文研讨会计时器
-│   └── slides/                  ← 演示幻灯片图片
+│   └── timer.html               ← 中文研讨会计时器
 ├── module-01/
 │   ├── README.md                ← 核心基础设施设置步骤
 │   ├── README_CN.md             ← 中文基础设施设置指南
@@ -290,24 +293,63 @@ agenthost/
 └── module-06/
     ├── readme.md                ← 多智能体业务场景：完整安装、部署、上传/向量化和聊天操作指南
     ├── readme_CN.md             ← 中文多智能体业务场景指南
-    ├── prompt/                 ← 原始需求/设计输入
-    └── agent-src/
-        ├── chat_agent/         ← Chat UI 和聊天 API
-        ├── orchestrator_agent/ ← LangGraph 编排和 A2A 路由
-        ├── data_processing_agent/ ← 上传、提取和向量化
-        ├── rag_agent/          ← 向量检索
-        ├── sql_agent/          ← 结构化查询
-        ├── sample-data/        ← 合成演示数据集
-        ├── deploy/             ← HorizonDB Bash/Bicep、ACR 远程生成和 ACA CLI 部署
-        └── docs/               ← 八份详细设计/运维指南及其 _CN 对应版本
+    ├── deploy.sh                ← 自动前置检查后直接部署、通用配置发现及阶段选择
+    ├── deploy-storage.sh        ← 仅在 Module-01 已有存储中增量 ARM 预配私有 data 容器
+    ├── deploy-models.sh         ← 部署 embedding 并扩展已有 APIM 路由；已有授权保持不变
+    ├── deploy-database.sh       ← 数据库验证/预配及 HorizonDB 配置/管理员辅助函数
+    ├── build-images.sh          ← 五个远程 ACR 构建，共用 agent-src 构建上下文
+    ├── deploy-aca.sh            ← 五个沙箱的配置、挂载、迁移、启动与就绪检查
+    ├── bicep/
+    │   ├── storage.bicep        ← 私有 data 容器；existing 账户/Blob 服务
+    │   ├── embedding.bicep      ← embedding 模型及 APIM 操作/后端/策略；不修改 RBAC
+    │   ├── database.bicep       ← 统一提供程序选择；不重复创建共享资源
+    │   ├── horizondb.bicep      ← HorizonDB 后端
+    │   └── postgresql.bicep     ← PostgreSQL Flexible Server 后端
+    ├── common/
+    │   ├── aca-config.jq        ← 共享受保护五角色配置验证
+    │   └── resolve-identity.sh  ← 为各阶段解析 Module-01 UAMI 标识
+    ├── sample-data/             ← 实际业务样本，不进入 Agent 镜像
+    │   ├── 01_capgemini_consumer_trends_2025-pages-*.pdf ← Capgemini 报告，5 个分片
+    │   ├── 02_ryder_ecommerce_consumer_study_2025-pages-*.pdf ← Ryder 报告，5 个分片
+    │   ├── 03_customer_reviews-rows-*.csv ← 客户评论，21 个分片
+    │   ├── 04_financial_sample-rows-000001-000700.csv ← 财务数据，700 行
+    │   ├── manifest.json        ← 分片与原文件、页码/行号的对应清单；不是上传输入
+    │   ├── split_samples.py     ← 可选分片工具；依赖已安装的 agent-src 包
+    │   └── raw/                 ← 四份未拆分原件；不要与其分片在同一工作区重复上传
+    └── agent-src/               ← 五个 Agent 共用的镜像构建上下文
+        ├── README.md            ← 英文源码与运行说明
+        ├── readme_CN.md         ← 中文源码与运行说明
+        ├── pyproject.toml       ← Python 依赖、打包和开发工具配置
+        ├── MANIFEST.in          ← Python 源码分发包的资源包含/排除规则
+        ├── .dockerignore       ← Docker 构建上下文排除规则
+        ├── .env.example        ← 本地开发环境变量示例；不是沙箱部署配置
+        ├── .gitignore          ← 排除本地环境、凭据和生成文件
+        ├── .gitattributes      ← 源码文件属性与换行规则
+        ├── compose.yaml        ← 可选本地开发 Compose 配置
+        ├── compose.agents.yaml ← 可选五 Agent 本地 Compose 配置
+        ├── chat_agent/         ← Chat UI/API、Dockerfile 和中英文 README；static/ 为前端资源
+        ├── orchestrator_agent/ ← LangGraph 编排、A2A 路由、Dockerfile 和中英文 README
+        ├── data_processing_agent/ ← 数据提取/向量化、Dockerfile 和中英文 README
+        ├── rag_agent/          ← 向量检索、Dockerfile 和中英文 README
+        ├── sql_agent/          ← 只读结构化查询、Dockerfile 和中英文 README
+        ├── docs/               ← 八组中英文文档，共 16 个 Markdown 文件
+        │   ├── architecture*.md ← 架构与组件职责
+        │   ├── cli-deployment*.md ← 统一 CLI 部署与配置
+        │   ├── data-processing*.md ← 上传、摄取与向量化
+        │   ├── implementation-report*.md ← 历史实现与验收报告
+        │   ├── orchestration*.md ← LangGraph 规划、A2A 协作与审核
+        │   ├── sandbox-deployment*.md ← AKS / ACA 部署路径
+        │   ├── security*.md     ← 身份认证、数据边界与运维
+        │   └── workshop-guide*.md ← 研讨会数据与演示指南
+        ├── shared/             ← Agent 共用的配置、A2A、数据库、模型、存储和图表代码
+        └── migrations/
+            ├── __init__.py
+            └── 001_initial.sql ← 初始 schema；由 Orchestrator 沙箱中的迁移命令执行
 
 ```
-
 <!--
 │   ├── README.md                ← 研讨会路径：ACA Sandboxes；可选路径：Dynamic Sessions
 │   ├── dynamic-session-deploy.sh← 可选路径：会话池部署（自定义容器）
 │   ├── dynamic-session-invoke.sh← 可选路径：会话池终结点的最小调用示例
 │   ├── dynamic-sessions.md       ← 可选的 Dynamic Sessions 学习指南
 -->
-
----

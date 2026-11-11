@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agent Host Workshop - Module 06</title>
+  <link rel="stylesheet" href="/static/style.css?v=pinned-controls">
+  <script src="/static/charts.js?v=document-citations" defer></script>
+  <script src="/static/app.js?v=status-reconnect" defer></script>
+</head>
+<body>
+  <div id="controls">
+    <header>
+      <h1>Agent Host Workshop - Module 06</h1>
+      <span id="meta">Bring your data. Explore DIRECT / RAG / SQL / HYBRID.</span>
+    </header>
+    <section class="toolbar" aria-label="Session settings">
+      <label>Session <select id="workspace" aria-describedby="session-help"></select></label>
+      <button id="connect">Connect</button>
+      <span id="connection" role="status">Loading sessions...</span>
+      <label>New session <input id="name" maxlength="100" placeholder="Summer launch"></label>
+      <button id="create">Create</button>
+      <button id="clear">Clear local conversation</button>
+      <small id="session-help">Each session keeps its own uploaded data. Reconnecting does not require re-uploading.</small>
+    </section>
+    <section class="toolbar" aria-label="File upload">
+      <label>Upload PDF, DOCX, CSV, XLSX, JSON, MD, TXT
+        <input id="file" type="file" accept=".pdf,.docx,.csv,.xlsx,.json,.md,.txt" multiple>
+      </label>
+      <button id="upload">Upload and process</button>
+      <button id="sources">Show sources</button>
+      <ol id="upload-queue" aria-live="polite" aria-label="Upload queue"></ol>
+    </section>
+  </div>
+  <div id="chat" aria-live="polite" aria-label="Conversation"></div>
+  <section id="progress" aria-live="polite" aria-label="Workflow progress"></section>
+  <div id="error" role="alert"></div>
+  <button id="retry" hidden>Retry last request</button>
+  <footer>
+    <textarea id="q" aria-label="Message" aria-describedby="message-help" rows="2" maxlength="4000" placeholder="Analyze profit by country and show a bar chart (also supports line, pie and data table)."></textarea>
+    <button id="send">Send</button>
+    <small id="message-help">Enter: send · Shift+Enter: new line · ↑/↓: previous/next question at the first/last line</small>
+  </footer>
+</body>
+</html>

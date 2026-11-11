@@ -1,0 +1,328 @@
+{
+  "csv_rows_per_part": 2000,
+  "pdf_pages_per_part": 20,
+  "max_bytes": 5000000,
+  "max_embedding_chunk_upper_bound": 4500,
+  "sources": [
+    {
+      "source": "01_capgemini_consumer_trends_2025.pdf",
+      "sha256": "bee1b2d1b7e1b034031d90afc7d75620c4318d377173f57d7ac74053ee827372",
+      "bytes": 12893602,
+      "parts": [
+        {
+          "file": "01_capgemini_consumer_trends_2025-pages-000001-000020.pdf",
+          "start": 1,
+          "end": 20,
+          "pages": 20,
+          "bytes": 3340207,
+          "embedding_chunk_upper_bound": 24,
+          "sha256": "447ae2c6f39c9d07561509d021be2cdeefa623de43e1f1bd53ac851f21bf97d1"
+        },
+        {
+          "file": "01_capgemini_consumer_trends_2025-pages-000021-000040.pdf",
+          "start": 21,
+          "end": 40,
+          "pages": 20,
+          "bytes": 2224389,
+          "embedding_chunk_upper_bound": 30,
+          "sha256": "72e8e1b14aa9ce03784dc823d66f7a537be40d0bc483cf6fb9fd7d70df6ca5e9"
+        },
+        {
+          "file": "01_capgemini_consumer_trends_2025-pages-000041-000060.pdf",
+          "start": 41,
+          "end": 60,
+          "pages": 20,
+          "bytes": 2697181,
+          "embedding_chunk_upper_bound": 25,
+          "sha256": "44130f8ea8ed34bc3a0e2217fce499b482e38c344a440310e3b4a7d00a563b25"
+        },
+        {
+          "file": "01_capgemini_consumer_trends_2025-pages-000061-000080.pdf",
+          "start": 61,
+          "end": 80,
+          "pages": 20,
+          "bytes": 3271596,
+          "embedding_chunk_upper_bound": 27,
+          "sha256": "a2bd375c9f1670cc32adf654dfc9ff5ff06ad084168335caa137245e237773f9"
+        },
+        {
+          "file": "01_capgemini_consumer_trends_2025-pages-000081-000100.pdf",
+          "start": 81,
+          "end": 100,
+          "pages": 20,
+          "bytes": 2041554,
+          "embedding_chunk_upper_bound": 29,
+          "sha256": "fb0990b0f9d4a04a49958c2e0ef41e0c81965f974d47e19a96af2d1d421bbbd2"
+        }
+      ],
+      "pages": 100
+    },
+    {
+      "source": "02_ryder_ecommerce_consumer_study_2025.pdf",
+      "sha256": "4bc72df20c26f0792b8e8fb9756a03f90001986534f8cadda0fa114f439ef27d",
+      "bytes": 9700513,
+      "parts": [
+        {
+          "file": "02_ryder_ecommerce_consumer_study_2025-pages-000001-000020.pdf",
+          "start": 1,
+          "end": 20,
+          "pages": 20,
+          "bytes": 2250393,
+          "embedding_chunk_upper_bound": 21,
+          "sha256": "b4f6bf047cba9d691d1cd890ecab51b8d8c533f8603ef5040ba79e383843400a"
+        },
+        {
+          "file": "02_ryder_ecommerce_consumer_study_2025-pages-000021-000040.pdf",
+          "start": 21,
+          "end": 40,
+          "pages": 20,
+          "bytes": 1658520,
+          "embedding_chunk_upper_bound": 20,
+          "sha256": "ac40e462cdc72494e0bed1b1596ff4ad93013767dd479a63fbf4bc31cfe1ae3d"
+        },
+        {
+          "file": "02_ryder_ecommerce_consumer_study_2025-pages-000041-000060.pdf",
+          "start": 41,
+          "end": 60,
+          "pages": 20,
+          "bytes": 2234262,
+          "embedding_chunk_upper_bound": 20,
+          "sha256": "8050635569ee67f5ed9583515be147e06ced5f4bbaf83eab414e1fdbf52635eb"
+        },
+        {
+          "file": "02_ryder_ecommerce_consumer_study_2025-pages-000061-000080.pdf",
+          "start": 61,
+          "end": 80,
+          "pages": 20,
+          "bytes": 1657793,
+          "embedding_chunk_upper_bound": 20,
+          "sha256": "c6c9724873bc58ae9d4f604b49bbee011dee5fbf2a8b2157f60389c2771d917d"
+        },
+        {
+          "file": "02_ryder_ecommerce_consumer_study_2025-pages-000081-000093.pdf",
+          "start": 81,
+          "end": 93,
+          "pages": 13,
+          "bytes": 2057469,
+          "embedding_chunk_upper_bound": 13,
+          "sha256": "bdc27fdf69dedaa32d11a1b0838facd349cabbeb629688c80b178b34984a39a3"
+        }
+      ],
+      "pages": 93
+    },
+    {
+      "source": "03_customer_reviews.csv",
+      "sha256": "ba7efc3e98f0219de24ae1804f335f4d67bca0ac5fe7fd3e9ddc620bc6e84a21",
+      "bytes": 7071436,
+      "parts": [
+        {
+          "file": "03_customer_reviews-rows-000001-002000.csv",
+          "start": 1,
+          "end": 2000,
+          "rows": 2000,
+          "bytes": 337361,
+          "embedding_chunk_upper_bound": 3031,
+          "sha256": "18b188f22788fb79703ae623d9e6ea45e562949da5f8a6547557a7d3655383a8"
+        },
+        {
+          "file": "03_customer_reviews-rows-002001-004000.csv",
+          "start": 2001,
+          "end": 4000,
+          "rows": 2000,
+          "bytes": 328206,
+          "embedding_chunk_upper_bound": 2976,
+          "sha256": "ce595010856aac75af654e7a22ad64676f3e9cd2886648f2a53b067afe10b05d"
+        },
+        {
+          "file": "03_customer_reviews-rows-004001-006000.csv",
+          "start": 4001,
+          "end": 6000,
+          "rows": 2000,
+          "bytes": 328635,
+          "embedding_chunk_upper_bound": 2857,
+          "sha256": "e2cb57746def89469fb7e83162121e8e25bb400039a150d35109b227edacbf0c"
+        },
+        {
+          "file": "03_customer_reviews-rows-006001-008000.csv",
+          "start": 6001,
+          "end": 8000,
+          "rows": 2000,
+          "bytes": 360159,
+          "embedding_chunk_upper_bound": 2517,
+          "sha256": "7917feaaf74e9aaade66ab44c6fe63c0a37bb604505d6826e65d4f209b6de539"
+        },
+        {
+          "file": "03_customer_reviews-rows-008001-010000.csv",
+          "start": 8001,
+          "end": 10000,
+          "rows": 2000,
+          "bytes": 400656,
+          "embedding_chunk_upper_bound": 3269,
+          "sha256": "8966caa7e35a9a6b2d2c4cb711d63b56f5b1aabb2aae69b3040467b499c127b2"
+        },
+        {
+          "file": "03_customer_reviews-rows-010001-012000.csv",
+          "start": 10001,
+          "end": 12000,
+          "rows": 2000,
+          "bytes": 332700,
+          "embedding_chunk_upper_bound": 2809,
+          "sha256": "0d3c731e1097de7ff91070384ed6c084da21bd8de765ba6c0a72226473957367"
+        },
+        {
+          "file": "03_customer_reviews-rows-012001-014000.csv",
+          "start": 12001,
+          "end": 14000,
+          "rows": 2000,
+          "bytes": 324026,
+          "embedding_chunk_upper_bound": 2219,
+          "sha256": "8f7d108e7988c85ed50d9e2014a0afaeee38739798a1cda4d19f082fcd0d7e68"
+        },
+        {
+          "file": "03_customer_reviews-rows-014001-016000.csv",
+          "start": 14001,
+          "end": 16000,
+          "rows": 2000,
+          "bytes": 308054,
+          "embedding_chunk_upper_bound": 2413,
+          "sha256": "3575362617dcb7a7ff11232dcb3b39f89fe10773438ba7bc93a1beab1ef477fe"
+        },
+        {
+          "file": "03_customer_reviews-rows-016001-018000.csv",
+          "start": 16001,
+          "end": 18000,
+          "rows": 2000,
+          "bytes": 310241,
+          "embedding_chunk_upper_bound": 2638,
+          "sha256": "b9b186b480b1b25f1eb54834368049ce678bdade02c8dacae8d2ff2b66b88a68"
+        },
+        {
+          "file": "03_customer_reviews-rows-018001-020000.csv",
+          "start": 18001,
+          "end": 20000,
+          "rows": 2000,
+          "bytes": 322873,
+          "embedding_chunk_upper_bound": 2094,
+          "sha256": "dbf9ab0444a9d1e70dce1b633939879f9df517e35e17a7ef6a8bcb092d97559e"
+        },
+        {
+          "file": "03_customer_reviews-rows-020001-022000.csv",
+          "start": 20001,
+          "end": 22000,
+          "rows": 2000,
+          "bytes": 330355,
+          "embedding_chunk_upper_bound": 2054,
+          "sha256": "f18b0755398c536c006c5113dfdca2413f98e44aab0c63f9ca715f1bf075c48a"
+        },
+        {
+          "file": "03_customer_reviews-rows-022001-024000.csv",
+          "start": 22001,
+          "end": 24000,
+          "rows": 2000,
+          "bytes": 368701,
+          "embedding_chunk_upper_bound": 2007,
+          "sha256": "928c6356a983226616f98320756b108b47def249fcab9752ba1e6cf505a407bc"
+        },
+        {
+          "file": "03_customer_reviews-rows-024001-026000.csv",
+          "start": 24001,
+          "end": 26000,
+          "rows": 2000,
+          "bytes": 435660,
+          "embedding_chunk_upper_bound": 2030,
+          "sha256": "f689b90d3a26e9d1a9b58fae0094a8a5773c49d3a675be04bb34ba682641af6f"
+        },
+        {
+          "file": "03_customer_reviews-rows-026001-028000.csv",
+          "start": 26001,
+          "end": 28000,
+          "rows": 2000,
+          "bytes": 426273,
+          "embedding_chunk_upper_bound": 2003,
+          "sha256": "2383d112db266d48c85c82a79319c9c6e3394a76bd2305d3df662da0e3a87d89"
+        },
+        {
+          "file": "03_customer_reviews-rows-028001-030000.csv",
+          "start": 28001,
+          "end": 30000,
+          "rows": 2000,
+          "bytes": 310313,
+          "embedding_chunk_upper_bound": 2041,
+          "sha256": "07fd8e7b739ba251eea1ddf44cd7e848cf28902aefbf0daf2d442083e40ca449"
+        },
+        {
+          "file": "03_customer_reviews-rows-030001-032000.csv",
+          "start": 30001,
+          "end": 32000,
+          "rows": 2000,
+          "bytes": 330579,
+          "embedding_chunk_upper_bound": 2002,
+          "sha256": "0d8720c246524379d45322edc52765e973cf1267aa81b3fde87137fd8fef656a"
+        },
+        {
+          "file": "03_customer_reviews-rows-032001-034000.csv",
+          "start": 32001,
+          "end": 34000,
+          "rows": 2000,
+          "bytes": 318115,
+          "embedding_chunk_upper_bound": 2141,
+          "sha256": "1041f0416679fd7dd28535aa71cc06289bd65c5558983631ba842d786ee92924"
+        },
+        {
+          "file": "03_customer_reviews-rows-034001-036000.csv",
+          "start": 34001,
+          "end": 36000,
+          "rows": 2000,
+          "bytes": 315446,
+          "embedding_chunk_upper_bound": 2182,
+          "sha256": "7337f263a2e0ae477d644cbe037717c7ca3216ec54f95281e4f37d51cf916eb6"
+        },
+        {
+          "file": "03_customer_reviews-rows-036001-038000.csv",
+          "start": 36001,
+          "end": 38000,
+          "rows": 2000,
+          "bytes": 326035,
+          "embedding_chunk_upper_bound": 2274,
+          "sha256": "d9b14054e72c7e9f51d5ddd56fa7253015c7bd464593aa80a8802d0f88fc06d7"
+        },
+        {
+          "file": "03_customer_reviews-rows-038001-040000.csv",
+          "start": 38001,
+          "end": 40000,
+          "rows": 2000,
+          "bytes": 331293,
+          "embedding_chunk_upper_bound": 2790,
+          "sha256": "6289fdeac8d495e39943ddaa658ae09730e33faf2a79738c88fd38297989d09b"
+        },
+        {
+          "file": "03_customer_reviews-rows-040001-041711.csv",
+          "start": 40001,
+          "end": 41711,
+          "rows": 1711,
+          "bytes": 270010,
+          "embedding_chunk_upper_bound": 2527,
+          "sha256": "1914f97e31f6a0c43c34795ab48385eb7dad4f36500847d73b399968338ec515"
+        }
+      ],
+      "rows": 41711
+    },
+    {
+      "source": "04_financial_sample.csv",
+      "sha256": "d53c7806c8ab43d214402e26411ca9e97695a4c066b8ada64648681eeebb7d31",
+      "bytes": 77159,
+      "parts": [
+        {
+          "file": "04_financial_sample-rows-000001-000700.csv",
+          "start": 1,
+          "end": 700,
+          "rows": 700,
+          "bytes": 77863,
+          "embedding_chunk_upper_bound": 0,
+          "sha256": "e043ebcdd0e5069c2c0491f07660a0a7d572cf019a510d5ccfa433c45aa1a1cc"
+        }
+      ],
+      "rows": 700
+    }
+  ]
+}

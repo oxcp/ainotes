@@ -1,4 +1,4 @@
-# Module 1 — Core Infrastructure Setup (20 min)
+# Module 1 — Core Infrastructure Setup (30 min)
 
 > 🌐 语言 / Language: **English** | [中文](README_CN.md)
 
@@ -175,7 +175,7 @@ After the template deployed, you have a resource group created with below resour
 > [!NOTE]
 > **For reference, the template deploys and configures the following resources:**
 > 1. **User-assigned managed identity (UAMI)** for workloads in later modules. It receives access to Foundry inference and the agent-state storage account.
-> 2. **Azure Storage account** using Standard LRS and the Cool access tier, with HTTPS-only access, TLS 1.2, and public blob access disabled. Blob versioning is enabled, and a private `agent-state` container is created for durable agent state.
+> 2. **Azure Storage account** using Standard LRS and the Cool access tier, with HTTPS-only access, TLS 1.2, and public blob access disabled. Blob versioning is enabled, and the private `agent-state` container stores durable agent state. Module 06 creates its private `data` container in this existing account; Module 01 does not create it or delete any existing containers/data.
 > 3. **Azure Key Vault** using the Standard tier, with RBAC authorization, soft delete, purge protection, and public network access enabled.
 > 4. **Azure Container Registry (ACR)** using the Standard tier, with the administrator account disabled.
 > 5. **Microsoft Foundry account** `foundry-agenthost-<deploymentSN>` of kind `AIServices`, with a system-assigned managed identity, local key authentication disabled, project management enabled, and public network access enabled.

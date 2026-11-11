@@ -9,6 +9,7 @@
 ## 浏览内容
 
 浏览本仓库最便捷的方式是访问 [AI Notes 网站](https://oxcp.github.io/ainotes/)。网站中的 Markdown 阅读器支持类似 GitHub 的渲染效果、代码快速复制、嵌入式视频，以及多模块 Workshop 导航。
+模块 06 导航将五个 Agent 指南与分组展示的设计及部署文档分开组织。
 
 ### Workshop 与动手指南
 
@@ -17,7 +18,7 @@
 | [Azure AI 智能体托管](agenthost/readme.md) | 模块化 Workshop，对比 Microsoft Foundry 托管智能体、AKS 与 `agent-sandbox`，以及 Azure Container Apps Sandboxes。内容涵盖共享基础设施、身份认证、状态持久化、隔离、生命周期管理和生产环境注意事项。 |
 | [Azure AI 基础设施 Workshop](azure-ai-infrastructure-workshop/README.md) | 端到端实验，涵盖 AKS 与 KAITO、Anyscale on Azure、Ray Data/Serve/Train、Microsoft Foundry 托管计算、合作伙伴模型和可观测性。 |
 | [AKS 上的 Anyscale](anyscale-on-aks/README_CN.md) | 在 AKS 上部署 Anyscale Operator，并使用 Ray 运行分布式模型推理和微调的脚本与指南。也提供[英文指南](anyscale-on-aks/README.md)。 |
-| [Azure 上的 Anyscale](anyscale-on-azure/README.md) | Anyscale Kubernetes Operator 认证所需的 Microsoft Entra 服务主体配置，附脱敏输出示例；另提供涵盖架构、网络、身份与 AI 工作负载的[中文网页介绍幻灯片](anyscale-on-azure/web-slides.html)及[权限检查脚本](anyscale-on-azure/check_permission.sh)。 |
+| [Azure 上的 Anyscale](anyscale-on-azure/README.md) | Anyscale Kubernetes Operator 认证所需的 Microsoft Entra 服务主体配置，附脱敏输出示例和[权限检查脚本](anyscale-on-azure/check_permission.sh)。 |
 | [AKS 上的 CNI](cni-on-aks/README.md) | 在 AKS 中管理和安装容器网络接口（CNI）的动手指南，包括创建 BYO CNI 集群、安装 Cilium，以及验证网络连通性。 |
 | [将 Azure 指标导出至 Prometheus 和 Grafana](azmon-export-to-prometheus/README.md) | 将 Azure Monitor 指标导出为 Prometheus 格式并使用 Grafana 进行可视化的实践指南。 |
 | [AKS 上的 Istio 监控](istio-on-aks/monitoring/README.md) | 面向 AKS Istio 插件的综合可观测性指南，包括指标、访问日志、链路追踪和相关工具。 |
@@ -38,12 +39,6 @@
 |---|---|---|
 | AKS + Azure Elastic SAN：12 万级 AI Agent 基础设施规模测试 | 对 120,000 个挂载持久卷的 Pod 进行规模验证，涵盖资源与容量设计、部署限制与实测速率、测试方法、分轮卷配置和 Pod 就绪结果，以及生产部署建议。 | [简体中文](test-report/AKS+ESAN-AIAgent-benchmark-report-cn.md) · [English](test-report/AKS+ESAN-AIAgent-benchmark-report-en.md) |
 
-### Web Slides
-
-| 幻灯片 | 说明 |
-|---|---|
-| [Azure Container Apps Sandboxes](web-slides/Azure_Container_Apps_Sandboxes.html) | 在浏览器中查看的 Azure Container Apps Sandboxes 技术介绍幻灯片。 |
-
 ## 仓库结构
 
 ```text
@@ -59,7 +54,6 @@ istio-on-aks/                    AKS Istio 可观测性指南
 models-healthcare/               医疗健康与医学模型评测
 multi-k8s-mgmt/                  Kubernetes 多集群管理笔记
 test-report/                     AI 基础设施基准与规模测试报告
-web-slides/                      浏览器版 HTML 幻灯片
 index.html                       GitHub Pages 首页
 markdown-viewer.html             网站共用的 Markdown 阅读器
 ```

@@ -86,7 +86,10 @@ Recap the three solutions, provide decision guidance, and share cost-optimizatio
 
 ---
 
-*Workshop complete — Agent Hosting on Azure, 135 minutes.*
+*Core workshop complete — Agent Hosting on Azure, 145 minutes.*
+
+Continue with [Module 06: Multi-Agent Business Scenarios](../module-06/readme.md) for a suggested
+60-minute extension; the core workshop plus this extension totals 205 minutes (3 hours 25 minutes).
 
 ---
 

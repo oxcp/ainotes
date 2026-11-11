@@ -1,0 +1,55 @@
+x-environment: &environment
+  DB_ENDPOINT: db
+  DB_SSL_MODE: disable
+  BLOB_BACKEND: local
+  LOCAL_BLOB_PATH: /app/.local/data
+  ORCHESTRATOR_URL: http://orchestrator:8080
+  DATA_PROCESSING_URL: http://data-processing:8080
+  RAG_URL: http://rag:8080
+  SQL_URL: http://sql:8080
+x-agent: &agent
+  env_file: .env
+  init: true
+  depends_on:
+    db: {condition: service_healthy}
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health',timeout=3)"]
+    interval: 15s
+    timeout: 5s
+    retries: 5
+services:
+  chat:
+    <<: *agent
+    image: ${ACR_LOGIN_SERVER:?Set ACR_LOGIN_SERVER to the existing registry login server}/studio-chat:${IMAGE_TAG:-latest}
+    ports: ["127.0.0.1:8080:8080"]
+    environment:
+      <<: *environment
+      A2A_PUBLIC_URL: http://chat:8080
+    volumes: [studio-originals:/app/.local/data]
+  orchestrator:
+    <<: *agent
+    image: ${ACR_LOGIN_SERVER:?Set ACR_LOGIN_SERVER to the existing registry login server}/studio-orchestrator:${IMAGE_TAG:-latest}
+    environment:
+      <<: *environment
+      A2A_PUBLIC_URL: http://orchestrator:8080
+  data-processing:
+    <<: *agent
+    image: ${ACR_LOGIN_SERVER:?Set ACR_LOGIN_SERVER to the existing registry login server}/studio-data-processing:${IMAGE_TAG:-latest}
+    environment:
+      <<: *environment
+      A2A_PUBLIC_URL: http://data-processing:8080
+    volumes: [studio-originals:/app/.local/data]
+  rag:
+    <<: *agent
+    image: ${ACR_LOGIN_SERVER:?Set ACR_LOGIN_SERVER to the existing registry login server}/studio-rag:${IMAGE_TAG:-latest}
+    environment:
+      <<: *environment
+      A2A_PUBLIC_URL: http://rag:8080
+  sql:
+    <<: *agent
+    image: ${ACR_LOGIN_SERVER:?Set ACR_LOGIN_SERVER to the existing registry login server}/studio-sql:${IMAGE_TAG:-latest}
+    environment:
+      <<: *environment
+      A2A_PUBLIC_URL: http://sql:8080
+volumes:
+  studio-originals:

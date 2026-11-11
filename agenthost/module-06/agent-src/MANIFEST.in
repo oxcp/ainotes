@@ -1,0 +1,6 @@
+include README.md readme_CN.md .env.example compose.yaml compose.agents.yaml
+recursive-include deploy *.py *.ps1
+include chat_agent/Dockerfile orchestrator_agent/Dockerfile data_processing_agent/Dockerfile rag_agent/Dockerfile sql_agent/Dockerfile
+recursive-include docs *.md
+prune sample-data
+recursive-include tests *.py *.cjs *.sh *.ps1

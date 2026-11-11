@@ -161,6 +161,11 @@ aca auth status >/dev/null 2>&1 || aca auth login
 aca doctor
 ```
 
+Module-06 的数据库由 `deploy-database.sh` 独立部署：默认 `DB_PROVIDER=horizondb`，
+也可选择 `DB_PROVIDER=postgresql`（Azure PostgreSQL Flexible Server）。
+两者使用通用 `DB_*` 配置和同一 psycopg 仓储；检查所选区域的资源提供程序、权限和容量。
+密码须保存在受保护文件中，切勿粘贴到 CLI 参数或启用跟踪；工具箱不自动创建数据库。
+
 按照[顶层指南](../README_CN.md#先决条件研讨会开始前)，下载并运行统一检查器。下面的 `sed` 命令仅在文件需要从 Windows CRLF 转为 Linux LF 时运行：
 
 ```bash

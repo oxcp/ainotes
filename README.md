@@ -9,6 +9,7 @@ The repository combines runnable scripts and infrastructure templates with detai
 ## Browse the Content
 
 The easiest way to explore the repository is through the [AI Notes site](https://oxcp.github.io/ainotes/). Its Markdown viewer provides GitHub-style rendering, code-copy controls, embedded videos, and navigation for multi-module workshops.
+Module 06 navigation separates the five Agent guides from a grouped set of design and deployment documents.
 
 ### Workshops and Hands-on Guides
 
@@ -17,7 +18,7 @@ The easiest way to explore the repository is through the [AI Notes site](https:/
 | [Agent Hosting on Azure](agenthost/readme.md) | A modular workshop comparing Microsoft Foundry hosted agents, AKS with `agent-sandbox`, and Azure Container Apps Sandboxes. It covers shared infrastructure, identity, state persistence, isolation, lifecycle management, and production considerations. |
 | [Azure AI Infrastructure Workshop](azure-ai-infrastructure-workshop/README.md) | End-to-end labs for AKS with KAITO, Anyscale on Azure, Ray Data/Serve/Train, Microsoft Foundry managed compute, partner models, and observability. |
 | [Anyscale on AKS](anyscale-on-aks/README.md) | Scripts and guidance for deploying the Anyscale Operator on AKS and running distributed model inference and fine-tuning with Ray. A [Chinese guide](anyscale-on-aks/README_CN.md) is also available. |
-| [Anyscale on Azure](anyscale-on-azure/README.md) | Microsoft Entra service principal setup for Anyscale Kubernetes Operator authentication, with a masked example response. Includes [introductory web slides (Chinese)](anyscale-on-azure/web-slides.html) covering architecture, networking, identity, and AI workloads, plus a [permission-check script](anyscale-on-azure/check_permission.sh). |
+| [Anyscale on Azure](anyscale-on-azure/README.md) | Microsoft Entra service principal setup for Anyscale Kubernetes Operator authentication, with a masked example response and a [permission-check script](anyscale-on-azure/check_permission.sh). |
 | [CNI on AKS](cni-on-aks/README.md) | A hands-on guide to managing and installing a Container Network Interface (CNI) on AKS, including creating a BYO CNI cluster, installing Cilium, and validating network connectivity. |
 | [Azure Metrics to Prometheus and Grafana](azmon-export-to-prometheus/README.md) | A practical guide for exporting Azure Monitor metrics in Prometheus format and visualizing them with Grafana. |
 | [Istio Monitoring on AKS](istio-on-aks/monitoring/README.md) | A consolidated observability guide for the AKS Istio add-on, including metrics, access logs, tracing, and supporting tools. |
@@ -38,12 +39,6 @@ The easiest way to explore the repository is through the [AI Notes site](https:/
 |---|---|---|
 | AKS + Azure Elastic SAN: 120K-Scale AI Agent Infrastructure Test | Scale validation of 120,000 Pods with persistent volumes, covering resource and capacity design, deployment limits and measured rates, test methodology, per-round volume provisioning and Pod readiness results, and production deployment recommendations. | [English](test-report/AKS+ESAN-AIAgent-benchmark-report-en.md) · [简体中文](test-report/AKS+ESAN-AIAgent-benchmark-report-cn.md) |
 
-### Web Slides
-
-| Slides | Description |
-|---|---|
-| [Azure Container Apps Sandboxes](web-slides/Azure_Container_Apps_Sandboxes.html) | A browser-based technical introduction to Azure Container Apps Sandboxes. |
-
 ## Repository Structure
 
 ```text
@@ -59,7 +54,6 @@ istio-on-aks/                    AKS Istio observability guidance
 models-healthcare/               Healthcare and medical-model evaluations
 multi-k8s-mgmt/                  Kubernetes multi-cluster management notes
 test-report/                     AI infrastructure benchmark and scale-test reports
-web-slides/                      Browser-based HTML slide decks
 index.html                       GitHub Pages landing page
 markdown-viewer.html             Shared Markdown renderer for the site
 ```
