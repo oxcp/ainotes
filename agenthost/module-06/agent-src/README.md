@@ -269,7 +269,7 @@ Database password authentication is environment-configured; database Entra authe
 
 The Bash scripts use **explicit command-line arguments > nonempty environment variables > defaults**.
 They do not automatically source `.env`. Shared names follow Modules 01/04; `LOCATION` defaults to the
-existing resource group's location (normally Module-01's `eastus2`), and the suffix comes from
+existing resource group's location (normally Module-01's `westus2`), and the suffix comes from
 `DEPLOYMENT_SN` or the group's `deploymentSN` tag. The scripts do not create a new resource group.
 
 | Environment variables | Defaults / behavior |

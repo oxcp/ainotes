@@ -14,7 +14,7 @@
 #
 # Optional env vars:
 #   RESOURCE_GROUP=rg-agenthost-workshop
-#   LOCATION=eastus2
+#   LOCATION=westus2
 #   IMAGE_TAG=latest
 #   SESSION_POOL_NAME=sessionpool-agenthost-<SN>
 #   SESSION_ENV_NAME=aca-session-env-agenthost-<SN>
@@ -27,7 +27,7 @@
 set -euo pipefail
 
 RESOURCE_GROUP="${RESOURCE_GROUP:-rg-agenthost-workshop}"
-LOCATION="${LOCATION:-eastus2}"
+LOCATION="${LOCATION:-westus2}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 TARGET_PORT="${TARGET_PORT:-8088}"
 MAX_SESSIONS="${MAX_SESSIONS:-50}"

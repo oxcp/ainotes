@@ -122,7 +122,7 @@ aca auth status >/dev/null 2>&1 || aca auth login
 
 | 环境变量 | 默认值 / 行为 |
 |---|---|
-| `SUBSCRIPTION_ID`, `RESOURCE_GROUP`, `LOCATION` | 当前 Azure CLI 账户；`rg-agenthost-workshop`；现有资源组区域，通常为 `eastus2` |
+| `SUBSCRIPTION_ID`, `RESOURCE_GROUP`, `LOCATION` | 当前 Azure CLI 账户；`rg-agenthost-workshop`；现有资源组区域，通常为 `westus2` |
 | `DB_LOCATION` | 仅覆盖数据库区域；默认使用 `LOCATION`/资源组区域，不改变 SandboxGroup 区域 |
 | `DEPLOYMENT_SN` | 资源组的 `deploymentSN` 标签 |
 | `ACR_NAME`, `ACR_LOGIN_SERVER` | `acragenthost<SN>`；查询其实际登录服务器 |
@@ -212,7 +212,7 @@ General checks:
 
 Sandbox checks:
 ✓ Sandbox group: sandbox-group-agenthost-7a5970
-✓ Region: eastus2
+✓ Region: westus2
 ✓ Sandbox group 'sandbox-group-agenthost-7a5970' exists in Azure
 ✓ Container Apps SandboxGroup Data Owner role assigned
 
@@ -459,11 +459,12 @@ PUT 成功（包括空响应）**并不足以判定成功**：最多读取六次
 如果中断前已创建管理员，重试时会核实并复用，不再重复写入。
 已有输出文件仍然禁止覆盖；此次修改不意味着整个工作流支持自动续跑。
 
-对于 Module 1 和 4 已就绪的**全新环境**，可单独指定支持的数据库区域，
-不影响 SandboxGroup 区域（当前 HorizonDB 参数组 API 不支持 `eastus2`）：
+对于 Module 1 和 4 已就绪的**全新环境**，HorizonDB / PostgreSQL 默认与
+`LOCATION` 或现有资源组使用相同区域，通常为 `westus2`。无需单独覆盖数据库区域；
+保持 `DB_LOCATION` 未设置即可使用共享区域：
 
 ```bash
-DB_LOCATION=eastus bash deploy.sh --migrate
+bash deploy.sh --migrate
 ```
 
 对于此前的部分失败，不要删除集群，也不要手工将失败清单改成成功。
@@ -477,7 +478,8 @@ bash deploy.sh --stage images &&
 bash deploy.sh --stage aca --migrate
 ```
 
-使用已有集群的实际区域（本例为 `eastus`），不要为同一个集群改选新区域。
+上述恢复示例适用于已有的 `eastus` 集群，并非新部署的默认区域。
+使用已有集群的实际区域，不要为同一个集群改选新区域。
 新输出文件必须尚不存在，重试 config 时保持 `DB_OUTPUT` 设置。
 不要重复执行已成功的阶段；保留已有 Agent/ACA 生成文件并遵循禁止覆盖的保护。
 跨区域数据库访问可能增加延迟及流量费用。

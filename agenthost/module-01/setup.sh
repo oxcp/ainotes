@@ -11,7 +11,7 @@
 #
 # Optional overrides (export before running):
 #   RESOURCE_GROUP   default: rg-agenthost-workshop
-#   LOCATION         default: eastus2
+#   LOCATION         default: westus2
 #   DEPLOYMENT_SN    default: random 6-hex suffix (openssl rand -hex 3)
 # Any other main.bicep parameter can be overridden by appending
 # `key=value` pairs as script arguments, e.g.:
@@ -23,7 +23,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 RESOURCE_GROUP="${RESOURCE_GROUP:-rg-agenthost-workshop}"
-LOCATION="${LOCATION:-eastus2}"
+LOCATION="${LOCATION:-westus2}"
 
 # Random deployment suffix — feeds main.bicep's deploymentSN param, which
 # suffixes globally-unique resource names (matches README's openssl rand -hex 3).

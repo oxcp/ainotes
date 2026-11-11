@@ -11,7 +11,7 @@ targetScope = 'subscription'
 param resourceGroupName string = 'rg-agenthost-workshop'
 
 @description('Azure region for all resources')
-param location string = 'eastus2'
+param location string = 'westus2'
 
 @description('Blob Storage account name (3-24 chars, lowercase alphanumeric)')
 param storageAccountName string = 'stcagenthost'

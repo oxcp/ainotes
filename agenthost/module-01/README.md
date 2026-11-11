@@ -53,7 +53,7 @@ The Foundry account ships with:
 
 ```bash
 export RESOURCE_GROUP="rg-agenthost-workshop"
-export LOCATION="eastus2"
+export LOCATION="westus2"
 ```
 
 ---

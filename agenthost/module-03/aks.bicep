@@ -19,8 +19,8 @@
 
 targetScope = 'resourceGroup'
 
-@description('Azure region for the AKS cluster + its node resource group. Defaults to eastus2 to match Module 1. The AKS resource is still created INTO the Module 1 resource group.')
-param location string = 'eastus2'
+@description('Azure region for the AKS cluster + its node resource group. Defaults to westus2 to match Module 1. The AKS resource is still created INTO the Module 1 resource group.')
+param location string = 'westus2'
 
 @description('Deployment suffix from Module 1 (resource-group tag deploymentSN)')
 param deploymentSN string

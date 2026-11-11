@@ -53,7 +53,7 @@ Foundry 帐户附带：
 
 ```bash
 export RESOURCE_GROUP="rg-agenthost-workshop"
-export LOCATION="eastus2"
+export LOCATION="westus2"
 ```
 
 ---

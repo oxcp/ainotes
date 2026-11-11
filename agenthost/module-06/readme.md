@@ -125,7 +125,7 @@ No provisioning script installs tools or silently logs in for you.
 
 | Environment variables | Default / behavior |
 |---|---|
-| `SUBSCRIPTION_ID`, `RESOURCE_GROUP`, `LOCATION` | Current Azure CLI account; `rg-agenthost-workshop`; existing RG location, normally `eastus2` |
+| `SUBSCRIPTION_ID`, `RESOURCE_GROUP`, `LOCATION` | Current Azure CLI account; `rg-agenthost-workshop`; existing RG location, normally `westus2` |
 | `DB_LOCATION` | Database-only region override; falls back to `LOCATION`/RG region, without changing the SandboxGroup region |
 | `DEPLOYMENT_SN` | RG `deploymentSN` tag |
 | `ACR_NAME`, `ACR_LOGIN_SERVER` | `acragenthost<SN>`; query its actual login server |
@@ -219,7 +219,7 @@ General checks:
 
 Sandbox checks:
 ✓ Sandbox group: sandbox-group-agenthost-7a5970
-✓ Region: eastus2
+✓ Region: westus2
 ✓ Sandbox group 'sandbox-group-agenthost-7a5970' exists in Azure
 ✓ Container Apps SandboxGroup Data Owner role assigned
 
@@ -479,11 +479,12 @@ No recovery flag is needed for either first deployment or retry. `DB_REUSE_ENTRA
 An interrupted run that created the administrator will reuse it on retry rather than write it again.
 Existing output files are still never overwritten: this change does not add whole-workflow auto-resume.
 
-For a **fresh** environment with Modules 1 and 4 ready, select a supported database region without
-changing the SandboxGroup region (the current HorizonDB parameter-group API does not support `eastus2`):
+For a **fresh** environment with Modules 1 and 4 ready, HorizonDB / PostgreSQL uses the same
+region as `LOCATION` or the existing resource group, normally `westus2`. No database-only
+region override is needed; leave `DB_LOCATION` unset to use the shared region:
 
 ```bash
-DB_LOCATION=eastus bash deploy.sh --migrate
+bash deploy.sh --migrate
 ```
 
 For the earlier partial failure, do not delete the cluster or edit the failed inventory to claim success.
@@ -498,7 +499,8 @@ bash deploy.sh --stage images &&
 bash deploy.sh --stage aca --migrate
 ```
 
-Use the existing cluster's actual region (`eastus` in this example), not a new region for the same cluster.
+The recovery example above is for an existing cluster in `eastus`, not a new deployment default.
+Use the existing cluster's actual region, not a new region for the same cluster.
 The new output file must not already exist. Keep `DB_OUTPUT` set for config retries.
 Do not rerun already-successful stages; preserve existing generated Agent/ACA files and follow their
 no-overwrite guards. Cross-region database access may increase latency and transfer charges.

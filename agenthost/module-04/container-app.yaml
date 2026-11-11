@@ -3,7 +3,7 @@
 
 name: agent-host
 type: Microsoft.App/containerApps
-location: eastus
+location: westus2
 identity:
   type: UserAssigned
   userAssignedIdentities:

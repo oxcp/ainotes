@@ -516,7 +516,7 @@ Labels:              agents.x-k8s.io/sandbox-name-hash=03e7e68b
                      app=agent-host
                      azure.workload.identity/use=true
                      component=agent-runtime
-                     topology.kubernetes.io/region=eastus2
+                     topology.kubernetes.io/region=westus2
                      topology.kubernetes.io/zone=0
 Annotations:         agents.x-k8s.io/propagated-labels: app,azure.workload.identity/use,component
 Status:              Running
