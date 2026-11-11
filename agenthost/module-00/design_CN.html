@@ -885,6 +885,10 @@
     .extension-diagram .wire { fill: none; stroke: var(--cyan); stroke-width: 2; }
     .extension-diagram .data-wire { fill: none; stroke: var(--green); stroke-width: 2; stroke-dasharray: 6 4; }
     .extension-diagram .model-wire { fill: none; stroke: var(--orange); stroke-width: 2; stroke-dasharray: 3 4; }
+    @keyframes diagramWireFlow { to { stroke-dashoffset: -70; } }
+    @media (prefers-reduced-motion: no-preference) {
+      #slide-16 .data-wire, #slide-16 .model-wire { animation: diagramWireFlow 3.5s linear infinite; }
+    }
     #slide-16 .wire-label { font-size: 13px; font-weight: 700; text-anchor: middle; paint-order: stroke; stroke: var(--panel); stroke-width: 5px; stroke-linejoin: round; }
     #slide-16 .data-label { fill: var(--green); }
     #slide-16 .model-label { fill: var(--orange); }
