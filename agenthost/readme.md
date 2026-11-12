@@ -229,6 +229,7 @@ agenthost/
 │   ├── main.json                ← Generated template for Azure Portal custom deployment
 │   ├── uiFormDefinition.json    ← Portal form showing credentials for the selected authentication method
 │   ├── cloud-init.yaml          ← First-boot setup and unified tool verification
+│   ├── .gitattributes          ← File attributes and line-ending rules
 │   └── scripts/
 │       └── verify-tools.sh      ← Verifies tool versions and user-scoped extensions
 ├── pic/                         ← Workshop screenshots, including toolbox-vm-deployment.png
@@ -254,6 +255,7 @@ agenthost/
 │   └── agent-src/               ← Agent Framework app source
 │       ├── main.py              ← Hosted-agent application entry point
 │       ├── requirements.txt     ← Python dependencies
+│       ├── __pycache__/         ← Python bytecode caches currently uploaded to the repository
 │       ├── Dockerfile           ← Agent container image
 │       ├── .azdignore           ← azd packaging exclusions
 │       └── .dockerignore        ← Container build exclusions
@@ -272,6 +274,7 @@ agenthost/
 │       │   ├── main.py          ← Agent application entry point
 │       │   ├── portal.html      ← Agent chat web interface
 │       │   ├── readme.md        ← Application usage notes
+│       │   ├── __pycache__/     ← Python bytecode caches currently uploaded to the repository
 │       │   └── .env.example     ← Example application environment variables
 │       ├── Dockerfile           ← Multi-stage Python image (build context = agent-src/)
 │       ├── requirements.txt     ← Python dependencies
@@ -296,6 +299,7 @@ agenthost/
     ├── deploy-database.sh       ← Database validation/provisioning and HorizonDB configuration/admin helpers
     ├── build-images.sh          ← Five remote ACR builds sharing the agent-src build context
     ├── deploy-aca.sh            ← Five-Sandbox configuration, mounts, migration, startup and readiness checks
+    ├── cleanup.sh               ← Clears Module-06 resources and generated configuration, preserving Modules 01–04 shared resources
     ├── bicep/
     │   ├── storage.bicep        ← Private data container; existing account/blob service
     │   ├── embedding.bicep      ← Embedding model and APIM operation/backend/policy; no RBAC changes
@@ -304,6 +308,8 @@ agenthost/
     │   └── postgresql.bicep     ← PostgreSQL Flexible Server backend
     ├── common/
     │   ├── aca-config.jq        ← Shared protected five-role configuration validation
+    │   ├── cleanup-aca.jq       ← Cleanup ownership and reference checks for sandboxes, disks, snapshots and volumes
+    │   ├── cleanup-ownership.sh ← Embedding/APIM child ownership records and cleanup safety checks
     │   └── resolve-identity.sh  ← Resolve Module-01 UAMI IDs for all stages
     ├── sample-data/             ← Actual business samples, outside Agent images
     │   ├── 01_capgemini_consumer_trends_2025-pages-*.pdf ← Capgemini report, 5 parts
@@ -344,10 +350,3 @@ agenthost/
             └── 001_initial.sql ← Initial schema; executed by the migration command in the Orchestrator sandbox
 
 ```
-
-<!--
-│   ├── README.md                ← Workshop path: ACA Sandboxes; optional track: Dynamic Sessions
-│   ├── dynamic-session-deploy.sh← Optional track: Session pool deployment (custom container)
-│   ├── dynamic-session-invoke.sh← Optional track: Minimal invoke example for session pool endpoint
-│   ├── dynamic-sessions.md       ← Optional Dynamic Sessions learning guide
--->

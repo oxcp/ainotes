@@ -16,3 +16,5 @@ IMPLEMENTATION_INSTRUCTIONS.md
 Caldova-Live-Demo
 tests/
 *.test.*
+dynamic-session*.*
+*/__pycache__/

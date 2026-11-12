@@ -229,6 +229,7 @@ agenthost/
 │   ├── main.json                ← 生成的 Azure 门户自定义部署模板
 │   ├── uiFormDefinition.json    ← 按认证方式动态显示凭据的门户表单
 │   ├── cloud-init.yaml          ← 首次启动配置与统一工具验证
+│   ├── .gitattributes          ← 文件属性与换行规则
 │   └── scripts/
 │       └── verify-tools.sh      ← 验证工具版本和用户范围扩展
 ├── pic/                         ← 研讨会截图，包括 toolbox-vm-deployment.png
@@ -254,6 +255,7 @@ agenthost/
 │   └── agent-src/               ← Agent Framework 应用源代码
 │       ├── main.py              ← 托管智能体应用入口
 │       ├── requirements.txt     ← Python 依赖项
+│       ├── __pycache__/         ← 当前已上传的 Python 字节码缓存
 │       ├── Dockerfile           ← 智能体容器映像
 │       ├── .azdignore           ← azd 打包排除项
 │       └── .dockerignore        ← 容器生成排除项
@@ -272,6 +274,7 @@ agenthost/
 │       │   ├── main.py          ← 智能体应用入口
 │       │   ├── portal.html      ← 智能体聊天 Web 界面
 │       │   ├── readme.md        ← 应用使用说明
+│       │   ├── __pycache__/     ← 当前已上传的 Python 字节码缓存
 │       │   └── .env.example     ← 应用环境变量示例
 │       ├── Dockerfile           ← 多阶段 Python 映像（生成上下文 = agent-src/）
 │       ├── requirements.txt     ← Python 依赖项
@@ -296,6 +299,7 @@ agenthost/
     ├── deploy-database.sh       ← 数据库验证/预配及 HorizonDB 配置/管理员辅助函数
     ├── build-images.sh          ← 五个远程 ACR 构建，共用 agent-src 构建上下文
     ├── deploy-aca.sh            ← 五个沙箱的配置、挂载、迁移、启动与就绪检查
+    ├── cleanup.sh               ← 清理 Module-06 专属资源和生成配置，保留 Modules 01–04 共享资源
     ├── bicep/
     │   ├── storage.bicep        ← 私有 data 容器；existing 账户/Blob 服务
     │   ├── embedding.bicep      ← embedding 模型及 APIM 操作/后端/策略；不修改 RBAC
@@ -304,6 +308,8 @@ agenthost/
     │   └── postgresql.bicep     ← PostgreSQL Flexible Server 后端
     ├── common/
     │   ├── aca-config.jq        ← 共享受保护五角色配置验证
+    │   ├── cleanup-aca.jq       ← 沙箱、磁盘、快照和卷的清理归属及引用校验
+    │   ├── cleanup-ownership.sh ← embedding/APIM 子资源归属记录与清理安全校验
     │   └── resolve-identity.sh  ← 为各阶段解析 Module-01 UAMI 标识
     ├── sample-data/             ← 实际业务样本，不进入 Agent 镜像
     │   ├── 01_capgemini_consumer_trends_2025-pages-*.pdf ← Capgemini 报告，5 个分片
@@ -344,9 +350,3 @@ agenthost/
             └── 001_initial.sql ← 初始 schema；由 Orchestrator 沙箱中的迁移命令执行
 
 ```
-<!--
-│   ├── README.md                ← 研讨会路径：ACA Sandboxes；可选路径：Dynamic Sessions
-│   ├── dynamic-session-deploy.sh← 可选路径：会话池部署（自定义容器）
-│   ├── dynamic-session-invoke.sh← 可选路径：会话池终结点的最小调用示例
-│   ├── dynamic-sessions.md       ← 可选的 Dynamic Sessions 学习指南
--->
