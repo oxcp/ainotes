@@ -129,6 +129,16 @@ if [[ "$mode" == discover ]]; then
   exit 0
 fi
 # -- Provision only the container; leave shared account settings unchanged ----
+# Persist the exact Module-06 child before ARM so storage-only/failed deployments
+# can be cleaned without deriving a storage account name during deletion.
+inventory="$root/.local/storage-deployment.json"
+[[ ! -L "$root/.local" && ! -L "$inventory" ]] || fail "Storage inventory must not be a symbolic link"
+mkdir -p "$root/.local"
+if [[ -e "$inventory" ]]; then
+  jq -e --arg id "$container" '.kind=="module06-storage" and .module=="module-06" and .container_id==$id' \
+    "$inventory" >/dev/null || fail "Storage inventory selects another target; preserve and review it first"
+fi
+jq -n --arg id "$container" '{kind:"module06-storage",module:"module-06",container_id:$id}' >"$inventory"
 # Incremental mode leaves unrelated resources intact; existing account settings are not deployed.
 az deployment group create --subscription "$subscription" --resource-group "$resource_group" \
   --name module06-storage --mode Incremental --template-file "$root/bicep/storage.bicep" \

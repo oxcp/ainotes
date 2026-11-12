@@ -217,11 +217,6 @@ This downloads the content required for the `agenthost` workshop.
 
 ## Workshop structure
 
-Key directories and files are shown below according to the current ignore rules and intended GitHub
-publication layout. This does not stage, upload or untrack files. Individual screenshots, repetitive
-source files and generated caches are omitted; wildcards group workshop sample parts and English/`_CN`
-documentation pairs.
-
 ```
 agenthost/
 ├── readme.md                    ← Workshop overview, prerequisites, modules, and structure

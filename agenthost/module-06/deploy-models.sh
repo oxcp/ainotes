@@ -5,6 +5,9 @@
 set +x
 set -euo pipefail
 umask 077
+case "${OSTYPE:-}" in
+  msys*|cygwin*) export MSYS2_ARG_CONV_EXCL="/subscriptions/;/SUBSCRIPTIONS/;${MSYS2_ARG_CONV_EXCL:-}" ;;
+esac
 root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 fail() { printf 'Error [models]: %s\n' "$*" >&2; exit 1; }
 if [[ $# == 1 && "$1" == --help ]]; then
@@ -139,13 +142,24 @@ printf 'Foundry target: %s/projects/%s; embedding=%s (%s/%s, %s x %s)\n' \
   "$account_id" "$project" "$deployment" "$model" "$version" "$sku" "$capacity" >&2
 
 # 4. Let Azure validate model availability, quota and APIM policy; no fallback on failure.
+# Refuse pre-existing children without a baseline rather than inventing their prior state.
+source "$root/common/cleanup-ownership.sh"
+ownership_begin_models "$account_id/deployments/$deployment" "$api_id/operations/embeddings" \
+  "$apim_id/backends/module06-embeddings-backend" "$model"
+deployment_rc=0
 az deployment group create --subscription "$subscription" --resource-group "$resource_group" \
   --name module06-embedding --mode Incremental --template-file "$root/bicep/embedding.bicep" \
   --parameters "foundryAccountName=$account" \
   "deploymentName=$deployment" "modelName=$model" "modelVersion=$version" \
   "skuName=$sku" "capacity=$capacity" "apimName=$apim_name" "openAiEndpoint=$endpoint" \
   "gatewayUrl=$gateway_url" "tenantId=$tenant_id" "callerPrincipalId=$principal_id" --only-show-errors -o none ||
-  fail "Embedding deployment failed (model or APIM); inspect deployment operations for module06-embedding to identify the failed resource"
+  deployment_rc=$?
+# Also capture partial failures so cleanup can identify the children actually created.
+ownership_finish_models
+((deployment_rc == 0)) ||
+  fail "Embedding deployment failed (model or APIM); inspect deployment operations for module06-embedding"
+jq -e --argjson ids "$model_target_ids" 'all(.resources[]|select(.id as $id|$ids|index($id)!=null); .after!=null)' <<<"$ownership" >/dev/null ||
+  fail "Embedding deployment reported success but expected children are missing; baseline retained"
 
 jq -n --arg url "$gateway_url/foundry/openai/v1" --arg model "$deployment" \
   --arg apim "$apim_id" --arg caller "$principal_id" \

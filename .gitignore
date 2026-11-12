@@ -15,3 +15,4 @@ copilot-worktrees/
 IMPLEMENTATION_INSTRUCTIONS.md
 Caldova-Live-Demo
 tests/
+*.test.*

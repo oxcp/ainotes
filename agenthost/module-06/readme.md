@@ -295,7 +295,11 @@ Module-01 already authorizes both identities at account scope, so no new IAM is 
 The official [v1 embeddings SDK examples](https://learn.microsoft.com/azure/foundry/openai/how-to/embeddings)
 use `https://ai.azure.com/.default` with an **account OpenAI endpoint**; endpoint path and token audience
 are distinct. The REST example also documents the cognitive-services audience, but this gateway uses `ai.azure.com`.
-The script checks the existing project and deployment-name conflicts, preserving any larger matching capacity.
+The script checks the existing project and deployment-name conflicts, preserving any larger matching capacity
+only for baseline-tracked Module-06 deployments. Before provisioning it records absent embedding/APIM
+children in `.local/cleanup-ownership.json`; pre-existing untracked targets are refused, not overwritten.
+It captures deployed child state (including the operation policy) after success or partial failure so
+cleanup can remove only known additions without guessing prior APIM configuration.
 Azure validates model/version/SKU availability and quota during deployment; errors stop execution,
 with no fallback to another account, region or model.
 
@@ -1078,6 +1082,63 @@ then its imported disks; do not delete the shared Module-04 SandboxGroup or Modu
 Review HorizonDB, Blob, snapshot and disk retention separately. There is no automatic data-retention/delete API.
 For database/Blob cleanup, follow [security and cleanup](agent-src/docs/security.md); do not use model-generated
 deletion queries or delete a shared container. See [CLI failure handling](agent-src/docs/cli-deployment.md#failure-retry-and-cleanup).
+
+### Clear Module-06 resources and configuration
+
+[cleanup.sh](cleanup.sh) clears Module-06 resources/configuration while preserving Modules 01–04.
+Requires Bash, `jq`, `realpath`, GNU `timeout`, Azure CLI and the current `aca` CLI.
+Authenticate first; the script never signs in or changes the default subscription.
+
+```bash
+bash cleanup.sh                         # read-only discovery and dry-run plan
+bash cleanup.sh --execute               # type: delete module-06
+```
+
+The fixed scope includes **all five Module-06 agent roles across saved attempts** in
+`.local/*.json`, their imported disks and snapshots attributable by deployment/role labels or source IDs, the recorded
+`studio-kb-data` volume (or recorded custom volume) and private Blob `data` container with all
+its data, tagged Module-06 databases and HorizonDB `<cluster>-vector` parameter groups.
+It also removes baseline-tracked embedding deployments and APIM `embeddings` operation/policy
+and `module06-embeddings-backend`, not the base gateway API/policy/backend or general model.
+Sandbox deletion uses `aca sandbox delete --id ID --yes`.
+**Deletion destroys database, Blob and sandbox data, including attributable snapshots.**
+Back up valuable state outside this deletion scope; sandbox snapshots do not back up the database.
+
+Exact IDs, deployment/role labels, disk sources, volume/container identity and database tags
+must agree. Shared disk/snapshot/volume/container and parameter-group references are refused.
+All inventories must use one subscription/resource group/SandboxGroup/region; inventories outside
+this module's `.local` require manual review. Unattributed snapshots are listed and retained.
+Missing inventories never authorize guessing resource names.
+Storage-only and failed storage stages save the exact container ID in
+`.local/storage-deployment.json`, allowing cleanup before any sandbox was created.
+
+`deploy-models.sh` now saves an absence baseline and deployed child state in
+`.local/cleanup-ownership.json`, including the operation policy, even after partial deployment.
+It refuses to overwrite pre-existing targets without a baseline. Cleanup rejects subsequent
+child changes rather than deleting another module's configuration. **Legacy model/APIM deployments
+without this baseline require manual prior-state review**: other verified resources can be removed,
+but cleanup reports partial completion with a nonzero exit and retains recovery files.
+It never invents or overwrites a previous APIM policy.
+
+Only after verified cloud cleanup does the script remove recognized inventories, the ownership
+baseline and named generated settings/keys/password in `.local`. Source, `.env`, custom inputs,
+uploads and caches remain. Failed reads/deletions retain recovery files; successful empty reads
+mean already absent. `OPERATION_TIMEOUT_SECONDS` bounds each cloud call (default 300 seconds).
+Git Bash excludes `/subscriptions/` from native Windows ARM ID path conversion.
+
+**Always preserved:** resource group, SandboxGroup, unrelated Module-04 sandboxes, shared
+UAMI/identity attachments/RBAC, VNet/connections, ACR registry/images, Foundry account/project,
+general model, base APIM API/policy/backend, storage account/Blob service and Module-01 state container.
+Unattributed snapshots, custom/external inventories and local Docker databases need separate review.
+Retained images/snapshots may still incur storage charges.
+Existing Azure soft-delete/retention policies may retain deleted data; shared retention settings are unchanged.
+
+Offline regression test and syntax check (no Azure credentials or destructive Azure calls):
+
+```bash
+bash -n cleanup.sh && bash -n cleanup.test.sh
+bash cleanup.test.sh
+```
 
 ---
 

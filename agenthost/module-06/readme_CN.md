@@ -285,7 +285,10 @@ Module-01 已在账户范围授权这两个身份，因此不需要新增 IAM。
 官方 [v1 embeddings SDK 示例](https://learn.microsoft.com/azure/foundry/openai/how-to/embeddings)
 使用 `https://ai.azure.com/.default` 访问**账户 OpenAI 端点**；端点路径与令牌受众是不同概念。
 REST 示例也记录了 cognitive-services 受众，但本网关使用 `ai.azure.com`。
-脚本检查已有项目和部署名冲突，并保留匹配部署已有的更大容量。
+脚本检查已有项目和部署名冲突；仅对有基线记录的 Module-06 部署保留匹配部署已有的更大容量。
+创建前在 `.local/cleanup-ownership.json` 中记录原先不存在的 embedding/APIM 子资源；
+已有但未记录的目标会被拒绝，而非覆盖。成功或部分失败后会保存已部署子资源的状态
+（包括操作策略），供清理时只删除已知新增项，无需猜测原有 APIM 配置。
 模型/版本/SKU 可用性和配额由 Azure 在部署时验证；出错立即停止，
 不会回退到其他账户、区域或模型。
 
@@ -1028,6 +1031,59 @@ aca sandbox resume --id "$SQL_SANDBOX_ID" "${aca_context[@]}"
 另见 [CLI 失败处理](agent-src/docs/cli-deployment_CN.md#失败重试与清理)。
 
 ---
+
+### 清除 Module-06 资源与配置
+
+[cleanup.sh](cleanup.sh) 清除 Module-06 资源/配置，同时保留 Modules 01–04。
+需要 Bash、`jq`、`realpath`、GNU `timeout`、Azure CLI 和当前 `aca` CLI。
+请先完成身份验证；脚本不会登录，也不会更改默认订阅。
+
+```bash
+bash cleanup.sh                         # 只读发现并预览计划
+bash cleanup.sh --execute               # 输入：delete module-06
+```
+
+固定范围包括 `.local/*.json` 中保存的**所有部署尝试的五种 Module-06 Agent 角色**、
+其导入磁盘及可通过部署/角色标签或来源 ID 归属的快照、记录的 `studio-kb-data` 卷（或记录的自定义卷）、
+私有 Blob `data` 容器及全部数据、带 Module-06 标签的数据库和 HorizonDB
+`<cluster>-vector` 参数组。还会删除有基线记录的 embedding 部署、APIM `embeddings`
+操作/策略和 `module06-embeddings-backend`，不会删除基础网关 API/策略/后端或通用模型。
+Sandbox 使用 `aca sandbox delete --id ID --yes` 删除。
+**删除会销毁数据库、Blob 和 Sandbox 数据，包括可归属的快照。**
+请将有价值的状态备份到删除范围之外；Sandbox 快照不包含数据库备份。
+
+精确 ID、部署/角色标签、源磁盘、卷/容器身份和数据库标签必须一致。
+拒绝删除被其他资源引用的磁盘/快照/卷/容器或参数组。
+所有清单必须位于同一订阅/资源组/SandboxGroup/区域；本模块 `.local` 外的清单需手动检查。
+无法归属的快照会列出并保留。缺少清单时不会猜测资源名称。
+单独部署存储或存储阶段失败时，会在 `.local/storage-deployment.json` 中保存精确容器 ID，
+因此无需先创建 Sandbox 即可清理。
+
+`deploy-models.sh` 现在将目标原先不存在的基线和部署后的子资源状态保存到
+`.local/cleanup-ownership.json`，包括操作策略，即使部署部分失败也会记录。
+没有基线时拒绝覆盖已有目标；清理时若子资源后来发生变化，也会拒绝删除，避免影响其他模块配置。
+**没有此基线的旧版模型/APIM 部署需手动核对之前的状态**：其他已验证的资源可以删除，
+但脚本会报告部分完成、以非零状态退出并保留恢复文件。不会猜测或覆盖原有 APIM 策略。
+
+仅在确认云端清理完成后，脚本才会删除 `.local` 中识别出的清单、所有权基线及指定的生成配置/
+密钥/密码。源码、`.env`、自定义输入、上传文件和缓存均保留。
+读取/删除失败会保留恢复文件；成功读取的空结果代表已不存在。
+`OPERATION_TIMEOUT_SECONDS` 限制每次云调用（默认 300 秒）。
+Git Bash 会排除原生 Windows 工具对 `/subscriptions/` ARM ID 的自动路径转换。
+
+**始终保留：** 资源组、SandboxGroup、无关的 Module-04 Sandbox、共享 UAMI/身份关联/RBAC、
+VNet/连接、ACR 注册表/镜像、Foundry 账户/项目、通用模型、基础 APIM API/策略/后端、
+存储账户/Blob 服务和 Module-01 状态容器。
+无法归属的快照、自定义/外部清单和本地 Docker 数据库需单独检查。
+保留的镜像/快照仍可能产生存储费用。
+Azure 已有的软删除/保留策略可能继续保留已删除数据；共享保留设置不会更改。
+
+离线回归测试与语法检查（无需 Azure 凭据，不执行破坏性 Azure 调用）：
+
+```bash
+bash -n cleanup.sh && bash -n cleanup.test.sh
+bash cleanup.test.sh
+```
 
 ## 可选 — 在本地运行五个 Agent
 
