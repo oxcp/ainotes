@@ -204,7 +204,7 @@ This downloads the content required for the `agenthost` workshop.
 | [module-01](./module-01/README.md) | Core Infrastructure Setup | 30 min | Deploy the shared Azure infrastructure used by all hosting solutions. |
 | [module-02](./module-02/README.md) | Solution A: Foundry Hosted Agent | 30 min | Deploy a managed Foundry hosted agent with native state, authentication, governance, and AI Gateway integration. |
 | [module-03](./module-03/README.md) | Solution B: AKS + agent-sandbox | 40 min | Deploy a customizable agent runtime on AKS with sandbox isolation, persistent state, and workload identity. |
-| [module-04](./module-04/README.md) | Solution C: ACA Sandboxes (workshop path) | 30 min | Deploy an agent in ACA Sandboxes with micro-VM isolation and suspend/resume.<!-- , and explore Dynamic Sessions as an optional track. --> |
+| [module-04](./module-04/README.md) | Solution C: ACA Sandboxes | 30 min | Deploy an agent in ACA Sandboxes with micro-VM isolation and suspend/resume.<!-- , and explore Dynamic Sessions as an optional track. --> |
 | [module-05](./module-05/README.md) | Wrap-up and Q&A | 5 min | Compare the solutions and review selection guidance, cost optimization, and production-hardening recommendations. |
 | [module-06](./module-06/readme.md) | Extended practice: Multi-Agent Business Scenarios | 60 min | Simulate a business scenario: deploy five agents that orchestrate and collaborate to process uploaded business data, then use it for intelligent analysis and planning. |
 
@@ -219,6 +219,7 @@ This downloads the content required for the `agenthost` workshop.
 
 ```text
 agenthost/
+├── .gitignore                   ← Git ignore rules for the workshop directory
 ├── readme.md                    ← Workshop overview, prerequisites, modules, and structure
 ├── README_CN.md                 ← Chinese workshop guide
 ├── check-prerequisites.sh       ← Checks tools, Azure login, extensions, permissions, and RBAC roles
@@ -282,9 +283,8 @@ agenthost/
 ├── module-04/
 │   ├── README.md                ← Workshop path: ACA Sandboxes
 │   ├── README_CN.md             ← Chinese ACA sandbox guide
-│   ├── sandbox.bicep            ← Workshop path: SandboxGroup (real Sandboxes, micro-VM boundary, suspend/resume) + UAMI AcrPull role
-│   ├── sandbox-deploy.sh        ← Workshop path: reuses the Module-03 image + SandboxGroup + disk image + sandbox mgmt
-│   └── container-app.yaml       ← Legacy standard ACA manifest (reference only)
+│   ├── sandbox.bicep            ← SandboxGroup (real Sandboxes, micro-VM boundary, suspend/resume) + UAMI AcrPull role
+│   └── sandbox-deploy.sh        ← Reuses the Module-03 image + SandboxGroup + disk image + sandbox mgmt
 ├── module-05/
 │   ├── README.md                ← Comparison recap, decision guide, cost tips, and production checklist
 │   └── README_CN.md             ← Chinese wrap-up guide

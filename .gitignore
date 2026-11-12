@@ -15,7 +15,6 @@ copilot-worktrees/
 IMPLEMENTATION_INSTRUCTIONS.md
 Caldova-Live-Demo
 tests/
-!e2b-on-azure/Embed/advanced/runtime/embed/terraform/azure/tests/*
 *.test.*
 dynamic-session*.*
 __pycache__/

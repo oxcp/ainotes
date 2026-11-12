@@ -204,7 +204,7 @@ Fix suggestion:
 | [module-01](./module-01/README_CN.md) | 核心基础设施设置 | 30 分钟 | 部署所有托管解决方案共用的 Azure 基础设施。 |
 | [module-02](./module-02/README_CN.md) | 解决方案 A：Foundry Hosted Agent | 30 分钟 | 部署具有原生状态、身份验证、治理和 AI Gateway 集成的托管 Foundry 智能体。 |
 | [module-03](./module-03/README_CN.md) | 解决方案 B：AKS + agent-sandbox | 40 分钟 | 在 AKS 上部署可定制的智能体运行时，具备沙盒隔离、持久状态和工作负载标识。 |
-| [module-04](./module-04/README_CN.md) | 解决方案 C：ACA Sandboxes（研讨会路径） | 30 分钟 | 在 ACA Sandboxes 中部署具有微型 VM 隔离及挂起/恢复功能的智能体。<!-- ，并探索作为可选路径的 Dynamic Sessions。 --> |
+| [module-04](./module-04/README_CN.md) | 解决方案 C：ACA Sandboxes | 30 分钟 | 在 ACA Sandboxes 中部署具有微型 VM 隔离及挂起/恢复功能的智能体。<!-- ，并探索作为可选路径的 Dynamic Sessions。 --> |
 | [module-05](./module-05/README_CN.md) | 总结和问答 | 5 分钟 | 比较解决方案，并查看选择指南、成本优化和生产环境强化建议。 |
 | [module-06](./module-06/readme_CN.md) | 扩展练习：多智能体业务场景 | 60 分钟 | 模拟业务场景，部署 5个 智能体，通过多智能体间的编排和协作，处理上传的业务数据，并据此做智能分析和计划。 |
 
@@ -219,6 +219,7 @@ Fix suggestion:
 
 ```text
 agenthost/
+├── .gitignore                   ← 研讨会目录的 Git 忽略规则
 ├── readme.md                    ← 研讨会概述、先决条件、模块和结构
 ├── README_CN.md                 ← 中文研讨会指南
 ├── check-prerequisites.sh       ← 检查工具、Azure 登录、扩展、权限和 RBAC 角色
@@ -282,9 +283,8 @@ agenthost/
 ├── module-04/
 │   ├── README.md                ← 研讨会路径：ACA Sandboxes
 │   ├── README_CN.md             ← 中文 ACA 沙盒指南
-│   ├── sandbox.bicep            ← 研讨会路径：SandboxGroup（真正的 Sandboxes、微型 VM 边界、挂起/恢复）+ UAMI AcrPull 角色
-│   ├── sandbox-deploy.sh        ← 研讨会路径：复用模块 03 映像 + SandboxGroup + 磁盘映像 + 沙盒管理
-│   └── container-app.yaml       ← 旧版标准 ACA 清单（仅供参考）
+│   ├── sandbox.bicep            ← SandboxGroup（真正的 Sandboxes、微型 VM 边界、挂起/恢复）+ UAMI AcrPull 角色
+│   └── sandbox-deploy.sh        ← 复用模块 03 映像 + SandboxGroup + 磁盘映像 + 沙盒管理
 ├── module-05/
 │   ├── README.md                ← 比较回顾、决策指南、成本技巧和生产环境清单
 │   └── README_CN.md             ← 中文总结指南
