@@ -16,7 +16,7 @@ The three selected complementary solutions are used to demonstrate these trade-o
 
 > 📊 **Prefer slides?** 
 >
-> Open [design](https://oxcp.github.io/ainotes/agenthost/module-00/design.html) to walkthrough the workshop design.
+> Open [slides](https://oxcp.github.io/ainotes/agenthost/module-00/design.html) to walkthrough the workshop design.
 
 ## 1. Target Scenarios
 
