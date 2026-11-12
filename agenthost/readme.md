@@ -22,7 +22,7 @@ This workshop takes you on a practical Azure agent-hosting journey:
 ### Core section:
 
 - **Target Scenarios**: ToB enterprise and ToC consumer scenarios, each with different priorities for isolation, scale, authentication, and cost.
-- **Solutions (see [Workshop Introduction](./module-00/README.md) for details)**:
+- **Solutions (see [Solution Design](./module-00/README.md) for details)**:
   - **Solution A**: Azure AI Foundry Hosted Agent (ToB managed) — fastest on-ramp, native state and authentication, strong governance and security.
   - **Solution B**: AKS + agent-sandbox (ToB / ToC) — high customization: meet enterprise-specific technical requirements for ToB, or tune cost and performance for ToC.
   - **Solution C**: ACA container runtime options (ToC / ToB):
@@ -200,7 +200,7 @@ This downloads the content required for the `agenthost` workshop.
 
 | Module | Topic | Duration | Purpose |
 |---|---|---|---|
-| [module-00](./module-00/README.md) | Introduction | 10 min | Understand the target scenarios, agent state pattern, and the three hosting solutions. |
+| [module-00](./module-00/README.md) | Solution Design | 10 min | Understand the target scenarios, agent state pattern, and the three hosting solutions. |
 | [module-01](./module-01/README.md) | Core Infrastructure Setup | 30 min | Deploy the shared Azure infrastructure used by all hosting solutions. |
 | [module-02](./module-02/README.md) | Solution A: Foundry Hosted Agent | 30 min | Deploy a managed Foundry hosted agent with native state, authentication, governance, and AI Gateway integration. |
 | [module-03](./module-03/README.md) | Solution B: AKS + agent-sandbox | 40 min | Deploy a customizable agent runtime on AKS with sandbox isolation, persistent state, and workload identity. |

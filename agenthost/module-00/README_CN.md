@@ -16,7 +16,7 @@
 
 > 📊 **更喜欢幻灯片？**
 >
-> 打开[设计](https://oxcp.github.io/ainotes/agenthost/module-00/design.html)，逐步了解研讨会设计。
+> 打开[设计](https://oxcp.github.io/ainotes/agenthost/module-00/design_CN.html)，逐步了解研讨会设计。
 
 ## 1. 目标场景
 

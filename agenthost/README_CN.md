@@ -21,7 +21,7 @@
 
 ### 基础部分：
 - **目标场景**：ToB 企业场景和 ToC 消费者场景，两者在隔离、扩展、身份验证和成本方面各有不同的优先级。
-- **解决方案（有关详细信息，请参阅[研讨会简介](./module-00/README_CN.md)）**：
+- **解决方案（有关详细信息，请参阅[方案设计](./module-00/README_CN.md)）**：
   - **解决方案 A**：Azure AI Foundry Hosted Agent（ToB 托管）— 最快捷的入门路径，提供原生状态和身份验证，以及强大的治理和安全性。
   - **解决方案 B**：AKS + agent-sandbox（ToB / ToC）— 高度可定制：满足 ToB 特有的企业技术要求，或针对 ToC 优化成本和性能。
   - **解决方案 C**：ACA 容器运行时选项（ToC / ToB）：
@@ -200,7 +200,7 @@ Fix suggestion:
 
 | 模块 | 主题 | 时长 | 目的 |
 |---|---|---|---|
-| [module-00](./module-00/README_CN.md) | 简介 | 10 分钟 | 了解目标场景、智能体状态模式和三种托管解决方案。 |
+| [module-00](./module-00/README_CN.md) | 方案设计 | 10 分钟 | 了解目标场景、智能体状态模式和三种托管解决方案。 |
 | [module-01](./module-01/README_CN.md) | 核心基础设施设置 | 30 分钟 | 部署所有托管解决方案共用的 Azure 基础设施。 |
 | [module-02](./module-02/README_CN.md) | 解决方案 A：Foundry Hosted Agent | 30 分钟 | 部署具有原生状态、身份验证、治理和 AI Gateway 集成的托管 Foundry 智能体。 |
 | [module-03](./module-03/README_CN.md) | 解决方案 B：AKS + agent-sandbox | 40 分钟 | 在 AKS 上部署可定制的智能体运行时，具备沙盒隔离、持久状态和工作负载标识。 |
