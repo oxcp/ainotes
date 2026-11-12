@@ -217,7 +217,7 @@ This downloads the content required for the `agenthost` workshop.
 
 ## Workshop structure
 
-```
+```text
 agenthost/
 ├── readme.md                    ← Workshop overview, prerequisites, modules, and structure
 ├── README_CN.md                 ← Chinese workshop guide
@@ -229,7 +229,7 @@ agenthost/
 │   ├── main.json                ← Generated template for Azure Portal custom deployment
 │   ├── uiFormDefinition.json    ← Portal form showing credentials for the selected authentication method
 │   ├── cloud-init.yaml          ← First-boot setup and unified tool verification
-│   ├── .gitattributes          ← File attributes and line-ending rules
+│   ├── .gitattributes           ← File attributes and line-ending rules
 │   └── scripts/
 │       └── verify-tools.sh      ← Verifies tool versions and user-scoped extensions
 ├── pic/                         ← Workshop screenshots, including toolbox-vm-deployment.png
@@ -255,7 +255,6 @@ agenthost/
 │   └── agent-src/               ← Agent Framework app source
 │       ├── main.py              ← Hosted-agent application entry point
 │       ├── requirements.txt     ← Python dependencies
-│       ├── __pycache__/         ← Python bytecode caches currently uploaded to the repository
 │       ├── Dockerfile           ← Agent container image
 │       ├── .azdignore           ← azd packaging exclusions
 │       └── .dockerignore        ← Container build exclusions
@@ -274,7 +273,6 @@ agenthost/
 │       │   ├── main.py          ← Agent application entry point
 │       │   ├── portal.html      ← Agent chat web interface
 │       │   ├── readme.md        ← Application usage notes
-│       │   ├── __pycache__/     ← Python bytecode caches currently uploaded to the repository
 │       │   └── .env.example     ← Example application environment variables
 │       ├── Dockerfile           ← Multi-stage Python image (build context = agent-src/)
 │       ├── requirements.txt     ← Python dependencies
@@ -293,7 +291,7 @@ agenthost/
 └── module-06/
     ├── readme.md                ← Multi-Agent Business Scenarios: complete installation, deployment, upload/vectorization and chat walkthrough
     ├── readme_CN.md             ← Chinese Multi-Agent Business Scenarios guide
-    ├── deploy.sh                ← Direct deployment, common-setting discovery and stage selection
+    ├── deploy.sh                ← Direct deployment after automatic preflight checks, common-setting discovery and stage selection
     ├── deploy-storage.sh        ← Private data container only, in existing Module-01 storage; incremental ARM
     ├── deploy-models.sh         ← Deploy embeddings and extend existing APIM routes; existing authorization unchanged
     ├── deploy-database.sh       ← Database validation/provisioning and HorizonDB configuration/admin helpers
@@ -319,6 +317,10 @@ agenthost/
     │   ├── manifest.json        ← Maps parts to originals and page/row ranges; not an upload input
     │   ├── split_samples.py     ← Optional splitter; requires the installed agent-src package
     │   └── raw/                 ← Four unsplit originals; do not upload alongside their parts in one workspace
+    │       ├── 01_capgemini_consumer_trends_2025.pdf
+    │       ├── 02_ryder_ecommerce_consumer_study_2025.pdf
+    │       ├── 03_customer_reviews.csv
+    │       └── 04_financial_sample.csv
     └── agent-src/               ← Shared image build context for all five Agents
         ├── README.md            ← English source and runtime guide
         ├── readme_CN.md         ← Chinese source and runtime guide

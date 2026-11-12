@@ -217,7 +217,7 @@ Fix suggestion:
 
 ## 研讨会结构
 
-```
+```text
 agenthost/
 ├── readme.md                    ← 研讨会概述、先决条件、模块和结构
 ├── README_CN.md                 ← 中文研讨会指南
@@ -229,7 +229,7 @@ agenthost/
 │   ├── main.json                ← 生成的 Azure 门户自定义部署模板
 │   ├── uiFormDefinition.json    ← 按认证方式动态显示凭据的门户表单
 │   ├── cloud-init.yaml          ← 首次启动配置与统一工具验证
-│   ├── .gitattributes          ← 文件属性与换行规则
+│   ├── .gitattributes           ← 文件属性与换行规则
 │   └── scripts/
 │       └── verify-tools.sh      ← 验证工具版本和用户范围扩展
 ├── pic/                         ← 研讨会截图，包括 toolbox-vm-deployment.png
@@ -255,7 +255,6 @@ agenthost/
 │   └── agent-src/               ← Agent Framework 应用源代码
 │       ├── main.py              ← 托管智能体应用入口
 │       ├── requirements.txt     ← Python 依赖项
-│       ├── __pycache__/         ← 当前已上传的 Python 字节码缓存
 │       ├── Dockerfile           ← 智能体容器映像
 │       ├── .azdignore           ← azd 打包排除项
 │       └── .dockerignore        ← 容器生成排除项
@@ -274,7 +273,6 @@ agenthost/
 │       │   ├── main.py          ← 智能体应用入口
 │       │   ├── portal.html      ← 智能体聊天 Web 界面
 │       │   ├── readme.md        ← 应用使用说明
-│       │   ├── __pycache__/     ← 当前已上传的 Python 字节码缓存
 │       │   └── .env.example     ← 应用环境变量示例
 │       ├── Dockerfile           ← 多阶段 Python 映像（生成上下文 = agent-src/）
 │       ├── requirements.txt     ← Python 依赖项
@@ -319,6 +317,10 @@ agenthost/
     │   ├── manifest.json        ← 分片与原文件、页码/行号的对应清单；不是上传输入
     │   ├── split_samples.py     ← 可选分片工具；依赖已安装的 agent-src 包
     │   └── raw/                 ← 四份未拆分原件；不要与其分片在同一工作区重复上传
+    │       ├── 01_capgemini_consumer_trends_2025.pdf
+    │       ├── 02_ryder_ecommerce_consumer_study_2025.pdf
+    │       ├── 03_customer_reviews.csv
+    │       └── 04_financial_sample.csv
     └── agent-src/               ← 五个 Agent 共用的镜像构建上下文
         ├── README.md            ← 英文源码与运行说明
         ├── readme_CN.md         ← 中文源码与运行说明
