@@ -125,7 +125,7 @@ No provisioning script installs tools or silently logs in for you.
 
 | Environment variables | Default / behavior |
 |---|---|
-| `SUBSCRIPTION_ID`, `RESOURCE_GROUP`, `LOCATION` | Current Azure CLI account; `rg-agenthost-workshop`; existing RG location, normally `westus2` |
+| `SUBSCRIPTION_ID`, `RESOURCE_GROUP`, `LOCATION` | Current Azure CLI account; `rg-agenthost-workshop`; existing RG location, normally `westus3` |
 | `DB_LOCATION` | Database-only region override; falls back to `LOCATION`/RG region, without changing the SandboxGroup region |
 | `DEPLOYMENT_SN` | RG `deploymentSN` tag |
 | `ACR_NAME`, `ACR_LOGIN_SERVER` | `acragenthost<SN>`; query its actual login server |
@@ -219,7 +219,7 @@ General checks:
 
 Sandbox checks:
 ✓ Sandbox group: sandbox-group-agenthost-7a5970
-✓ Region: westus2
+✓ Region: westus3
 ✓ Sandbox group 'sandbox-group-agenthost-7a5970' exists in Azure
 ✓ Container Apps SandboxGroup Data Owner role assigned
 
@@ -484,7 +484,7 @@ An interrupted run that created the administrator will reuse it on retry rather 
 Existing output files are still never overwritten: this change does not add whole-workflow auto-resume.
 
 For a **fresh** environment with Modules 1 and 4 ready, HorizonDB / PostgreSQL uses the same
-region as `LOCATION` or the existing resource group, normally `westus2`. No database-only
+region as `LOCATION` or the existing resource group, normally `westus3`. No database-only
 region override is needed; leave `DB_LOCATION` unset to use the shared region:
 
 ```bash

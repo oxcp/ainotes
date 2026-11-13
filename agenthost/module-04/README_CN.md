@@ -44,8 +44,7 @@ az extension add --name containerapp --upgrade --allow-preview true -y
 
 ```bash
 cd agenthost/module-04
-chmod +x sandbox-deploy.sh
-./sandbox-deploy.sh
+bash sandbox-deploy.sh
 ```
 > [!tip]
 > `sandbox-deploy.sh` 完成配置需要运行大约 2 分钟。

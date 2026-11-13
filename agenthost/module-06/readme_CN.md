@@ -122,7 +122,7 @@ aca auth status >/dev/null 2>&1 || aca auth login
 
 | 环境变量 | 默认值 / 行为 |
 |---|---|
-| `SUBSCRIPTION_ID`, `RESOURCE_GROUP`, `LOCATION` | 当前 Azure CLI 账户；`rg-agenthost-workshop`；现有资源组区域，通常为 `westus2` |
+| `SUBSCRIPTION_ID`, `RESOURCE_GROUP`, `LOCATION` | 当前 Azure CLI 账户；`rg-agenthost-workshop`；现有资源组区域，通常为 `westus3` |
 | `DB_LOCATION` | 仅覆盖数据库区域；默认使用 `LOCATION`/资源组区域，不改变 SandboxGroup 区域 |
 | `DEPLOYMENT_SN` | 资源组的 `deploymentSN` 标签 |
 | `ACR_NAME`, `ACR_LOGIN_SERVER` | `acragenthost<SN>`；查询其实际登录服务器 |
@@ -212,7 +212,7 @@ General checks:
 
 Sandbox checks:
 ✓ Sandbox group: sandbox-group-agenthost-7a5970
-✓ Region: westus2
+✓ Region: westus3
 ✓ Sandbox group 'sandbox-group-agenthost-7a5970' exists in Azure
 ✓ Container Apps SandboxGroup Data Owner role assigned
 
@@ -463,7 +463,7 @@ PUT 成功（包括空响应）**并不足以判定成功**：最多读取六次
 已有输出文件仍然禁止覆盖；此次修改不意味着整个工作流支持自动续跑。
 
 对于 Module 1 和 4 已就绪的**全新环境**，HorizonDB / PostgreSQL 默认与
-`LOCATION` 或现有资源组使用相同区域，通常为 `westus2`。无需单独覆盖数据库区域；
+`LOCATION` 或现有资源组使用相同区域，通常为 `westus3`。无需单独覆盖数据库区域；
 保持 `DB_LOCATION` 未设置即可使用共享区域：
 
 ```bash

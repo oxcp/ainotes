@@ -44,7 +44,7 @@ esac
 (($# <= 1)) || fail "Only --skip-network or --help is supported"
 
 export RESOURCE_GROUP="${RESOURCE_GROUP:-rg-agenthost-workshop}"
-export LOCATION="${LOCATION:-westus2}"
+export LOCATION="${LOCATION:-westus3}"
 prefix="${ACA_SUBNET_PREFIX:-}"
 connection="${CUSTOMER_VNET_CONNECTION_NAME:-module06-aks-vnet}"
 [[ "$RESOURCE_GROUP" =~ ^[A-Za-z0-9_.()-]+$ && "$RESOURCE_GROUP" != *. ]] || fail "Invalid RESOURCE_GROUP"

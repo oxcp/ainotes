@@ -54,8 +54,7 @@
 
 ```bash
 cd agenthost/module-03
-chmod +x prepare-agent-sandbox.sh
-./prepare-agent-sandbox.sh
+bash prepare-agent-sandbox.sh
 ```
 
 > [!tip]
@@ -110,7 +109,7 @@ chmod +x prepare-agent-sandbox.sh
 ## 手动步骤
 > [!warning]
 > **单命令部署的替代方案：** 仅当选择手动部署路径时才执行这些步骤。
-> **运行 `./prepare-agent-sandbox.sh` 后请勿再运行这些步骤**。
+> **运行 `bash prepare-agent-sandbox.sh` 后请勿再运行这些步骤**。
 >
 
 <details>
@@ -310,8 +309,7 @@ sed "s|<ACR_NAME>|${ACR_NAME}|g; s|<IMAGE_TAG>|${IMAGE_TAG}|g; s|<NAMESPACE>|${N
 运行以下脚本，在 AKS 托管 VNet 和 Storage 帐户之间建立专用连接：
 
 ```bash
-chmod +x deploy-storage-private-link.sh
-./deploy-storage-private-link.sh
+bash deploy-storage-private-link.sh
 ```
 
 该脚本可能会要求你确认它是否检测到正确的 AKS 托管 VNet：
@@ -324,7 +322,7 @@ Continue with this VNet? [y/N]: y
 在 **AKS 节点资源组**中验证 VNet 名称。如果检测到的 VNet 正确，请输入 **y** 继续。否则，输入 **N** 停止脚本，然后再次运行脚本并显式指定 VNet 名称：
 
 ```bash
-VNET_NAME=<aks-vnet-name> ./deploy-storage-private-link.sh
+VNET_NAME=<aks-vnet-name> bash deploy-storage-private-link.sh
 ```
 
 > [!note]
@@ -516,7 +514,7 @@ Labels:              agents.x-k8s.io/sandbox-name-hash=03e7e68b
                      app=agent-host
                      azure.workload.identity/use=true
                      component=agent-runtime
-                     topology.kubernetes.io/region=westus2
+                     topology.kubernetes.io/region=westus3
                      topology.kubernetes.io/zone=0
 Annotations:         agents.x-k8s.io/propagated-labels: app,azure.workload.identity/use,component
 Status:              Running

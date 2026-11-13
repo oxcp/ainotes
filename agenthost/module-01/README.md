@@ -53,7 +53,7 @@ The Foundry account ships with:
 
 ```bash
 export RESOURCE_GROUP="rg-agenthost-workshop"
-export LOCATION="westus2"
+export LOCATION="westus3"
 ```
 
 ---
@@ -63,8 +63,7 @@ export LOCATION="westus2"
 Deploy everything with a **single command** by using the wrapper script (recommended). The script calls `az deployment sub create` on `main.bicep`, generates the deployment suffix for you, and prints the outputs:
 
 ```bash
-chmod +x setup.sh
-./setup.sh
+bash setup.sh
 ```
 > [!TIP]
 > Before running `setup.sh`, you can optionally override parameters in `main.bicep` as needed.

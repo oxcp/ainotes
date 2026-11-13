@@ -54,8 +54,7 @@ This module **reuses the resources created by Module 1** instead of recreating t
 
 ```bash
 cd agenthost/module-03
-chmod +x prepare-agent-sandbox.sh
-./prepare-agent-sandbox.sh
+bash prepare-agent-sandbox.sh
 ```
 
 > [!TIP]
@@ -111,7 +110,7 @@ After `prepare-agent-sandbox.sh` completes, open the resource group in the Azure
 > [!warning]
 > **Alternative to One-Command Deployment:** follow these steps only if you chose
 > the manual deployment path.
-> **Do not run them after `./prepare-agent-sandbox.sh`**.
+> **Do not run them after `bash prepare-agent-sandbox.sh`**.
 >
 
 <details>
@@ -311,8 +310,7 @@ If your storage account has public network access disabled, the AKS-managed VNet
 Run the following script to establish private connectivity between the AKS-managed VNet and the storage account:
 
 ```bash
-chmod +x deploy-storage-private-link.sh
-./deploy-storage-private-link.sh
+bash deploy-storage-private-link.sh
 ```
 
 The script may ask you to confirm that it detected the correct AKS-managed VNet:
@@ -325,7 +323,7 @@ Continue with this VNet? [y/N]: y
 Verify the VNet name in the **AKS node resource group**. If the detected VNet is correct, enter **y** to continue. Otherwise, enter **N** to stop the script, then rerun it with the VNet name specified explicitly:
 
 ```bash
-VNET_NAME=<aks-vnet-name> ./deploy-storage-private-link.sh
+VNET_NAME=<aks-vnet-name> bash deploy-storage-private-link.sh
 ```
 
 > [!note]
@@ -518,7 +516,7 @@ Labels:              agents.x-k8s.io/sandbox-name-hash=03e7e68b
                      app=agent-host
                      azure.workload.identity/use=true
                      component=agent-runtime
-                     topology.kubernetes.io/region=westus2
+                     topology.kubernetes.io/region=westus3
                      topology.kubernetes.io/zone=0
 Annotations:         agents.x-k8s.io/propagated-labels: app,azure.workload.identity/use,component
 Status:              Running

@@ -53,7 +53,7 @@ Foundry 帐户附带：
 
 ```bash
 export RESOURCE_GROUP="rg-agenthost-workshop"
-export LOCATION="westus2"
+export LOCATION="westus3"
 ```
 
 ---
@@ -63,8 +63,7 @@ export LOCATION="westus2"
 使用包装器脚本通过**单条命令**部署所有内容（推荐）。该脚本对 `main.bicep` 调用 `az deployment sub create`，为你生成部署后缀并输出结果：
 
 ```bash
-chmod +x setup.sh
-./setup.sh
+bash setup.sh
 ```
 > [!TIP]
 > 运行 `setup.sh` 前，可根据需要选择覆盖 `main.bicep` 中的参数。

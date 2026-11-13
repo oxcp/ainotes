@@ -19,8 +19,8 @@
 
 targetScope = 'resourceGroup'
 
-@description('Azure region for the AKS cluster + its node resource group. Defaults to westus2 to match Module 1. The AKS resource is still created INTO the Module 1 resource group.')
-param location string = 'westus2'
+@description('Azure region for the AKS cluster + its node resource group. Defaults to westus3 to match Module 1. The AKS resource is still created INTO the Module 1 resource group.')
+param location string = 'westus3'
 
 @description('Deployment suffix from Module 1 (resource-group tag deploymentSN)')
 param deploymentSN string
@@ -48,7 +48,7 @@ param kubernetesVersion string = ''
 
 @description('System node pool VM size')
 //param systemNodeVmSize string = 'Standard_D4as_v5'
-param systemNodeVmSize string = 'standard_d4ads_v7'
+param systemNodeVmSize string = 'standard_d4ds_v7'
 
 @description('System node pool OS SKU. Only the sandbox (kata) node pool needs Azure Linux; the system pool can remain Ubuntu.')
 param systemNodeOsSku string = 'Ubuntu'

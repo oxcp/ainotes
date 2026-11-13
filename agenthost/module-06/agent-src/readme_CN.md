@@ -260,7 +260,7 @@ models 阶段只新增模型和 APIM embedding 子资源；单独重跑 config �
 ### Shell 部署默认值
 
 Bash 脚本采用 **显式命令行参数 > 非空环境变量 > 默认值** 的优先级，不会自动加载 `.env`。
-共享名称沿用 Modules 01/04；`LOCATION` 默认取现有资源组的区域（通常为 Module-01 的 `westus2`），
+共享名称沿用 Modules 01/04；`LOCATION` 默认取现有资源组的区域（通常为 Module-01 的 `westus3`），
 后缀来自 `DEPLOYMENT_SN` 或资源组的 `deploymentSN` 标签。脚本不会创建新的资源组。
 
 | 环境变量 | 默认值 / 行为 |
