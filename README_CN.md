@@ -19,6 +19,7 @@
 | [AKS 上的 Anyscale](anyscale-on-aks/README_CN.md) | 在 AKS 上部署 Anyscale Operator，并使用 Ray 运行分布式模型推理和微调的脚本与指南。也提供[英文指南](anyscale-on-aks/README.md)。 |
 | [Azure 上的 Anyscale](anyscale-on-azure/README.md) | Anyscale Kubernetes Operator 认证所需的 Microsoft Entra 服务主体配置，附脱敏输出示例和[权限检查脚本](anyscale-on-azure/check_permission.sh)。 |
 | [AKS 上的 CNI](cni-on-aks/README.md) | 在 AKS 中管理和安装容器网络接口（CNI）的动手指南，包括创建 BYO CNI 集群、安装 Cilium，以及验证网络连通性。 |
+| [AKS GitOps 与 Flux、ACR Artifact Cache](gitops-acr-cache/README.md) | 面向企业受限网络的出站优先镜像交付架构，结合 Flux 镜像自动化、Pull Request 审批，以及从上游 ACR 到下游 ACR 的按需缓存。包含部署与验证脚本，以及[最小 GitOps 演示](gitops-acr-cache/gitops/README.md)。 |
 | [将 Azure 指标导出至 Prometheus 和 Grafana](azmon-export-to-prometheus/README.md) | 将 Azure Monitor 指标导出为 Prometheus 格式并使用 Grafana 进行可视化的实践指南。 |
 | [AKS 上的 Istio 监控](istio-on-aks/monitoring/README.md) | 面向 AKS Istio 插件的综合可观测性指南，包括指标、访问日志、链路追踪和相关工具。 |
 | [在 Azure 上部署 E2B Embed](e2b-on-azure/Embed/quick-install.md) | 将 E2B Embed 部署到单实例 Azure VM Scale Set 的安装指南。可通过指南内的链接查看使用现有 VNet 或 Storage Private Link 的高级配置。 |
@@ -49,6 +50,7 @@ azure-ai-infrastructure-workshop/ 多路线 Azure AI 基础设施实验
 cni-on-aks/                      AKS CNI 管理与 Cilium 安装指南
 codegen-compare-across-models/   代码生成对比与相关资料
 e2b-on-azure/Embed/              E2B Embed 部署指南与内置 Azure runtime
+gitops-acr-cache/                AKS GitOps、Flux 镜像自动化与 ACR Artifact Cache 指南和脚本
 istio-on-aks/                    AKS Istio 可观测性指南
 models-healthcare/               医疗健康与医学模型评测
 multi-k8s-mgmt/                  Kubernetes 多集群管理笔记

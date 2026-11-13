@@ -42,12 +42,21 @@ if (($#)); then
       usage
       exit 0
       ;;
-    --resolve) mode=resolve ;;
-    --discover) mode=discover ;;
-    *) fail "Unknown option: $1" ;;
+    --resolve)
+      mode=resolve
+      ;;
+    --discover)
+      mode=discover
+      ;;
+    *)
+      fail "Unknown option: $1"
+      ;;
   esac
 fi
-for tool in jq az; do command -v "$tool" >/dev/null || fail "Required tool missing: $tool"; done
+for tool in jq az; do
+  command -v "$tool" >/dev/null || fail "Required tool missing: $tool"
+done
+echo "==> [1/3] Validating shared Blob configuration" >&2
 
 urls=()
 # Accept either common settings or the generated five-role map, but require one shared account.
@@ -62,7 +71,9 @@ for file in "${ACA_COMMON:-$root/.local/aca-common.json}" "${ACA_CONFIG:-$root/.
       then map(.AZURE_STORAGE_ACCOUNT_URL | rtrimstr("/")) | unique
       else error("Expected data container and HTTPS account URLs") end
     ' "$file")" || fail "Invalid Blob configuration in $file"
-  while IFS= read -r url; do urls+=("$url"); done < <(jq -r '.[]' <<<"$settings" | tr -d '\r')
+  while IFS= read -r url; do
+    urls+=("$url")
+  done < <(jq -r '.[]' <<<"$settings" | tr -d '\r')
 done
 url="${urls[0]:-}"
 for candidate in "${urls[@]}"; do
@@ -70,6 +81,7 @@ for candidate in "${urls[@]}"; do
 done
 
 # -- Resolve the existing Module 1 storage account ----------------------------
+echo "==> [2/3] Resolving and verifying the existing storage account" >&2
 container="${KB_STORAGE_CONTAINER_ID:-}"
 name="${STORAGE_ACCOUNT_NAME:-}"
 subscription="${STORAGE_SUBSCRIPTION_ID:-${SUBSCRIPTION_ID:-}}"
@@ -79,15 +91,19 @@ for key in container name subscription resource_group; do
 done
 if [[ -n "$container" ]]; then
   # A full container ID selects its own scope; reject conflicting explicit storage overrides.
-  [[ "$container" =~ ^/subscriptions/([^/]+)/resourceGroups/([^/]+)/providers/Microsoft\.Storage/storageAccounts/([a-z0-9]{3,24})/blobServices/default/containers/data$ ]] ||
-    fail "KB_STORAGE_CONTAINER_ID must be a Microsoft.Storage data container ARM ID"
-  id_sub="${BASH_REMATCH[1]}" id_rg="${BASH_REMATCH[2]}" id_name="${BASH_REMATCH[3]}"
+  [[ "$container" =~ ^/subscriptions/([^/]+)/resourceGroups/([^/]+)/providers/Microsoft\.Storage/storageAccounts/([a-z0-9]{3,24})/blobServices/default/containers/data$ ]] \
+    || fail "KB_STORAGE_CONTAINER_ID must be a Microsoft.Storage data container ARM ID"
+  id_sub="${BASH_REMATCH[1]}"
+  id_rg="${BASH_REMATCH[2]}"
+  id_name="${BASH_REMATCH[3]}"
   [[ -z "$name" || "$name" == "$id_name" ]] || fail "STORAGE_ACCOUNT_NAME conflicts with KB_STORAGE_CONTAINER_ID"
-  [[ -z "${STORAGE_SUBSCRIPTION_ID:-}" || "${subscription,,}" == "${id_sub,,}" ]] ||
-    fail "STORAGE_SUBSCRIPTION_ID conflicts with KB_STORAGE_CONTAINER_ID"
-  [[ -z "${STORAGE_RESOURCE_GROUP:-}" || "${resource_group,,}" == "${id_rg,,}" ]] ||
-    fail "STORAGE_RESOURCE_GROUP conflicts with KB_STORAGE_CONTAINER_ID"
-  subscription="$id_sub" resource_group="$id_rg" name="$id_name"
+  [[ -z "${STORAGE_SUBSCRIPTION_ID:-}" || "${subscription,,}" == "${id_sub,,}" ]] \
+    || fail "STORAGE_SUBSCRIPTION_ID conflicts with KB_STORAGE_CONTAINER_ID"
+  [[ -z "${STORAGE_RESOURCE_GROUP:-}" || "${resource_group,,}" == "${id_rg,,}" ]] \
+    || fail "STORAGE_RESOURCE_GROUP conflicts with KB_STORAGE_CONTAINER_ID"
+  subscription="$id_sub"
+  resource_group="$id_rg"
+  name="$id_name"
 fi
 subscription="${subscription:-$(az account show --query id -o tsv | tr -d '\r\n')}"
 [[ -n "$subscription" && "$subscription" != null ]] || fail "Azure subscription not found"
@@ -100,8 +116,8 @@ if [[ -z "$name" ]]; then
   sn="${DEPLOYMENT_SN:-}"
   sn="$(printf '%s' "$sn" | tr -d '\r\n')"
   if [[ -z "$sn" ]]; then
-    sn="$(az group show --subscription "$subscription" -n "$resource_group" --query tags.deploymentSN -o tsv | tr -d '\r\n')" ||
-      fail "Cannot read existing Module-01 resource group"
+    sn="$(az group show --subscription "$subscription" -n "$resource_group" --query tags.deploymentSN -o tsv | tr -d '\r\n')" \
+      || fail "Cannot read existing Module-01 resource group"
   fi
   [[ "$sn" =~ ^[a-z0-9]+$ ]] || fail "Set STORAGE_ACCOUNT_NAME or a valid DEPLOYMENT_SN / RG deploymentSN tag"
   name="stcagenthost$sn"
@@ -109,13 +125,13 @@ fi
 [[ "$name" =~ ^[a-z0-9]{3,24}$ ]] || fail "Invalid storage account name"
 account_id="/subscriptions/$subscription/resourceGroups/$resource_group/providers/Microsoft.Storage/storageAccounts/$name"
 # ARM reads work independently of Blob endpoint network access. This does not test SDK connectivity.
-account="$(az resource show --ids "$account_id" --api-version 2023-01-01 -o json)" ||
-  fail "Existing Module-01 storage account not found or inaccessible: $account_id"
-actual_id="$(jq -er '.id | strings | select(length>0)' <<<"$account" | tr -d '\r\n')" ||
-  fail "Existing storage account ARM response has no ID"
+account="$(az resource show --ids "$account_id" --api-version 2023-01-01 -o json)" \
+  || fail "Existing Module-01 storage account not found or inaccessible: $account_id"
+actual_id="$(jq -er '.id | strings | select(length>0)' <<<"$account" | tr -d '\r\n')" \
+  || fail "Existing storage account ARM response has no ID"
 [[ "${actual_id,,}" == "${account_id,,}" ]] || fail "Resolved storage account ID differs from requested account"
-endpoint="$(jq -er '.properties.primaryEndpoints.blob | strings | select(length>0) | rtrimstr("/")' <<<"$account" | tr -d '\r\n')" ||
-  fail "Existing storage account has no Blob endpoint"
+endpoint="$(jq -er '.properties.primaryEndpoints.blob | strings | select(length>0) | rtrimstr("/")' <<<"$account" | tr -d '\r\n')" \
+  || fail "Existing storage account has no Blob endpoint"
 [[ -z "$url" || "${endpoint,,}" == "${url,,}" ]] || fail "Storage account does not match configured AZURE_STORAGE_ACCOUNT_URL"
 container="$actual_id/blobServices/default/containers/data"
 if [[ "$mode" == resolve ]]; then
@@ -129,6 +145,7 @@ if [[ "$mode" == discover ]]; then
   exit 0
 fi
 # -- Provision only the container; leave shared account settings unchanged ----
+echo "==> [3/3] Provisioning the private data container (shared account unchanged)" >&2
 # Persist the exact Module-06 child before ARM so storage-only/failed deployments
 # can be cleaned without deriving a storage account name during deletion.
 inventory="$root/.local/storage-deployment.json"
@@ -140,9 +157,13 @@ if [[ -e "$inventory" ]]; then
 fi
 jq -n --arg id "$container" '{kind:"module06-storage",module:"module-06",container_id:$id}' >"$inventory"
 # Incremental mode leaves unrelated resources intact; existing account settings are not deployed.
-az deployment group create --subscription "$subscription" --resource-group "$resource_group" \
-  --name module06-storage --mode Incremental --template-file "$root/bicep/storage.bicep" \
-  --parameters "storageAccountName=$name" --only-show-errors -o none ||
-  fail "Incremental data container provisioning failed; no later stages should run"
+az deployment group create \
+  --subscription "$subscription" \
+  --resource-group "$resource_group" \
+  --name module06-storage \
+  --mode Incremental \
+  --template-file "$root/bicep/storage.bicep" \
+  --parameters "storageAccountName=$name" --only-show-errors -o none \
+  || fail "Incremental data container provisioning failed; no later stages should run"
 jq -n --arg status "$mode" --arg id "$container" --arg url "$endpoint" \
   '{status:$status,KB_STORAGE_CONTAINER_ID:$id,AZURE_STORAGE_ACCOUNT_URL:$url,AZURE_STORAGE_CONTAINER:"data"}'

@@ -56,6 +56,7 @@ fail() {
   printf 'Error: %s\n' "$*" >&2
   exit 1
 }
+# -- Read-only CLI capability checks -----------------------------------------
 volume_preflight() {
   local help key
   for key in KB_STORAGE_CONTAINER_ID KB_VOLUME_NAME; do
@@ -66,18 +67,18 @@ volume_preflight() {
   done
   # Preview CLI surfaces vary; verify actual flags before spending time importing images.
   command -v aca >/dev/null || fail "Required tool missing: aca"
-  help="$(aca sandboxgroup volume create --help)" ||
-    fail "ACA volume capability check failed"
+  help="$(aca sandboxgroup volume create --help)" \
+    || fail "ACA volume capability check failed"
   [[ "$help" == *AzureBlobByo* && "$help" == *--storage-container-id* &&
-    "$help" == *--identity-kind* && "$help" == *--identity-resource-id* ]] ||
-    fail "Upgrade aca: AzureBlobByo with managed-identity authentication is required"
+    "$help" == *--identity-kind* && "$help" == *--identity-resource-id* ]] \
+    || fail "Upgrade aca: AzureBlobByo with managed-identity authentication is required"
   help="$(aca sandbox mount --help)" || fail "ACA mount capability check failed"
-  [[ "$help" == *--readonly* && "$help" == *--volume* && "$help" == *--path* ]] ||
-    fail "Upgrade aca: read-only runtime volume mounts are required"
-  [[ "${KB_STORAGE_CONTAINER_ID:-}" =~ ^/subscriptions/[^/]+/resourceGroups/[^/]+/providers/Microsoft.Storage/storageAccounts/[^/]+/blobServices/default/containers/data$ ]] ||
-    fail "Set KB_STORAGE_CONTAINER_ID to the existing data container ARM resource ID"
-  [[ "${KB_VOLUME_NAME:-studio-kb-data}" =~ ^[a-zA-Z0-9][a-zA-Z0-9-]{0,62}$ ]] ||
-    fail "Invalid KB_VOLUME_NAME"
+  [[ "$help" == *--readonly* && "$help" == *--volume* && "$help" == *--path* ]] \
+    || fail "Upgrade aca: read-only runtime volume mounts are required"
+  [[ "${KB_STORAGE_CONTAINER_ID:-}" =~ ^/subscriptions/[^/]+/resourceGroups/[^/]+/providers/Microsoft.Storage/storageAccounts/[^/]+/blobServices/default/containers/data$ ]] \
+    || fail "Set KB_STORAGE_CONTAINER_ID to the existing data container ARM resource ID"
+  [[ "${KB_VOLUME_NAME:-studio-kb-data}" =~ ^[a-zA-Z0-9][a-zA-Z0-9-]{0,62}$ ]] \
+    || fail "Invalid KB_VOLUME_NAME"
 }
 if [[ $# == 1 && "$1" == --capabilities ]]; then
   volume_preflight
@@ -117,12 +118,51 @@ while (($#)); do
     --subscription | --resource-group | --region | --sandbox-group | --registry | --registry-identity | --tag | --vnet-connection | --config | --output | --health-timeout | --operation-timeout | --cpu | --memory | --auto-suspend-mins)
       (($# >= 2)) && [[ -n "$2" && "$2" != --* ]] || fail "Missing value for $1"
       case "$1" in
-        --subscription) subscription="$2" ;; --region) region="$2" ;;
-        --resource-group) resource_group="$2" ;; --sandbox-group) sandbox_group="$2" ;;
-        --registry) registry="$2" ;; --registry-identity) identity="$2" ;; --tag) tag="$2" ;;
-        --vnet-connection) vnet="$2" ;; --config) config="$2" ;; --output) output="$2" ;;
-        --health-timeout) health_timeout="$2" ;; --operation-timeout) operation_timeout="$2" ;;
-        --cpu) cpu="$2" ;; --memory) memory="$2" ;; --auto-suspend-mins) auto_suspend_mins="$2" ;;
+        --subscription)
+          subscription="$2"
+          ;;
+        --region)
+          region="$2"
+          ;;
+        --resource-group)
+          resource_group="$2"
+          ;;
+        --sandbox-group)
+          sandbox_group="$2"
+          ;;
+        --registry)
+          registry="$2"
+          ;;
+        --registry-identity)
+          identity="$2"
+          ;;
+        --tag)
+          tag="$2"
+          ;;
+        --vnet-connection)
+          vnet="$2"
+          ;;
+        --config)
+          config="$2"
+          ;;
+        --output)
+          output="$2"
+          ;;
+        --health-timeout)
+          health_timeout="$2"
+          ;;
+        --operation-timeout)
+          operation_timeout="$2"
+          ;;
+        --cpu)
+          cpu="$2"
+          ;;
+        --memory)
+          memory="$2"
+          ;;
+        --auto-suspend-mins)
+          auto_suspend_mins="$2"
+          ;;
       esac
       shift 2
       ;;
@@ -134,21 +174,24 @@ for key in subscription resource_group region sandbox_group registry identity vn
   operation_timeout cpu memory auto_suspend_mins; do
   printf -v "$key" '%s' "$(printf '%s' "${!key}" | tr -d '\r\n')"
 done
-for tool in jq aca mktemp; do command -v "$tool" >/dev/null || fail "Required tool missing: $tool"; done
+echo "==> [1/5] Validating ACA inputs, configuration and CLI capabilities"
+for tool in jq aca mktemp; do
+  command -v "$tool" >/dev/null || fail "Required tool missing: $tool"
+done
 [[ -f "$config" ]] || fail "--config must name a protected five-role JSON file"
 [[ "$tag" =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]] || fail "Invalid image tag"
 for value in "$health_timeout" "$operation_timeout"; do
   [[ "$value" =~ ^[1-9][0-9]{0,4}$ ]] || fail "Timeouts must be positive integers of at most five digits"
 done
-[[ "$auto_suspend_mins" =~ ^(0|[1-9][0-9]{0,4})$ ]] ||
-  fail "Auto-suspend minutes must be 0 (disabled) or a positive integer of at most five digits"
+[[ "$auto_suspend_mins" =~ ^(0|[1-9][0-9]{0,4})$ ]] \
+  || fail "Auto-suspend minutes must be 0 (disabled) or a positive integer of at most five digits"
 [[ "$cpu" =~ ^[1-9][0-9]*m?$ ]] || fail "CPU must be positive cores or millicores (for example 1000m)"
 [[ "$memory" =~ ^[1-9][0-9]*(Mi|Gi)$ ]] || fail "Memory must use Mi or Gi (for example 2048Mi)"
 [[ ! -e "$output" ]] || fail "Output already exists; preserve the inventory and use a new --output"
-jq -e -f "$root/common/aca-config.jq" "$config" >/dev/null ||
-  fail "Invalid configuration: check five roles, distinct shared keys, DB TLS, Azure Blob, models and common data settings"
-jq -e 'all(.[]; (.AZURE_CLIENT_SECRET // "")=="")' "$config" >/dev/null ||
-  fail "Remove service-principal secrets; all five Agents must use the Module-01 UAMI"
+jq -e -f "$root/common/aca-config.jq" "$config" >/dev/null \
+  || fail "Invalid configuration: check five roles, distinct shared keys, DB TLS, Azure Blob, models and common data settings"
+jq -e 'all(.[]; (.AZURE_CLIENT_SECRET // "")=="")' "$config" >/dev/null \
+  || fail "Remove service-principal secrets; all five Agents must use the Module-01 UAMI"
 volume_preflight
 volume_name="${KB_VOLUME_NAME:-studio-kb-data}"
 container_id="$KB_STORAGE_CONTAINER_ID"
@@ -180,11 +223,14 @@ tmp="$(mktemp -d "$root/.local/aca-deploy.XXXXXX")"
 recorded=false
 stage="local-validation"
 active_role=""
+# -- Protected temporary files, inventory and failure reporting ---------------
 summary() {
   printf '\n%-17s %-12s %s\n' "AGENT" "STATUS" "URL"
-  jq -r '.agents | to_entries[] | [.key,.value.status,(.value.url // "-")] | @tsv' "$output" |
-    tr -d '\r' |
-    while IFS=$'\t' read -r role status url; do printf '%-17s %-12s %s\n' "$role" "$status" "$url"; done
+  jq -r '.agents | to_entries[] | [.key,.value.status,(.value.url // "-")] | @tsv' "$output" \
+    | tr -d '\r' \
+    | while IFS=$'\t' read -r role status url; do
+      printf '%-17s %-12s %s\n' "$role" "$status" "$url"
+    done
   printf 'Inventory: %s\n' "$output"
 }
 cleanup() {
@@ -200,7 +246,9 @@ cleanup() {
         "$output" >"$tmp/inventory.json" && mv -- "$tmp/inventory.json" "$output"
     fi
   fi
-  if $recorded; then summary; fi
+  if $recorded; then
+    summary
+  fi
   rm -f -- "$tmp/config.json" "$tmp/runtime.json" "$tmp/peer-header" "$tmp/browser-header" \
     "$tmp/manifest.json" "$tmp/response.json" "$tmp/health.json" "$tmp/card.json" \
     "$tmp/inventory.json" "$tmp/probe.json"
@@ -213,10 +261,21 @@ trap 'exit 143' TERM
 cp -- "$config" "$tmp/config.json"
 config="$tmp/config.json"
 
+# -- Render and validate a sandbox manifest before importing images -----------
 manifest() {
   local role="$1" disk="$2"
   # Wait for an explicit start marker; importing other images must not exhaust bootstrap's 600s timeout.
-  local boot='umask 077; cd /app; deadline=$(($(date +%s)+3600)); while [ ! -f /app/.local/studio-start ]; do if [ "$(date +%s)" -ge "$deadline" ]; then echo "Configuration activation timed out" >&2; exit 1; fi; sleep 1; done; '
+  local boot='umask 077
+cd /app
+deadline=$(($(date +%s)+3600))
+while [ ! -f /app/.local/studio-start ]; do
+  if [ "$(date +%s)" -ge "$deadline" ]; then
+    echo "Configuration activation timed out" >&2
+    exit 1
+  fi
+  sleep 1
+done
+'
   case "$role" in
     chat | data-processing) boot+='python -c '"'$mount_probe'"' && ' ;;
   esac
@@ -235,7 +294,10 @@ manifest() {
 manifest chat "00000000-0000-0000-0000-000000000001"
 aca sandbox validate --file "$tmp/manifest.json" >/dev/null
 printf 'Configuration and ACA manifest validated (%s).\n' "$(aca --version | tr -d '\r\n')"
-for tool in az curl timeout openssl; do command -v "$tool" >/dev/null || fail "Required tool missing: $tool"; done
+for tool in az curl timeout openssl; do
+  command -v "$tool" >/dev/null || fail "Required tool missing: $tool"
+done
+# -- Resolve shared Azure resources and verify network connectivity -----------
 stage="context"
 subscription="${subscription:-$(az account show --query id -o tsv | tr -d '\r\n')}"
 group="$(az group show --subscription "$subscription" -n "$resource_group" -o json)"
@@ -257,15 +319,19 @@ fi
 [[ "$registry" =~ ^[a-zA-Z0-9][a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]] || fail "--registry must be a login-server hostname"
 # Match ARM IDs case-insensitively without changing the value sent to Azure.
 identity_pattern='^/subscriptions/[^/]+/resourcegroups/[^/]+/providers/microsoft[.]managedidentity/userassignedidentities/[^/]+$'
-[[ "$identity" == system || "${identity,,}" =~ $identity_pattern ]] ||
-  fail "--registry-identity must be system or a user-assigned identity ARM resource ID"
+[[ "$identity" == system || "${identity,,}" =~ $identity_pattern ]] \
+  || fail "--registry-identity must be system or a user-assigned identity ARM resource ID"
 group_id="/subscriptions/$subscription/resourceGroups/$resource_group/providers/Microsoft.App/sandboxGroups/$sandbox_group"
 group_region="$(az resource show --ids "$group_id" --query location -o tsv | tr -d '\r\n')"
 [[ "${group_region,,}" == "${region,,}" ]] || fail "Existing SandboxGroup region differs from the configured deployment region"
 aca_call() {
   # Pin every call to the resolved group/scope and bound waits instead of relying on ambient defaults.
-  timeout "$operation_timeout" aca "$@" --subscription "$subscription" --resource-group "$resource_group" \
-    --group "$sandbox_group" --region "$region" -o json
+  timeout "$operation_timeout" aca "$@" \
+    --subscription "$subscription" \
+    --resource-group "$resource_group" \
+    --group "$sandbox_group" \
+    --region "$region" \
+    -o json
 }
 single() {
   jq -e 'if type == "array" then
@@ -287,9 +353,13 @@ exec_checked() {
   fi
 }
 stage="network"
-timeout "$operation_timeout" aca sandboxgroup get --name "$sandbox_group" --subscription "$subscription" \
-  --resource-group "$resource_group" --region "$region" -o json >"$tmp/response.json" ||
-  fail "Cannot read existing SandboxGroup VNet connections"
+timeout "$operation_timeout" aca sandboxgroup get \
+  --name "$sandbox_group" \
+  --subscription "$subscription" \
+  --resource-group "$resource_group" \
+  --region "$region" \
+  -o json >"$tmp/response.json" \
+  || fail "Cannot read existing SandboxGroup VNet connections"
 jq -e --arg id "$group_id" '
   ((.id // "" | ascii_downcase)==($id|ascii_downcase)) and
   (.vnetConnections | type=="array") and
@@ -307,18 +377,18 @@ if [[ -n "$vnet" ]]; then
   jq -e --arg name "$vnet" '
     [.vnetConnections[] | select((.name|ascii_downcase)==($name|ascii_downcase))] |
     length==1 and .[0].properties.provisioningState=="Succeeded"
-  ' "$tmp/response.json" >/dev/null ||
-    fail "Selected VNet connection is missing, ambiguous or not Succeeded; complete Module-04 networking first"
+  ' "$tmp/response.json" >/dev/null \
+    || fail "Selected VNet connection is missing, ambiguous or not Succeeded; complete Module-04 networking first"
   vnet="$(jq -er --arg name "$vnet" '.vnetConnections[] |
     select((.name|ascii_downcase)==($name|ascii_downcase)) | .name' "$tmp/response.json" | tr -d '\r\n')"
   printf 'Verified existing VNet connection: %s (all five Agents).\n' "$vnet"
 else
   storage_id="${container_id%/blobServices/default/containers/data}"
-  az resource show --ids "$storage_id" --api-version 2023-01-01 -o json >"$tmp/response.json" ||
-    fail "Cannot read Blob storage network access settings"
+  az resource show --ids "$storage_id" --api-version 2023-01-01 -o json >"$tmp/response.json" \
+    || fail "Cannot read Blob storage network access settings"
   jq -e '.properties.publicNetworkAccess=="Enabled" and .properties.networkAcls.defaultAction=="Allow"' \
-    "$tmp/response.json" >/dev/null ||
-    fail "Blob storage is private, restricted or its network settings are unknown; configure a ready Module-04 VNet connection"
+    "$tmp/response.json" >/dev/null \
+    || fail "Blob storage is private, restricted or its network settings are unknown; configure a ready Module-04 VNet connection"
   printf 'No group VNet connection; verified Blob storage allows public network access.\n'
 fi
 deployment_id="$(date -u +%Y%m%d-%H%M%S)-$(openssl rand -hex 3 | tr -d '\r\n')"
@@ -332,6 +402,7 @@ recorded=true
 printf 'Target: %s / %s / %s (%s)\nDeployment: %s\n' "$subscription" "$resource_group" "$sandbox_group" "$region" "$deployment_id"
 
 stage="agent-identity"
+# -- Verify the Module-01 UAMI inherited by all five guests --------------------
 # Sandbox identities are inherited from the group; --identity on disk import only authorizes ACR.
 agent_identity="$(SUBSCRIPTION_ID="$subscription" RESOURCE_GROUP="$resource_group" DEPLOYMENT_SN="$sn" \
   bash "$root/common/resolve-identity.sh")"
@@ -355,6 +426,7 @@ fi
 
 # -- Verify or create the group-level Blob volume ----------------------------
 stage="volume"
+echo "==> [2/5] Verifying the shared Blob volume and managed identity"
 volume_identity="$(printf '%s' "${KB_VOLUME_IDENTITY:-$identity}" | tr -d '\r\n')"
 identity_kind=UserAssigned
 identity_args=(--identity-resource-id "$volume_identity")
@@ -362,8 +434,8 @@ if [[ "$volume_identity" == system ]]; then
   identity_kind=SystemAssigned
   identity_args=()
 else
-  [[ "${volume_identity,,}" =~ $identity_pattern ]] ||
-    fail "KB_VOLUME_IDENTITY must be system or an existing group user-assigned identity ARM ID"
+  [[ "${volume_identity,,}" =~ $identity_pattern ]] \
+    || fail "KB_VOLUME_IDENTITY must be system or an existing group user-assigned identity ARM ID"
 fi
 record --arg name "$volume_name" --arg container "$container_id" --arg kind "$identity_kind" \
   --arg identity "$volume_identity" \
@@ -371,22 +443,25 @@ record --arg name "$volume_name" --arg container "$container_id" --arg kind "$id
 storage_id="${container_id%/blobServices/default/containers/data}"
 storage_url="$(az resource show --ids "$storage_id" --query properties.primaryEndpoints.blob -o tsv | tr -d '\r\n')"
 configured_url="$(jq -er '.chat.AZURE_STORAGE_ACCOUNT_URL' "$config" | tr -d '\r\n')"
-[[ "${storage_url%/}" == "${configured_url%/}" ]] ||
-  fail "KB_STORAGE_CONTAINER_ID does not match the configured AZURE_STORAGE_ACCOUNT_URL"
+[[ "${storage_url%/}" == "${configured_url%/}" ]] \
+  || fail "KB_STORAGE_CONTAINER_ID does not match the configured AZURE_STORAGE_ACCOUNT_URL"
 az resource show --ids "$group_id" --query identity -o json >"$tmp/response.json"
 jq -e --arg identity "$volume_identity" '
     if $identity=="system" then (.principalId | type=="string" and length>0)
     else any((.userAssignedIdentities // {} | keys)[]; ascii_downcase==($identity|ascii_downcase)) end
-    ' "$tmp/response.json" >/dev/null ||
-  fail "The selected Blob volume managed identity is not assigned to the existing SandboxGroup"
+    ' "$tmp/response.json" >/dev/null \
+  || fail "The selected Blob volume managed identity is not assigned to the existing SandboxGroup"
 # Listing must succeed: authentication/authorization failures must never be treated as absence.
 aca_call sandboxgroup volume list >"$tmp/response.json"
 exists="$(jq -r --arg name "$volume_name" '
     if type!="array" then error("Expected volume list") else
     any(.[]; (.volumeName // .name)==$name) end' "$tmp/response.json" | tr -d '\r\n')"
 if [[ "$exists" == false ]]; then
-  aca_call sandboxgroup volume create --name "$volume_name" --type AzureBlobByo \
-    --storage-container-id "$container_id" --identity-kind "$identity_kind" \
+  aca_call sandboxgroup volume create \
+    --name "$volume_name" \
+    --type AzureBlobByo \
+    --storage-container-id "$container_id" \
+    --identity-kind "$identity_kind" \
     "${identity_args[@]}" >"$tmp/response.json"
 fi
 aca_call sandboxgroup volume get --name "$volume_name" >"$tmp/response.json"
@@ -398,11 +473,12 @@ single "$tmp/response.json" | jq -e --arg name "$volume_name" --arg container "$
     .auth.kind=="ManagedIdentity" and .auth.identity.kind==$kind and
     (if $kind=="UserAssigned" then
         (.auth.identity.resourceId // "" | ascii_downcase)==($identity|ascii_downcase)
-     else (.auth.identity.resourceId // "")=="" end)' >/dev/null ||
-  fail "Existing volume differs from the requested container or identity; choose another KB_VOLUME_NAME, do not delete shared data"
+     else (.auth.identity.resourceId // "")=="" end)' >/dev/null \
+  || fail "Existing volume differs from the requested container or identity; choose another KB_VOLUME_NAME, do not delete shared data"
 
 # -- Import all five images and create the Sandboxes -------------------------
 stage="image-import"
+echo "==> [3/5] Importing images, creating Sandboxes and mounting shared data"
 for active_role in "${roles[@]}"; do
   image="$registry/studio-$active_role:$tag"
   disk_name="studio-$active_role-$deployment_id"
@@ -410,8 +486,12 @@ for active_role in "${roles[@]}"; do
     '.agents[$role] += {image:$image,disk_name:$name,status:"importing"}'
   printf 'Importing %s...\n' "$active_role"
   # Sandboxes boot from disk images; the group identity authorizes importing each OCI image from ACR.
-  aca_call sandboxgroup disk create --image "$image" --name "$disk_name" --identity "$identity" \
-    --label "deployment=$deployment_id" --label "role=$active_role" \
+  aca_call sandboxgroup disk create \
+    --image "$image" \
+    --name "$disk_name" \
+    --identity "$identity" \
+    --label "deployment=$deployment_id" \
+    --label "role=$active_role" \
     --wait-timeout "$operation_timeout" >"$tmp/response.json"
   disk_id="$(single "$tmp/response.json" | jq -er '.id | strings | select(length > 0)' | tr -d '\r\n')"
   record --arg role "$active_role" --arg id "$disk_id" '.agents[$role] += {disk_id:$id,status:"imported"}'
@@ -421,31 +501,35 @@ for active_role in "${roles[@]}"; do
   disk_id="$(jq -er --arg role "$active_role" '.agents[$role].disk_id' "$output" | tr -d '\r\n')"
   manifest "$active_role" "$disk_id"
   aca sandbox validate --file "$tmp/manifest.json" >/dev/null
-  aca_call sandbox apply --file "$tmp/manifest.json" --wait-timeout "$operation_timeout" >"$tmp/response.json"
+  aca_call sandbox apply \
+    --file "$tmp/manifest.json" \
+    --wait-timeout "$operation_timeout" >"$tmp/response.json"
   # Preview apply can print "Created sandbox: ..." even with -o json. Read persisted state instead.
   sandbox_id=""
   for attempt in {1..6}; do
-    aca_call sandbox list --selector "role=$active_role" >"$tmp/response.json" ||
-      fail "Cannot discover the created sandbox; preserve the inventory and inspect its role and source disk ID"
+    aca_call sandbox list --selector "role=$active_role" >"$tmp/response.json" \
+      || fail "Cannot discover the created sandbox; preserve the inventory and inspect its role and source disk ID"
     # Older deployments can share this role, but each run imports a distinct disk per role.
     jq -e --arg disk "$disk_id" '
       if type!="array" then error("Expected sandbox list")
       else map(select(.sourcesRef.diskImage.id==$disk)) end |
       if length>1 then error("Multiple sandboxes use the imported disk") else . end
-    ' "$tmp/response.json" >"$tmp/probe.json" ||
-      fail "Invalid sandbox list or ambiguous source disk match; no further sandboxes will be created"
+    ' "$tmp/response.json" >"$tmp/probe.json" \
+      || fail "Invalid sandbox list or ambiguous source disk match; no further sandboxes will be created"
     if jq -e 'length==1' "$tmp/probe.json" >/dev/null; then
       sandbox_id="$(jq -er --arg role "$active_role" --arg deployment "$deployment_id" '
         .[0] | select(.labels=={role:$role,deployment:$deployment}) |
         .id | strings | select(length>0)
-      ' "$tmp/probe.json" | tr -d '\r\n')" ||
-        fail "Created sandbox ID, labels or source disk did not match; inspect the deployment before retrying"
+      ' "$tmp/probe.json" | tr -d '\r\n')" \
+        || fail "Created sandbox ID, labels or source disk did not match; inspect the deployment before retrying"
       break
     fi
-    if ((attempt < 6)); then sleep 5; fi
+    if ((attempt < 6)); then
+      sleep 5
+    fi
   done
-  [[ -n "$sandbox_id" ]] ||
-    fail "Created sandbox was not visible after bounded discovery; do not assume creation failed or delete the inventory"
+  [[ -n "$sandbox_id" ]] \
+    || fail "Created sandbox was not visible after bounded discovery; do not assume creation failed or delete the inventory"
   record --arg role "$active_role" --arg id "$sandbox_id" '.agents[$role] += {sandbox_id:$id,status:"created"}'
   # Workshop ingress is public to anyone with the URL; application API keys remain required.
   aca_call sandbox port add --id "$sandbox_id" --port 8080 --anonymous >"$tmp/response.json"
@@ -459,7 +543,10 @@ done
 stage="mount"
 for active_role in "${mount_roles[@]}"; do
   sandbox_id="$(jq -er --arg role "$active_role" '.agents[$role].sandbox_id' "$output" | tr -d '\r\n')"
-  aca_call sandbox mount --id "$sandbox_id" --volume "$volume_name" --path /kb-data \
+  aca_call sandbox mount \
+    --id "$sandbox_id" \
+    --volume "$volume_name" \
+    --path /kb-data \
     --readonly >"$tmp/response.json"
   exec_checked "$sandbox_id" "python -c '$mount_probe'"
   record --arg role "$active_role" --arg volume "$volume_name" \
@@ -468,6 +555,7 @@ done
 
 # -- Upload protected runtime configuration ---------------------------------
 stage="configuration"
+echo "==> [4/5] Uploading runtime settings, checking database access and activating Agents"
 for active_role in "${roles[@]}"; do
   sandbox_id="$(jq -er --arg role "$active_role" '.agents[$role].sandbox_id' "$output" | tr -d '\r\n')"
   # Use actual ingress URLs, not guessed hostnames, for discovery and downstream A2A requests.
@@ -480,7 +568,9 @@ for active_role in "${roles[@]}"; do
     ' "$config" >"$tmp/runtime.json"
   exec_checked "$sandbox_id" 'install -d -m 700 -o 10001 -g 10001 /app/.local'
   # fs write creates root-owned files; the guest user must copy, not chmod/chown, the upload.
-  aca_call sandbox fs write --id "$sandbox_id" --path /app/.local/studio-runtime.pending \
+  aca_call sandbox fs write \
+    --id "$sandbox_id" \
+    --path /app/.local/studio-runtime.pending \
     --file "$tmp/runtime.json" >"$tmp/response.json"
   exec_checked "$sandbox_id" 'set -eu
 owned=$(mktemp /app/.local/studio-runtime.XXXXXX)
@@ -502,7 +592,8 @@ for active_role in "${roles[@]}"; do
 done
 if $migrate; then
   # Run shared-schema migration once, from Orchestrator, rather than racing all five guests.
-  stage="database-migration" active_role="orchestrator"
+  stage="database-migration"
+  active_role="orchestrator"
   sandbox_id="$(jq -er '.agents.orchestrator.sandbox_id' "$output" | tr -d '\r\n')"
   if [[ "$(jq -r '.orchestrator.DB_AUTH_MODE // "password"' "$config" | tr -d '\r\n')" == entra ]]; then
     exec_checked "$sandbox_id" 'cd /app && python -m shared.database_bootstrap --config /app/.local/studio-runtime.json --migrate'
@@ -530,6 +621,7 @@ for active_role in "${roles[@]}"; do
 done
 
 stage="health"
+echo "==> [5/5] Verifying health, authenticated Agent Cards and Chat collaboration"
 active_role=""
 # Header files keep API keys out of curl's literal command-line arguments.
 jq -r '"Authorization: Bearer " + .chat.A2A_API_KEY' "$config" >"$tmp/peer-header"
@@ -547,8 +639,8 @@ while ((SECONDS < deadline)); do
     }
     ((budget <= 5)) || budget=5
     if curl --silent --fail --proto '=https' --connect-timeout "$budget" --max-time "$budget" \
-      "$url/health" -o "$tmp/health.json" &&
-      jq -e '.status == "ok"' "$tmp/health.json" >/dev/null; then
+      "$url/health" -o "$tmp/health.json" \
+      && jq -e '.status == "ok"' "$tmp/health.json" >/dev/null; then
       budget=$((deadline - SECONDS))
       ((budget > 0)) || {
         all_ready=false
@@ -556,8 +648,8 @@ while ((SECONDS < deadline)); do
       }
       ((budget <= 5)) || budget=5
       if curl --silent --fail --proto '=https' --connect-timeout "$budget" --max-time "$budget" \
-        --header "@$tmp/peer-header" "$url/.well-known/agent-card.json" -o "$tmp/card.json" &&
-        jq -e --arg role "$role" --arg url "$url/a2a" '
+        --header "@$tmp/peer-header" "$url/.well-known/agent-card.json" -o "$tmp/card.json" \
+        && jq -e --arg role "$role" --arg url "$url/a2a" '
                   .name == ("studio-" + $role) and .capabilities.streaming == true
                   and any(.supportedInterfaces[]?;
                     .url == $url and .protocolBinding == "JSONRPC" and .protocolVersion == "1.0")

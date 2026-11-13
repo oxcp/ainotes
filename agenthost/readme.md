@@ -287,7 +287,8 @@ agenthost/
 │   └── sandbox-deploy.sh        ← Reuses the Module-03 image + SandboxGroup + disk image + sandbox mgmt
 ├── module-05/
 │   ├── README.md                ← Comparison recap, decision guide, cost tips, and production checklist
-│   └── README_CN.md             ← Chinese wrap-up guide
+│   ├── README_CN.md             ← Chinese wrap-up guide
+│   └── cleanup.sh               ← Removes AKS VNet Private Endpoints/NICs, then AKS, deployment records and the workshop resource group
 └── module-06/
     ├── readme.md                ← Multi-Agent Business Scenarios: complete installation, deployment, upload/vectorization and chat walkthrough
     ├── readme_CN.md             ← Chinese Multi-Agent Business Scenarios guide

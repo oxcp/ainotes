@@ -77,6 +77,56 @@
 
 ---
 
+## 资源释放
+
+> [!WARNING]
+> **如果需要继续 Module-06，先不要释放资源。** Module-06 依赖 Modules 01–04 创建的共享基础设施。
+>
+> 如果不继续 Module-06，或 Module-06 已完成，请按顺序先运行 [Module-06 资源清理](../module-06/readme_CN.md)中的 [cleanup.sh](../module-06/cleanup.sh)，确认成功后，再运行本模块的 [cleanup.sh](./cleanup.sh)，释放 Modules 01–04 的资源。未部署 Module-06 时，其清理脚本只处理已发现的 Module-06 资源和配置。
+
+在已登录 Azure 的 Bash 环境中，从 `agenthost` 目录执行；需要 Azure CLI 和 `jq`（存在 SandboxGroup 时还需要 `aca`）。先确认当前订阅，预览两次清理计划：
+
+```bash
+az account show --query '{subscription:id,name:name}' -o table
+bash module-06/cleanup.sh  # 如果还没有开始module-06资源部署，可以忽略这一步
+bash module-05/cleanup.sh
+```
+
+确认目标正确、重要数据已备份后，依次执行：
+
+```bash
+bash module-06/cleanup.sh --execute # 如果还没有开始module-06资源部署，可以忽略这一步
+
+bash module-05/cleanup.sh --execute # 如果不需要上一步，或上一步已经成功后再继续
+```
+
+Module-06 要求输入 `delete module-06`；本模块要求输入 `delete <资源组名称>`，默认是 `delete rg-agenthost-workshop`。任一步失败时停止，检查错误，不要跳过失败继续删除。预览和执行时须使用相同的环境变量。
+
+本脚本优先使用已有环境变量，未设置或为空时采用以下默认值：
+
+| 环境变量 | 默认值 |
+|---|---|
+| `RESOURCE_GROUP` | `rg-agenthost-workshop` |
+| `SUBSCRIPTION_ID` | Azure CLI 当前订阅 |
+| `DEPLOYMENT_SN` | 目标资源组 tag `deploymentSN`；已有值必须与 tag 一致，否则停止 |
+| `AKS_NAME` | `aks-agenthost-<deploymentSN>` |
+| `DEPLOYMENT_NAME` | `main-<deploymentSN>` |
+
+例如：`RESOURCE_GROUP=<资源组> SUBSCRIPTION_ID=<订阅 GUID> bash module-05/cleanup.sh`。名称覆盖不会扩大 Private Endpoint/NIC 的筛选范围，但最后会删除整个选定资源组，请仔细检查。
+
+默认清理 `rg-agenthost-workshop`，并按顺序执行（设置环境变量时使用对应目标）：
+
+1. 使用 `aca sandboxgroup delete --yes` 删除选定资源组中的所有 ACA SandboxGroup，显式指定订阅、资源组及各组所在区域。等待删除完成并确认组已不存在后，才继续后续步骤；没有组时跳过。删除或验证失败则停止全部后续步骤。有价值的 Sandbox 状态须先备份到组外，组内快照不属于外部备份。
+2. 删除该资源组中、位于 AKS 所在 VNet 的 Private Endpoint 和 NIC。AKS 自建 VNet 从节点资源组发现；只选择目标 VNet 内的网络资源。Private Endpoint 的受管 NIC 通常由 Azure 自动删除，脚本只补删仍存在的选中 NIC；若 NIC 关联 VM，则停止并要求人工检查。
+3. 删除 `aks-agenthost-<deploymentSN>`，等待完成；AKS 的托管节点资源组也随之删除。
+4. 删除 `rg-agenthost-workshop` 中的 deployment 记录。
+5. 删除订阅 deployment `main-<deploymentSN>`。脚本在任何删除前，从资源组 tag `deploymentSN` 读取并保存该值；缺失或无效则停止，不猜测部署名称。
+6. 删除整个 `rg-agenthost-workshop`，并检查资源组已不存在。
+
+**最后一步会删除该资源组内的所有剩余资源和数据，包括并非本研讨会创建的资源**；必须先检查资源组内容。删除 deployment 记录本身不会删除其部署的资源。本脚本不清除本地 kubeconfig、Entra 应用注册或其他资源组中的独立资源；这些不随此资源组删除的对象需另行检查。
+
+---
+
 ## 后续步骤
 
 - 查看 [Azure 上的智能体托管研讨会](../agenthost.md)设计文档

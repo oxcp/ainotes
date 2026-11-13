@@ -1,14 +1,21 @@
 #!/usr/bin/env bash
-# Baselines authorize only new, narrowly allowlisted children, never parent resources.
+# cleanup-ownership.sh -- Track Module-06 embedding/APIM child ownership.
+#
+# Sourced by deploy-models.sh and cleanup.sh; not a standalone cleanup command.
+# Requires the caller's root and fail helper, plus jq, az and timeout.
+# Baselines authorize only new, narrowly allowlisted children, never parents.
+
+# -- Normalize Azure CLI/JQ behavior on Git Bash ------------------------------
 case "${OSTYPE:-}" in
-  msys*|cygwin*) export MSYS2_ARG_CONV_EXCL="/subscriptions/;/SUBSCRIPTIONS/;${MSYS2_ARG_CONV_EXCL:-}" ;;
+  msys* | cygwin*) export MSYS2_ARG_CONV_EXCL="/subscriptions/;/SUBSCRIPTIONS/;${MSYS2_ARG_CONV_EXCL:-}" ;;
 esac
 jq() {
   case "${OSTYPE:-}" in
-    msys*|cygwin*) command jq --binary "$@" ;;
+    msys* | cygwin*) command jq --binary "$@" ;;
     *) command jq "$@" ;;
   esac | tr -d '\r'
 }
+# -- Validate allowlisted child types and saved deployment state --------------
 ownership_validate_target() {
   local target="$1"
   jq -e '
@@ -35,6 +42,7 @@ ownership_validate_target() {
     end)
   ' <<<"$target" >/dev/null || fail "Invalid or unsafe ownership target"
 }
+# -- Read persisted ARM state; absence requires a complete successful read ----
 ownership_read() {
   local id="$1" api="$2" result object policy
   # A successful collection GET distinguishes absence from permission/network failures.
@@ -52,6 +60,7 @@ ownership_read() {
   fi
   printf '%s\n' "$object"
 }
+# -- Record the baseline before creating embedding/APIM children --------------
 ownership_begin_models() {
   local model_id="$1" operation_id="$2" backend_id="$3" model="$4" target live
   model_target_ids="$(jq -cn --arg m "$model_id" --arg o "$operation_id" --arg b "$backend_id" '[$m,$o,$b]')"
@@ -80,11 +89,13 @@ ownership_begin_models() {
     {id:$backend_id,api:"2023-05-01-preview",kind:"backend",before:null,after:null}')
   ownership_save
 }
+# -- Publish the baseline atomically -----------------------------------------
 ownership_save() {
   [[ ! -L "$ledger.next" && ! -e "$ledger.next" ]] || fail "Ownership staging file already exists"
   printf '%s\n' "$ownership" >"$ledger.next"
   mv -- "$ledger.next" "$ledger"
 }
+# -- Capture created children, including partial deployment failures ----------
 ownership_finish_models() {
   local target live id
   while IFS= read -r target; do

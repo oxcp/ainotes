@@ -287,7 +287,8 @@ agenthost/
 │   └── sandbox-deploy.sh        ← 复用模块 03 映像 + SandboxGroup + 磁盘映像 + 沙盒管理
 ├── module-05/
 │   ├── README.md                ← 比较回顾、决策指南、成本技巧和生产环境清单
-│   └── README_CN.md             ← 中文总结指南
+│   ├── README_CN.md             ← 中文总结指南
+│   └── cleanup.sh               ← 先清理 AKS VNet 内的 Private Endpoint/NIC，再删除 AKS、部署记录及研讨会资源组
 └── module-06/
     ├── readme.md                ← 多智能体业务场景：完整安装、部署、上传/向量化和聊天操作指南
     ├── readme_CN.md             ← 中文多智能体业务场景指南

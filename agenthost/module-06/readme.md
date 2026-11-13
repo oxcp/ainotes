@@ -1120,6 +1120,12 @@ without this baseline require manual prior-state review**: other verified resour
 but cleanup reports partial completion with a nonzero exit and retains recovery files.
 It never invents or overwrites a previous APIM policy.
 
+Database and parameter-group candidates from the generic ARM inventory are rechecked
+against the provider collection, so a deleted resource still listed in a stale inventory
+does not cause a false “Resources remain” error. Failed, incomplete or paginated reads
+still stop cleanup. If resources really remain, the final plan is printed for diagnosis.
+This check does not resolve a missing legacy ownership baseline; those recovery files remain.
+
 Only after verified cloud cleanup does the script remove recognized inventories, the ownership
 baseline and named generated settings/keys/password in `.local`. Source, `.env`, custom inputs,
 uploads and caches remain. Failed reads/deletions retain recovery files; successful empty reads

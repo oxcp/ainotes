@@ -99,19 +99,28 @@ images_preflight() {
 }
 
 # Sourcing exposes only the read-only guard for deploy.sh; it never submits builds.
-if [[ "${BASH_SOURCE[0]}" != "$0" ]]; then return 0; fi
+if [[ "${BASH_SOURCE[0]}" != "$0" ]]; then
+  return 0
+fi
+echo "==> [1/2] Validating image settings and all five Dockerfiles"
 images_preflight "$@"
 
 # -- Build each Agent image after all Dockerfiles pass preflight --------------
+echo "==> [2/2] Building and publishing five Agent images in the existing ACR"
 for entry in "${agents[@]}"; do
   role="${entry%%:*}"
   package="${entry#*:}"
   image="studio-$role:$tag"
-  printf 'Building and publishing %s in ACR %s\n' "$image" "$registry"
+  printf '    Building and publishing %s in ACR %s\n' "$image" "$registry"
   # Use agent-src as the context so every Dockerfile can COPY shared code as well as its own package.
   # Deployment credentials live in module-06/.local, outside this uploaded context.
-  if ! az acr build --registry "$registry" --image "$image" \
-    --file "$root/$package/Dockerfile" --platform linux "$root" "${subscription_args[@]}"; then
+  if ! az acr build \
+    --registry "$registry" \
+    --image "$image" \
+    --file "$root/$package/Dockerfile" \
+    --platform linux \
+    "$root" \
+    "${subscription_args[@]}"; then
     fail "ACR build failed for $role; later images were not submitted."
   fi
 done

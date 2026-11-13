@@ -1,1 +1,13 @@
+IMPLEMENTATION_INSTRUCTIONS.md
 module-04/container-app.yaml
+module-04/dynamic-session*.*
+module-06/agent-src/.local/
+module-06/agent-src/.venv/
+module-06/agent-src/deploy/
+module-06/agent-src/sample-data/
+module-06/agent-src/tests/
+module-06/notmust/
+module-06/.local/
+module-06/prompt/
+module-06/.local*
+tests/

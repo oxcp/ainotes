@@ -51,17 +51,25 @@ fail() {
   exit 1
 }
 # Subshell helpers preserve the former scripts' variable, exit and cleanup isolation.
+# -- HorizonDB administrator verification and creation -----------------------
 ensure_horizon_admin() (
   set +x
   set -euo pipefail
   trap - EXIT INT TERM
-  fail() { printf 'Error [horizondb-admin]: %s\n' "$*" >&2; exit 1; }
-  [[ $# == 5 || ( $# == 6 && "$6" == --existing-only ) ]] ||
-    fail "Usage: ensure_horizon_admin CLUSTER_ID PRINCIPAL_ID NAME TENANT_ID REGION [--existing-only]"
-  cluster_id="$1" principal="$2" name="$3" tenant="$4" region="$5"
+  fail() {
+    printf 'Error [horizondb-admin]: %s\n' "$*" >&2
+    exit 1
+  }
+  [[ $# == 5 || ($# == 6 && "$6" == --existing-only) ]] \
+    || fail "Usage: ensure_horizon_admin CLUSTER_ID PRINCIPAL_ID NAME TENANT_ID REGION [--existing-only]"
+  cluster_id="$1"
+  principal="$2"
+  name="$3"
+  tenant="$4"
+  region="$5"
   existing_only="${6:-}"
-  cluster="$(az resource show --ids "$cluster_id" --api-version 2026-05-01-preview -o json)" ||
-    fail "Cannot read HorizonDB cluster"
+  cluster="$(az resource show --ids "$cluster_id" --api-version 2026-05-01-preview -o json)" \
+    || fail "Cannot read HorizonDB cluster"
   jq -e --arg id "$cluster_id" --arg tenant "$tenant" --arg region "$region" '
     (.id|ascii_downcase)==($id|ascii_downcase) and .properties.provisioningState=="Succeeded" and
     (.location|ascii_downcase)==($region|ascii_downcase) and
@@ -71,8 +79,8 @@ ensure_horizon_admin() (
 
   read_admin() {
     local response
-    response="$(az rest --method get --url "$cluster_id/administrators?api-version=2026-05-01-preview" -o json)" ||
-      fail "Cannot read HorizonDB administrators"
+    response="$(az rest --method get --url "$cluster_id/administrators?api-version=2026-05-01-preview" -o json)" \
+      || fail "Cannot read HorizonDB administrators"
     admin_state="$(jq -er --arg principal "$principal" --arg name "$name" --arg tenant "$tenant" '
       if (.value|type)!="array" or ((.nextLink // "")!="") then
         error("Incomplete administrator list; refusing to infer absence")
@@ -106,30 +114,41 @@ ensure_horizon_admin() (
       printf 'Verified created HorizonDB Entra administrator: %s\n' "$name"
       exit 0
     fi
-    if ((attempt < 6)); then sleep 5; fi
+    if ((attempt < 6)); then
+      sleep 5
+    fi
   done
   fail "Administrator PUT returned successfully but the matching identity was not visible after bounded verification"
 )
 
+# -- HorizonDB mutable configuration; creation settings are never replayed ----
 configure_horizon_cluster() (
   set +x
   set -euo pipefail
   trap - EXIT INT TERM
-  fail() { printf 'Error [horizondb-config]: %s\n' "$*" >&2; exit 1; }
+  fail() {
+    printf 'Error [horizondb-config]: %s\n' "$*" >&2
+    exit 1
+  }
   [[ $# == 6 ]] || fail "Usage: configure_horizon_cluster CLUSTER_ID REGION ADMIN CORES TENANT ENTRA_ENABLED"
-  id="$1" region="$2" admin="$3" cores="$4" tenant="$5" entra="$6"
+  id="$1"
+  region="$2"
+  admin="$3"
+  cores="$4"
+  tenant="$5"
+  entra="$6"
   [[ "$entra" == Enabled || "$entra" == Disabled ]] || fail "Invalid Entra authentication mode"
   parameter_group="${id%/clusters/*}/parameterGroups/${id##*/}-vector"
   read_cluster() {
-    cluster="$(az resource show --ids "$id" --api-version 2026-05-01-preview -o json)" ||
-      fail "Cannot read HorizonDB cluster"
+    cluster="$(az resource show --ids "$id" --api-version 2026-05-01-preview -o json)" \
+      || fail "Cannot read HorizonDB cluster"
     jq -e --arg id "$id" --arg region "$region" --arg admin "$admin" --argjson cores "$cores" '
       (.id|ascii_downcase)==($id|ascii_downcase) and (.location|ascii_downcase)==($region|ascii_downcase) and
       .properties.version=="17" and .properties.administratorLogin==$admin and
       .properties.vCores==$cores and .properties.replicaCount==1 and .properties.zonePlacementPolicy=="BestEffort"
     ' <<<"$cluster" >/dev/null || fail "Cluster identity, region, administrator, version or sizing mismatch"
-    state="$(jq -er '.properties.provisioningState | strings | select(length>0)' <<<"$cluster" | tr -d '\r\n')" ||
-      fail "Cluster provisioning state missing"
+    state="$(jq -er '.properties.provisioningState | strings | select(length>0)' <<<"$cluster" | tr -d '\r\n')" \
+      || fail "Cluster provisioning state missing"
     case "$state" in Failed | Canceled | Deleting) fail "Cluster is in terminal state $state" ;; esac
   }
   configured() {
@@ -153,15 +172,17 @@ configure_horizon_cluster() (
       authConfig:({passwordAuth:"Enabled",entraIdAuth:$entra} +
         (if $entra=="Enabled" then {tenantId:$tenant} else {} end))}}')"
   printf 'Updating HorizonDB parameter-group association and authentication via PATCH.\n'
-  az rest --method patch --url "$id?api-version=2026-05-01-preview" --body "$body" --output none ||
-    fail "Cluster configuration PATCH failed"
+  az rest --method patch --url "$id?api-version=2026-05-01-preview" --body "$body" --output none \
+    || fail "Cluster configuration PATCH failed"
   for attempt in {1..30}; do
     read_cluster
     if configured; then
       printf 'Verified HorizonDB parameter group is InSync and authentication settings match.\n'
       exit 0
     fi
-    if ((attempt < 30)); then sleep 10; fi
+    if ((attempt < 30)); then
+      sleep 10
+    fi
   done
   fail "Cluster configuration was not confirmed after bounded verification; success inventory was not published"
 )
@@ -174,7 +195,11 @@ provider="${DB_PROVIDER:-horizondb}"
 cluster="${DB_RESOURCE_NAME:-}"
 admin="${DB_ADMIN_USERNAME:-${DB_USERNAME:-studioadmin}}"
 identity_id="${AGENT_IDENTITY_RESOURCE_ID:-}"
-identity_principal="" identity_client="" identity_name="" identity_tenant="" auth_mode="password"
+identity_principal=""
+identity_client=""
+identity_name=""
+identity_tenant=""
+auth_mode="password"
 reuse_admin="${DB_REUSE_ENTRA_ADMIN:-false}"
 vcores="${DB_VCORES:-2}"
 sku="${DB_SKU_NAME:-Standard_D2ds_v5}"
@@ -184,7 +209,8 @@ password_from_env="${DB_PASSWORD:-}"
 # Retain the value only in this shell, not in the environment inherited by child processes.
 unset DB_PASSWORD
 firewall_file="${DB_FIREWALL_RULES_FILE:-}"
-vcores_explicit=false sizing_explicit=false
+vcores_explicit=false
+sizing_explicit=false
 output="${DB_OUTPUT:-$root/.local/database-deployment.json}"
 while (($#)); do
   case "$1" in
@@ -199,11 +225,24 @@ while (($#)); do
     --provider | --subscription | --resource-group | --location | --resource-name | --cluster-name | --admin-username | --identity-resource-id | --vcores | --sku-name | --storage-size-gb | --password-file | --firewall-rules-file | --output)
       (($# >= 2)) && [[ -n "$2" && "$2" != --* ]] || fail "Missing value for $1"
       case "$1" in
-        --subscription) subscription="$2" ;; --location) location="$2" ;;
+        --subscription)
+          subscription="$2"
+          ;;
+        --location)
+          location="$2"
+          ;;
         --provider) provider="$2" ;;
         --identity-resource-id) identity_id="$2" ;;
-        --resource-group) resource_group="$2" ;; --resource-name | --cluster-name) cluster="$2" ;;
-        --admin-username) admin="$2" ;; --vcores)
+        --resource-group)
+          resource_group="$2"
+          ;;
+        --resource-name | --cluster-name)
+          cluster="$2"
+          ;;
+        --admin-username)
+          admin="$2"
+          ;;
+        --vcores)
           vcores="$2"
           vcores_explicit=true
           ;;
@@ -232,6 +271,7 @@ for key in subscription resource_group location provider cluster admin identity_
   printf -v "$key" '%s' "$(printf '%s' "${!key}" | tr -d '\r\n')"
 done
 # -- Validate provider, credentials and sizing -------------------------------
+echo "==> [1/4] Validating database provider, credentials and sizing"
 case "$provider" in
   horizondb)
     prefix=hdb
@@ -245,11 +285,13 @@ case "$provider" in
 esac
 [[ "$reuse_admin" == true || "$reuse_admin" == false ]] || fail "DB_REUSE_ENTRA_ADMIN must be true or false"
 if [[ "$reuse_admin" == true ]]; then
-  [[ "$provider" == horizondb && -n "$identity_id" ]] ||
-    fail "--reuse-entra-admin requires HorizonDB and AGENT_IDENTITY_RESOURCE_ID"
+  [[ "$provider" == horizondb && -n "$identity_id" ]] \
+    || fail "--reuse-entra-admin requires HorizonDB and AGENT_IDENTITY_RESOURCE_ID"
 fi
 template="$root/bicep/database.bicep"
-for tool in az jq mktemp; do command -v "$tool" >/dev/null || fail "Required tool missing: $tool"; done
+for tool in az jq mktemp; do
+  command -v "$tool" >/dev/null || fail "Required tool missing: $tool"
+done
 [[ -n "$password_from_env" || -f "$password_file" ]] || fail "Set DB_PASSWORD or provide a protected password file"
 [[ "$admin" =~ ^[a-zA-Z][a-zA-Z0-9_]{0,62}$ ]] || fail "Invalid administrator name"
 if [[ "$provider" == postgresql ]]; then
@@ -272,6 +314,7 @@ fi
 [[ ! -e "$output" ]] || fail "Output already exists; preserve it and select a new --output"
 
 # -- Prepare protected parameters and failure handling -----------------------
+echo "==> [2/4] Preparing protected parameters and resolving existing resources"
 mkdir -p -- "$root/.local"
 chmod 700 "$root/.local"
 tmp="$(mktemp -d "$root/.local/database-deploy.XXXXXX")"
@@ -284,8 +327,8 @@ cleanup() {
     printf 'Error: %s %s failed. No automatic rollback or provider fallback was performed.\n' "$provider" "$stage" >&2
     # Keep the attempted ARM resource ID even if provisioning or output validation fails.
     if $recorded; then
-      jq --arg stage "$stage" '.status="failed" | .failed_stage=$stage' "$output" >"$tmp/status.json" &&
-        mv -- "$tmp/status.json" "$output"
+      jq --arg stage "$stage" '.status="failed" | .failed_stage=$stage' "$output" >"$tmp/status.json" \
+        && mv -- "$tmp/status.json" "$output"
       printf 'Resource identity retained in %s\n' "$output" >&2
     fi
   fi
@@ -339,8 +382,8 @@ fi
 # Resolve the actual UAMI object ID, not its client ID: the provider administrator API keys on principalId.
 # Always query ARM even when callers export IDs, so a stale/mismatched environment cannot grant another principal.
 if [[ -n "$identity_id" ]]; then
-  [[ "${identity_id,,}" =~ ^/subscriptions/[^/]+/resourcegroups/[^/]+/providers/microsoft.managedidentity/userassignedidentities/[^/]+$ ]] ||
-    fail "Identity must be a user-assigned managed identity ARM resource ID"
+  [[ "${identity_id,,}" =~ ^/subscriptions/[^/]+/resourcegroups/[^/]+/providers/microsoft.managedidentity/userassignedidentities/[^/]+$ ]] \
+    || fail "Identity must be a user-assigned managed identity ARM resource ID"
   identity="$(az identity show --ids "$identity_id" -o json)"
   identity_principal="$(jq -er '.principalId | strings | select(test("^[0-9a-fA-F-]{36}$"))' <<<"$identity" | tr -d '\r\n')"
   identity_client="$(jq -er '.clientId | strings | select(test("^[0-9a-fA-F-]{36}$"))' <<<"$identity" | tr -d '\r\n')"
@@ -362,15 +405,15 @@ if [[ "$provider" == horizondb ]]; then
     ' <<<"$clusters" | tr -d '\r\n')" || fail "Invalid HorizonDB discovery response"
   [[ "$matches" == 0 || "$matches" == 1 ]] || fail "Ambiguous HorizonDB resource identity"
   if [[ "$matches" == 1 ]]; then
-    existing="$(az resource show --ids "$cluster_id" --api-version 2026-05-01-preview -o json)" ||
-      fail "Cannot read existing HorizonDB cluster"
+    existing="$(az resource show --ids "$cluster_id" --api-version 2026-05-01-preview -o json)" \
+      || fail "Cannot read existing HorizonDB cluster"
     jq -e --arg id "$cluster_id" --arg region "$location" --arg admin "$admin" --argjson cores "$vcores" '
       (.id|ascii_downcase)==($id|ascii_downcase) and (.location|ascii_downcase)==($region|ascii_downcase) and
       .properties.provisioningState=="Succeeded" and .properties.version=="17" and
       .properties.administratorLogin==$admin and .properties.vCores==$cores and
       .properties.replicaCount==1 and .properties.zonePlacementPolicy=="BestEffort"
-      ' <<<"$existing" >/dev/null ||
-      fail "Existing HorizonDB cluster state, region, administrator, version or sizing differs; refusing creation/update"
+      ' <<<"$existing" >/dev/null \
+      || fail "Existing HorizonDB cluster state, region, administrator, version or sizing differs; refusing creation/update"
     reuse_cluster=true
     printf 'Verified existing HorizonDB cluster; ARM will not replay the cluster creation PUT.\n'
   fi
@@ -399,9 +442,13 @@ jq -n --rawfile password "$password_file" --slurpfile rules "$tmp/rules.json" \
 printf 'Target: subscription=%s resource-group=%s region=%s cluster=%s\n' \
   "$subscription" "$resource_group" "$location" "$cluster"
 # -- Validate ARM before creating billable resources --------------------------
-printf 'Validating %s template and explicit firewall rules...\n' "$provider"
-if ! az deployment group validate --subscription "$subscription" --resource-group "$resource_group" \
-  --template-file "$template" --parameters "@$tmp/parameters.json" --output none >"$tmp/diagnostics" 2>&1; then
+printf '==> [3/4] Validating %s template and explicit firewall rules...\n' "$provider"
+if ! az deployment group validate \
+  --subscription "$subscription" \
+  --resource-group "$resource_group" \
+  --template-file "$template" \
+  --parameters "@$tmp/parameters.json" \
+  --output none >"$tmp/diagnostics" 2>&1; then
   fail "ARM validation failed for $provider in $location; check access, capacity and parameters. CLI diagnostics are suppressed to protect credentials"
 fi
 
@@ -411,10 +458,16 @@ jq -n --arg id "$cluster_id" --arg region "$location" --arg provider "$provider"
   '{status:"creating", resource_id:$id, region:$region, DB_PROVIDER:$provider}' >"$output"
 recorded=true
 stage="provisioning"
-if ! az deployment group create --subscription "$subscription" --resource-group "$resource_group" \
-  --name "module06-$cluster" --mode Incremental \
-  --template-file "$template" --parameters "@$tmp/parameters.json" \
-  --query properties.outputs --output json >"$tmp/result.json" 2>"$tmp/diagnostics"; then
+echo "==> [4/4] Provisioning the database and verifying connection settings"
+if ! az deployment group create \
+  --subscription "$subscription" \
+  --resource-group "$resource_group" \
+  --name "module06-$cluster" \
+  --mode Incremental \
+  --template-file "$template" \
+  --parameters "@$tmp/parameters.json" \
+  --query properties.outputs \
+  --output json >"$tmp/result.json" 2>"$tmp/diagnostics"; then
   printf 'Inspect ARM deployment operations in the portal: %s (nested: module06-%s). Request bodies may contain credentials; do not share them.\n' \
     "module06-$cluster" "$provider" >&2
   fail "ARM provisioning failed for $provider; CLI diagnostics are suppressed to protect credentials"
@@ -444,13 +497,17 @@ jq -e --arg provider "$provider" --arg id "$cluster_id" --arg region "$location"
 if [[ "$provider" == horizondb ]]; then
   stage="cluster-configuration"
   entra=Disabled
-  if [[ "$auth_mode" == entra ]]; then entra=Enabled; fi
+  if [[ "$auth_mode" == entra ]]; then
+    entra=Enabled
+  fi
   configure_horizon_cluster "$cluster_id" "$location" "$admin" "$vcores" "$identity_tenant" "$entra"
 fi
 if [[ "$provider" == horizondb && "$auth_mode" == entra ]]; then
   stage="administrator"
   admin_args=()
-  if [[ "$reuse_admin" == true ]]; then admin_args+=(--existing-only); fi
+  if [[ "$reuse_admin" == true ]]; then
+    admin_args+=(--existing-only)
+  fi
   ensure_horizon_admin "$cluster_id" "$identity_principal" "$identity_name" \
     "$identity_tenant" "$location" "${admin_args[@]}"
 fi

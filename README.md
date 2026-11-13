@@ -19,6 +19,7 @@ The easiest way to explore the repository is through the [AI Notes site](https:/
 | [Anyscale on AKS](anyscale-on-aks/README.md) | Scripts and guidance for deploying the Anyscale Operator on AKS and running distributed model inference and fine-tuning with Ray. A [Chinese guide](anyscale-on-aks/README_CN.md) is also available. |
 | [Anyscale on Azure](anyscale-on-azure/README.md) | Microsoft Entra service principal setup for Anyscale Kubernetes Operator authentication, with a masked example response and a [permission-check script](anyscale-on-azure/check_permission.sh). |
 | [CNI on AKS](cni-on-aks/README.md) | A hands-on guide to managing and installing a Container Network Interface (CNI) on AKS, including creating a BYO CNI cluster, installing Cilium, and validating network connectivity. |
+| [AKS GitOps with Flux and ACR Artifact Cache](gitops-acr-cache/README.md) | An outbound-first image delivery architecture for restricted enterprise networks, combining Flux image automation, pull-request approval, and on-demand caching from an upstream ACR to a downstream ACR. Includes deployment and verification scripts and a [minimal GitOps demo](gitops-acr-cache/gitops/README.md). Guides are in Chinese. |
 | [Azure Metrics to Prometheus and Grafana](azmon-export-to-prometheus/README.md) | A practical guide for exporting Azure Monitor metrics in Prometheus format and visualizing them with Grafana. |
 | [Istio Monitoring on AKS](istio-on-aks/monitoring/README.md) | A consolidated observability guide for the AKS Istio add-on, including metrics, access logs, tracing, and supporting tools. |
 | [E2B Embed on Azure](e2b-on-azure/Embed/quick-install.md) | Install guides to deploy a single Azure VM Scale Set instance. Links within the guide lead to advanced configurations for an existing VNet or Storage Private Link. |
@@ -49,6 +50,7 @@ azure-ai-infrastructure-workshop/ Multi-track Azure AI infrastructure labs
 cni-on-aks/                      AKS CNI management and Cilium installation guide
 codegen-compare-across-models/   Code-generation comparisons and source material
 e2b-on-azure/Embed/              E2B Embed deployment guides and vendored Azure runtime
+gitops-acr-cache/                AKS GitOps, Flux image automation, and ACR Artifact Cache guides and scripts
 istio-on-aks/                    AKS Istio observability guidance
 models-healthcare/               Healthcare and medical-model evaluations
 multi-k8s-mgmt/                  Kubernetes multi-cluster management notes
