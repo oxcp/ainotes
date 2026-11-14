@@ -20,11 +20,11 @@ case "${OSTYPE:-}" in
 esac
 
 fail() {
-  printf 'ERROR: %s\n' "$*" >&2
+  printf '\033[1;33mERROR: %s\033[0m\n' "$*" >&2
   exit 1
 }
 
-trap 'rc=$?; printf "Cleanup stopped (%s). Review the error before retrying.\n" "$rc" >&2; exit "$rc"' ERR
+trap 'rc=$?; printf "\033[1;33mCleanup stopped (%s). Review the error before retrying.\033[0m\n" "$rc" >&2; exit "$rc"' ERR
 
 # ── Command-line options ────────────────────────────────────────────────────
 execute=false
@@ -188,13 +188,13 @@ printf '    [4/6] Delete resource-group deployment records:\n'
 jq -r '.[].name' <<<"$deployments"
 printf '    [5/6] Delete subscription deployment record: %s (exists: %s)\n' "$deployment_name" "$has_sub_deployment"
 printf '    [6/6] Delete the ENTIRE resource group: %s\n' "$resource_group"
-printf 'Back up valuable Sandbox state outside the group before deletion; group-local snapshots are not an external backup.\n'
+printf '\033[1;33mBack up valuable Sandbox state outside the group before deletion; group-local snapshots are not an external backup.\033[0m\n'
 printf 'AKS deletion also removes its managed node resource group. Deployment record deletion alone does not delete resources.\n'
 if ! "$execute"; then
   printf 'Dry-run only. Run Module-06 cleanup first, then rerun with --execute.\n'
   exit 0
 fi
-printf 'All resources and data in this group will be deleted. Type "delete %s": ' "$resource_group"
+printf '\033[1;33mAll resources and data in this group will be deleted. Type "delete %s": \033[0m' "$resource_group"
 IFS= read -r confirmation || fail "Confirmation required"
 [[ "$confirmation" == "delete $resource_group" ]] || fail "Confirmation did not match; nothing deleted"
 
@@ -278,4 +278,4 @@ az_call group delete --name "$resource_group" --yes
 remaining_groups="$(az_call group list -o json)" || fail "Cannot verify resource-group deletion"
 jq -e --arg rg "$resource_group" 'all(.[]; (.name|ascii_downcase)!=($rg|ascii_downcase))' <<<"$remaining_groups" >/dev/null ||
   fail "Resource group still exists; check Azure deletion status"
-printf 'Cleanup complete: %s removed from subscription %s.\n' "$resource_group" "$subscription"
+printf '\033[1;32mCleanup complete: %s removed from subscription %s.\033[0m\n' "$resource_group" "$subscription"

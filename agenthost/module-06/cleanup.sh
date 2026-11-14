@@ -19,10 +19,10 @@ case "${OSTYPE:-}" in
 esac
 root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 fail() {
-  printf 'Error [cleanup]: %s\n' "$*" >&2
+  printf '\033[1;33mError [cleanup]: %s\033[0m\n' "$*" >&2
   exit 1
 }
-trap 'rc=$?; printf "Cleanup stopped (%s); recovery files retained. Review the error before retrying.\n" "$rc" >&2; exit "$rc"' ERR
+trap 'rc=$?; printf "\033[1;33mCleanup stopped (%s); recovery files retained. Review the error before retrying.\033[0m\n" "$rc" >&2; exit "$rc"' ERR
 # -- Command-line options and required tools ---------------------------------
 execute=false
 while (($#)); do
@@ -292,13 +292,14 @@ printf 'Local generated files (removed only after complete cloud cleanup):\n'
 if ((${#files[@]})); then
   printf '  %s\n' "${files[@]}"
 fi
-printf '%s\n' 'Shared infrastructure and unrelated Module-04 sandboxes are preserved.' \
+printf '%s\n' 'Shared infrastructure and unrelated Module-04 sandboxes are preserved.'
+printf '\033[1;33m%s\033[0m\n' \
   'Back up valuable state outside this deletion scope first; attributable snapshots will also be deleted.'
 if ! $execute; then
   printf 'DRY RUN: nothing changed. Use --execute to apply.\n'
   exit 0
 fi
-printf 'Type "delete module-06" to confirm: '
+printf '\033[1;33mType "delete module-06" to confirm: \033[0m'
 read -r answer || fail "Confirmation required"
 [[ "$answer" == 'delete module-06' ]] || fail "Confirmation did not match"
 confirmed_plan="$(plan)" || fail "Cannot revalidate plan"
@@ -375,12 +376,14 @@ echo "==> [4/4] Verifying final cloud state and removing generated local files"
 final_plan="$(plan)" || fail "Cannot verify final cleanup"
 jq -e 'all(to_entries[]|select(.key!="limitations" and .key!="unattributed_snapshots"); .value|length==0)' \
   <<<"$final_plan" >/dev/null || {
-  printf 'Remaining cloud cleanup plan (limitations and unattributed snapshots are not deletion targets):\n' >&2
+  printf '\033[1;33mRemaining cloud cleanup plan (limitations and unattributed snapshots are not deletion targets):\033[0m\n' >&2
   jq . <<<"$final_plan" >&2
   fail "Resources remain; recovery files retained"
 }
 if jq -e '.limitations|length>0' <<<"$final_plan" >/dev/null; then
-  jq -r '.limitations[]' <<<"$final_plan" >&2
+  while IFS= read -r limitation; do
+    printf '\033[1;33m%s\033[0m\n' "$limitation" >&2
+  done < <(jq -r '.limitations[]' <<<"$final_plan")
   fail "Partial cleanup only; unverified ownership/prior state requires review; local files retained"
 fi
 for file in "${files[@]}"; do
@@ -389,4 +392,4 @@ done
 for file in "${files[@]}"; do
   rm -f -- "$file"
 done
-printf 'Module-06 cleanup complete. Unattributed snapshots, custom inputs and shared resources retained.\n'
+printf '\033[1;32mModule-06 cleanup complete. Unattributed snapshots, custom inputs and shared resources retained.\033[0m\n'
