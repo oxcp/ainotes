@@ -38,6 +38,8 @@ Usage: bash deploy-database.sh [options]
   --help
 Precedence: explicit flags > environment > defaults. SN: DEPLOYMENT_SN or RG deploymentSN tag.
 Running this script creates billable resources after mandatory ARM validation.
+Provisioning reports ARM state and elapsed time every 15 seconds while waiting.
+Edits to this script take effect on the next run, not an in-progress deployment.
 Never creates a resource group. Password uses a protected temporary file, never a literal argument.
 WARNING: the default firewall exposes the database to all IPv4 addresses. TLS/authentication remain required.
 PostgreSQL Flexible Server uses PG17, the existing postgres database and the vector allowlist.
@@ -49,6 +51,46 @@ HELP
 fail() {
   printf 'Error: %s\n' "$*" >&2
   exit 1
+}
+provision_database() {
+  local started=$SECONDS state
+  printf '    Submitting ARM deployment: module06-%s\n' "$cluster" >&2
+  az deployment group create \
+    --subscription "$subscription" \
+    --resource-group "$resource_group" \
+    --name "module06-$cluster" \
+    --mode Incremental \
+    --template-file "$template" \
+    --parameters "@$tmp/parameters.json" \
+    --no-wait --output none >"$tmp/result.json" 2>"$tmp/diagnostics" || return 1
+  while true; do
+    state="$(az deployment group show \
+      --subscription "$subscription" --resource-group "$resource_group" \
+      --name "module06-$cluster" --query properties.provisioningState \
+      --output tsv 2>"$tmp/diagnostics" | tr -d '\r\n')" || {
+      printf '    Cannot read ARM deployment state; stopping without assuming success.\n' >&2
+      return 1
+    }
+    case "$state" in
+      Succeeded|Failed|Canceled|Accepted|Running|Ready|Creating|Updating)
+        printf '    ARM deployment: %s (elapsed %dm %02ds)\n' \
+          "$state" "$(((SECONDS - started) / 60))" "$(((SECONDS - started) % 60))" >&2
+        ;;
+      *)
+        printf '    ARM deployment returned an empty or unrecognized state; stopping.\n' >&2
+        return 1
+        ;;
+    esac
+    case "$state" in
+      Succeeded) break ;;
+      Failed|Canceled) return 1 ;;
+    esac
+    sleep 15 || return 1
+  done
+  az deployment group show \
+    --subscription "$subscription" --resource-group "$resource_group" \
+    --name "module06-$cluster" --query properties.outputs \
+    --output json >"$tmp/result.json" 2>"$tmp/diagnostics"
 }
 # Subshell helpers preserve the former scripts' variable, exit and cleanup isolation.
 # -- HorizonDB administrator verification and creation -----------------------
@@ -115,6 +157,7 @@ ensure_horizon_admin() (
       exit 0
     fi
     if ((attempt < 6)); then
+      printf '    Waiting for HorizonDB Entra administrator visibility (%s/6).\n' "$attempt"
       sleep 5
     fi
   done
@@ -181,11 +224,15 @@ configure_horizon_cluster() (
       exit 0
     fi
     if ((attempt < 30)); then
+      printf '    Waiting for HorizonDB configuration: state=%s, verification=%s/30.\n' "$state" "$attempt"
       sleep 10
     fi
   done
   fail "Cluster configuration was not confirmed after bounded verification; success inventory was not published"
 )
+# Parse the deployment body before running it: edits during a long Azure call
+# must not change the commands Bash reads when that call returns.
+main() {
 # -- Configuration ----------------------------------------------------------
 root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 subscription="${SUBSCRIPTION_ID:-}"
@@ -271,7 +318,7 @@ for key in subscription resource_group location provider cluster admin identity_
   printf -v "$key" '%s' "$(printf '%s' "${!key}" | tr -d '\r\n')"
 done
 # -- Validate provider, credentials and sizing -------------------------------
-echo "==> [1/4] Validating database provider, credentials and sizing"
+echo "  ==> [1/4] Validating database provider, credentials and sizing"
 case "$provider" in
   horizondb)
     prefix=hdb
@@ -314,7 +361,7 @@ fi
 [[ ! -e "$output" ]] || fail "Output already exists; preserve it and select a new --output"
 
 # -- Prepare protected parameters and failure handling -----------------------
-echo "==> [2/4] Preparing protected parameters and resolving existing resources"
+echo "  ==> [2/4] Preparing protected parameters and resolving existing resources"
 mkdir -p -- "$root/.local"
 chmod 700 "$root/.local"
 tmp="$(mktemp -d "$root/.local/database-deploy.XXXXXX")"
@@ -428,7 +475,7 @@ jq -n --rawfile password "$password_file" --slurpfile rules "$tmp/rules.json" \
   --arg principal "$identity_principal" --arg identityName "$identity_name" --arg tenant "$identity_tenant" \
   --arg provider "$provider" --arg sku "$sku" --argjson storage "$storage" --argjson reuse "$reuse_cluster" '
   ($password | sub("\r?\n$"; "")) as $p |
-  if ($p | length) < 8 or ($p | length) > 128 or ($p | contains("\r") or contains("\n") or contains("\u0000"))
+  if ($p | length) < 8 or ($p | length) > 128 or ($p | contains("\r") or contains("\n") or index("\u0000") != null)
   then error("Password must contain 8-128 characters on one line")
   else {
     clusterName: {value:$cluster}, location:{value:$location},
@@ -442,7 +489,7 @@ jq -n --rawfile password "$password_file" --slurpfile rules "$tmp/rules.json" \
 printf 'Target: subscription=%s resource-group=%s region=%s cluster=%s\n' \
   "$subscription" "$resource_group" "$location" "$cluster"
 # -- Validate ARM before creating billable resources --------------------------
-printf '==> [3/4] Validating %s template and explicit firewall rules...\n' "$provider"
+printf '  ==> [3/4] Validating %s template and explicit firewall rules...\n' "$provider"
 if ! az deployment group validate \
   --subscription "$subscription" \
   --resource-group "$resource_group" \
@@ -458,22 +505,15 @@ jq -n --arg id "$cluster_id" --arg region "$location" --arg provider "$provider"
   '{status:"creating", resource_id:$id, region:$region, DB_PROVIDER:$provider}' >"$output"
 recorded=true
 stage="provisioning"
-echo "==> [4/4] Provisioning the database and verifying connection settings"
-if ! az deployment group create \
-  --subscription "$subscription" \
-  --resource-group "$resource_group" \
-  --name "module06-$cluster" \
-  --mode Incremental \
-  --template-file "$template" \
-  --parameters "@$tmp/parameters.json" \
-  --query properties.outputs \
-  --output json >"$tmp/result.json" 2>"$tmp/diagnostics"; then
+echo "  ==> [4/4] Provisioning the database and verifying connection settings"
+if ! provision_database; then
   printf 'Inspect ARM deployment operations in the portal: %s (nested: module06-%s). Request bodies may contain credentials; do not share them.\n' \
     "module06-$cluster" "$provider" >&2
   fail "ARM provisioning failed for $provider; CLI diagnostics are suppressed to protect credentials"
 fi
 # -- Validate and save nonsecret connection settings --------------------------
 stage="output-validation"
+printf '    Validating deployment outputs and connection settings.\n'
 # Both providers expose the same connection contract, so Agent code does not branch by service.
 # ARM success is not a connectivity check; deploy-aca.sh verifies schema access from the guests.
 jq -e --arg provider "$provider" --arg id "$cluster_id" --arg region "$location" \
@@ -496,6 +536,7 @@ jq -e --arg provider "$provider" --arg id "$cluster_id" --arg region "$location"
 ' "$tmp/result.json" >"$tmp/status.json"
 if [[ "$provider" == horizondb ]]; then
   stage="cluster-configuration"
+  printf '    Verifying HorizonDB parameter group and authentication settings.\n'
   entra=Disabled
   if [[ "$auth_mode" == entra ]]; then
     entra=Enabled
@@ -504,6 +545,7 @@ if [[ "$provider" == horizondb ]]; then
 fi
 if [[ "$provider" == horizondb && "$auth_mode" == entra ]]; then
   stage="administrator"
+  printf '    Verifying HorizonDB Entra administrator.\n'
   admin_args=()
   if [[ "$reuse_admin" == true ]]; then
     admin_args+=(--existing-only)
@@ -515,3 +557,6 @@ mv -- "$tmp/status.json" "$output"
 printf '%s provisioned. Nonsecret connection settings: %s\n' "$provider" "$output"
 jq '{DB_PROVIDER,DB_ENDPOINT,DB_PORT,DB_DATABASE,DB_USERNAME,DB_SSL_MODE,DB_AUTH_MODE}' "$output"
 printf 'Database connectivity/schema are not yet verified. Run the ACA script with --migrate for initial schema setup.\n'
+}
+
+main "$@"; exit "$?"

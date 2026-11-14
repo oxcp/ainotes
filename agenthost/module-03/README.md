@@ -326,6 +326,12 @@ Verify the VNet name in the **AKS node resource group**. If the detected VNet is
 VNET_NAME=<aks-vnet-name> bash deploy-storage-private-link.sh
 ```
 
+For unattended execution, use `--yes` to skip this confirmation and accept the first VNet discovered in the AKS node resource group. This does not bypass other checks:
+
+```bash
+bash deploy-storage-private-link.sh --yes
+```
+
 > [!note]
 > `deploy-storage-private-link.sh` makes the following key changes:
 >

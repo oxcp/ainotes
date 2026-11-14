@@ -56,7 +56,9 @@ fi
 for tool in jq az; do
   command -v "$tool" >/dev/null || fail "Required tool missing: $tool"
 done
-echo "==> [1/3] Validating shared Blob configuration" >&2
+steps=3
+[[ "$mode" == provisioned ]] || steps=2
+echo "  ==> [1/$steps] Validating shared Blob configuration" >&2
 
 urls=()
 # Accept either common settings or the generated five-role map, but require one shared account.
@@ -81,7 +83,7 @@ for candidate in "${urls[@]}"; do
 done
 
 # -- Resolve the existing Module 1 storage account ----------------------------
-echo "==> [2/3] Resolving and verifying the existing storage account" >&2
+echo "  ==> [2/$steps] Resolving and verifying the existing storage account" >&2
 container="${KB_STORAGE_CONTAINER_ID:-}"
 name="${STORAGE_ACCOUNT_NAME:-}"
 subscription="${STORAGE_SUBSCRIPTION_ID:-${SUBSCRIPTION_ID:-}}"
@@ -145,7 +147,7 @@ if [[ "$mode" == discover ]]; then
   exit 0
 fi
 # -- Provision only the container; leave shared account settings unchanged ----
-echo "==> [3/3] Provisioning the private data container (shared account unchanged)" >&2
+echo "  ==> [3/3] Provisioning the private data container (shared account unchanged)" >&2
 # Persist the exact Module-06 child before ARM so storage-only/failed deployments
 # can be cleaned without deriving a storage account name during deletion.
 inventory="$root/.local/storage-deployment.json"

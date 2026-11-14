@@ -34,7 +34,7 @@ fi
 for tool in az jq; do
   command -v "$tool" >/dev/null || fail "Required tool missing: $tool"
 done
-echo "==> [1/3] Resolving Foundry account, project and embedding settings" >&2
+echo "  ==> [1/3] Resolving Foundry account, project and embedding settings" >&2
 subscription="${SUBSCRIPTION_ID:-$(az account show --query id -o tsv | tr -d '\r\n')}"
 resource_group="${RESOURCE_GROUP:-rg-agenthost-workshop}"
 account="${FOUNDRY_RESOURCE_NAME:-}"
@@ -87,7 +87,7 @@ done
   || fail "Use a text-embedding-3 model that supports the application's dimensions parameter"
 
 # -- Verify existing deployments; preserve shared model and capacity ----------
-echo "==> [2/3] Verifying existing deployments, APIM and Agent identity" >&2
+echo "  ==> [2/3] Verifying existing deployments, APIM and Agent identity" >&2
 deployments="$(az cognitiveservices account deployment list --subscription "$subscription" -g "$resource_group" -n "$account" -o json)"
 existing="$(jq -c --arg name "$deployment" '[.[] | select(.name==$name)] |
   if length>1 then error("Duplicate deployment name") else .[0] // null end' <<<"$deployments" | tr -d '\r')"
@@ -160,7 +160,7 @@ printf 'Foundry target: %s/projects/%s; embedding=%s (%s/%s, %s x %s)\n' \
   "$account_id" "$project" "$deployment" "$model" "$version" "$sku" "$capacity" >&2
 
 # -- Record ownership and deploy only Module-06 children ----------------------
-echo "==> [3/3] Recording ownership and deploying embeddings/APIM routes" >&2
+echo "  ==> [3/3] Recording ownership and deploying embeddings/APIM routes" >&2
 # Refuse pre-existing children without a baseline rather than inventing their prior state.
 source "$root/common/cleanup-ownership.sh"
 ownership_begin_models "$account_id/deployments/$deployment" "$api_id/operations/embeddings" \

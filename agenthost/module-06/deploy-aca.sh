@@ -174,7 +174,7 @@ for key in subscription resource_group region sandbox_group registry identity vn
   operation_timeout cpu memory auto_suspend_mins; do
   printf -v "$key" '%s' "$(printf '%s' "${!key}" | tr -d '\r\n')"
 done
-echo "==> [1/5] Validating ACA inputs, configuration and CLI capabilities"
+echo "  ==> [1/5] Validating ACA inputs, configuration and CLI capabilities"
 for tool in jq aca mktemp; do
   command -v "$tool" >/dev/null || fail "Required tool missing: $tool"
 done
@@ -426,7 +426,7 @@ fi
 
 # -- Verify or create the group-level Blob volume ----------------------------
 stage="volume"
-echo "==> [2/5] Verifying the shared Blob volume and managed identity"
+echo "  ==> [2/5] Verifying the shared Blob volume and managed identity"
 volume_identity="$(printf '%s' "${KB_VOLUME_IDENTITY:-$identity}" | tr -d '\r\n')"
 identity_kind=UserAssigned
 identity_args=(--identity-resource-id "$volume_identity")
@@ -478,7 +478,7 @@ single "$tmp/response.json" | jq -e --arg name "$volume_name" --arg container "$
 
 # -- Import all five images and create the Sandboxes -------------------------
 stage="image-import"
-echo "==> [3/5] Importing images, creating Sandboxes and mounting shared data"
+echo "  ==> [3/5] Importing images, creating Sandboxes and mounting shared data"
 for active_role in "${roles[@]}"; do
   image="$registry/studio-$active_role:$tag"
   disk_name="studio-$active_role-$deployment_id"
@@ -555,7 +555,7 @@ done
 
 # -- Upload protected runtime configuration ---------------------------------
 stage="configuration"
-echo "==> [4/5] Uploading runtime settings, checking database access and activating Agents"
+echo "  ==> [4/5] Uploading runtime settings, checking database access and activating Agents"
 for active_role in "${roles[@]}"; do
   sandbox_id="$(jq -er --arg role "$active_role" '.agents[$role].sandbox_id' "$output" | tr -d '\r\n')"
   # Use actual ingress URLs, not guessed hostnames, for discovery and downstream A2A requests.
@@ -621,7 +621,7 @@ for active_role in "${roles[@]}"; do
 done
 
 stage="health"
-echo "==> [5/5] Verifying health, authenticated Agent Cards and Chat collaboration"
+echo "  ==> [5/5] Verifying health, authenticated Agent Cards and Chat collaboration"
 active_role=""
 # Header files keep API keys out of curl's literal command-line arguments.
 jq -r '"Authorization: Bearer " + .chat.A2A_API_KEY' "$config" >"$tmp/peer-header"

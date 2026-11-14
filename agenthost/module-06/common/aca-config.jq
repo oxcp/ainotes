@@ -5,7 +5,7 @@ def positive_integer: test("^[1-9][0-9]*$");
 def first_endpoint: map(select(type == "string" and length > 0)) | first | https;
 def role_config:
   type == "object" and all(to_entries[]; (.key | test("^[A-Z][A-Z0-9_]*$")) and (.value | type == "string"))
-  and all(.[]; contains("\u0000") | not)
+  and all(.[]; index("\u0000") == null)
   and (.A2A_API_KEY | nonempty and length >= 24 and (test("[\\r\\n]") | not))
   and ((.DB_PROVIDER // "horizondb") | . == "horizondb" or . == "postgresql")
   and (.DB_ENDPOINT | nonempty and test("^[a-zA-Z0-9.-]+$")

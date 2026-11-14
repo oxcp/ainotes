@@ -325,6 +325,12 @@ Continue with this VNet? [y/N]: y
 VNET_NAME=<aks-vnet-name> bash deploy-storage-private-link.sh
 ```
 
+无人值守执行时，可以使用 `--yes` 跳过此确认，接受在 AKS 节点资源组中发现的第一个 VNet。该参数不会跳过其他检查：
+
+```bash
+bash deploy-storage-private-link.sh --yes
+```
+
 > [!note]
 > `deploy-storage-private-link.sh` 会进行以下关键更改：
 >

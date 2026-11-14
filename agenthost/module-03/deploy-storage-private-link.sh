@@ -1,9 +1,29 @@
 #!/usr/bin/env bash
 # Optional post-AKS deployment for private Blob connectivity.
-# Usage: ./deploy-storage-private-link.sh
-# Optional override: VNET_NAME=<aks-vnet-name> ./deploy-storage-private-link.sh
+# Usage: bash deploy-storage-private-link.sh [--yes]
+# --yes skips confirmation of the automatically discovered AKS-managed VNet.
+# Optional override: VNET_NAME=<aks-vnet-name> bash deploy-storage-private-link.sh
 
 set -euo pipefail
+
+assume_yes=false
+for option in "$@"; do
+  case "$option" in
+    --yes)
+      assume_yes=true
+      ;;
+    --help)
+      printf '%s\n' 'Usage: bash deploy-storage-private-link.sh [--yes]' \
+        '--yes skips confirmation and uses the first VNet discovered in the AKS node resource group.' \
+        'Set VNET_NAME to select a VNet explicitly.'
+      exit 0
+      ;;
+    *)
+      printf 'ERROR: Unknown option: %s (use --help)\n' "$option" >&2
+      exit 1
+      ;;
+  esac
+done
 
 RESOURCE_GROUP="${RESOURCE_GROUP:-rg-agenthost-workshop}"
 
@@ -111,15 +131,19 @@ else
 
   echo "    No VNET_NAME input provided."
   echo "    First VNet in $NODE_RESOURCE_GROUP: $VNET_NAME"
-  read -r -p "Continue with this VNet? [y/N]: " CONFIRM
-  case "$CONFIRM" in
-    y|Y|yes|YES)
-      ;;
-    *)
-      echo "Aborted. Re-run with VNET_NAME=<your-vnet-name>."
-      exit 1
-      ;;
-  esac
+  if "$assume_yes"; then
+    echo "    --yes: continuing with the discovered VNet without confirmation."
+  else
+    read -r -p "Continue with this VNet? [y/N]: " CONFIRM
+    case "$CONFIRM" in
+      y|Y|yes|YES)
+        ;;
+      *)
+        echo "Aborted. Re-run with VNET_NAME=<your-vnet-name>."
+        exit 1
+        ;;
+    esac
+  fi
 fi
 
 VNET_ID=$(az network vnet show --resource-group "$NODE_RESOURCE_GROUP" --name "$VNET_NAME" --query id --output tsv | tr -d "\r\n")

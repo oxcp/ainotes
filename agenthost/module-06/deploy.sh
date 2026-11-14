@@ -17,6 +17,14 @@ umask 077
 
 # -- Helpers and command-line options ----------------------------------------
 root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+stage_header() {
+  local color="" reset=""
+  if [[ -t 1 && "${TERM:-}" != dumb && ! -v NO_COLOR ]]; then
+    color=$'\033[1;36m'
+    reset=$'\033[0m'
+  fi
+  printf '\n%s==> [Stage %s/6] %s%s\n' "$color" "$1" "$2" "$reset"
+}
 usage() {
   cat <<'HELP'
 Usage: bash deploy.sh [--stage all|storage|models|database|config|images|aca]
@@ -218,12 +226,12 @@ if wants config; then
     || fail "Remove AZURE_CLIENT_SECRET from ACA_COMMON; the primary cloud path uses Module-01 UAMI"
   # Synthetic DB/key values validate common settings without generating credentials or files.
   jq -e '
-      . + {FOUNDRY_EMBEDDING_BASE_URL:((.AGENT_APIM_ENDPOINT // "" | rtrimstr("/")) + "/openai/v1"),
+      (. + {FOUNDRY_EMBEDDING_BASE_URL:((.AGENT_APIM_ENDPOINT // "" | rtrimstr("/")) + "/openai/v1"),
       EMBEDDING_TOKEN_SCOPE:"https://ai.azure.com/.default",
       DB_PROVIDER:env.DB_PROVIDER,DB_AUTH_MODE:"password",DB_ENDPOINT:"validation.example.test",DB_PORT:"5432",
       DB_DATABASE:"postgres",DB_USERNAME:"studioadmin",DB_PASSWORD:"validation-only",
       DB_SSL_MODE:"require",
-      A2A_API_KEY:"validation-peer-key-000000000000"} as $env |
+      A2A_API_KEY:"validation-peer-key-000000000000"}) as $env |
       ["chat","orchestrator","data-processing","rag","sql"] |
       map({key:.,value:$env}) | from_entries
     ' <<<"$common_settings" | jq -e -f "$root/common/aca-config.jq" >/dev/null \
@@ -325,12 +333,12 @@ trap 'rc=$?; printf "Error [%s]: stage stopped (exit %s); no later stages ran. P
 # -- Run stages in dependency order -----------------------------------------
 if wants storage; then
   stage=storage
-  printf '\n==> [1/6] Private data container in existing Module-01 account (incremental ARM)\n'
+  stage_header 1 "Private data container in existing Module-01 account (incremental ARM)"
   bash "$root/deploy-storage.sh"
 fi
 if wants models; then
   stage=models
-  printf '\n==> [2/6] Existing Foundry embedding deployment + APIM operation; Module-01 authorization unchanged\n'
+  stage_header 2 "Existing Foundry embedding deployment + APIM operation; Module-01 authorization unchanged"
   # A failed model/APIM update must not leave old metadata eligible for config retries.
   rm -f -- "$root/.local/embedding-config.json"
   model_settings="$(bash "$root/deploy-models.sh")"
@@ -338,12 +346,12 @@ if wants models; then
 fi
 if wants database; then
   stage=database
-  printf '\n==> [3/6] Database ARM validation and provisioning\n'
+  stage_header 3 "Database ARM validation and provisioning"
   bash "$root/deploy-database.sh" --password-file "$DB_PASSWORD_FILE"
 fi
 if wants config; then
   stage=config
-  printf '\n==> [4/6] Merge protected common settings and DB manifest\n'
+  stage_header 4 "Merge protected common settings and DB manifest"
   [[ -f "$DB_PASSWORD_FILE" ]] || fail "Database password file missing"
   jq -e '.status=="provisioned" and .DB_PROVIDER==env.DB_PROVIDER' "$DB_OUTPUT" >/dev/null \
     || fail "DB_OUTPUT must be provisioned and match DB_PROVIDER"
@@ -379,12 +387,12 @@ if wants config; then
 fi
 if wants images; then
   stage=images
-  printf '\n==> [5/6] Five remote ACR builds (agent-src context)\n'
+  stage_header 5 "Five remote ACR builds (agent-src context)"
   bash "$root/build-images.sh"
 fi
 if wants aca; then
   stage=aca
-  printf '\n==> [6/6] Validate manifests, deploy, configure and check five Agents\n'
+  stage_header 6 "Validate manifests, deploy, configure and check five Agents"
   args=()
   # Provisioning a database does not create application tables; migration remains explicit.
   if $migrate; then

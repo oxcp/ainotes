@@ -69,17 +69,15 @@ resource cluster 'Microsoft.HorizonDb/clusters@2026-05-01-preview' = if (!reuseC
   }
 }
 
-resource existingCluster 'Microsoft.HorizonDb/clusters@2026-05-01-preview' existing = {
-  name: clusterName
-}
 // deploy-database.sh attaches/verifies the parameter group using PATCH after ARM.
 // deploy-database.sh creates/verifies the Entra administrator via REST after ARM succeeds.
 // The preview administrator PUT can return an empty body that ARM treats as a deployment failure.
 
 // HorizonDB creates DefaultPool with the cluster; existing references it instead of creating another pool.
 resource pool 'Microsoft.HorizonDb/clusters/pools@2026-05-01-preview' existing = {
-  parent: existingCluster
-  name: 'DefaultPool'
+  // The parent creation resource is skipped when reusing a cluster.
+  #disable-next-line use-parent-property
+  name: '${clusterName}/DefaultPool'
 }
 
 // HorizonDB firewall rules belong to the pool, unlike Flexible Server's server-level rules.
@@ -99,9 +97,11 @@ resource rules 'Microsoft.HorizonDb/clusters/pools/firewallRules@2026-05-01-prev
 ]
 
 // Return the service FQDN, not a guessed hostname; password and application schema are not outputs.
-output resourceId string = existingCluster.id
+output resourceId string = resourceId('Microsoft.HorizonDb/clusters', clusterName)
 output provider string = 'horizondb'
-output endpoint string = reuseCluster ? existingCluster.properties.fullyQualifiedDomainName : cluster!.properties.fullyQualifiedDomainName
+// A second cluster symbol, even "existing", emits a duplicate ARM resource with symbolic-name codegen.
+#disable-next-line use-resource-symbol-reference
+output endpoint string = reuseCluster ? reference(resourceId('Microsoft.HorizonDb/clusters', clusterName), '2026-05-01-preview').fullyQualifiedDomainName : cluster!.properties.fullyQualifiedDomainName
 output port int = 5432
 output database string = 'postgres'
 output username string = empty(identityPrincipalId) ? administratorLogin : identityName

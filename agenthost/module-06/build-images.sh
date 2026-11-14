@@ -40,7 +40,7 @@ fail() {
 # -- Configuration ----------------------------------------------------------
 images_preflight() {
   registry="${ACR_NAME:-}"
-  tag="${IMAGE_TAG:-module06}"
+  tag="${IMAGE_TAG:-latest}"
   while (($#)); do
     case "$1" in
       --registry | --tag)
@@ -102,11 +102,11 @@ images_preflight() {
 if [[ "${BASH_SOURCE[0]}" != "$0" ]]; then
   return 0
 fi
-echo "==> [1/2] Validating image settings and all five Dockerfiles"
+echo "  ==> [1/2] Validating image settings and all five Dockerfiles"
 images_preflight "$@"
 
 # -- Build each Agent image after all Dockerfiles pass preflight --------------
-echo "==> [2/2] Building and publishing five Agent images in the existing ACR"
+echo "  ==> [2/2] Building and publishing five Agent images in the existing ACR"
 for entry in "${agents[@]}"; do
   role="${entry%%:*}"
   package="${entry#*:}"

@@ -46,7 +46,7 @@ esac
 export RESOURCE_GROUP="${RESOURCE_GROUP:-rg-agenthost-workshop}"
 export LOCATION="${LOCATION:-westus3}"
 prefix="${ACA_SUBNET_PREFIX:-}"
-connection="${CUSTOMER_VNET_CONNECTION_NAME:-module06-aks-vnet}"
+connection="${CUSTOMER_VNET_CONNECTION_NAME:-bloblink}"
 [[ "$RESOURCE_GROUP" =~ ^[A-Za-z0-9_.()-]+$ && "$RESOURCE_GROUP" != *. ]] || fail "Invalid RESOURCE_GROUP"
 for tool in az jq kubectl openssl sed; do
   command -v "$tool" >/dev/null || fail "Required tool missing: $tool"
@@ -138,7 +138,7 @@ if [[ "$current" != null ]]; then
     <<<"$current" >/dev/null || fail "Existing connection targets another subnet; refusing to repoint it"
 fi
 
-# -- Create a dedicated delegated subnet, or verify the existing one ----------
+# -- Create or reuse the subnet, then ensure the ACA delegation ---------------
 subnets="$(az network vnet subnet list -g "$node_group" --vnet-name "$vnet_name" -o json)" ||
   fail "Cannot read VNet subnets"
 subnet="$(jq -c '[.[]|select(.name=="aca-subnet")] |
@@ -150,16 +150,34 @@ if [[ "$subnet" == null ]]; then
     --vnet-name "$vnet_name" \
     --name aca-subnet \
     --address-prefixes "$prefix" \
-    --delegations Microsoft.App/environments \
     -o none || fail "Subnet creation failed; choose a free /24 inside the AKS VNet"
 else
   jq -e --arg prefix "$prefix" '
     (.addressPrefix // .addressPrefixes[0])==$prefix and
     (.addressPrefixes // [$prefix]|length)==1 and
-    (.delegations|length)==1 and .delegations[0].serviceName=="Microsoft.App/environments"
+    (((.delegations // [])|length)==0 or
+    ((.delegations|length)==1 and .delegations[0].serviceName=="Microsoft.App/environments"))
     ' <<<"$subnet" >/dev/null ||
     fail "Existing aca-subnet prefix/delegation differs; review it manually instead of overwriting"
 fi
+
+echo "    Delegating aca-subnet to Microsoft.App/environments"
+az network vnet subnet update \
+  --resource-group "$node_group" \
+  --vnet-name "$vnet_name" \
+  --name aca-subnet \
+  --delegations Microsoft.App/environments \
+  -o none || fail "ACA subnet delegation failed; no VNet connection created"
+subnet="$(az network vnet subnet show \
+  --resource-group "$node_group" \
+  --vnet-name "$vnet_name" \
+  --name aca-subnet \
+  -o json)" || fail "Cannot verify ACA subnet delegation"
+jq -e --arg prefix "$prefix" '
+  (.addressPrefix // .addressPrefixes[0])==$prefix and
+  (.addressPrefixes // [$prefix]|length)==1 and
+  (.delegations|length)==1 and .delegations[0].serviceName=="Microsoft.App/environments"
+  ' <<<"$subnet" >/dev/null || fail "ACA subnet prefix/delegation verification failed"
 
 # -- Create the connection and wait for persisted readiness -------------------
 if [[ "$current" == null ]]; then
