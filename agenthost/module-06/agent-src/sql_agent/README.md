@@ -52,8 +52,19 @@ growth is distinct from a margin decline.
 Generation receives the supported-function list. A rejected SQL proposal gets one correction with the
 validator error; every corrected query passes the same gate before execution. A second rejection fails
 explicitly and never executes the rejected statement.
+PostgreSQL grouping errors (`42803`) can also use this same single correction budget. The model
+receives the previous proposal and a safe grouping diagnostic, not raw database error text. Every
+corrected proposal passes the SQL gate and workspace rewrite again before a new read-only execution.
+Group detail columns explicitly; compute grouped totals in a CTE before outer ratios/window functions.
 Results identify the actual catalog filenames referenced by the validated query; a bounded catalog
 does not establish complete coverage of all uploaded shards.
+For independent review and financial summaries, the prompt requires separate source-family aggregates,
+not joins between unrelated populations. A single result can use a labeled `UNION ALL` inside a CTE,
+with compatible column types and `NULL` for inapplicable measures; this remains subject to the same SQL gate.
+When combining report themes with review examples and rating/sentiment statistics, the prompt requests
+the actual rating/sentiment distributions rather than inventing keyword classifiers. Explicitly requested
+keyword counts must remain labeled lexical matches: their sentiment labels do not measure semantic
+agreement with a report, and different keyword sets cannot establish which theme has stronger support.
 
 ### Independent SQL gate
 
@@ -111,7 +122,11 @@ endpoint. Use [RemoteSQL](../shared/remote.py) and the [shared A2A transport](..
 
 Invalid model output, `INVALID_SQL`, `UNSAFE_SQL`, missing datasets, database errors and oversized results
 fail explicitly. A2A returns a failed task/error artifact; unknown internal exceptions are sanitized.
-There is no automatic SQL repair or fake result. Orchestrator may retry worker-level `TimeoutError` once,
+Unrecovered database errors during query execution are reported as `SQL_EXECUTION_FAILED` with only a validated
+SQLSTATE code (or `unavailable`), never raw database messages, SQL fragments or credentials.
+Orchestrator retains this safe message in the run's worker errors; unexpected exceptions remain generic.
+Only `42803` permits bounded database-error correction; other database errors are not automatically
+repaired, and no results are fabricated. Orchestrator may retry worker-level `TimeoutError` once,
 but that is not a general retry for database statement errors. It may return a reviewed partial HYBRID
 answer if RAG succeeds and SQL fails.
 
@@ -159,6 +174,6 @@ scoped selects/CTEs, exact aggregation, workspace isolation and remote errors us
 The opt-in [PostgreSQL test](../tests/integration/test_postgres.py) checks real queries, read-only transactions
 and timeout recovery with a disposable database and `STUDIO_TEST_POSTGRES=1`.
 
-There is no SQL authoring UI, arbitrary schema access, automatic query repair or unlimited result export.
+There is no SQL authoring UI, arbitrary schema access, general-purpose query repair or unlimited result export.
 The function/table restrictions intentionally limit expressiveness. Current local versus cloud validation
 is documented in the [acceptance report](../docs/implementation-report.md).

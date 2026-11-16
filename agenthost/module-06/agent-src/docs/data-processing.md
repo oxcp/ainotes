@@ -35,8 +35,10 @@ such as split files. It performs exact cosine search across document chunks and 
 workspace/source filters, optional metadata predicates and a relevance threshold. Results are merged,
 deduplicated and bounded by `TOP_K` (default five).
 Rating/sentiment conditions are enforced as metadata predicates, not merely embedded as search text.
-An explicitly constrained metadata-only sample requires both a rating bound and a sentiment label; it
-bypasses the similarity threshold but retains workspace/source/metadata filters.
+An explicitly constrained metadata-only sample requires at least one rating bound or sentiment label; it
+bypasses the similarity threshold but retains workspace/source/metadata filters. Empty constraints are
+rejected. Sentiment-only sampling must not add an unrequested rating bound; topic-specific searches
+still apply the relevance threshold.
 
 `review_overview` instead reads a bounded set of stored review passages without semantic search.
 It reports truncation; neither passage counts nor selected examples represent complete review-row totals

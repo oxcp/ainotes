@@ -287,11 +287,10 @@ class Repository:
         predicates, values = evidence_filters(filters)
         if metadata_only and (
             review_filter is None
-            or review_filter.sentiment_label is None
-            or (review_filter.rating_min is None and review_filter.rating_max is None)
+            or not review_filter.model_dump(exclude_none=True)
         ):
             raise StudioError(
-                "INVALID_RETRIEVAL", "Metadata-only examples require rating and sentiment constraints.", 422
+                "INVALID_RETRIEVAL", "Metadata-only examples require rating or sentiment constraints.", 422
             )
         where = list(predicates) if metadata_only else ["similarity_score >= %s", *predicates]
         args: list[str | float | list[str]] = (

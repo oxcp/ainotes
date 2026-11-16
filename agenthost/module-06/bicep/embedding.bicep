@@ -14,7 +14,7 @@ param modelName string = 'text-embedding-3-small'
 param modelVersion string = '1'
 param skuName string = 'GlobalStandard'
 @minValue(1)
-param capacity int = 30
+param capacity int = 200
 
 resource account 'Microsoft.CognitiveServices/accounts@2026-03-01' existing = {
   name: foundryAccountName

@@ -73,13 +73,12 @@ class RagAgent:
             search.metadata_only
             and (
                 search.review_filter is None
-                or search.review_filter.sentiment_label is None
-                or (search.review_filter.rating_min is None and search.review_filter.rating_max is None)
+                or not search.review_filter.model_dump(exclude_none=True)
             )
             for search in plan.searches
         ):
             raise StudioError(
-                "INVALID_RETRIEVAL", "Metadata-only examples require rating and sentiment constraints.", 422
+                "INVALID_RETRIEVAL", "Metadata-only examples require rating or sentiment constraints.", 422
             )
         vectors = await self.model.embed([search.query for search in plan.searches])
         if len(vectors) != len(plan.searches):

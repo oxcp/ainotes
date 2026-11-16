@@ -49,7 +49,16 @@ Orchestrator -> RemoteSQL.run() -> A2A "query"
 以及连续月份对比。“增收不增利”与利润率下降是不同的判断。
 生成阶段收到支持的函数列表。被拒绝的 SQL 可携带校验错误纠正一次；纠正后的查询仍须通过
 同一校验才执行。第二次被拒绝时明确失败，绝不执行被拒绝的语句。
+PostgreSQL 分组错误（`42803`）也可使用这同一次纠正机会。模型收到前一次 SQL 提案及安全的
+分组诊断，而非原始数据库错误文本。每份修正提案都要重新通过 SQL 检查和工作区改写，
+再执行新的只读查询。明细列需明确分组；先在 CTE 中汇总，再在外层计算比率或窗口函数。
 结果标明通过校验的查询实际引用的目录文件名；有上限的目录不代表覆盖全部已上传分片。
+分别总结评论与财务数据时，提示词要求按来源组独立汇总，而非关联无关人群。
+单一结果可在 CTE 内使用带分组标签的 `UNION ALL`，保持对应列类型兼容，
+不适用的指标使用 `NULL`；这些查询仍须通过同一 SQL 校验。
+结合报告主题、评论示例及评分/情感统计时，提示词要求返回真实的评分/情感分布，
+而非自行构造关键词分类器。仅在明确要求时统计关键词，并标注为字面匹配：
+匹配记录的情感标签不代表语义上认同报告，不同关键词集合也不能证明哪个主题支持更强。
 
 ### 独立 SQL 检查
 
@@ -106,7 +115,11 @@ Agent Card 声明技能 `query`。Studio 操作 `query` 要求 `workspace` 和 1
 
 无效模型输出、`INVALID_SQL`、`UNSAFE_SQL`、缺少数据集、数据库错误和结果过大都会明确失败。
 A2A 返回失败任务/错误产物，未知内部异常会做安全脱敏。
-没有自动 SQL 修复或伪造结果。Orchestrator 可以对 Worker 级 `TimeoutError` 重试一次，
+查询执行期间未恢复的数据库错误返回 `SQL_EXECUTION_FAILED`，只附带校验后的 SQLSTATE 代码
+（或 `unavailable`），不包含原始数据库错误文本、SQL 片段或凭据。
+Orchestrator 在运行的工作 Agent 错误中保留该安全说明；未知异常仍使用通用消息。
+仅 `42803` 允许有界的数据库错误纠正；其他数据库错误不自动修复，也不伪造结果。
+Orchestrator 可以对 Worker 级 `TimeoutError` 重试一次，
 但这不是对数据库语句错误的通用重试。
 HYBRID 中 RAG 成功、SQL 失败时，Orchestrator 可能返回经过复核的部分答案。
 
@@ -153,6 +166,6 @@ python -m pytest -q tests\unit\test_workers.py tests\unit\test_boundaries.py tes
 可选的 [PostgreSQL 测试](../tests/integration/test_postgres.py) 使用可丢弃数据库和
 `STUDIO_TEST_POSTGRES=1`，验证真实查询、只读事务与超时恢复。
 
-没有 SQL 编写 UI、任意模式访问、自动查询修复或无限结果导出。
+没有 SQL 编写 UI、任意模式访问、通用自动查询修复或无限结果导出。
 函数/表限制有意缩小了表达范围。当前本地与云端验证情况见
 [验收报告](../docs/implementation-report_CN.md)。

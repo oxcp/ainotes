@@ -57,9 +57,12 @@ Orchestrator -> final generation and evidence review
    Requested review rating ranges and sentiment labels are planned as typed `review_filter` constraints,
    applied before vector ranking/`TOP_K`, not embedded as search keywords. High-rating negative and
    low-rating positive reviews use separate searches; missing matches remain an explicit evidence gap.
-   For examples constrained only by rating and sentiment, `metadata_only` requires both constraints and
+   For examples constrained only by rating and/or sentiment, `metadata_only` requires at least one constraint and
    ranks matching rows by vector similarity without a relevance cutoff. Topic-specific requests keep
    the cutoff; coverage warnings distinguish metadata examples from above-threshold semantic evidence.
+   Negative sentiment does not imply a low rating: generic negative-review examples use the sentiment
+   label alone, without inventing `rating_max=2`. Samples do not guarantee coverage of every client type
+   or establish its dominant complaint.
 4. Similarity is `1 - cosine_distance`, using PostgreSQL/vector's `<=>` operator. The repository applies
    the applicable threshold and exact-match filters, orders descending and caps results at `TOP_K`.
 5. `RagAgent.run()` validates each `Evidence`, rechecks the applicable threshold and cap, and raises

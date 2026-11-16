@@ -43,6 +43,11 @@ class Plan(Contract):
     sql_goal: str = Field(default="", max_length=4000)
     rag_strategy: RetrievalStrategy = "semantic"
     chart_intent: Literal["auto", "requested", "none"] = "auto"
+    answer_language: str = Field(
+        default="",
+        max_length=80,
+        description="Answer language selected from the current user message, honoring an explicit language request.",
+    )
 
 
 class SQLProposal(Contract):

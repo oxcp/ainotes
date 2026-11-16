@@ -58,6 +58,15 @@ START -> receive_request
 - **Aggregate/generate:** if neither worker result exists, route to `handle_error`. Otherwise synthesize
   evidence, calculated facts, interpretation, recommendations and limitations. DIRECT reuses its initial
   draft on the first pass instead of making a second generation call.
+- **Answer language:** Chat forwards the question without choosing a separate response language.
+  Planning records `answer_language` from the current message (an explicit language request takes
+  precedence). DIRECT, RAG, SQL and HYBRID drafts, revisions, reviews and chart selection receive the
+  same choice. Mixed-language questions follow the surrounding request, not English identifiers,
+  source documents or previous answers. Legacy plans without this field infer language from the
+  current message. Wrong-language prose requests a revision without requerying workers.
+  Original quotations, SQL/column names, citation IDs and JSON keys remain unchanged. This controls
+  model-generated prose, not fixed UI labels, progress messages or server error strings; language
+  selection and checking are model-driven, not a deterministic language detector.
 - **Charts:** `prepare_charts` uses shared `ChartSelection` source/column/row references and resolves actual
   SQL cells, numeric RAG metadata or ingestion counts into bounded `ChartSpec` objects. It skips the model
   for chart-free/text-only sources, times out at `WORKER_TIMEOUT` without retry, and preserves reviewed text on
@@ -69,6 +78,10 @@ START -> receive_request
   Ratio-like column names (`margin`, `ratio`, `rate`, `pct`, `percent`, `percentage`, or `%`) cannot
   share bar/line axes with other measures. SQL-backed review charts do not extract statistics from
   individual review prose.
+  Document-value extraction also gets one correction for invalid schema or quotation anchors, using
+  the original passages, validation error and previous extraction when available. Corrected values
+  must pass the same quotation/workspace checks; a second failure remains an explicit chart error.
+  Extraction timeouts and other service failures are not retried by this correction loop.
 - **Review:** the model checks the actual draft and chart semantics. Chart-only problems in `chart_issues`
   remove charts and produce `INVALID_CHART` while preserving otherwise valid text. Code additionally requires
   correction of citation IDs absent from RAG results and blocks evidence from another workspace.

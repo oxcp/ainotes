@@ -122,6 +122,7 @@ Only set overrides when your existing resources differ from the workshop default
 | `IMAGE_TAG` | Image tag shared by builds and ACA imports; defaults to `latest` |
 | `FOUNDRY_RESOURCE_NAME`, `FOUNDRY_PROJECT_NAME` | Custom existing Foundry account/project; project defaults to `maf-agent-prj` |
 | `LLM_MODEL` | Deployed general-model name when Module-01 deployment outputs cannot be used |
+| `EMBEDDING_CAPACITY` | Defaults to `200` (200K TPM for `text-embedding-3-small`); requires sufficient regional model/SKU quota |
 | `CUSTOMER_VNET_CONNECTION_NAME` | Select among multiple existing VNet connections |
 | `DB_FIREWALL_RULES_FILE` | Custom database firewall rules |
 | `ACA_COMMON` | Separate custom runtime JSON; normally omit and use automatic discovery |
@@ -136,7 +137,7 @@ again individually after the full deployment:
 | Stage | Action |
 |---|---|
 | `storage` | Create/reuse private `data` in the existing storage account |
-| `models` | Deploy `text-embedding-3-small` and add its route to the existing APIM |
+| `models` | Deploy `text-embedding-3-small` with 200K TPM by default and add its route to the existing APIM |
 | `database` | Deploy the selected database and configure UAMI Entra authentication |
 | `config` | Discover model/storage settings and generate protected Agent configuration |
 | `images` | Build and publish five images remotely using ACR Tasks |
@@ -145,6 +146,16 @@ again individually after the full deployment:
 `--migrate` initializes the dedicated workshop database inside a guest; do not target a production database.
 Agent database connections use Entra authentication, not the provisioning administrator password.
 The existing general model and shared infrastructure are reused.
+
+To raise an existing Module-06 embedding deployment to 200K TPM, keep its `.local` ownership records
+and run only the models stage in the same configured Bash session:
+
+```bash
+EMBEDDING_CAPACITY=200 bash deploy.sh --stage models
+```
+
+Existing higher capacity is preserved. Azure validates available quota; this does not request a quota increase.
+No database redeployment, Agent image rebuild or data re-ingestion is needed.
 
 Generated settings, passwords, peer keys and resource inventories are saved under `.local`.
 Keep them private, Git-ignored and available for cleanup. Do not edit the generated configuration;
@@ -222,26 +233,25 @@ Expand the evidence panel to inspect sources and SQL. Charts must use verified d
 are not review-row counts. A broad review overview may use only five passages and is **not a full-dataset summary**.
 Use SQL for sentiment distributions and other dataset-wide counts.
 
-### 10 suggested chat questions
+### 8 suggested chat questions
 
 Copy these questions one at a time. Finish uploading and processing the relevant files in the same Session first.
-For statistics, state which uploaded review parts are actually queryable. Upload additional parts first
-if the required evidence is not in the processed subset.
+Uploading every part is not required. For statistics, state which uploaded review parts are actually queryable.
+If this retrieval finds no relevant passage for a report or theme, explicitly identify the evidence gap;
+do not infer that the full report lacks that viewpoint. Upload additional parts as needed to expand the analysis.
 
 | No. | Expected mode | Chat question |
 |---|---|---|
-| 1 | RAG (vector retrieval) | Find reviews in the uploaded parts that express high expectations but disappointing experiences, then contrast them with the opposite experience. Quote the original text. |
-| 2 | RAG (vector retrieval) | Compare the uploaded Capgemini and Ryder reports: what shared concerns and differences do consumers have about price, convenience and sustainable consumption? Cite sources. |
-| 3 | RAG (vector retrieval) | Find the before-and-after percentages for purchasing Gen AI-recommended products in the uploaded Capgemini report. Show a bar chart and explain the change. |
-| 4 | SQL (structured queries) | Count sentiment labels and their percentages across the uploaded review parts. Show a pie chart and state the coverage. |
-| 5 | SQL (structured queries) | Do ratings agree with sentiment labels in the uploaded review parts? Show a grouped bar chart and identify high-rated negative reviews and low-rated positive reviews. |
-| 6 | SQL (structured queries) | Analyze monthly sales, profit and profit margin in Financial Sample. Show trend charts and identify months when sales grew but profit did not. |
-| 7 | HYBRID (combined retrieval and multi-Agent collaboration) | Chart the sentiment distribution across the uploaded review parts, then quote reviews describing good value and poor value to explain the differences in experience. |
-| 8 | HYBRID (combined retrieval and multi-Agent collaboration) | Which clientType groups have higher negative-review rates in the uploaded review parts? Chart the rates, include sample sizes and suggest improvements grounded in relevant reviews. |
-| 9 | HYBRID (combined retrieval and multi-Agent collaboration) | What evidence or counterexamples in the review parts support the emphasis on value and convenience in the two uploaded reports? Analyze ratings, sentiment statistics and original quotations together. |
-| 10 | HYBRID (combined retrieval and multi-Agent collaboration) | Using the uploaded reviews, both reports and Financial Sample, separately summarize consumer experience, market trends and business performance. Include three charts and three recommended actions, without directly joining unrelated datasets. |
+| 1 | RAG (vector retrieval) | Find contrasting experiences of high expectations followed by disappointment and exceeded expectations in the uploaded reviews. Quote the original text, state any missing evidence and do not compute counts. |
+| 2 | RAG (vector retrieval) | Quote passages about price, convenience and sustainable consumption separately from the uploaded Capgemini and Ryder reports, then compare similarities and differences. Do not judge themes lacking source text. |
+| 3 | RAG (vector retrieval) | Extract comparison percentages for purchasing Gen AI-recommended products from the uploaded Capgemini report. Quote the source and show a bar chart, preserving its time periods and populations; state if comparable values are unavailable. |
+| 4 | SQL (structured queries) | Aggregate sales and profit by year and month from the uploaded financial data and show a line chart. List profit margin (total profit / total sales) separately in a table; identify months when sales rose but profit did not versus the previous month. |
+| 5 | SQL (structured queries) | Count the uploaded reviews and their percentages by existing sentiment category. Show a pie chart, total sample size and data coverage. |
+| 6 | HYBRID (combined retrieval and multi-Agent collaboration) | Compare negative-review rates across platforms (such as apps or websites) in the uploaded reviews, using existing sentiment categories. Show a bar chart of rates and list each platform's total review count. Ground suggestions in review quotations; state if none are available. |
+| 7 | RAG (vector retrieval) | Use customer needs in the uploaded reviews and consumer trends in both reports to recommend priority business improvements for the future. Explain the evidence and metrics for evaluating each recommendation; distinguish facts from assumptions and do not chart. |
+| 8 | HYBRID (combined retrieval and multi-Agent collaboration) | Calculate total sales and total profit from the uploaded financial data. Separately use reviews and reports to summarize customer experience and market risks. State evidence and gaps by source; do not chart or infer causality across sources. |
 
-*These are expected execution modes, not manual routing settings or a claim that all ten questions have passed end-to-end acceptance.*
+*These wordings reduce task ambiguity; they do not replace fixes to SQL, chart or citation validation. These are expected execution modes, not manual routing settings or a claim that all eight questions have passed end-to-end acceptance.*
 
 ### In-chat analytical charts
 

@@ -27,9 +27,42 @@ The planner sees the question, recent context and current file/dataset inventory
 configured peers; they are not a dynamically discovered tool catalog for the planner.
 The displayed `tasks`/`depends_on` plan describes fixed graph branches, not an arbitrary executable DAG.
 
+The planning prompt chooses the smallest necessary worker set by evidence needs, not file format.
+Contrasting disappointing and better-than-expected reviews with quotations is RAG, even across CSV shards;
+source scope and citations do not justify SQL. Explicit field filters or sentiment counts alone use SQL.
+HYBRID requires a distinct structured query plus retrieved qualitative evidence, such as sentiment
+percentages accompanied by review quotations. The prompt requires both needs in the route reason and
+includes contrastive examples; this is model guidance, not a deterministic routing guarantee.
+Existing deployments must load the updated Orchestrator code to use the revised prompt.
+
+Published percentages and before/after figures in a report remain RAG evidence, even when a chart is
+requested: the downstream chart stage extracts quotation-anchored values without requiring SQL.
+The planner must not invent a structured counterpart to a PDF or substitute unrelated review/sales
+tables for the report's survey metrics. For example, charting the Capgemini report's stated Gen AI
+purchase percentages is RAG with `chart_intent=requested`; combining report findings with actual
+Financial Sample aggregates is HYBRID. Explicit requests for missing structured sources retain that
+scope so the worker reports the limitation instead of querying unrelated data.
+
 Intentional ordering clarification: generation precedes evidence review so the reviewer can inspect the actual
 answer, not only source material. A revision is reviewed again; a second failed review blocks the response.
 DIRECT uses its initial answer as the draft without an unnecessary second generation call.
+For synthesis only, retrieved passages use request-local short references (`R1`, `R2`, ...), with
+document/workspace IDs omitted from that view. The server resolves exact references in `citation_ids`
+and bracketed text back to original record IDs before chart selection and evidence review. Revisions
+reuse the same mapping; persisted evidence and public response contracts still use original IDs.
+Unknown references are not guessed, dropped or mapped to document IDs: they fail citation checks,
+including inline citations when retrieval returned no passages. Valid IDs do not bypass factual or
+workspace review, and the one-revision limit remains unchanged.
+Workers receive the full current request alongside the planner goal so an incomplete goal does not
+erase requested sources or predicates. If the combined text exceeds the 4,000-character worker limit,
+the original request is kept intact and goal omission is logged; conversation history is not forwarded.
+For reports-versus-reviews analysis, planning/retrieval prompts request both report evidence and review
+examples. Without report passages, synthesis/review must explicitly leave the report premise unverified,
+not claim the reviews confirm it. Keyword counts and stored sentiment labels are not semantic agreement
+or a valid basis for ranking theme strength. The answer should follow the current user's language.
+Statistics accompanying a text-first comparison do not make a chart explicit. Chart selection excludes
+conversation history; correction receives the rejected selection plus specific invalid/available columns.
+Wide summaries are not silently transposed into invented columns; unsupported selections still fail.
 `prepare_charts` runs between generation and review, or after file processing for ingestion-only summaries.
 Sources include actual SQL rows, ingestion counts, numeric RAG metadata, quotation-anchored document values
 and explicit before/after percentages in the current user request. For document charts, the model selects
@@ -40,6 +73,17 @@ When appropriate, document extraction runs before deciding whether chartable dat
 an explicit chart request without usable data produces `CHART_DATA_UNAVAILABLE`.
 Long-form SQL can be pivoted by `series_column`; duplicate/incomplete cells are rejected rather than filled
 with invented zeros. Currency and ratio series must not share a bar/line axis.
+For group-rate comparisons with sample sizes, the chart prompt selects the actual rate series separately
+from a count table/chart; count bars must not be titled as rates. Decimal strings remain valid numeric
+cells, and fractions retain their 0–1 scale unless SQL explicitly returns percentages.
+When review retrieval is empty but SQL succeeds, generation and review are instructed to preserve scoped
+statistics, disclose missing quotations, and label suggested investigations as statistical recommendations,
+not observed complaint themes. Unsupported claims still fail review.
+Conversely, SQL failure does not invalidate independently supported report observations or document charts.
+For separate multi-source summaries, prompts preserve each source's scope and select fewer charts when
+the requested count cannot be supported, disclosing missing sections rather than discarding all charts.
+Weak/truncated retrieval permits cited, passage-scoped observations, not whole-market conclusions.
+Worker errors retain safe `StudioError` messages; unexpected exception details are never exposed.
 Chart failures/timeouts are explicit partial-run errors rather than losing the answer. Review reports chart-only
 semantic issues in `chart_issues`; those charts are removed without blocking valid text.
 Specs are bounded to four charts, four series and 40 rows each; completed run JSON and browser-local

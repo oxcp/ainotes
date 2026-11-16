@@ -47,7 +47,7 @@ Configure through environment variables (stage-specific flags remain on stage sc
   AGENT_IDENTITY_RESOURCE_ID (otherwise Module-01 IDENTITY_NAME / id-agenthost-<SN>).
   FOUNDRY_RESOURCE_NAME, FOUNDRY_PROJECT_NAME (maf-agent-prj), EMBEDDING_DEPLOYMENT_NAME,
   EMBEDDING_MODEL_NAME (text-embedding-3-small), EMBEDDING_MODEL_VERSION (1),
-  EMBEDDING_SKU (GlobalStandard), EMBEDDING_CAPACITY (30), APIM_NAME (apim-agenthost-<SN>).
+  EMBEDDING_SKU (GlobalStandard), EMBEDDING_CAPACITY (200 = 200K TPM), APIM_NAME (apim-agenthost-<SN>).
   LLM_MODEL (otherwise Module-01 main-<SN> deployment output), EMBEDDING_DIMENSIONS (1536).
 Protected inputs/outputs default to module-06/.local (outside image context):
   ACA_COMMON (optional custom JSON input; never overwritten, must already exist)

@@ -35,6 +35,36 @@ from shared.observability import clock, event, failure
 from shared.planning import inventory_summary, plan_question
 from shared.storage import BlobStore
 
+_CITATION_BRACKET = re.compile(r"[\[【]([^\]】\n]+)[\]】]")
+_CITATION_REFERENCE = re.compile(
+    r"\b(?:[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}|R\d+)\b", re.IGNORECASE
+)
+ANSWER_LANGUAGE_PROMPT = """Use answer_language for all generated explanatory prose, including answer
+sections, recommendations, limitations, review feedback and chart titles/reasons. If it is empty,
+infer the language from the CURRENT user message (question.message, or top-level message for DIRECT).
+An explicit response-language request in that message takes precedence. For mixed-language messages,
+follow the surrounding request, not quoted text, filenames or technical terms. Do not copy the language
+of a previous answer, English worker goals, SQL output or retrieved sources. Revisions keep the same rule.
+Preserve original quotations, proper names, code, SQL, exact source column/series identifiers, citation
+IDs and JSON schema keys; translate the surrounding explanation, not evidence or machine identifiers.
+When reviewing, a wrong-language narrative needs status=revise with a specific language correction,
+not immediate blocking or removal of otherwise valid evidence/charts. Do not rerun workers just to translate."""
+
+
+def _map_answer_citations(answer: dict[str, Any], references: dict[str, str]) -> dict[str, Any]:
+    def replace_bracket(match: re.Match[str]) -> str:
+        return _CITATION_REFERENCE.sub(
+            lambda ref: references.get(ref.group(), ref.group()), match.group()
+        )
+
+    mapped = dict(answer)
+    for key, value in answer.items():
+        if key == "citation_ids":
+            mapped[key] = [references.get(ref, ref) for ref in value]
+        elif isinstance(value, str):
+            mapped[key] = _CITATION_BRACKET.sub(replace_bracket, value)
+    return mapped
+
 
 class State(TypedDict, total=False):
     request_id: str
@@ -148,10 +178,13 @@ class Orchestrator:
 
         async def direct(state):
             note(state, "direct_llm", "Preparing a direct model response without data queries...")
-            payload = state["question"]
+            payload = {
+                **state["question"],
+                "answer_language": state["plan"].get("answer_language", ""),
+            }
             if state["plan"].get("chart_intent") == "requested":
                 # Direct charts use current-request values, not stale assistant claims about rendering.
-                payload = {**payload, "recent_context": []}
+                payload["recent_context"] = []
             answer = await self.model.structured(
                 "Answer the question directly. No workspace data was retrieved. "
                 "Do not invent chart data. If visualization needs data, ask for it. "
@@ -164,7 +197,8 @@ class Orchestrator:
                 "Do not include any text-only-output or no-rendered-graphics disclaimer, in any language. "
                 "For a chart request, describe the comparison briefly instead of recommending that "
                 "the user draw the requested chart themselves. "
-                "Supported visualizations are bar, line, pie and numeric comparison table.",
+                "Supported visualizations are bar, line, pie and numeric comparison table.\n"
+                + ANSWER_LANGUAGE_PROMPT,
                 payload,
                 Answer,
             )
@@ -184,19 +218,34 @@ class Orchestrator:
                 "Searching uploaded documents..." if name == "rag_search" else "Querying structured data...",
             )
             workspace = UUID(state["workspace_id"])
+            question = state["question"]["message"]
+            goal = state["plan"]["rag_goal" if name == "rag_search" else "sql_goal"]
+            if goal and goal != question:
+                combined = (
+                    f"Current user request:\n{question}\n\n"
+                    f"Planner's worker goal (may omit requested scope):\n{goal}"
+                )
+                if len(combined) <= 4000:
+                    question = combined
+                else:
+                    event(
+                        name, "bounded",
+                        "Worker goal omitted to preserve the full current request within the input limit.",
+                        request_id=state["request_id"],
+                    )
             for retry in range(2):
                 try:
                     call: Coroutine[Any, Any, RagResult | SQLResult]
                     if name == "rag_search":
                         call = self.rag.run(
                             workspace,
-                            state["plan"]["rag_goal"] or state["question"]["message"],
+                            question,
                             state["question"].get("filters", {}),
                             state["plan"].get("rag_strategy", "semantic"),
                         )
                     else:
                         call = self.sql.run(
-                            workspace, state["plan"]["sql_goal"] or state["question"]["message"]
+                            workspace, question
                         )
                     result = await asyncio.wait_for(call, timeout=self.config.worker_timeout)
                     return {("rag_result" if name == "rag_search" else "sql_result"): result.model_dump()}
@@ -213,6 +262,9 @@ class Orchestrator:
                             {
                                 "worker": name,
                                 "code": exc.code if isinstance(exc, StudioError) else "WORKER_FAILED",
+                                "message": exc.message
+                                if isinstance(exc, StudioError)
+                                else "Worker operation failed. Check the worker logs.",
                                 "retry_count": retry,
                             }
                         ]
@@ -231,6 +283,7 @@ class Orchestrator:
 
         def evidence(state):
             payload = {k: state[k] for k in ("rag_result", "sql_result", "errors") if k in state}
+            payload["answer_language"] = state.get("plan", {}).get("answer_language", "")
             if state.get("question"):
                 # History resolves intent during planning; old assistant facts/citations are not evidence.
                 payload["question"] = {k: v for k, v in state["question"].items() if k != "recent_context"}
@@ -263,18 +316,34 @@ class Orchestrator:
                     note(
                         state, "prepare_charts", "Extracting chart values with document quotation anchors..."
                     )
-                    extracted = await asyncio.wait_for(
-                        self.model.structured(
-                            DOCUMENT_CHART_PROMPT,
-                            {
-                                "question": {"message": state["question"]["message"]},
-                                "passages": retrieved["results"],
-                            },
-                            DocumentChartExtraction,
-                        ),
-                        timeout=self.config.worker_timeout,
-                    )
-                    source = document_source(extracted, retrieved["results"], state["workspace_id"])
+                    extraction_payload = {
+                        "question": {"message": state["question"]["message"]},
+                        "passages": retrieved["results"],
+                    }
+                    for attempt in range(2):
+                        extracted = None
+                        try:
+                            extracted = await asyncio.wait_for(
+                                self.model.structured(
+                                    DOCUMENT_CHART_PROMPT,
+                                    extraction_payload,
+                                    DocumentChartExtraction,
+                                ),
+                                timeout=self.config.worker_timeout,
+                            )
+                            source = document_source(extracted, retrieved["results"], state["workspace_id"])
+                            break
+                        except (ValidationError, StudioError) as exc:
+                            if attempt or (isinstance(exc, StudioError) and exc.code != "INVALID_CHART"):
+                                raise
+                            failure(exc, request_id=state["request_id"], stage="document_chart_extraction")
+                            extraction_payload["validation_error"] = str(exc)
+                            if extracted is not None:
+                                extraction_payload["previous_extraction"] = extracted.model_dump()
+                            note(
+                                state, "prepare_charts",
+                                "Correcting document chart extraction against original passages...",
+                            )
                     if source:
                         sources["document"] = source
                 if intent != "requested":
@@ -290,7 +359,7 @@ class Orchestrator:
                         )
                     return {"charts": []}
                 note(state, "prepare_charts", "Selecting grounded charts from available numeric results...")
-                purpose = CHART_PROMPT
+                purpose = CHART_PROMPT + "\n" + ANSWER_LANGUAGE_PROMPT
                 if state.get("rag_result", {}).get("retrieval_method") == "review_overview":
                     purpose += (
                         "\nFor a qualitative review overview, prefer charts=[] unless the question explicitly "
@@ -298,12 +367,16 @@ class Orchestrator:
                         "sentiment counts; do not make a pie chart or infer distributions from these passages."
                     )
                 payload = {
-                    "question": state.get("question", {}),
+                    "answer_language": state.get("plan", {}).get("answer_language", ""),
+                    "question": {
+                        k: v for k, v in state.get("question", {}).items() if k != "recent_context"
+                    },
                     "analysis": state.get("answer", {}),
                     "required_changes": state.get("review", {}),
                     "sources": sources,
                 }
                 for attempt in range(2):
+                    selection = None
                     try:
                         selection = await asyncio.wait_for(
                             self.model.structured(purpose, payload, ChartSelection),
@@ -316,7 +389,10 @@ class Orchestrator:
                             raise
                         failure(exc, request_id=state["request_id"], stage="prepare_charts")
                         payload["validation_error"] = str(exc)
+                        if selection is not None:
+                            payload["previous_selection"] = selection.model_dump()
                         note(state, "prepare_charts", "Correcting chart selection against source cells...")
+                assert selection is not None
                 if not charts and intent == "requested":
                     raise StudioError(
                         "CHART_DATA_UNAVAILABLE",
@@ -353,17 +429,37 @@ class Orchestrator:
             if state["mode"] == "DIRECT" and state.get("answer") and not state.get("revision_count"):
                 return {}
             payload = evidence(state)
+            passages = state.get("rag_result", {}).get("results", [])
+            references = {f"R{index}": item["record_id"] for index, item in enumerate(passages, 1)}
+            # Only synthesis sees short references; review, charts and persisted evidence retain real IDs.
+            if "rag_result" in payload:
+                payload["rag_result"] = {
+                    **payload["rag_result"],
+                    "results": [
+                        {
+                            **{k: v for k, v in item.items() if k not in {"workspace_id", "document_id"}},
+                            "record_id": reference,
+                        }
+                        for reference, item in zip(references, passages)
+                    ],
+                }
             if state.get("review"):
                 payload["required_changes"] = state["review"]
-                payload["previous_answer"] = state.get("answer")
+                payload["previous_answer"] = _map_answer_citations(
+                    state["answer"], {record: reference for reference, record in references.items()}
+                )
                 payload["charts"] = state.get("charts", [])
             answer = await self.model.structured(
-                "Synthesize and polish a presentation-ready answer. Separate retrieved evidence, calculated facts, "
+                "Synthesize and polish a presentation-ready answer. "
+                "Separate retrieved evidence, calculated facts, "
                 "interpretation, recommendations and limitations. Use only supplied citation IDs. "
                 "Each rag_result.results[].record_id is a supplied citation ID: put the IDs of supporting "
                 "passages in citation_ids when summarizing review evidence. "
-                "Inline bracket citations must use those same exact record_id values, never document_id "
-                "or a reconstructed UUID. Keep the answer concise; do not repeat every figure in every section. "
+                "For this draft, these are short references such as R1 and R2, not UUIDs. Use [R1] or "
+                "[R1, R2] inline and the same references in citation_ids. The server resolves them to "
+                "original record IDs before review. Use only references present in the supplied results; "
+                "never invent a reference, copy document_id, or reconstruct a UUID. "
+                "Keep the answer concise; do not repeat every figure in every section. "
                 "When there are no retrieved passages, citation_ids MUST be []; SQL text, table names, "
                 "column names, chart source names and request IDs are NOT citation IDs. "
                 "Do not invent calculations. Explicitly disclose failed workers and insufficient retrieval. "
@@ -383,26 +479,47 @@ class Orchestrator:
                 "Respect retrieval_method, truncated and warnings: an overview subset is not a representative "
                 "sample or a whole-dataset summary. Ground qualitative statements in the supplied passages. "
                 "For cross-source comparisons, explicitly check each source/theme against actual passage text. "
+                "A question saying 'the two reports emphasize X' is an unverified user premise, not report "
+                "evidence. If only review passages were retrieved, discuss those examples against the "
+                "user-specified theme and explicitly state neither report's premise was verified; never "
+                "claim that reviews confirm or contradict the reports without report passages. "
+                "SQL keyword matches are lexical subsets, not semantic theme prevalence. Sentiment labels "
+                "within those subsets do not establish support/contradiction of a theme or report. Do not "
+                "rank themes by strength using different keyword sets, match counts or subset positivity. "
+                "Distinguish a passage's meaning from its stored sentiment label when they disagree. "
                 "If one report or theme is missing, preserve verified findings and name the evidence gap; "
                 "do not claim a completed comparison or shared trend without support from both sources. "
+                "For separate summaries of unrelated sources, keep each source's findings, population and "
+                "time period separate. A failed SQL worker blocks financial/statistical claims from that "
+                "worker, not supported report findings or report charts. Weak/truncated evidence permits "
+                "cited observations explicitly scoped to the retrieved passages, not whole-market conclusions. "
+                "When fewer charts are supported than requested, preserve supported charts and disclose "
+                "which requested sections lack data; do not claim all chart data is unavailable. "
                 "Contents pages, acknowledgments and repeated footers do not establish consumer findings. "
                 "History and planner goals are not verified data. Skipped ingestion records can be empty, "
+                "short or duplicate text, not additional customer reviews. "
                 "Retrieval warnings describe execution/coverage only; candidate counts and query words "
                 "are never evidence of matching review traits. Match review rating/sentiment in metadata "
                 "before using a passage as a mismatch example. SQL counts remain valid independently "
                 "of missing qualitative examples: preserve verified statistics and disclose the text gap. "
-                "short or duplicate text, not additional customer reviews. When revising, correct the supplied "
-                "previous_answer against current evidence rather than assuming review suggestions are facts.",
+                "When no review passages were retrieved, do not claim customer complaint themes or causes. "
+                "Still report verified group rates and sample sizes; label any suggested investigation "
+                "as a recommendation based on statistics, not a finding from review text. Distinguish the "
+                "highest rate from the largest count, and keep source scope and small-sample limitations. "
+                "When revising, correct the supplied "
+                "previous_answer against current evidence rather than assuming review suggestions are facts.\n"
+                + ANSWER_LANGUAGE_PROMPT,
                 payload,
                 Answer,
             )
-            return {"answer": answer.model_dump()}
+            return {"answer": _map_answer_citations(answer.model_dump(), references)}
 
         async def review(state):
             note(state, "review_evidence", "Reviewing answer, numerical claims and citations...")
             payload = {**evidence(state), "answer": state["answer"], "charts": state.get("charts", [])}
             result = await self.model.structured(
-                "Review the actual draft against question and supplied evidence. Check numerical claims against "
+                "Review the actual draft against question and supplied evidence. "
+                "Check numerical claims against "
                 "the applicable SQL rows, retrieved passages or explicit user input; correct citations and workspace, labeled "
                 "recommendations, unsupported percentages/market claims, conflicting evidence and missing data. "
                 "Check chart titles, units, ordering, selected rows and pie parts-of-whole semantics against "
@@ -432,6 +549,19 @@ class Orchestrator:
                 "An honestly scoped partial answer may be approved: missing requested evidence alone is not "
                 "an unsupported claim when the draft clearly discloses the gap and preserves only verified "
                 "findings. Still reject claims of shared trends or comparisons without both sources. "
+                "A user premise about report themes is not verified evidence. If report passages are absent, "
+                "require an explicit statement that the report claims were not verified and scope discussion "
+                "to reviews against the user-specified themes. A generic 'partial coverage' disclaimer does "
+                "not justify claiming that reviews reinforce the reports. Keyword matches plus sentiment "
+                "labels do not prove semantic support/contradiction; reject theme-strength rankings from "
+                "different lexical query sets, even when their counts and percentages are numerically correct. "
+                "Weak/truncated retrieval does not invalidate accurate citations from the returned passages. "
+                "For separate source summaries, require explicit scope rather than exhaustive coverage. "
+                "Fewer charts than requested is a disclosed limitation, not a reason to block otherwise "
+                "supported findings or demand invented charts for a failed SQL source. "
+                "For HYBRID with SQL rows but no review passages, approve accurate scoped statistics and "
+                "clearly labeled statistical recommendations if the missing original-text evidence is "
+                "disclosed; do not require nonexistent citations or invented complaint themes. "
                 "A review_overview uses stored passages, not semantic scores; null similarity is expected. "
                 "The record_id fields in rag_result.results ARE citation IDs; require the draft's "
                 "citation_ids to identify supporting passages for a review overview. "
@@ -439,7 +569,7 @@ class Orchestrator:
                 "History and planner goals do not establish facts. Ingestion skipped_records does not establish "
                 "a count of missing reviews. When charts is empty, chart_issues must be empty; "
                 "do not report an already disclosed chart-generation error as a new chart issue. "
-                "Return approved, revise or blocked.",
+                "Return approved, revise or blocked.\n" + ANSWER_LANGUAGE_PROMPT,
                 payload,
                 Review,
             )
@@ -453,23 +583,21 @@ class Orchestrator:
                     "Unrecognized citation IDs. Use only actual RAG record_id values; "
                     "when no RAG passages were returned, citation_ids MUST be []. SQL is not a citation ID."
                 )
-            if allowed:
-                inline = {
-                    citation.lower()
-                    for text in state["answer"].values()
-                    if isinstance(text, str)
-                    for bracket in re.findall(r"[\[【]([^\]】\n]+)[\]】]", text)
-                    for citation in re.findall(
-                        r"\b[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}\b", bracket
-                    )
-                }
-                if inline - {item.lower() for item in allowed}:
-                    if result.status == "approved":
-                        result.status = "revise"
-                    result.required_changes.append(
-                        "Replace unrecognized inline citation UUIDs with the exact supporting record_id, "
-                        "not document_id. Remove any claim without a supporting passage."
-                    )
+            inline = {
+                citation.lower()
+                for text in state["answer"].values()
+                if isinstance(text, str)
+                for bracket in _CITATION_BRACKET.findall(text)
+                for citation in _CITATION_REFERENCE.findall(bracket)
+            }
+            if inline - {item.lower() for item in allowed}:
+                if result.status == "approved":
+                    result.status = "revise"
+                result.required_changes.append(
+                    "Replace unrecognized inline citations with the supporting passage's supplied "
+                    "reference, not document_id. Remove any claim without a supporting passage. "
+                    "When no passages were returned, do not include passage citations."
+                )
             if (
                 state.get("rag_result", {}).get("retrieval_method") == "review_overview"
                 and allowed

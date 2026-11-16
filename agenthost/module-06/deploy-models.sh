@@ -77,7 +77,7 @@ deployment="${deployment:-text-embedding-3-small}"
 model="${EMBEDDING_MODEL_NAME:-text-embedding-3-small}"
 version="${EMBEDDING_MODEL_VERSION:-1}"
 sku="${EMBEDDING_SKU:-GlobalStandard}"
-capacity="${EMBEDDING_CAPACITY:-30}"
+capacity="${EMBEDDING_CAPACITY:-200}"
 for key in deployment model version sku capacity; do
   printf -v "$key" '%s' "$(printf '%s' "${!key}" | tr -d '\r\n')"
 done
