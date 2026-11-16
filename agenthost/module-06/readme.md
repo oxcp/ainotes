@@ -24,22 +24,23 @@ data and vectors.
 | SQL | Generate, validate and execute bounded read-only queries |
 
 ```mermaid
+%%{init: {"flowchart": {"nodeSpacing": 80, "rankSpacing": 100}}}%%
 flowchart TD
-    U["Browser"] --> C["Chat"]
-    C -->|Original files| B[("Private Blob")]
-    C -->|A2A| O["Orchestrator · LangGraph"]
-    O -->|A2A| D["Data Processing"]
-    O -->|A2A| R["RAG"]
-    O -->|A2A| S["SQL"]
-    B --> D
-    D --> H[("HorizonDB / PostgreSQL · data and vectors")]
-    R --> H
-    S --> H
-    O --> H
-    D --> E["Foundry embeddings · via APIM"]
-    R --> E
-    O --> L["Foundry general model · via APIM"]
-    S --> L
+    U["Browser"] -->|"Upload files<br/>Ask questions"| C["Chat"]
+    C -->|"Store original<br/>files"| B[("Private Blob")]
+    C -->|"A2A requests<br/>File references"| O["Orchestrator<br/>LangGraph"]
+    O -->|"A2A<br/>Process uploads"| D["Data Processing"]
+    O -->|"A2A<br/>RAG / HYBRID retrieval"| R["RAG"]
+    O -->|"A2A<br/>SQL / HYBRID queries"| S["SQL"]
+    B -->|"Read original<br/>files"| D
+    D -->|"Store structured<br/>data and vectors"| H[("HorizonDB / PostgreSQL<br/>Data and vectors")]
+    R -->|"Session-scoped<br/>vector search"| H
+    S -->|"Read schema<br/>Run read-only SQL"| H
+    O -->|"Manage Sessions<br/>Save completed runs"| H
+    D -->|"Embed document<br/>chunks"| E["Foundry embeddings<br/>via APIM"]
+    R -->|"Embed search<br/>queries"| E
+    O -->|"Plan / DIRECT<br/>Synthesize / review"| L["Foundry general model<br/>via APIM"]
+    S -->|Generate SQL| L
 ```
 
 ## Prerequisites
@@ -220,6 +221,53 @@ there is no manual mode selector.
 Expand the evidence panel to inspect sources and SQL. Charts must use verified data; passage counts
 are not review-row counts. A broad review overview may use only five passages and is **not a full-dataset summary**.
 Use SQL for sentiment distributions and other dataset-wide counts.
+
+### 10 suggested chat questions
+
+Copy these questions one at a time. Finish uploading and processing the relevant files in the same Session first.
+For statistics, state which uploaded review parts are actually queryable. Upload additional parts first
+if the required evidence is not in the processed subset.
+
+| No. | Expected mode | Chat question |
+|---|---|---|
+| 1 | RAG (vector retrieval) | Find reviews in the uploaded parts that express high expectations but disappointing experiences, then contrast them with the opposite experience. Quote the original text. |
+| 2 | RAG (vector retrieval) | Compare the uploaded Capgemini and Ryder reports: what shared concerns and differences do consumers have about price, convenience and sustainable consumption? Cite sources. |
+| 3 | RAG (vector retrieval) | Find the before-and-after percentages for purchasing Gen AI-recommended products in the uploaded Capgemini report. Show a bar chart and explain the change. |
+| 4 | SQL (structured queries) | Count sentiment labels and their percentages across the uploaded review parts. Show a pie chart and state the coverage. |
+| 5 | SQL (structured queries) | Do ratings agree with sentiment labels in the uploaded review parts? Show a grouped bar chart and identify high-rated negative reviews and low-rated positive reviews. |
+| 6 | SQL (structured queries) | Analyze monthly sales, profit and profit margin in Financial Sample. Show trend charts and identify months when sales grew but profit did not. |
+| 7 | HYBRID (combined retrieval and multi-Agent collaboration) | Chart the sentiment distribution across the uploaded review parts, then quote reviews describing good value and poor value to explain the differences in experience. |
+| 8 | HYBRID (combined retrieval and multi-Agent collaboration) | Which clientType groups have higher negative-review rates in the uploaded review parts? Chart the rates, include sample sizes and suggest improvements grounded in relevant reviews. |
+| 9 | HYBRID (combined retrieval and multi-Agent collaboration) | What evidence or counterexamples in the review parts support the emphasis on value and convenience in the two uploaded reports? Analyze ratings, sentiment statistics and original quotations together. |
+| 10 | HYBRID (combined retrieval and multi-Agent collaboration) | Using the uploaded reviews, both reports and Financial Sample, separately summarize consumer experience, market trends and business performance. Include three charts and three recommended actions, without directly joining unrelated datasets. |
+
+*These are expected execution modes, not manual routing settings or a claim that all ten questions have passed end-to-end acceptance.*
+
+### In-chat analytical charts
+
+For example: **“Summarize total profit by country and show a bar chart and data table.”**
+Chat messages support bar, line and pie charts and numeric comparison tables; the AI can select a suitable visualization.
+SQL/HYBRID charts use actual query results. When explicitly requested, RAG can also use retrieved numeric metadata
+or values anchored to quotations from retrieved documents; you do not need to repeat the numbers in the question.
+Upload charts describe processing counts only; ask follow-up questions for business analysis.
+
+For report charts such as question 3, expand **Chart sources** to check filenames, pages (when available),
+record IDs and original quotations. The server validates quoted numbers, and evidence review checks units,
+periods, statistical scope and comparability without inferring missing values.
+If PDF extraction loses chart layout and numbers cannot be reliably matched to labels or periods, use explicit
+prose values or structured tables instead of guessing. Missing suitable numeric data produces
+`CHART_DATA_UNAVAILABLE` while preserving the text answer.
+
+Each answer supports up to four charts, with four series and 40 rows per chart. Pie charts require a single
+non-negative SQL series with a positive total and valid part-to-whole semantics, or a complete, mutually exclusive
+grouping quoted from a document (percentages must total 100%). Independent adoption rates or retrieved-passage
+counts cannot stand in for a population distribution.
+Charts label sources and subset coverage, include accessible data tables and hover details, and use local SVG
+without a CDN or model-generated HTML/JS execution. Chart errors are explicit and preserve the text answer.
+Charts persist with completed runs and in the browser's latest 30 local messages. Refreshing the same tab
+and reconnecting to the same Session restores local history. Clearing local history does not delete server-side runs.
+
+### Additional acceptance checks
 
 Also ask about a topic absent from the uploads: the answer should acknowledge insufficient evidence.
 Select a second Session and check **Show sources**: the first Session's files should not appear there.
