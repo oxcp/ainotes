@@ -282,7 +282,7 @@ Each response appears in the history panel. Expand its "Evidence, SQL and execut
 ![module-06-chat-response+evidence-en](../pic/module-06-chat-response+evidence-en.png)
 
 <details>
-<summary>Expand to view a complete HYBRID response example (Chinese model text translated into English)</summary>
+<summary>Expand to view a complete HYBRID response example </summary>
 
 ![module-06-chat-response+evidence-hybrid-en](../pic/module-06-chat-response+evidence-hybrid-en.png)
 
