@@ -88,8 +88,6 @@ Do not enable `set -x` or HTTP debug logging.
 cd agenthost/module-06
 az account show -o none 2>/dev/null || az login
 aca auth status >/dev/null 2>&1 || aca auth login
-aca --version
-az bicep version
 
 export SUBSCRIPTION_ID="$(az account show --query id -o tsv | tr -d '\r\n')"
 export RESOURCE_GROUP="${RESOURCE_GROUP:-rg-agenthost-workshop}"
@@ -109,15 +107,32 @@ Select the intended subscription with `az account set` before this block if nece
 
 ## Step 2 — Deploy once
 
-The default database is **HorizonDB**. If using Azure PostgreSQL Flexible Server instead,
-set `DB_PROVIDER=postgresql` before deployment. Both use PostgreSQL 17, the `postgres` database and `vector`.
+`DB_PROVIDER` defaults to **HorizonDB**. The available services are **HorizonDB | PostgreSQL**
+(Azure PostgreSQL Flexible Server). Command values must be lowercase: `horizondb` (default) or `postgresql`.
+Both use PostgreSQL 17, the `postgres` database and `vector`.
+
+Before deployment, set the database provider and region in the current Bash shell:
+
+```bash
+export DB_PROVIDER="horizondb"  # Change to "postgresql" if needed
+export DB_LOCATION="eastus2"   # Example: replace with a region supporting your chosen database service
+```
+
+> [!IMPORTANT]
+> - **`DB_LOCATION` controls only the database deployment region; it can differ from the resource group's
+>   and ACA SandboxGroup's regions.** If the previously selected region does not offer your chosen database
+>   service, specify a supported region here.
+> - Do not change the shared `LOCATION` or rebuild the SandboxGroup for this purpose.
+> - `eastus2` above is only an example: verify database service/SKU availability and subscription quota in the target region.
+> - When `DB_LOCATION` is unset, `LOCATION` takes precedence; otherwise the resource group's region is used.
+> - Cross-region connections must still meet network access requirements and can increase latency and data transfer costs.
 
 Only set overrides when your existing resources differ from the workshop defaults:
 
 | Variable | When needed |
 |---|---|
 | `DB_PROVIDER` | `horizondb` (default) or `postgresql` |
-| `DB_LOCATION` | Database-only region override; otherwise uses the shared region |
+| `DB_LOCATION` | Database-only region override, independent of the resource group/SandboxGroup; select a supported region if the original region lacks the chosen database service |
 | `ACR_NAME`, `STORAGE_ACCOUNT_NAME`, `APIM_NAME` | Custom existing Module-01 resource names |
 | `IMAGE_TAG` | Image tag shared by builds and ACA imports; defaults to `latest` |
 | `FOUNDRY_RESOURCE_NAME`, `FOUNDRY_PROJECT_NAME` | Custom existing Foundry account/project; project defaults to `maf-agent-prj` |
@@ -143,32 +158,18 @@ again individually after the full deployment:
 | `images` | Build and publish five images remotely using ACR Tasks |
 | `aca` | Create five sandboxes, mount storage, apply the schema, start Agents and check connectivity |
 
-`--migrate` initializes the dedicated workshop database inside a guest; do not target a production database.
-Agent database connections use Entra authentication, not the provisioning administrator password.
-The existing general model and shared infrastructure are reused.
+The command must finish with all five Agents marked `ready`. It checks health endpoints, authenticated
+Agent Cards and a Chat → Orchestrator → database request.
 
-To raise an existing Module-06 embedding deployment to 200K TPM, keep its `.local` ownership records
-and run only the models stage in the same configured Bash session:
+Data uploads, processing and model answers still need validation through the following steps.
 
-```bash
-EMBEDDING_CAPACITY=200 bash deploy.sh --stage models
-```
-
-Existing higher capacity is preserved. Azure validates available quota; this does not request a quota increase.
-No database redeployment, Agent image rebuild or data re-ingestion is needed.
+> [!important]
+> - Auto-suspend is **disabled by default** because HTTP/A2A requests do not wake suspended Agents.
+>   All five Agents therefore incur compute charges even when idle.
+> - If you suspend them between exercises, explicitly resume all workers before using them again.
 
 Generated settings, passwords, peer keys and resource inventories are saved under `.local`.
-Keep them private, Git-ignored and available for cleanup. Do not edit the generated configuration;
-custom settings belong in a separate `ACA_COMMON` JSON with string values.
-Scripts do not automatically load `.env`. On WSL, store credentials on a Linux filesystem or restrict Windows ACLs.
-
-The command must finish with all five Agents marked `ready`. It checks health endpoints, authenticated
-Agent Cards and a Chat → Orchestrator → database request. Uploads and model answers still need the checks below.
-
-**If deployment fails:** stop and retain the error, password and inventories. There is no automatic rollback
-or resume. Existing database/ACA inventories and Agent configuration cannot be overwritten.
-Use [the CLI deployment reference](agent-src/docs/cli-deployment.md) and `bash deploy.sh --help`
-for deliberate stage retries; a new ACA output path creates a **new deployment**, not a restart.
+Custom settings belong in a separate `ACA_COMMON` JSON with string values.
 
 ## Step 3 — Connect to a Session
 
@@ -180,19 +181,21 @@ jq -r '.agents.chat.url' "$ACA_OUTPUT"
 2. Select an existing **Session**, or enter `Summer launch` under **New session** and click **Create**.
 3. Click **Connect** before uploading or asking questions.
 
-A Session is a persistent workspace for uploaded data, not a login. All Sessions in the configured
-database are visible to workshop users, but queries and sources are scoped to the selected Session.
-Switching Sessions requires reconnecting. **Clear local conversation** clears browser history only,
-not stored data. Enter sends a question; Shift+Enter inserts a newline.
+A Session is a persistent workspace for uploaded data. Data is available only within the Session
+to which it was uploaded. When switching Sessions, reconnect and upload data to the selected Session.
+
+**Clear local conversation** clears browser history only, not stored data.
+
+Enter sends a question; Shift+Enter inserts a newline.
 
 ## Step 4 — Upload and process sample data
 
-Use the prepared PDF/CSV parts in [sample-data](sample-data/), not the legacy synthetic fixtures under
-`agent-src/sample-data`. Deployment does not import data automatically.
-The [manifest](sample-data/manifest.json) records source files and coverage.
+Deployment does not import data automatically. Use the prepared PDF/CSV parts in [sample-data](sample-data/).
 
 Select one or more files, then click **Upload and process**. The browser uploads and processes them
-**one at a time**. Start small:
+**one at a time**.
+
+You can start with a small selection of files, for example:
 
 | Order | Upload | Expected result |
 |---|---|---|
@@ -200,109 +203,110 @@ Select one or more files, then click **Upload and process**. The browser uploads
 | 2 | [First customer-review CSV part](sample-data/03_customer_reviews-rows-000001-002000.csv) | Store typed rows and embed useful review text |
 | 3 | [Financial CSV: all 700 rows](sample-data/04_financial_sample-rows-000001-000700.csv) | Store typed rows; numeric financial data produces no embeddings |
 
-Wait for each processing report and inspect counts, warnings and **Show sources**.
-Embedding runs automatically; there is no separate vectorization command.
-Keep the page open while the queue runs. On error, the queue pauses; **Retry last request** continues
-the current file/run without repeating completed files. Refreshing loses the local queue.
-Failed ingestion has no durable embedding checkpoint, so retrying may incur embedding charges again.
+Then gradually upload and process additional PDF/CSV parts.
 
-- Add remaining parts only as needed. The complete review source has **41,711 rows in 21 parts**.
-  Each CSV part becomes a separate dataset/table; whole-dataset statistics must aggregate all relevant parts.
-- Do not upload both an original and its parts into one Session. Deduplication is per file, not across parts.
-  Accepted row counts and embedding counts are different measures.
-- Default per-file limits are **20 MB**, **50,000 rows** and **100,000 embedding chunks**.
-  Large ingestions may take up to the default **7,200-second** ingestion deadline; allow for model quota and cost.
-- Use text PDFs; OCR is not supported. PDF citation pages are local to each part:
-  `original page = manifest.start + cited page - 1`.
-- Use only sources you are authorized to upload. Conclusions cover the processed parts, not necessarily
-  the entire source or a representative market sample.
+> [!note]
+> - The complete review source has **41,711 rows in 21 parts**. Each CSV part becomes a separate
+>   dataset/table; whole-dataset statistics must aggregate all relevant parts.
+> - Default per-file limits are **20 MB**, **50,000 rows** and **100,000 embedding chunks**.
+> - The workshop sample data comes from publicly accessible sites and is used only for technical testing
+>   in this workshop. The data is not guaranteed to be representative of the market.
+
+<!--
+> - Do not upload both an original and its parts into one Session. Deduplication is per file, not across parts;
+-->
+
+After uploading, click **Show sources** to view the files uploaded to the current Session.
+Embedding runs automatically; there is no separate vectorization command.
+
+**Keep the page open while the queue runs.**
+
+> [!tip]
+> - On an upload error, the queue pauses. Click **Retry last request** to continue the current file/run
+>   without repeating completed files. Errors commonly occur when embedding generation hits capacity limits.
+> - To raise the existing embedding deployment's TPM to address such errors, open model deployments in
+>   the Microsoft Foundry project, find the deployed "text-embedding-3-small" model, select "Edit",
+>   and increase "Tokens per Minute Rate Limit".
+> - Large ingestions may take up to the default **7,200-second** ingestion deadline; allow for model quota and cost.
+> - Use text PDFs; OCR is not supported.
 
 ## Step 5 — Ask questions and verify evidence
 
 Ask the following in the same Session after its relevant uploads finish. The model selects the route;
 there is no manual mode selector.
 
-| Mode | Question | Verify |
+| Mode | Example question | Data retrieval |
 |---|---|---|
 | DIRECT | Write three taglines for a repairable speaker. | General-model response, without retrieval or SQL |
-| RAG | According to the uploaded reports, what matters to consumers? | Relevant passages, filenames, pages and citations |
-| SQL | Which country generated the highest total profit? Show a bar chart and data table. | Read-only SQL and totals consistent with the financial CSV |
-| HYBRID | Combine consumer trends and sales performance and recommend the best launch market. | Both qualitative and quantitative evidence, with recommendations distinguished from facts |
+| RAG | According to the uploaded reports, what matters to consumers? | Vector retrieval of relevant passages, filenames, pages and citations |
+| SQL | Which country generated the highest total profit? Show a bar chart and data table. | SQL queries, with totals consistent with the financial CSV |
+| HYBRID | Combine consumer trends and sales performance and recommend the best launch market. | Both vector retrieval and SQL queries, with combined results |
 
-Expand the evidence panel to inspect sources and SQL. Charts must use verified data; passage counts
-are not review-row counts. A broad review overview may use only five passages and is **not a full-dataset summary**.
-Use SQL for sentiment distributions and other dataset-wide counts.
+### More example questions
 
-### 8 suggested chat questions
-
-Copy these questions one at a time. Finish uploading and processing the relevant files in the same Session first.
-Uploading every part is not required. For statistics, state which uploaded review parts are actually queryable.
-If this retrieval finds no relevant passage for a report or theme, explicitly identify the evidence gap;
-do not infer that the full report lacks that viewpoint. Upload additional parts as needed to expand the analysis.
+**The following questions are examples for reference and can be copied one at a time.**
 
 | No. | Expected mode | Chat question |
 |---|---|---|
-| 1 | RAG (vector retrieval) | Find contrasting experiences of high expectations followed by disappointment and exceeded expectations in the uploaded reviews. Quote the original text, state any missing evidence and do not compute counts. |
-| 2 | RAG (vector retrieval) | Quote passages about price, convenience and sustainable consumption separately from the uploaded Capgemini and Ryder reports, then compare similarities and differences. Do not judge themes lacking source text. |
-| 3 | RAG (vector retrieval) | Extract comparison percentages for purchasing Gen AI-recommended products from the uploaded Capgemini report. Quote the source and show a bar chart, preserving its time periods and populations; state if comparable values are unavailable. |
-| 4 | SQL (structured queries) | Aggregate sales and profit by year and month from the uploaded financial data and show a line chart. List profit margin (total profit / total sales) separately in a table; identify months when sales rose but profit did not versus the previous month. |
-| 5 | SQL (structured queries) | Count the uploaded reviews and their percentages by existing sentiment category. Show a pie chart, total sample size and data coverage. |
-| 6 | HYBRID (combined retrieval and multi-Agent collaboration) | Compare negative-review rates across platforms (such as apps or websites) in the uploaded reviews, using existing sentiment categories. Show a bar chart of rates and list each platform's total review count. Ground suggestions in review quotations; state if none are available. |
-| 7 | RAG (vector retrieval) | Use customer needs in the uploaded reviews and consumer trends in both reports to recommend priority business improvements for the future. Explain the evidence and metrics for evaluating each recommendation; distinguish facts from assumptions and do not chart. |
-| 8 | HYBRID (combined retrieval and multi-Agent collaboration) | Calculate total sales and total profit from the uploaded financial data. Separately use reviews and reports to summarize customer experience and market risks. State evidence and gaps by source; do not chart or infer causality across sources. |
+| 1 | DIRECT (direct response) | Explain the difference between sales, profit and profit margin in plain language, with a simple example. Do not use uploaded data. |
+| 2 | RAG (vector retrieval) | Find contrasting experiences of high expectations followed by disappointment and exceeded expectations in the reviews. Quote the original text, state any missing evidence and do not compute counts. |
+| 3 | RAG (vector retrieval) | Quote passages about price, convenience and sustainable consumption from the reports, then compare similarities and differences. Do not judge themes lacking source text. |
+| 4 | RAG (vector retrieval) | Extract comparison percentages for purchasing Gen AI-recommended products from the reports. Quote the source and show a bar chart, preserving its time periods and populations; state if comparable values are unavailable. |
+| 5 | SQL (structured queries) | Summarize total profit by country and show a bar chart and data table. |
+| 6 | SQL (structured queries) | Aggregate sales and profit by year and month from the uploaded financial data and show a line chart. List profit margin (total profit / total sales) separately in a table; identify months when sales rose but profit did not versus the previous month. |
+| 7 | SQL (structured queries) | Count the uploaded reviews and their percentages by sentiment category. Show a pie chart, total sample size and data coverage. |
+| 8 | HYBRID (combined retrieval and multi-Agent collaboration) | Compare negative-review rates across platforms (such as apps or websites), using sentiment categories. Show a bar chart of rates and ground suggestions in review quotations; state if none are available. |
+| 9 | HYBRID (combined retrieval and multi-Agent collaboration) | Calculate total sales and total profit from the financial data, and use reviews and reports to summarize customer experience and market risks. Do not chart. |
+| 10 | HYBRID (combined retrieval and multi-Agent collaboration) | Calculate total sales and total profit from the financial data, and use customer needs in the reviews and consumer trends in the reports to recommend priority business improvements for the future. Do not chart. |
 
-*These wordings reduce task ambiguity; they do not replace fixes to SQL, chart or citation validation. These are expected execution modes, not manual routing settings or a claim that all eight questions have passed end-to-end acceptance.*
+*"Expected mode" is the data retrieval and aggregation approach the model is expected to select, not a manual routing setting.*
+
+> [!tip]
+> - The DIRECT example requires no uploads. For the other questions, finish uploading and processing
+>   the relevant files in the same Session first.
+> - Uploading every part is not required; retrieval and synthesis use only the uploaded data.
+> - If a retrieval finds no relevant passage for a report or theme, the answer will identify the evidence gap.
+>   Upload additional parts as needed to expand the analysis.
+
+### Reviewing answers
+
+- Expand the evidence panel to inspect sources and SQL.
+- Charts must use verified data; passage counts are not review-row counts.
+- A broad review overview may use only five passages and is **not a full-dataset summary**.
+- Use SQL for sentiment distributions and other dataset-wide counts.
 
 ### In-chat analytical charts
 
-For example: **“Summarize total profit by country and show a bar chart and data table.”**
-Chat messages support bar, line and pie charts and numeric comparison tables; the AI can select a suitable visualization.
-SQL/HYBRID charts use actual query results. When explicitly requested, RAG can also use retrieved numeric metadata
-or values anchored to quotations from retrieved documents; you do not need to repeat the numbers in the question.
-Upload charts describe processing counts only; ask follow-up questions for business analysis.
-
-For report charts such as question 3, expand **Chart sources** to check filenames, pages (when available),
-record IDs and original quotations. The server validates quoted numbers, and evidence review checks units,
-periods, statistical scope and comparability without inferring missing values.
-If PDF extraction loses chart layout and numbers cannot be reliably matched to labels or periods, use explicit
-prose values or structured tables instead of guessing. Missing suitable numeric data produces
-`CHART_DATA_UNAVAILABLE` while preserving the text answer.
-
-Each answer supports up to four charts, with four series and 40 rows per chart. Pie charts require a single
-non-negative SQL series with a positive total and valid part-to-whole semantics, or a complete, mutually exclusive
-grouping quoted from a document (percentages must total 100%). Independent adoption rates or retrieved-passage
-counts cannot stand in for a population distribution.
-Charts label sources and subset coverage, include accessible data tables and hover details, and use local SVG
-without a CDN or model-generated HTML/JS execution. Chart errors are explicit and preserve the text answer.
-Charts persist with completed runs and in the browser's latest 30 local messages. Refreshing the same tab
-and reconnecting to the same Session restores local history. Clearing local history does not delete server-side runs.
-
-### Additional acceptance checks
-
-Also ask about a topic absent from the uploads: the answer should acknowledge insufficient evidence.
-Select a second Session and check **Show sources**: the first Session's files should not appear there.
-Health checks alone do not validate the workshop; confirm uploads and all four query modes.
+- Chat messages support bar, line and pie charts and numeric comparison tables; the AI can select a suitable visualization.
+- SQL/HYBRID charts use actual query results. When explicitly requested, RAG can also use retrieved numeric
+  metadata or values anchored to quotations from retrieved documents.
+- Each answer supports up to four charts, with up to four series and 40 rows per chart.
+- Chart errors are explicit and preserve the text answer. Charts persist with completed runs and are also
+  saved in the browser's latest 30 local messages.
+- Refreshing the same tab and reconnecting to the same Session restores local history.
+  Clearing local history does not delete server-side runs.
+- Also ask about a topic absent from the uploads: the answer should acknowledge insufficient evidence.
+- Each Session should have its own uploaded files. Select a second Session and check **Show sources**:
+  the first Session's files should not appear there. In a new Session, you can try uploading other data
+  files from outside this workshop for testing.
 
 ## Step 6 — Clean up
-
-Auto-suspend is **disabled by default** because HTTP/A2A requests do not wake manually activated,
-suspended workers. All five running Agents incur compute charges even when idle.
-If you suspend them between exercises, explicitly resume all workers before use.
-Suspended sandboxes still incur storage charges; the database and other Azure services are billed separately.
 
 When finished, preview cleanup, review the targets, then execute:
 
 ```bash
 bash cleanup.sh
-bash cleanup.sh --execute
+source ./cleanup.sh --execute
 ```
 
 Type **`delete module-06`** when prompted.
 
 > [!WARNING]
-> Cleanup destroys Module-06 database/Blob/Sandbox data, including attributable snapshots.
-> Back up valuable state **outside the deletion scope** first.
+> - Cleanup destroys Module-06 database/Blob/Sandbox data, including attributable snapshots.
+> - After cloud cleanup is verified, it also empties this module's entire `.local`, including hidden files,
+>   custom files and subdirectories.
 
+<!--
 The script uses saved `.local` inventories for **all deployment attempts**. It removes Module-06 sandboxes,
 imported disks, attributable snapshots, the recorded Blob volume and `data` container, tagged databases/
 parameter groups, and baseline-tracked embedding/APIM additions.
@@ -310,8 +314,23 @@ It preserves the shared resource group, SandboxGroup, Module-04 sandboxes, UAMI/
 Foundry account/project, general model, base APIM and storage account.
 
 Missing ownership records or failed deletions stop complete cleanup and retain recovery files.
-Review external/custom inventories separately. Retained images/snapshots and Azure retention policies
-may continue to incur storage charges. Do not delete the shared resource group to clean up only this module.
+Review external/custom inventories separately. Dry runs, cancellation and failures do not reset environment
+variables; changes to local files during cleanup also stop local deletion. Do not deploy concurrently
+with cleanup or empty `.local` beforehand: the script needs its inventories to verify cloud ownership.
+
+When invoked with `source`, cloud deletion still runs in a separate Bash process. Only after complete success does it
+`unset` known Module-06 deployment variables in the current Bash shell, including `ACA_COMMON`, `ACA_CONFIG`,
+`ACA_OUTPUT`, database settings/passwords, image tags, model/storage/identity settings, and subscription,
+resource-group and region selections. It does not clear unrelated variables, edit shell startup files,
+delete external custom configurations, or clear Azure CLI login/defaults. Readonly variables or namerefs
+are rejected before deletion; use a clean Bash shell in that case.
+`bash cleanup.sh --execute` still cleans cloud resources and local files, but a child process cannot unset
+its caller's environment variables, so the `source` invocation above is recommended.
+-->
+> [!important]
+> - To redeploy Module-06, **start again from Step 1 (environment setup, subscription, resource group,
+>   database options, and so on)**, then run `bash deploy.sh --migrate`.
+> - Do not delete the shared resource group to clean up only this module.
 
 ## References
 

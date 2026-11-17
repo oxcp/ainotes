@@ -4,13 +4,66 @@
 #   1. Read saved inventories and verify ownership of Module-06 resources
 #   2. Preview exact deletion targets and require explicit confirmation
 #   3. Delete cloud resources in dependency order and verify their absence
-#   4. Remove generated local files only after complete cloud cleanup
+#   4. Empty .local only after complete cloud cleanup; reset caller variables when sourced
 #
 # Usage: bash cleanup.sh [--execute]
 # Env overrides: SUBSCRIPTION_ID, RESOURCE_GROUP, OPERATION_TIMEOUT_SECONDS.
 # Scope comes from saved inventories; overrides must agree with their values.
-# Prerequisites: jq, realpath, timeout; az/aca when cloud inventories require them.
+# Prerequisites: jq, realpath, timeout, find, sort, sha256sum; az/aca when cloud inventories require them.
 # Never deletes the shared Module-01/04 infrastructure.
+# Run destructive work in a child so sourcing cannot replace the caller's traps/options or exit its shell.
+if [[ "${BASH_SOURCE[0]}" != "$0" ]]; then
+  _module06_cleanup_in_shell() {
+    local -
+    set +x
+    local arg variable declaration execute=false
+    local -a reset_variables=(
+      ACA_COMMON ACA_CONFIG ACA_OUTPUT
+      SUBSCRIPTION_ID RESOURCE_GROUP LOCATION DEPLOYMENT_SN
+      DB_PROVIDER DB_LOCATION DB_RESOURCE_NAME DB_ADMIN_USERNAME DB_USERNAME
+      DB_VCORES DB_SKU_NAME DB_STORAGE_SIZE_GB DB_REUSE_ENTRA_ADMIN
+      DB_PASSWORD DB_PASSWORD_FILE DB_OUTPUT DB_FIREWALL_RULES_FILE
+      ACR_NAME ACR_LOGIN_SERVER IMAGE_TAG SANDBOX_GROUP_NAME
+      REGISTRY_IDENTITY IDENTITY_NAME AGENT_IDENTITY_RESOURCE_ID AGENT_IDENTITY_NAME
+      AGENT_IDENTITY_CLIENT_ID AGENT_IDENTITY_PRINCIPAL_ID AZURE_TENANT_ID
+      CUSTOMER_VNET_CONNECTION_NAME SANDBOX_CPU SANDBOX_MEMORY AUTO_SUSPEND_MINS
+      HEALTH_TIMEOUT_SECONDS OPERATION_TIMEOUT_SECONDS
+      STORAGE_ACCOUNT_NAME STORAGE_SUBSCRIPTION_ID STORAGE_RESOURCE_GROUP
+      KB_STORAGE_CONTAINER_ID KB_VOLUME_NAME KB_VOLUME_IDENTITY
+      FOUNDRY_RESOURCE_NAME FOUNDRY_PROJECT_NAME APIM_NAME LLM_MODEL
+      EMBEDDING_DEPLOYMENT_NAME EMBEDDING_MODEL_NAME EMBEDDING_MODEL_VERSION
+      EMBEDDING_SKU EMBEDDING_CAPACITY EMBEDDING_DIMENSIONS
+    )
+    for arg in "$@"; do
+      [[ "$arg" != --execute ]] || execute=true
+      if [[ "$arg" == --help ]]; then
+        command bash "${BASH_SOURCE[0]}" --help
+        return "$?"
+      fi
+    done
+    if $execute; then
+      for variable in "${reset_variables[@]}"; do
+        declaration="$(declare -p "$variable" 2>/dev/null)" || continue
+        if [[ "$declaration" =~ ^declare\ -[^[:space:]]*[rn] ]]; then
+          printf 'Error [cleanup]: %s is readonly or a nameref; use a clean shell before cleanup.\n' "$variable" >&2
+          return 1
+        fi
+      done
+    fi
+    command bash "${BASH_SOURCE[0]}" "$@" || return "$?"
+    if $execute; then
+      unset -v "${reset_variables[@]}" || return "$?"
+      printf 'Cleared Module-06 deployment overrides in this shell. Reconfigure deployment settings before redeploying.\n'
+    fi
+  }
+  if _module06_cleanup_in_shell "$@"; then
+    unset -f _module06_cleanup_in_shell
+    return 0
+  else
+    unset -f _module06_cleanup_in_shell
+    return 1
+  fi
+fi
 set +x
 set -Eeuo pipefail
 umask 077
@@ -35,14 +88,21 @@ while (($#)); do
 Usage: bash cleanup.sh [--execute]
 Default: read-only discovery and a dry-run plan.
 --execute requires typing "delete module-06" (also accepted on stdin).
+Use source ./cleanup.sh --execute to also unset deployment overrides in the calling Bash shell.
+Sourced dry runs, cancellation and failures do not reset variables or change shell options/traps.
+Running with bash cannot unset parent-shell variables; use the sourced form for a redeployment reset.
 Fixed scope: all five Module-06 agent roles across saved deployment attempts,
 their disks and attributable snapshots, Module-06 data container/volume,
 tagged databases/parameter groups, and baseline-tracked embedding/APIM children.
+After verified cloud cleanup, empties this module's .local (including hidden/custom files and
+subdirectories), without following symlinks. The .local directory itself is retained.
 Never deletes the shared RG, SandboxGroup, UAMI, ACR, Foundry account/project,
 general model, base APIM API/policy/backend, VNet, or storage account.
 Inventories are discovered in this module's .local/*.json; no name-only deletion.
 Missing ownership/baselines are reported, not guessed. Keep backups outside the
 objects being deleted: this cleanup intentionally deletes attributable snapshots.
+External custom files, shell startup files, Azure CLI login/defaults and unrelated variables
+are not changed. Reapply the README deployment settings before deploying again.
 HELP
       exit 0
       ;;
@@ -50,7 +110,7 @@ HELP
   esac
   shift
 done
-for tool in jq realpath timeout; do
+for tool in jq realpath timeout find sort sha256sum; do
   command -v "$tool" >/dev/null || fail "Required tool missing: $tool"
 done
 jq() {
@@ -67,6 +127,16 @@ safe_file() {
   [[ "$(realpath -m -- "$file")" == "$file" ]] || fail "Symlinked/noncanonical path refused: $file"
 }
 [[ ! -L "$root/.local" ]] || fail ".local must not be a symbolic link"
+[[ ! -e "$root/.local" || -d "$root/.local" ]] || fail "Artifact path must be a directory"
+[[ "$(realpath -m -- "$root/.local")" == "$root/.local" ]] || fail "Noncanonical artifact directory refused"
+local_state() {
+  if [[ -d "$root/.local" ]]; then
+    find "$root/.local" -xdev -mindepth 1 -printf '%y %s %T@ %p\0' | LC_ALL=C sort -z | sha256sum
+  else
+    printf 'absent\n'
+  fi
+}
+initial_local_state="$(local_state)" || fail "Cannot inspect local cleanup targets"
 # -- Read saved deployment inventories; do not derive deletion targets by name
 echo "==> [1/4] Reading inventories and validating Module-06 ownership"
 aca_inventories='[]'
@@ -267,12 +337,12 @@ plan() {
     if ! jq -e '.resources|any(.kind=="embedding")' <<<"$ownership" >/dev/null; then
       limitations="$(jq -c '.+["Legacy embeddings/APIM metadata has no baseline: model deployment, embeddings operation/policy and module06-embeddings-backend require manual prior-state review."]' <<<"$limitations")"
     fi
-    if [[ "$aca_inventories" == '[]' && -f "$root/.local/aca-config.json" ]]; then
-      limitations="$(jq -c '.+["Agent configuration exists without an ACA inventory: cannot establish sandbox/disk/volume ownership; review cloud inventory manually."]' <<<"$limitations")"
-    fi
-    if [[ "$db_inventories" == '[]' && -f "$root/.local/database-password" ]]; then
-      limitations="$(jq -c '.+["Database credentials exist without a DB inventory: database ownership/absence cannot be verified; credentials retained."]' <<<"$limitations")"
-    fi
+  fi
+  if [[ "$aca_inventories" == '[]' && -f "$root/.local/aca-config.json" ]]; then
+    limitations="$(jq -c '.+["Agent configuration exists without an ACA inventory: cannot establish sandbox/disk/volume ownership; review cloud inventory manually."]' <<<"$limitations")"
+  fi
+  if [[ "$db_inventories" == '[]' && -f "$root/.local/database-password" ]]; then
+    limitations="$(jq -c '.+["Database credentials exist without a DB inventory: database ownership/absence cannot be verified; credentials retained."]' <<<"$limitations")"
   fi
   jq -cnS --argjson a "$aca_plan" --argjson database "$databases" --argjson parameters "$parameters" \
     --argjson children "$children" --argjson limitations "$limitations" \
@@ -288,9 +358,9 @@ done
 initial_plan="$(plan)" || fail "Cannot build a safe cleanup plan"
 printf 'Cloud cleanup plan (exact IDs; retained/limitations are NOT deletions):\n'
 jq . <<<"$initial_plan"
-printf 'Local generated files (removed only after complete cloud cleanup):\n'
-if ((${#files[@]})); then
-  printf '  %s\n' "${files[@]}"
+printf 'Entire local cleanup scope (emptied only after complete cloud cleanup): %s\n' "$root/.local"
+if [[ -d "$root/.local" ]]; then
+  find "$root/.local" -xdev -mindepth 1 -print
 fi
 printf '%s\n' 'Shared infrastructure and unrelated Module-04 sandboxes are preserved.'
 printf '\033[1;33m%s\033[0m\n' \
@@ -304,6 +374,7 @@ read -r answer || fail "Confirmation required"
 [[ "$answer" == 'delete module-06' ]] || fail "Confirmation did not match"
 confirmed_plan="$(plan)" || fail "Cannot revalidate plan"
 [[ "$confirmed_plan" == "$initial_plan" ]] || fail "Cloud plan changed; rerun and review"
+[[ "$(local_state)" == "$initial_local_state" ]] || fail "Local files changed; rerun and review"
 # -- Verify each resource's absence after deletion ----------------------------
 present() {
   local kind="$1" id="$2" api="${3:-}" live
@@ -372,7 +443,7 @@ for kind in sandboxes snapshots disks volumes containers database parameters chi
   done < <(jq -c --arg kind "$kind" '.[$kind][]' <<<"$initial_plan")
 done
 # -- Verify complete cloud cleanup before removing generated configuration ----
-echo "==> [4/4] Verifying final cloud state and removing generated local files"
+echo "==> [4/4] Verifying final cloud state and emptying the module's .local"
 final_plan="$(plan)" || fail "Cannot verify final cleanup"
 jq -e 'all(to_entries[]|select(.key!="limitations" and .key!="unattributed_snapshots"); .value|length==0)' \
   <<<"$final_plan" >/dev/null || {
@@ -389,7 +460,12 @@ fi
 for file in "${files[@]}"; do
   safe_file "$file"
 done
-for file in "${files[@]}"; do
-  rm -f -- "$file"
-done
-printf '\033[1;32mModule-06 cleanup complete. Unattributed snapshots, custom inputs and shared resources retained.\033[0m\n'
+[[ ! -L "$root/.local" && "$(local_state)" == "$initial_local_state" ]] \
+  || fail "Local files changed during cloud cleanup; recovery files retained"
+if [[ -d "$root/.local" ]]; then
+  find "$root/.local" -xdev -depth -mindepth 1 -delete
+  [[ -z "$(find "$root/.local" -mindepth 1 -print -quit)" ]] || fail "Local cleanup incomplete"
+fi
+printf '\033[1;32mModule-06 cleanup complete; .local is empty. Unattributed snapshots, external custom inputs and shared resources retained.\033[0m\n'
+printf 'For current-shell environment reset, use: source "%s/cleanup.sh" --execute\n' "$root"
+printf 'A bash child cannot unset parent variables. Also review startup-file exports and external inventories before redeploying.\n'
