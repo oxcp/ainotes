@@ -190,29 +190,25 @@ Enter sends a question; Shift+Enter inserts a newline.
 
 ## Step 4 — Upload and process sample data
 
-Deployment does not import data automatically. Use the prepared PDF/CSV parts in [sample-data](sample-data/).
+Deployment does not import data automatically. Use the prepared PDF/CSV files in [sample-data](sample-data/).
 
 Select one or more files, then click **Upload and process**. The browser uploads and processes them
 **one at a time**.
 
-You can start with a small selection of files, for example:
+| Order | Upload | File contents and processing result | Data source and link |
+|---|---|---|---|
+| 1 | [Capgemini (PDF: 20 pages)](sample-data/01_capgemini_consumer_trends_2025-pages-000001-000020.pdf) | Consumer trends report (pages 1–20); extract text and store searchable vectors | Capgemini Research Institute report: [what-matters-to-todays-consumer-2025](https://www.capgemini.com/us-en/insights/research-library/what-matters-to-todays-consumer-2025/). First 20 pages |
+| 2 | [Ryder (PDF: 20 pages)](sample-data/02_ryder_ecommerce_consumer_study_2025-pages-000001-000020.pdf) | E-commerce consumer study (pages 1–20); extract text and store searchable vectors | Ryder insights report: [2025-ryder-ecommerce-consumer-study](https://www.ryder.com/globalassets/media/documents/insights/white-papers/2025-ryder-ecommerce-consumer-study_ada.pdf). First 20 pages |
+| 3 | [Customer reviews (CSV: 2,000 rows)](sample-data/03_customer_reviews-rows-000001-002000.csv) | Customer reviews (rows 1–2,000); store typed rows and embed useful review text | Workshop-provided sample from a public source |
+| 4 | [Financial report (CSV: 700 rows)](sample-data/04_financial_sample-rows-000001-000700.csv) | Financial sample data (700 rows); store typed rows; numeric financial data produces no embeddings | [Microsoft Power BI Financial Sample](https://learn.microsoft.com/en-us/power-bi/create-reports/sample-financial-download) |
 
-| Order | Upload | Expected result |
-|---|---|---|
-| 1 | [First Capgemini PDF part](sample-data/01_capgemini_consumer_trends_2025-pages-000001-000020.pdf) and [first Ryder PDF part](sample-data/02_ryder_ecommerce_consumer_study_2025-pages-000001-000020.pdf) | Extract text and store searchable vectors |
-| 2 | [First customer-review CSV part](sample-data/03_customer_reviews-rows-000001-002000.csv) | Store typed rows and embed useful review text |
-| 3 | [Financial CSV: all 700 rows](sample-data/04_financial_sample-rows-000001-000700.csv) | Store typed rows; numeric financial data produces no embeddings |
+- *The workshop sample data comes from publicly accessible sites.*
+- *It is used only for technical testing in this workshop and is not guaranteed to be representative of the market.*
 
-Then gradually upload and process additional PDF/CSV parts.
-
-> [!note]
+<!--
 > - The complete review source has **41,711 rows in 21 parts**. Each CSV part becomes a separate
 >   dataset/table; whole-dataset statistics must aggregate all relevant parts.
 > - Default per-file limits are **20 MB**, **50,000 rows** and **100,000 embedding chunks**.
-> - The workshop sample data comes from publicly accessible sites and is used only for technical testing
->   in this workshop. The data is not guaranteed to be representative of the market.
-
-<!--
 > - Do not upload both an original and its parts into one Session. Deduplication is per file, not across parts;
 -->
 

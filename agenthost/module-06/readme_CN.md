@@ -181,26 +181,21 @@ Enter 发送问题，Shift+Enter 换行。
 
 ## 步骤 4 — 上传并处理示例数据
 
-部署不会自动导入数据。请使用 [sample-data](sample-data/) 中已准备好的 PDF/CSV 分片，
+部署不会自动导入数据。请使用 [sample-data](sample-data/) 中已准备好的 PDF/CSV。选择一个或多个文件，点击 **Upload and process**，浏览器会**逐个上传并处理**。
 
-选择一个或多个文件，点击 **Upload and process**，浏览器会**逐个上传并处理**。
+| 顺序 | 上传文件 | 文件内容及处理结果 | 数据来源与链接 |
+|---|---|---|---|
+| 1 | [Capgemini (PDF：20页)](sample-data/01_capgemini_consumer_trends_2025-pages-000001-000020.pdf) | 消费者趋势报告（第 1–20 页）；提取文本并存储可检索向量 | Capgemini Research Institute 的研究报告：[what-matters-to-todays-consumer-2025](https://www.capgemini.com/us-en/insights/research-library/what-matters-to-todays-consumer-2025/ )。前20页 |
+| 2 | [Ryder (PDF：20页)](sample-data/02_ryder_ecommerce_consumer_study_2025-pages-000001-000020.pdf) | 电商消费者研究报告（第 1–20 页）；提取文本并存储可检索向量 | Ryder insights 研究报告：[2025-ryder-ecommerce-consumer-study](https://www.ryder.com/globalassets/media/documents/insights/white-papers/2025-ryder-ecommerce-consumer-study_ada.pdf) 。前20页 |
+| 3 | [客户评论 (CSV：2000行)](sample-data/03_customer_reviews-rows-000001-002000.csv) | 客户评论（第 1–2,000 行）；存储有类型的行，并为有用评论文本生成嵌入 | 研讨会提供的公开来源样例 |
+| 4 | [财务报告 (CSV：700 行)](sample-data/04_financial_sample-rows-000001-000700.csv) | 财务样例数据（700 行）；存储有类型的行，数值财务数据不生成嵌入 | [Microsoft Power BI 的 Financial Sample](https://learn.microsoft.com/en-us/power-bi/create-reports/sample-financial-download) |
 
-也可以先使用少量文件，例如：
-
-| 顺序 | 上传文件 | 预期结果 |
-|---|---|---|
-| 1 | [Capgemini 首个 PDF 分片](sample-data/01_capgemini_consumer_trends_2025-pages-000001-000020.pdf)和 [Ryder 首个 PDF 分片](sample-data/02_ryder_ecommerce_consumer_study_2025-pages-000001-000020.pdf) | 提取文本并存储可检索向量 |
-| 2 | [客户评论首个 CSV 分片](sample-data/03_customer_reviews-rows-000001-002000.csv) | 存储有类型的行，并为有用评论文本生成嵌入 |
-| 3 | [财务 CSV：全部 700 行](sample-data/04_financial_sample-rows-000001-000700.csv) | 存储有类型的行；数值财务数据不生成嵌入 |
-
-再逐步增加其它更多 PDF/CSV 分片的上传处理。
-
-> [!note]
-> - 完整评论源包含 **41,711 行、21 个分片**；每个 CSV 分片是独立数据集/表，全量统计需汇总所有相关分片。
-> - 每文件默认限制为 **20 MB**、**50,000 行**和 **100,000 个嵌入分块**。
-> - 本研讨会提供的示例数据来源于可公开访问站点，只用于研讨会的技术测试，数据本身不保证具有市场代表性。
+- *本研讨会提供的示例数据来源于公开访问站点*
+- *只用于研讨会的技术测试，数据本身不保证具有市场代表性。*
 
 <!--
+> - 完整评论源包含 **41,711 行、21 个分片**；每个 CSV 分片是独立数据集/表，全量统计需汇总所有相关分片。
+> - 每文件默认限制为 **20 MB**、**50,000 行**和 **100,000 个嵌入分块**。
 > - 不要在同一 Session 同时上传原件和分片。去重仅在单个文件内进行，不跨分片；
 -->
 
