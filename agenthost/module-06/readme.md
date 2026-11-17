@@ -5,15 +5,15 @@
 [⬆ Back to Workshop Home](../readme.md)
 
 > **Suggested duration: 60 minutes**, following the 145-minute core workshop.
-> Cloud provisioning, image builds and data ingestion may require additional waiting time.
 
 ## Overview
 
-Upload consumer reports, customer reviews and sales data, then ask five collaborating Agents
-for grounded business analysis. Each Agent runs in its own ACA Sandbox. **A2A** connects the Agents,
-**LangGraph** coordinates tasks inside Orchestrator, and the **OpenAI SDK** calls Microsoft Foundry
-through the existing APIM gateway. **Azure HorizonDB / PostgreSQL Flexible Server** stores structured
-data and vectors.
+- Business scenario: upload consumer reports, customer reviews and sales data, then ask five collaborating Agents for grounded business analysis.
+- Implementation overview:
+  - Each Agent runs in its own ACA Sandbox and communicates through **A2A**.
+  - **LangGraph** coordinates tasks inside Orchestrator, and the **OpenAI SDK** calls Microsoft Foundry through the existing APIM gateway.
+  - **Azure HorizonDB / PostgreSQL Flexible Server** stores structured data and vectors.
+- Agent roles:
 
 | Agent | Responsibility |
 |---|---|
@@ -22,6 +22,8 @@ data and vectors.
 | Data Processing | Extract files, load structured data and generate embeddings |
 | RAG | Retrieve relevant passages with source citations |
 | SQL | Generate, validate and execute bounded read-only queries |
+
+## Architecture
 
 ```mermaid
 %%{init: {"flowchart": {"nodeSpacing": 80, "rankSpacing": 100}}}%%
@@ -51,10 +53,9 @@ flowchart TD
 - Use Linux Bash (including WSL), Azure CLI with Bicep, the independent
   [`aca` CLI](https://aka.ms/aca-cli-install), `jq`, `curl`, `openssl`, GNU `timeout` and `realpath`.
   The deployment path was checked with ACA CLI `1.0.0-preview.5` and Bicep `0.48.1`.
-  Local Python and Docker are not required.
 - The operator needs database/model/APIM child-resource deployment permissions, storage ARM read/container
   deployment permissions, permission to attach the UAMI and run ACR Tasks, and
-  **Container Apps SandboxGroup Data Owner** on the existing group.
+  **Container Apps SandboxGroup Data Owner** on the existing SandboxGroup.
 - The UAMI needs model access, ACR pull permissions and **Storage Blob Data Contributor**.
   The selected database requires provider registration and regional capacity; HorizonDB also requires preview access.
 
@@ -62,27 +63,20 @@ flowchart TD
 
 Deployment creates the private `data` container in the existing storage account and mounts it
 **read-only at `/kb-data` in Chat and Data Processing**. The application still uses the Blob SDK
-for uploads. The volume identity defaults to the existing registry identity; it must already be
-assigned to the SandboxGroup and have **Storage Blob Data Reader** or stronger data permissions.
+for uploads.
 
-For private storage, complete Module-04's VNet/Private DNS setup first. Deployment selects the group's
-sole existing VNet connection and applies it to all five sandboxes. If there are multiple connections,
-set `CUSTOMER_VNET_CONNECTION_NAME` to the intended ready connection.
+Private storage access requires Private Link, so complete Module-04's VNet/Private DNS setup first.
 
 > [!CAUTION]
 > This is a workshop deployment, not a production multi-user service:
 > - Anyone who can reach the Chat URL can access all Sessions and their data; no browser key is required.
->   A2A peer authentication remains mandatory.
 > - The default database firewall allows **all IPv4 sources** (`0.0.0.0`–`255.255.255.255`).
 >   Use restricted rules/private networking outside the workshop. Adding narrower rules does not remove existing broad rules.
 > - The shared UAMI receives database administrator privileges for workshop setup; production needs least-privilege SQL roles.
-> - Do not upload confidential data without authorization. Extracted text is sent to Foundry;
->   the default embedding SKU, `GlobalStandard`, may process requests across Azure regions.
 
 ## Step 1 — Check the existing environment
 
 From the repository root, enter this module. Run the remaining commands here in the **same Bash session**.
-Do not enable `set -x` or HTTP debug logging.
 
 ```bash
 cd agenthost/module-06
@@ -105,7 +99,28 @@ Confirm the intended subscription, resource group, region and SandboxGroup, and 
 Select the intended subscription with `az account set` before this block if necessary.
 **Do not create another SandboxGroup.**
 
-## Step 2 — Deploy once
+Confirm that the checks pass with output similar to the following:
+
+```text
+General checks:
+✓ Azure CLI found
+✓ Azure CLI logged in
+✓ Subscription configured (624e6382-...) [config]
+✓ Resource group configured (rg-agenthost-workshop) [config]
+✓ ARM authentication working
+
+Sandbox checks:
+✓ Sandbox group: sandbox-group-agenthost-7a5970
+✓ Region: westus3
+✓ Sandbox group 'sandbox-group-agenthost-7a5970' exists in Azure
+✓ Container Apps SandboxGroup Data Owner role assigned
+
+9/9 passed
+
+aca 1.0.0-preview.5 — all checks passed
+```
+
+## Step 2 — Deploy with one command
 
 `DB_PROVIDER` defaults to **HorizonDB**. The available services are **HorizonDB | PostgreSQL**
 (Azure PostgreSQL Flexible Server). Command values must be lowercase: `horizondb` (default) or `postgresql`.
@@ -142,6 +157,8 @@ Only set overrides when your existing resources differ from the workshop default
 | `DB_FIREWALL_RULES_FILE` | Custom database firewall rules |
 | `ACA_COMMON` | Separate custom runtime JSON; normally omit and use automatic discovery |
 
+Run the following command to complete the deployment required for this module:
+
 ```bash
 bash deploy.sh --migrate
 ```
@@ -158,18 +175,26 @@ again individually after the full deployment:
 | `images` | Build and publish five images remotely using ACR Tasks |
 | `aca` | Create five sandboxes, mount storage, apply the schema, start Agents and check connectivity |
 
-The command must finish with all five Agents marked `ready`. It checks health endpoints, authenticated
-Agent Cards and a Chat → Orchestrator → database request.
+The command must finish with all five Agents marked `ready`:
 
-Data uploads, processing and model answers still need validation through the following steps.
+```text
+AGENT             STATUS       URL
+chat              ready        https://<chat-ingress>
+orchestrator      ready        https://<orchestrator-ingress>
+data-processing   ready        https://<processing-ingress>
+rag               ready        https://<rag-ingress>
+sql               ready        https://<sql-ingress>
+Inventory: .../.local/aca-deployment.json
+```
+
+- The command also checks health endpoints, authenticated Agent Cards and a Chat → Orchestrator → database request.
+- Generated settings, passwords, peer keys and resource inventories are saved under `.local`.
+- Custom settings belong in a separate `ACA_COMMON` JSON with string values.
 
 > [!important]
 > - Auto-suspend is **disabled by default** because HTTP/A2A requests do not wake suspended Agents.
 >   All five Agents therefore incur compute charges even when idle.
 > - If you suspend them between exercises, explicitly resume all workers before using them again.
-
-Generated settings, passwords, peer keys and resource inventories are saved under `.local`.
-Custom settings belong in a separate `ACA_COMMON` JSON with string values.
 
 ## Step 3 — Connect to a Session
 
@@ -212,7 +237,17 @@ Select one or more files, then click **Upload and process**. The browser uploads
 > - Do not upload both an original and its parts into one Session. Deduplication is per file, not across parts;
 -->
 
-After uploading, click **Show sources** to view the files uploaded to the current Session.
+**Upload steps:**
+1. Confirm that you have selected the target **Session** and clicked **Connect**.
+2. Select the local sample PDF/CSV files in the file picker. You can select multiple files at once.
+3. Click **Upload and process** to start uploading and processing the selected files.
+4. Keep the page open until the queue finishes uploading and processing each file. If an error pauses the queue, click **Retry last request** to retry.
+
+After uploading, confirm that all selected files show "Completed" in the status area:
+
+![module-06-files-upload-completed](../pic/module-06-files-upload-completed.png)
+
+Click **Show sources** to view the files uploaded to the current Session.
 Embedding runs automatically; there is no separate vectorization command.
 
 **Keep the page open while the queue runs.**
@@ -226,7 +261,7 @@ Embedding runs automatically; there is no separate vectorization command.
 > - Large ingestions may take up to the default **7,200-second** ingestion deadline; allow for model quota and cost.
 > - Use text PDFs; OCR is not supported.
 
-## Step 5 — Ask questions and verify evidence
+## Step 5 — Ask questions and verify Agent behavior
 
 Ask the following in the same Session after its relevant uploads finish. The model selects the route;
 there is no manual mode selector.
@@ -237,6 +272,204 @@ there is no manual mode selector.
 | RAG | According to the uploaded reports, what matters to consumers? | Vector retrieval of relevant passages, filenames, pages and citations |
 | SQL | Which country generated the highest total profit? Show a bar chart and data table. | SQL queries, with totals consistent with the financial CSV |
 | HYBRID | Combine consumer trends and sales performance and recommend the best launch market. | Both vector retrieval and SQL queries, with combined results |
+
+Each response appears in the history panel. Expand its "Evidence, SQL and execution plan" section to see:
+- The routing mode selected by the model.
+- The task workflow planned by the Orchestrator Agent, including which Agents participate, their goals, the RAG retrieval strategy, whether to generate charts, the answer language, and more.
+- The collaboration between Agents and each Agent's inputs and responses.
+- The final synthesis and review performed by the Orchestrator Agent.
+
+![module-06-chat-response+evidence](../pic/module-06-chat-response+evidence.png)
+
+<details>
+<summary>Expand to view a complete HYBRID response example (Chinese model text translated into English)</summary>
+
+![module-06-chat-response+evidence-hybrid](../pic/module-06-chat-response+evidence-hybrid.png)
+
+```text
+{
+  "mode": "HYBRID",
+  "plan": {
+    "mode": "HYBRID",
+    "reason": "Recommending a market requires both structured sales/profit summaries and source passages from consumer trend reports: SQL calculates sales performance by market, while RAG extracts consumer trends and market context from the reports to support the explanation.",
+    "rag_goal": "Use 01_capgemini_consumer_trends_2025.pdf and 02_ryder_ecommerce_consumer_study_2025.pdf to retrieve consumer trends, purchasing preferences, price sensitivity, regional/market differences and indicators of product launch suitability relevant to market selection.",
+    "sql_goal": "Aggregate sales and profit performance by country from 04_financial_sample.csv, focusing on each country's total sales and profit and the comparative rankings needed to recommend the most suitable product launch market.",
+    "rag_strategy": "semantic",
+    "chart_intent": "none",
+    "answer_language": "Simplified Chinese",
+    "tasks": [
+      {
+        "worker": "rag_agent",
+        "goal": "Use 01_capgemini_consumer_trends_2025.pdf and 02_ryder_ecommerce_consumer_study_2025.pdf to retrieve consumer trends, purchasing preferences, price sensitivity, regional/market differences and indicators of product launch suitability relevant to market selection.",
+        "depends_on": []
+      },
+      {
+        "worker": "sql_agent",
+        "goal": "Aggregate sales and profit performance by country from 04_financial_sample.csv, focusing on each country's total sales and profit and the comparative rankings needed to recommend the most suitable product launch market.",
+        "depends_on": []
+      }
+    ]
+  },
+  "documents": {
+    "status": "weak",
+    "results": [
+      {
+        "record_id": "5856ffb2-bd44-4e6d-8028-acf45d00ea96",
+        "workspace_id": "3316b200-58be-4bb4-aa26-8cb472ba91ef",
+        "document_id": "eec4d614-566c-48be-9fda-f00e18d9488d",
+        "filename": "01_capgemini_consumer_trends_2025-pages-000001-000020.pdf",
+        "content": "We identified five distinct behavior clusters based on the \nsub-themes on which questions were asked in the consumer \nsurvey:\nSource: Capgemini Research Institute, Consumer Demand survey, October–November 2024, N = 12,000 consumers; Educated \nRationalists cluster = 2,462 consumers; Convenience-Led Urbanites cluster = 3,556 consumers; Grounded Suburbanites cluster = \n1,912 consumers; Digital-First Trailblazers cluster = 2,660 consumers; Traditionalists cluster = 1,410 consumers.\nFigure 1.\nConsumer trends clusters \n12%\n16%\n21%\n22%\n30%\nTraditionalists  \nGrounded Suburbanites \nEducated Rationalists Digital-First Trailblazers \nConvenience-Led Urbanites  \nUsage of Gen AI\nSocial media influence\nSustainability impact\nOnline advertisements\nCost of living \n(Last-mile) convenience\nLoyalty\n9\nCapgemini Research Institute 2025\nWhat matter to today’s consumer? 2025 consumer behavior tracker for the consumer product and retail industries",
+        "similarity_score": 0.516250412399397,
+        "page_number": 9,
+        "section": null,
+        "metadata": {
+          "language": "en"
+        }
+      },
+      {
+        "record_id": "34550ca0-2808-419b-9afa-68a0ab6bfb22",
+        "workspace_id": "3316b200-58be-4bb4-aa26-8cb472ba91ef",
+        "document_id": "70bf51ee-7e42-4ad5-bf99-667622a252a8",
+        "filename": "02_ryder_ecommerce_consumer_study_2025-pages-000001-000020.pdf",
+        "content": "PURCHASE BEHAVIOR | 12\nPURCHASE BEHAVIOR | 13\nPURCHASE BEHAVIOR: \nKEY TAKEAWAYS\n• Experience is the leading driver of physical \nshopping.\n• Price comparison is the most commonly used \nresearch method among online shoppers.\n• Cleaning products, toys, and vitamins/\nsupplements exhibited the most annual \ngrowth. \n• Holiday purchasing patterns signal key \nomnichannel and consumer loyalty \nopportunities.",
+        "similarity_score": 0.5390977324415074,
+        "page_number": 13,
+        "section": null,
+        "metadata": {
+          "language": "en"
+        }
+      },
+      {
+        "record_id": "34bcd495-b5f9-4a19-b67b-d43a9fc5d24a",
+        "workspace_id": "3316b200-58be-4bb4-aa26-8cb472ba91ef",
+        "document_id": "eec4d614-566c-48be-9fda-f00e18d9488d",
+        "filename": "01_capgemini_consumer_trends_2025-pages-000001-000020.pdf",
+        "content": "Executive \nsummary \nSeeing the light: The beginning of the end of the cost-\nof-living crisis?\nAlthough the cost-of-living crisis continues to impact \nconsumer sentiment, things are slowly improving. \nHowever, consumers still seek discounts, both online and \nin-store. Private-label sales are on the rise as consumers \nlook for more affordable options.   \n• 64% of shoppers visit multiple physical stores looking \nfor deals, up from 56% last year.\n• Currently, 65% of consumers buy private-label or low-\ncost brands, up from 63% last year.\n• 73% of millennials expect retailers to provide alerts \nwhen brands reduce the weight of a product without \nreducing the price (‘shrinkflation’).\n \nThe grass is greener: Why consumers are \nswitching brands\n \n• 70% of consumers globally switch to try new brands. Another \nmajor reason for switching brands, as stated by 65% of \nconsumers, was that membership programs and shared \npreference data failed to result in a better experience.\n• Two-thirds of consumers will switch food brands for higher \nnutrition scores. \nTo remain competitive, brands and retailers must augment Gen AI \ntools to become more consumer-centric, use technology to boost \nresilience and sustainability and lower prices, leverage social and \nretail media networks as a keyway to engage and influence early in \nthe consumer journey, and bridge the gap in consumer education \nand trust with transparent collaboration across all partners.\n6\nCapgemini Research Institute 2025\nWhat matter to today’s consumer? 2025 consumer behavior tracker for the consumer product and retail industries",
+        "similarity_score": 0.5088272243476892,
+        "page_number": 6,
+        "section": null,
+        "metadata": {
+          "language": "en"
+        }
+      },
+      {
+        "record_id": "e333d479-fb07-4b6a-81de-d61b38f1520b",
+        "workspace_id": "3316b200-58be-4bb4-aa26-8cb472ba91ef",
+        "document_id": "70bf51ee-7e42-4ad5-bf99-667622a252a8",
+        "filename": "02_ryder_ecommerce_consumer_study_2025-pages-000001-000020.pdf",
+        "content": "PURCHASE BEHAVIOR",
+        "similarity_score": 0.4901920565175468,
+        "page_number": 12,
+        "section": null,
+        "metadata": {
+          "language": "en"
+        }
+      },
+      {
+        "record_id": "d1281d59-ee99-4be9-bf9e-383ab60d4f1e",
+        "workspace_id": "3316b200-58be-4bb4-aa26-8cb472ba91ef",
+        "document_id": "b3002d48-de4a-42f5-97ce-b25511b16f73",
+        "filename": "01_capgemini_consumer_trends_2025-pages-000041-000060.pdf",
+        "content": "trend highlights \na growing impatience and desire for immediate \ngratification among consumers.\n70\n%\nof consumers are willing to pay more  \nfor quick delivery\n52\nCapgemini Research Institute 2025\nWhat matter to today’s consumer? 2025 consumer behavior tracker for the consumer product and retail industries",
+        "similarity_score": 0.5057642285570623,
+        "page_number": 12,
+        "section": null,
+        "metadata": {
+          "language": "en"
+        }
+      }
+    ],
+    "top_k": 5,
+    "retrieval_method": "semantic",
+    "truncated": true,
+    "warnings": [
+      "Search 01_capgemini_consumer_trends_2025.pdf / market selection consumer trends purchase preferences price sensitivity regional differences market attractiveness: 5 candidates above threshold, 3 retained.",
+      "Search 02_ryder_ecommerce_consumer_study_2025.pdf / market selection consumer trends purchase preferences price sensitivity regional differences market attractiveness: 5 candidates above threshold, 2 retained.",
+      "Search coverage is bounded by the current file inventory and similarity threshold. A matching passage is not proof of every requested theme; verify its text. Missing evidence is not evidence that a report lacks a theme.",
+      "Evidence was capped by the merged record/context budget; coverage is partial."
+    ]
+  },
+  "query": {
+    "sql": "WITH country_summary AS (SELECT country, SUM(sales) AS total_sales, SUM(profit) AS total_profit, COUNT(*) AS row_count FROM (SELECT * FROM ds_10552e69c5c04c309340a4390cb97890 WHERE workspace_id = '3316b200-58be-4bb4-aa26-8cb472ba91ef') AS ds_10552e69c5c04c309340a4390cb97890 GROUP BY country), ranked AS (SELECT country, total_sales, total_profit, row_count, ROUND(total_profit / NULLIF(total_sales, 0), 6) AS profit_margin, RANK() OVER (ORDER BY total_sales DESC, total_profit DESC) AS sales_rank, RANK() OVER (ORDER BY total_profit DESC, total_sales DESC) AS profit_rank FROM country_summary) SELECT country, total_sales, total_profit, profit_margin, sales_rank, profit_rank, CASE WHEN sales_rank = 1 AND profit_rank = 1 THEN TRUE ELSE FALSE END AS recommended_market_flag FROM ranked ORDER BY total_sales DESC, total_profit DESC, country LIMIT 100",
+    "columns": [
+      "country",
+      "total_sales",
+      "total_profit",
+      "profit_margin",
+      "sales_rank",
+      "profit_rank",
+      "recommended_market_flag"
+    ],
+    "rows": [
+      {
+        "country": "United States of America",
+        "total_sales": "25029830.18",
+        "total_profit": "2995540.68",
+        "profit_margin": "0.119679",
+        "sales_rank": 1,
+        "profit_rank": 4,
+        "recommended_market_flag": false
+      },
+      {
+        "country": "Canada",
+        "total_sales": "24887654.89",
+        "total_profit": "3529228.89",
+        "profit_margin": "0.141806",
+        "sales_rank": 2,
+        "profit_rank": 3,
+        "recommended_market_flag": false
+      },
+      {
+        "country": "France",
+        "total_sales": "24354172.29",
+        "total_profit": "3781020.79",
+        "profit_margin": "0.155251",
+        "sales_rank": 3,
+        "profit_rank": 1,
+        "recommended_market_flag": false
+      },
+      {
+        "country": "Germany",
+        "total_sales": "23505340.82",
+        "total_profit": "3680388.82",
+        "profit_margin": "0.156577",
+        "sales_rank": 4,
+        "profit_rank": 2,
+        "recommended_market_flag": false
+      },
+      {
+        "country": "Mexico",
+        "total_sales": "20949352.11",
+        "total_profit": "2907523.11",
+        "profit_margin": "0.138788",
+        "sales_rank": 5,
+        "profit_rank": 5,
+        "recommended_market_flag": false
+      }
+    ],
+    "row_count": 5,
+    "summary": "Executed read-only query; returned 5 rows.",
+    "warnings": [
+      "Query scope: 1 catalog dataset(s): 04_financial_sample-rows-000001-000700.csv. The bounded catalog is not proof of complete uploaded-file coverage."
+    ]
+  },
+  "review": {
+    "status": "approved",
+    "unsupported_claims": [],
+    "conflicts": [],
+    "required_changes": [],
+    "notes": [
+      "The conclusion is explicitly labeled as a recommendation, and the partial coverage limitations of the retrieval and SQL results are disclosed.",
+      "The financial comparison is based only on the five returned countries; it does not claim to represent all markets.",
+      "The statements about retrieved consumer trends and purchasing preferences are consistent with the cited evidence."
+    ],
+    "chart_issues": []
+  },
+  "errors": []
+}
+```
+
+</details>
 
 ### More example questions
 
@@ -260,9 +493,8 @@ there is no manual mode selector.
 > [!tip]
 > - The DIRECT example requires no uploads. For the other questions, finish uploading and processing
 >   the relevant files in the same Session first.
-> - Uploading every part is not required; retrieval and synthesis use only the uploaded data.
+> - Retrieval and synthesis use only the uploaded data.
 > - If a retrieval finds no relevant passage for a report or theme, the answer will identify the evidence gap.
->   Upload additional parts as needed to expand the analysis.
 
 ### Reviewing answers
 
@@ -283,8 +515,8 @@ there is no manual mode selector.
   Clearing local history does not delete server-side runs.
 - Also ask about a topic absent from the uploads: the answer should acknowledge insufficient evidence.
 - Each Session should have its own uploaded files. Select a second Session and check **Show sources**:
-  the first Session's files should not appear there. In a new Session, you can try uploading other data
-  files from outside this workshop for testing.
+  the first Session's files should not appear there.
+- In a new Session, try uploading your own data files from outside this workshop and test them with relevant questions.
 
 ## Step 6 — Clean up
 

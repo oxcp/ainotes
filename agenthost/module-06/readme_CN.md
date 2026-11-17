@@ -5,15 +5,15 @@
 [⬆ 返回研讨会主页](../README_CN.md)
 
 > **建议时长：60 分钟**，接续 145 分钟的核心研讨会。
-> 云端资源预配、镜像构建和数据摄取可能需要额外等待时间。
 
 ## 概述
 
-上传消费者报告、客户评论和销售数据，由五个协作的 Agent 提供有据可依的业务分析。
-每个 Agent 在独立的 ACA Sandbox 中运行，通过 **A2A** 通信；
-**LangGraph** 在 Orchestrator 内协调任务，**OpenAI SDK** 通过已有 APIM 网关调用 Microsoft Foundry，
-**Azure HorizonDB / PostgreSQL Flexible Server** 存储结构化数据和向量。
-
+- 业务场景：上传消费者报告、客户评论和销售数据，由五个协作的 Agent 提供有据可依的业务分析。
+- 实现概要：
+  - 每个 Agent 在独立的 ACA Sandbox 中运行，通过 **A2A** 通信；
+  - **LangGraph** 在 Orchestrator 内协调任务，**OpenAI SDK** 通过已有 APIM 网关调用 Microsoft Foundry；
+  - **Azure HorizonDB / PostgreSQL Flexible Server** 存储结构化数据和向量。
+- Agent 角色定义：
 | Agent | 职责 |
 |---|---|
 | Chat | 浏览器界面、Session 管理和文件上传 |
@@ -22,6 +22,7 @@
 | RAG | 检索相关片段并提供来源引用 |
 | SQL | 生成、验证并执行受限的只读查询 |
 
+## 架构
 ```mermaid
 %%{init: {"flowchart": {"nodeSpacing": 80, "rankSpacing": 100}}}%%
 flowchart TD
@@ -50,9 +51,8 @@ flowchart TD
 - 使用 Linux Bash（含 WSL）、带 Bicep 的 Azure CLI、独立的
   [`aca` CLI](https://aka.ms/aca-cli-install)、`jq`、`curl`、`openssl`、GNU `timeout` 和 `realpath`。
   部署路径已使用 ACA CLI `1.0.0-preview.5` 和 Bicep `0.48.1` 检查。
-  不需要本地 Python 或 Docker。
 - 操作人员需具备数据库/模型/APIM 子资源部署权限、存储 ARM 读取及容器部署权限、
-  挂载 UAMI 和运行 ACR Tasks 的权限，以及已有组上的 **Container Apps SandboxGroup Data Owner**。
+  挂载 UAMI 和运行 ACR Tasks 的权限，以及已有 SandboxGroup 上的 **Container Apps SandboxGroup Data Owner**。
 - UAMI 需具备模型访问、ACR 拉取和 **Storage Blob Data Contributor** 权限。
   所选数据库需完成提供程序注册且区域容量可用；HorizonDB 还需预览访问权限。
 
@@ -60,25 +60,19 @@ flowchart TD
 
 部署会在已有存储账户中创建私有 `data` 容器，
 并**只读挂载到 Chat 和 Data Processing 的 `/kb-data`**；应用仍通过 Blob SDK 上传文件。
-卷身份默认使用已有镜像拉取身份，必须已分配给 SandboxGroup，
-并具备 **Storage Blob Data Reader** 或更高数据权限。
 
-私有存储需先完成 Module-04 的 VNet/Private DNS 配置。部署会选择组中唯一的已有 VNet 连接，
-并应用到全部五个沙箱；若有多个连接，通过 `CUSTOMER_VNET_CONNECTION_NAME` 指定已就绪的目标连接。
+私有存储访问需通过Private Link实现，因此需先完成 Module-04 的 VNet/Private DNS 配置。
 
 > [!CAUTION]
 > 本模块用于研讨会，不是生产级多用户服务：
-> - 任何能访问 Chat URL 的人都能访问所有 Session 及其数据，浏览器无需密钥；A2A 对等认证仍为必需。
+> - 任何能访问 Chat URL 的人都能访问所有 Session 及其数据，浏览器无需密钥。
 > - 数据库默认防火墙允许**所有 IPv4 来源**（`0.0.0.0`–`255.255.255.255`）。
 >   研讨会之外应限制规则或使用私有网络；新增窄范围规则不会删除已有宽范围规则。
 > - 共享 UAMI 获得数据库管理员权限以完成研讨会设置；生产环境应使用最小权限 SQL 角色。
-> - 未经授权不要上传机密数据。提取文本会发送到 Foundry；
->   默认嵌入 SKU `GlobalStandard` 可能跨 Azure 区域处理请求。
 
 ## 步骤 1 — 检查已有环境
 
 从仓库根目录进入本模块，后续命令均在此目录的**同一个 Bash 会话**中运行。
-不要启用 `set -x` 或 HTTP 调试日志。
 
 ```bash
 cd agenthost/module-06
@@ -101,7 +95,27 @@ aca doctor --subscription "$SUBSCRIPTION_ID" --resource-group "$RESOURCE_GROUP" 
 如需切换订阅，先通过 `az account set` 选择目标，再运行上面的命令块。
 **不要再创建一个 SandboxGroup。**
 
-## 步骤 2 — 一次性部署
+确认检查通过，看到以下相似的结果：
+```text
+General checks:
+✓ Azure CLI found
+✓ Azure CLI logged in
+✓ Subscription configured (624e6382-...) [config]
+✓ Resource group configured (rg-agenthost-workshop) [config]
+✓ ARM authentication working
+
+Sandbox checks:
+✓ Sandbox group: sandbox-group-agenthost-7a5970
+✓ Region: westus3
+✓ Sandbox group 'sandbox-group-agenthost-7a5970' exists in Azure
+✓ Container Apps SandboxGroup Data Owner role assigned
+
+9/9 passed
+
+aca 1.0.0-preview.5 — all checks passed
+```
+
+## 步骤 2 — 一键式部署
 
 `DB_PROVIDER` 默认选择 **HorizonDB**，可选服务为 **HorizonDB | PostgreSQL**（Azure PostgreSQL Flexible Server）。
 命令中的取值必须使用小写：`horizondb`（默认）或 `postgresql`。
@@ -137,6 +151,8 @@ export DB_LOCATION="eastus2"   # 示例：请替换为所选数据库服务实�
 | `DB_FIREWALL_RULES_FILE` | 自定义数据库防火墙规则 |
 | `ACA_COMMON` | 独立的自定义运行时 JSON；通常不设置，使用自动发现 |
 
+运行以下命令，一键式完成本模块所需的部署：
+
 ```bash
 bash deploy.sh --migrate
 ```
@@ -152,16 +168,24 @@ bash deploy.sh --migrate
 | `images` | 通过 ACR Tasks 远程构建并发布五个镜像 |
 | `aca` | 创建五个沙箱、挂载存储、应用数据库结构、启动 Agent 并检查连通性 |
 
-命令应以五个 Agent 全部显示 `ready` 结束。它会检查健康端点、经过认证的 Agent Card，以及 Chat → Orchestrator → 数据库请求。
+命令应以五个 Agent 全部显示 `ready` 结束：
+```text
+AGENT             STATUS       URL
+chat              ready        https://<chat-ingress>
+orchestrator      ready        https://<orchestrator-ingress>
+data-processing   ready        https://<processing-ingress>
+rag               ready        https://<rag-ingress>
+sql               ready        https://<sql-ingress>
+Inventory: .../.local/aca-deployment.json
+```
 
-数据上传处理和模型回答仍需通过后续步骤验证。
+- 命令还会检查健康端点、经过认证的 Agent Card，以及 Chat → Orchestrator → 数据库请求。
+- 生成的配置、密码、对等密钥和资源清单保存在 `.local` 下。
+- 自定义设置应写入另一份 `ACA_COMMON` JSON，值使用字符串。
 
 > [!important]
 > - 自动挂起**默认禁用**，因为 HTTP/A2A 请求不会唤醒已挂起的 Agent。因此五个 Agent 即使空闲也会产生计算费用。
 > - 练习间隙如需挂起，再次使用前应显式恢复所有工作 Agent。
-
-生成的配置、密码、对等密钥和资源清单保存在 `.local` 下。
-自定义设置应写入另一份 `ACA_COMMON` JSON，值使用字符串。
 
 ## 步骤 3 — 连接 Session
 
@@ -199,7 +223,15 @@ Enter 发送问题，Shift+Enter 换行。
 > - 不要在同一 Session 同时上传原件和分片。去重仅在单个文件内进行，不跨分片；
 -->
 
-上传文件完成后，点击 **Show sources**，可以查看当前 Session 已经上传的文件数据。向量转换会自动触发，无需单独执行向量化命令。
+**上传操作步骤：**
+1. 确认已选择目标 **Session** 并点击 **Connect**。
+2. 在文件选择区域选择本地的示例 PDF/CSV 文件，可一次选择多个文件。
+3. 点击 **Upload and process**，开始上传并处理所选文件。
+4. 保持页面打开，等待队列逐个完成所有文件的上传和处理；若出错暂停，点击 **Retry last request** 重试。
+
+上传文件完成后，在状态显示区看到所选文件的上传状态都是“Completed”:
+![module-06-files-upload-completed](../pic/module-06-files-upload-completed.png)
+点击 **Show sources**，可以查看当前 Session 已经上传的文件数据。向量转换会自动触发，无需单独执行向量化命令。
 
 **队列运行时请不要关闭页面。**
 
@@ -209,7 +241,7 @@ Enter 发送问题，Shift+Enter 换行。
 > - 大文件摄取可能用到默认 **7,200 秒**的摄取期限，需预留模型配额和费用。
 > - 使用文本 PDF，不支持 OCR。
 
-## 步骤 5 — 提问并核对证据
+## 步骤 5 — 提问并核对智能体行为
 
 在同一 Session 的相关文件处理完成后，逐个提问。模型自动选择路由，无需手动选择模式。
 
@@ -219,6 +251,203 @@ Enter 发送问题，Shift+Enter 换行。
 | RAG | 根据已上传的报告，消费者最关注哪些方面？ | 通过向量检索相关片段、文件名、页码和引用 |
 | SQL | 哪个国家的总利润最高？用柱状图和数据表展示。 | SQL查询，汇总结果与财务 CSV 一致 |
 | HYBRID | 结合消费趋势和销售表现，推荐最适合推出产品的市场。 | 同时使用向量检索和SQL查询，汇总结果 |
+
+每次提问的结果会显示在历史面板中，展开回答的"Evidence, SQL and execution plan"区域，可以看到：
+- 模型选择的路由模式
+- Orchestraotr agent规划的任务流程（包括哪些agent需要参与，各自的目标，rag查询方式，是否画图，回答语言等等）
+- 多个agent协作过程和每个agent的输入和响应结果
+- 最后由Orchestrator agent完成结果的汇总和审核
+![module-06-chat-response+evidence](../pic/module-06-chat-response+evidence.png)
+
+<details>
+<summary>这是一个采用 HYBRID 模式的完整响应过程示例，展开查看</summary>
+
+![module-06-chat-response+evidence-hybrid](../pic/module-06-chat-response+evidence-hybrid.png)
+
+```text
+{
+  "mode": "HYBRID",
+  "plan": {
+    "mode": "HYBRID",
+    "reason": "需要同时用销售/利润的结构化汇总和消费趋势的报告原文来推荐市场：SQL 计算各市场销售表现，RAG 提取报告中的消费趋势与市场背景作为解释依据。",
+    "rag_goal": "结合 01_capgemini_consumer_trends_2025.pdf 和 02_ryder_ecommerce_consumer_study_2025.pdf，检索与市场选择相关的消费趋势、购买偏好、价格敏感性、地区/市场差异及适合推出产品的线索。",
+    "sql_goal": "基于 04_financial_sample.csv 按 country 汇总销售表现与利润表现，重点取各国家的 sales、profit 总和及必要的对比排序，用于推荐最适合推出产品的市场。",
+    "rag_strategy": "semantic",
+    "chart_intent": "none",
+    "answer_language": "Simplified Chinese",
+    "tasks": [
+      {
+        "worker": "rag_agent",
+        "goal": "结合 01_capgemini_consumer_trends_2025.pdf 和 02_ryder_ecommerce_consumer_study_2025.pdf，检索与市场选择相关的消费趋势、购买偏好、价格敏感性、地区/市场差异及适合推出产品的线索。",
+        "depends_on": []
+      },
+      {
+        "worker": "sql_agent",
+        "goal": "基于 04_financial_sample.csv 按 country 汇总销售表现与利润表现，重点取各国家的 sales、profit 总和及必要的对比排序，用于推荐最适合推出产品的市场。",
+        "depends_on": []
+      }
+    ]
+  },
+  "documents": {
+    "status": "weak",
+    "results": [
+      {
+        "record_id": "5856ffb2-bd44-4e6d-8028-acf45d00ea96",
+        "workspace_id": "3316b200-58be-4bb4-aa26-8cb472ba91ef",
+        "document_id": "eec4d614-566c-48be-9fda-f00e18d9488d",
+        "filename": "01_capgemini_consumer_trends_2025-pages-000001-000020.pdf",
+        "content": "We identified five distinct behavior clusters based on the \nsub-themes on which questions were asked in the consumer \nsurvey:\nSource: Capgemini Research Institute, Consumer Demand survey, October–November 2024, N = 12,000 consumers; Educated \nRationalists cluster = 2,462 consumers; Convenience-Led Urbanites cluster = 3,556 consumers; Grounded Suburbanites cluster = \n1,912 consumers; Digital-First Trailblazers cluster = 2,660 consumers; Traditionalists cluster = 1,410 consumers.\nFigure 1.\nConsumer trends clusters \n12%\n16%\n21%\n22%\n30%\nTraditionalists  \nGrounded Suburbanites \nEducated Rationalists Digital-First Trailblazers \nConvenience-Led Urbanites  \nUsage of Gen AI\nSocial media influence\nSustainability impact\nOnline advertisements\nCost of living \n(Last-mile) convenience\nLoyalty\n9\nCapgemini Research Institute 2025\nWhat matter to today’s consumer? 2025 consumer behavior tracker for the consumer product and retail industries",
+        "similarity_score": 0.516250412399397,
+        "page_number": 9,
+        "section": null,
+        "metadata": {
+          "language": "en"
+        }
+      },
+      {
+        "record_id": "34550ca0-2808-419b-9afa-68a0ab6bfb22",
+        "workspace_id": "3316b200-58be-4bb4-aa26-8cb472ba91ef",
+        "document_id": "70bf51ee-7e42-4ad5-bf99-667622a252a8",
+        "filename": "02_ryder_ecommerce_consumer_study_2025-pages-000001-000020.pdf",
+        "content": "PURCHASE BEHAVIOR | 12\nPURCHASE BEHAVIOR | 13\nPURCHASE BEHAVIOR: \nKEY TAKEAWAYS\n• Experience is the leading driver of physical \nshopping.\n• Price comparison is the most commonly used \nresearch method among online shoppers.\n• Cleaning products, toys, and vitamins/\nsupplements exhibited the most annual \ngrowth. \n• Holiday purchasing patterns signal key \nomnichannel and consumer loyalty \nopportunities.",
+        "similarity_score": 0.5390977324415074,
+        "page_number": 13,
+        "section": null,
+        "metadata": {
+          "language": "en"
+        }
+      },
+      {
+        "record_id": "34bcd495-b5f9-4a19-b67b-d43a9fc5d24a",
+        "workspace_id": "3316b200-58be-4bb4-aa26-8cb472ba91ef",
+        "document_id": "eec4d614-566c-48be-9fda-f00e18d9488d",
+        "filename": "01_capgemini_consumer_trends_2025-pages-000001-000020.pdf",
+        "content": "Executive \nsummary \nSeeing the light: The beginning of the end of the cost-\nof-living crisis?\nAlthough the cost-of-living crisis continues to impact \nconsumer sentiment, things are slowly improving. \nHowever, consumers still seek discounts, both online and \nin-store. Private-label sales are on the rise as consumers \nlook for more affordable options.   \n• 64% of shoppers visit multiple physical stores looking \nfor deals, up from 56% last year.\n• Currently, 65% of consumers buy private-label or low-\ncost brands, up from 63% last year.\n• 73% of millennials expect retailers to provide alerts \nwhen brands reduce the weight of a product without \nreducing the price (‘shrinkflation’).\n \nThe grass is greener: Why consumers are \nswitching brands\n \n• 70% of consumers globally switch to try new brands. Another \nmajor reason for switching brands, as stated by 65% of \nconsumers, was that membership programs and shared \npreference data failed to result in a better experience.\n• Two-thirds of consumers will switch food brands for higher \nnutrition scores. \nTo remain competitive, brands and retailers must augment Gen AI \ntools to become more consumer-centric, use technology to boost \nresilience and sustainability and lower prices, leverage social and \nretail media networks as a keyway to engage and influence early in \nthe consumer journey, and bridge the gap in consumer education \nand trust with transparent collaboration across all partners.\n6\nCapgemini Research Institute 2025\nWhat matter to today’s consumer? 2025 consumer behavior tracker for the consumer product and retail industries",
+        "similarity_score": 0.5088272243476892,
+        "page_number": 6,
+        "section": null,
+        "metadata": {
+          "language": "en"
+        }
+      },
+      {
+        "record_id": "e333d479-fb07-4b6a-81de-d61b38f1520b",
+        "workspace_id": "3316b200-58be-4bb4-aa26-8cb472ba91ef",
+        "document_id": "70bf51ee-7e42-4ad5-bf99-667622a252a8",
+        "filename": "02_ryder_ecommerce_consumer_study_2025-pages-000001-000020.pdf",
+        "content": "PURCHASE BEHAVIOR",
+        "similarity_score": 0.4901920565175468,
+        "page_number": 12,
+        "section": null,
+        "metadata": {
+          "language": "en"
+        }
+      },
+      {
+        "record_id": "d1281d59-ee99-4be9-bf9e-383ab60d4f1e",
+        "workspace_id": "3316b200-58be-4bb4-aa26-8cb472ba91ef",
+        "document_id": "b3002d48-de4a-42f5-97ce-b25511b16f73",
+        "filename": "01_capgemini_consumer_trends_2025-pages-000041-000060.pdf",
+        "content": "trend highlights \na growing impatience and desire for immediate \ngratification among consumers.\n70\n%\nof consumers are willing to pay more  \nfor quick delivery\n52\nCapgemini Research Institute 2025\nWhat matter to today’s consumer? 2025 consumer behavior tracker for the consumer product and retail industries",
+        "similarity_score": 0.5057642285570623,
+        "page_number": 12,
+        "section": null,
+        "metadata": {
+          "language": "en"
+        }
+      }
+    ],
+    "top_k": 5,
+    "retrieval_method": "semantic",
+    "truncated": true,
+    "warnings": [
+      "Search 01_capgemini_consumer_trends_2025.pdf / market selection consumer trends purchase preferences price sensitivity regional differences market attractiveness: 5 candidates above threshold, 3 retained.",
+      "Search 02_ryder_ecommerce_consumer_study_2025.pdf / market selection consumer trends purchase preferences price sensitivity regional differences market attractiveness: 5 candidates above threshold, 2 retained.",
+      "Search coverage is bounded by the current file inventory and similarity threshold. A matching passage is not proof of every requested theme; verify its text. Missing evidence is not evidence that a report lacks a theme.",
+      "Evidence was capped by the merged record/context budget; coverage is partial."
+    ]
+  },
+  "query": {
+    "sql": "WITH country_summary AS (SELECT country, SUM(sales) AS total_sales, SUM(profit) AS total_profit, COUNT(*) AS row_count FROM (SELECT * FROM ds_10552e69c5c04c309340a4390cb97890 WHERE workspace_id = '3316b200-58be-4bb4-aa26-8cb472ba91ef') AS ds_10552e69c5c04c309340a4390cb97890 GROUP BY country), ranked AS (SELECT country, total_sales, total_profit, row_count, ROUND(total_profit / NULLIF(total_sales, 0), 6) AS profit_margin, RANK() OVER (ORDER BY total_sales DESC, total_profit DESC) AS sales_rank, RANK() OVER (ORDER BY total_profit DESC, total_sales DESC) AS profit_rank FROM country_summary) SELECT country, total_sales, total_profit, profit_margin, sales_rank, profit_rank, CASE WHEN sales_rank = 1 AND profit_rank = 1 THEN TRUE ELSE FALSE END AS recommended_market_flag FROM ranked ORDER BY total_sales DESC, total_profit DESC, country LIMIT 100",
+    "columns": [
+      "country",
+      "total_sales",
+      "total_profit",
+      "profit_margin",
+      "sales_rank",
+      "profit_rank",
+      "recommended_market_flag"
+    ],
+    "rows": [
+      {
+        "country": "United States of America",
+        "total_sales": "25029830.18",
+        "total_profit": "2995540.68",
+        "profit_margin": "0.119679",
+        "sales_rank": 1,
+        "profit_rank": 4,
+        "recommended_market_flag": false
+      },
+      {
+        "country": "Canada",
+        "total_sales": "24887654.89",
+        "total_profit": "3529228.89",
+        "profit_margin": "0.141806",
+        "sales_rank": 2,
+        "profit_rank": 3,
+        "recommended_market_flag": false
+      },
+      {
+        "country": "France",
+        "total_sales": "24354172.29",
+        "total_profit": "3781020.79",
+        "profit_margin": "0.155251",
+        "sales_rank": 3,
+        "profit_rank": 1,
+        "recommended_market_flag": false
+      },
+      {
+        "country": "Germany",
+        "total_sales": "23505340.82",
+        "total_profit": "3680388.82",
+        "profit_margin": "0.156577",
+        "sales_rank": 4,
+        "profit_rank": 2,
+        "recommended_market_flag": false
+      },
+      {
+        "country": "Mexico",
+        "total_sales": "20949352.11",
+        "total_profit": "2907523.11",
+        "profit_margin": "0.138788",
+        "sales_rank": 5,
+        "profit_rank": 5,
+        "recommended_market_flag": false
+      }
+    ],
+    "row_count": 5,
+    "summary": "Executed read-only query; returned 5 rows.",
+    "warnings": [
+      "Query scope: 1 catalog dataset(s): 04_financial_sample-rows-000001-000700.csv. The bounded catalog is not proof of complete uploaded-file coverage."
+    ]
+  },
+  "review": {
+    "status": "approved",
+    "unsupported_claims": [],
+    "conflicts": [],
+    "required_changes": [],
+    "notes": [
+      "结论已明确标注为“建议”，并披露了检索与SQL结果的部分覆盖限制。",
+      "财务对比仅基于返回的5个国家；未声称代表完整市场池。",
+      "检索到的消费趋势与购买偏好表述与所引证据一致。"
+    ],
+    "chart_issues": []
+  },
+  "errors": []
+}
+```
+
+</details>
 
 ### 更多示例问题
 
@@ -241,8 +470,8 @@ Enter 发送问题，Shift+Enter 换行。
 
 > [!tip]
 > - DIRECT 示例无需上传文件；其他问题请先在同一 Session 完成相关文件的上传和处理；
-> - 不要求上传全部分片，仅根据已上传数据完成检索和信息汇总
-> - 若本次未检索到某份报告或某个主题的相关原文，会说明证据缺口。需要扩大分析范围时，按需补充相应分片。
+> - 仅根据已上传数据完成检索和信息汇总；
+> - 若本次未检索到某份报告或某个主题的相关原文，会说明证据缺口。
 
 
 ### 查看问题回答
@@ -259,7 +488,8 @@ Enter 发送问题，Shift+Enter 换行。
 - 图表错误明确显示且保留文字答案。图表随完成的运行持久化，也保存在浏览器本地最近 30 条消息中
 - 在同一标签页刷新后重新连接同一 Session 可恢复本地历史。清空本地历史不会删除服务端运行记录
 - 再询问一个上传资料未涉及的话题，答案应说明证据不足。
-- 每个 Session 应有自己对应的上传文件。选择第二个 Session 并检查 **Show sources**，不应出现第一个 Session 的文件。在新的 Session 中，可以尝试上传本研讨会之外的其他数据文件做测试
+- 每个 Session 应有自己对应的上传文件。选择第二个 Session 并检查 **Show sources**，不应出现第一个 Session 的文件
+- 在新的 Session 中，可以尝试上传本研讨会之外的，您自己的其他数据文件，配以相应的问题做测试
 
 
 ## 步骤 6 — 清理资源
