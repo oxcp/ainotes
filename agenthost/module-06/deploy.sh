@@ -19,11 +19,52 @@ umask 077
 root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 stage_header() {
   local color="" reset=""
+  active_stage="$stage"
+  active_stage_number="$1"
+  stage_started=$SECONDS
   if [[ -t 1 && "${TERM:-}" != dumb && ! -v NO_COLOR ]]; then
     color=$'\033[1;36m'
     reset=$'\033[0m'
   fi
-  printf '\n%s==> [Stage %s/6] %s%s\n' "$color" "$1" "$2" "$reset"
+  printf '\n%s[%s] ==> [Stage %s/6] START %s%s\n' \
+    "$color" "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$1" "$2" "$reset"
+}
+format_elapsed() {
+  printf '%02d:%02d:%02d (%ss)' "$(($1 / 3600))" "$(($1 / 60 % 60))" "$(($1 % 60))" "$1"
+}
+stage_finished() {
+  local status=COMPLETED elapsed=$((SECONDS - stage_started))
+  local color="" elapsed_color="" reset=""
+  [[ "$1" == 0 ]] || status=STOPPED
+  if [[ -t 1 && "${TERM:-}" != dumb && ! -v NO_COLOR ]]; then
+    color=$'\033[1;32m'
+    [[ "$1" == 0 ]] || color=$'\033[1;31m'
+    elapsed_color=$'\033[1;33m'
+    reset=$'\033[0m'
+  fi
+  printf '%s[%s] ==> [Stage %s/6] %s %s; %selapsed=%s%s; exit=%s%s\n' \
+    "$color" "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$active_stage_number" "$status" "$active_stage" \
+    "$elapsed_color" "$(format_elapsed "$elapsed")" "$color" "$1" "$reset"
+  active_stage=""
+}
+deployment_finished() {
+  local rc="$1" elapsed=$((SECONDS - deployment_started)) status=COMPLETED
+  trap - EXIT INT TERM
+  if [[ -n "$common_tmp" ]]; then
+    rm -f -- "$common_tmp" || rc=1
+  fi
+  if [[ -n "$config_tmp" ]]; then
+    rm -f -- "$config_tmp/config.json" || rc=1
+    rmdir -- "$config_tmp" || rc=1
+  fi
+  if [[ -n "$active_stage" ]]; then
+    stage_finished "$rc"
+  fi
+  [[ "$rc" == 0 ]] || status=STOPPED
+  printf '\n[%s] Deployment %s; stage=%s; total elapsed=%s; exit=%s\n' \
+    "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$status" "$selected" \
+    "$(format_elapsed "$elapsed")" "$rc"
+  exit "$rc"
 }
 usage() {
   cat <<'HELP'
@@ -33,6 +74,9 @@ Runs preflight checks, then storage -> models -> database -> config -> images ->
 Running this script deploys billable resources; review provider, network access and cost first.
 --stage selects one stage for a deliberate retry; it is NOT an automatic resume.
 --migrate explicitly enables initial schema migration in the ACA guests.
+Reports timezone-qualified start/end timestamps and elapsed HH:MM:SS (seconds)
+for each selected stage and the whole run, including failures and INT/TERM interruptions.
+Total time includes preflight and preparation.
 
 Configure through environment variables (stage-specific flags remain on stage scripts):
   DB_PROVIDER, SUBSCRIPTION_ID, RESOURCE_GROUP, LOCATION, DEPLOYMENT_SN,
@@ -165,6 +209,15 @@ case "$selected" in
   all | storage | models | database | config | images | aca) ;;
   *) fail "Invalid stage: $selected" ;;
 esac
+deployment_started=$SECONDS
+active_stage=""
+common_tmp=""
+config_tmp=""
+trap 'deployment_finished "$?"' EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+printf '[%s] Deployment START; stage=%s; migrate=%s\n' \
+  "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$selected" "$migrate"
 # Environment metadata may come from Windows CLI command substitutions in WSL; preserve secrets and paths.
 for key in SUBSCRIPTION_ID RESOURCE_GROUP LOCATION DEPLOYMENT_SN DB_PROVIDER AGENT_IDENTITY_RESOURCE_ID \
   IDENTITY_NAME ACR_NAME IMAGE_TAG SANDBOX_GROUP_NAME STORAGE_ACCOUNT_NAME STORAGE_SUBSCRIPTION_ID \
@@ -240,11 +293,10 @@ if wants config; then
     mkdir -p -- "$root/.local"
     chmod 700 "$root/.local"
     common_tmp="$(mktemp "$root/.local/common.XXXXXX")"
-    trap 'rm -f -- "$common_tmp"' EXIT
     printf '%s\n' "$common_settings" >"$common_tmp"
     chmod 600 "$common_tmp"
     mv -- "$common_tmp" "$common"
-    trap - EXIT
+    common_tmp=""
     printf 'Generated common settings from current Module-01 resources: %s\n' "$common" >&2
   fi
 fi
@@ -335,6 +387,7 @@ if wants storage; then
   stage=storage
   stage_header 1 "Private data container in existing Module-01 account (incremental ARM)"
   bash "$root/deploy-storage.sh"
+  stage_finished 0
 fi
 if wants models; then
   stage=models
@@ -343,11 +396,13 @@ if wants models; then
   rm -f -- "$root/.local/embedding-config.json"
   model_settings="$(bash "$root/deploy-models.sh")"
   printf '%s\n' "$model_settings" >"$root/.local/embedding-config.json"
+  stage_finished 0
 fi
 if wants database; then
   stage=database
   stage_header 3 "Database ARM validation and provisioning"
   bash "$root/deploy-database.sh" --password-file "$DB_PASSWORD_FILE"
+  stage_finished 0
 fi
 if wants config; then
   stage=config
@@ -360,8 +415,7 @@ if wants config; then
   [[ -f "$root/.local/a2a-key" ]] || openssl rand -hex 32 >"$root/.local/a2a-key"
   chmod 600 "$root/.local/a2a-key"
   chmod 600 "$common" "$DB_PASSWORD_FILE"
-  tmp="$(mktemp -d "$root/.local/config.XXXXXX")"
-  trap 'rm -f -- "$tmp/config.json"; rmdir -- "$tmp"' EXIT
+  config_tmp="$(mktemp -d "$root/.local/config.XXXXXX")"
   # Merge only DB_* outputs into common settings; all five roles share the same data/auth contract.
   # --rawfile keeps passwords and keys out of literal process arguments and console output.
   jq -n --slurpfile common "$common" --slurpfile db "$DB_OUTPUT" \
@@ -376,19 +430,21 @@ if wants config; then
         A2A_API_KEY:($peer|sub("\r?\n$";""))}) as $env |
       ["chat","orchestrator","data-processing","rag","sql"] |
       map({key:.,value:$env}) | from_entries
-    ' >"$tmp/config.json"
-  jq -e -f "$root/common/aca-config.jq" "$tmp/config.json" >/dev/null || fail "Merged ACA configuration invalid"
+    ' >"$config_tmp/config.json"
+  jq -e -f "$root/common/aca-config.jq" "$config_tmp/config.json" >/dev/null || fail "Merged ACA configuration invalid"
   mkdir -p -- "$(dirname -- "$ACA_CONFIG")"
   # Publish only a fully validated file so the ACA stage cannot consume a partial configuration.
-  mv -- "$tmp/config.json" "$ACA_CONFIG"
+  mv -- "$config_tmp/config.json" "$ACA_CONFIG"
   chmod 600 "$ACA_CONFIG"
-  rmdir -- "$tmp"
-  trap - EXIT
+  rmdir -- "$config_tmp"
+  config_tmp=""
+  stage_finished 0
 fi
 if wants images; then
   stage=images
   stage_header 5 "Five remote ACR builds (agent-src context)"
   bash "$root/build-images.sh"
+  stage_finished 0
 fi
 if wants aca; then
   stage=aca
@@ -399,5 +455,6 @@ if wants aca; then
     args+=(--migrate)
   fi
   bash "$root/deploy-aca.sh" "${args[@]}"
+  stage_finished 0
 fi
 printf '\nSelected deployment stages completed. Live workflow acceptance remains required.\n'
