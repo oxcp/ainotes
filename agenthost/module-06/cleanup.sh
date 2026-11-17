@@ -327,8 +327,8 @@ plan() {
     ownership_validate_target "$target"
     live="$(ownership_read "$(jq -r .id <<<"$target")" "$(jq -r .api <<<"$target")")" || fail "Cannot read tracked child"
     if [[ "$live" != null ]]; then
-      jq -e --argjson live "$live" '.after!=null and .after==($live|del(.etag,.properties.provisioningState))' \
-        <<<"$target" >/dev/null || fail "Tracked child changed, or deployment did not capture its final state: $(jq -r .id <<<"$target")"
+      ownership_matches_state "$target" "$live" \
+        || fail "Tracked child changed, or deployment did not capture its final state: $(jq -r .id <<<"$target")"
       children="$(jq -c --argjson t "$target" '.+[$t|{id,api}]' <<<"$children")"
     fi
   done < <(jq -c '.resources|sort_by(if .kind=="operation" then 0 elif .kind=="backend" then 1 else 2 end)[]' <<<"$ownership")
@@ -411,9 +411,9 @@ for kind in sandboxes snapshots disks volumes containers database parameters chi
         api="$(jq -r .api <<<"$item")"
         live="$(ownership_read "$id" "$api")" || fail "Cannot revalidate child immediately before deletion"
         [[ "$live" != null ]] || continue
-        jq -e --arg id "$id" --argjson live "$live" '
-          .resources[]|select(.id==$id)|.after==($live|del(.etag,.properties.provisioningState))' \
-          <<<"$ownership" >/dev/null || fail "Child changed before deletion: $id"
+        target="$(jq -ce --arg id "$id" '.resources[]|select(.id==$id)' <<<"$ownership")" \
+          || fail "Missing child ownership before deletion: $id"
+        ownership_matches_state "$target" "$live" || fail "Child changed before deletion: $id"
         headers=()
         etag="$(jq -r '.etag // ""' <<<"$live")"
         [[ -z "$etag" ]] || headers=(--headers "If-Match=$etag")

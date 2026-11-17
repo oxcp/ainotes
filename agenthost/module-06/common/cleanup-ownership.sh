@@ -60,6 +60,21 @@ ownership_read() {
   fi
   printf '%s\n' "$object"
 }
+# -- Compare ownership without treating embedding scaling as replacement -----
+ownership_matches_state() {
+  jq -e --argjson live "$2" '
+    .kind as $kind |
+    def comparable:
+      if .==null then null else
+        del(.etag,.properties.provisioningState) |
+        if $kind=="embedding" then
+          del(.sku.capacity,.properties.currentCapacity,.properties.rateLimits,
+            .systemData.lastModifiedAt,.systemData.lastModifiedBy,.systemData.lastModifiedByType)
+        else . end
+      end;
+    (.after|comparable)==($live|comparable)
+  ' <<<"$1" >/dev/null
+}
 # -- Record the baseline before creating embedding/APIM children --------------
 ownership_begin_models() {
   local model_id="$1" operation_id="$2" backend_id="$3" model="$4" target live
@@ -77,8 +92,8 @@ ownership_begin_models() {
     previous="$(jq -c --arg id "$(jq -r .id <<<"$target")" '.resources[]|select(.id==$id)' <<<"$ownership")"
     if [[ -n "$previous" ]]; then
       ownership_validate_target "$previous"
-      jq -e --argjson live "$live" '.after==($live|if .==null then null else del(.etag,.properties.provisioningState) end)' \
-        <<<"$previous" >/dev/null || fail "Tracked child changed since deployment; review it before modifying"
+      ownership_matches_state "$previous" "$live" \
+        || fail "Tracked child changed since deployment; review it before modifying"
     else
       [[ "$live" == null ]] || fail "Target predates Module-06 baseline; refusing to overwrite: $(jq -r .id <<<"$target")"
       ownership="$(jq -c --argjson t "$target" '.resources+=[$t]' <<<"$ownership")"
