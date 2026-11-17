@@ -37,10 +37,10 @@ START -> receive_request
   FILE_UPLOAD -> process_uploaded_file -> prepare_charts -> emit_response -> END
   QUESTION -> classify_and_plan
     DIRECT -> direct_llm ----------------------+
-    RAG    -> rag_search -> aggregate_results -+-> generate_final_response
-    SQL    -> sql_query  -> aggregate_results -+       -> prepare_charts -> review_evidence
+    RAG    -> rag_search -> aggregate_results -+-> prepare_charts -> generate_final_response
+    SQL    -> sql_query  -> aggregate_results -+                         -> review_evidence
     HYBRID -> [rag_search || sql_query]         |            approved -> emit_response
-                  -> aggregate_results -------+            revise   -> revise -> generate_final_response
+                  -> aggregate_results -------+            revise   -> revise -> prepare_charts
                                                            blocked  -> handle_error -> emit_response
 ```
 
@@ -50,13 +50,22 @@ START -> receive_request
   original in Chat; the local `upload()` helper is not the production Chat upload path.
 - **Plan:** ask the general model for a validated `Plan`: `DIRECT`, `RAG`, `SQL` or `HYBRID`, plus
   independent `rag_goal` / `sql_goal`. Uploads bypass model planning.
+  With an available inventory, proposed SQL-only/HYBRID routes get one independent completeness check:
+  rates plus requested review quotations need HYBRID, even with “if available”; plain statistics do not.
+  Financial totals plus qualitative review/report analysis assign financial aggregates to SQL and
+  original customer needs/report findings to RAG, not unsolicited sentiment or keyword-risk counts.
+  HYBRID requires an independently requested structured operation: extracting published PDF percentages
+  and charting a report's two-period comparison use RAG without an unrelated SQL query.
 - **Dispatch:** DIRECT calls the general model without querying workspace evidence. RAG/SQL call their
   remote workers. HYBRID fans out both independent branches in the graph before aggregation.
 - **Timeouts:** each read worker uses `WORKER_TIMEOUT` (default 120 seconds); `TimeoutError` gets one
   retry. Other failures become explicit worker errors, not invented results. Upload processing is not
   retried by this worker loop.
 - **Aggregate/generate:** if neither worker result exists, route to `handle_error`. Otherwise synthesize
-  evidence, calculated facts, interpretation, recommendations and limitations. DIRECT reuses its initial
+  charts, evidence, calculated facts, interpretation, recommendations and limitations. Data-backed drafts
+  receive actual chart specifications (or chart errors) before synthesis; they describe included charts,
+  not instructions to draw them. Unknown source coverage does not prove additional countries, missing
+  months or a partial sample. DIRECT reuses its initial
   draft on the first pass instead of making a second generation call.
 - **Answer language:** Chat forwards the question without choosing a separate response language.
   Planning records `answer_language` from the current message (an explicit language request takes
@@ -82,8 +91,13 @@ START -> receive_request
   the original passages, validation error and previous extraction when available. Corrected values
   must pass the same quotation/workspace checks; a second failure remains an explicit chart error.
   Extraction timeouts and other service failures are not retried by this correction loop.
-- **Review:** the model checks the actual draft and chart semantics. Chart-only problems in `chart_issues`
-  remove charts and produce `INVALID_CHART` while preserving otherwise valid text. Code additionally requires
+  A single reported metric across two periods supports a comparison; another metric/report is not
+  required. Preserve reported period/population labels and disclose unspecified prior sample sizes.
+- **Review:** the model checks the actual draft and chart semantics. First-pass `chart_issues` remove the
+  rejected charts and use the one workflow revision to regenerate charts with the specific feedback;
+  document extraction receives it as well as chart selection. A corrected chart leaves no stale error.
+  Final chart failures produce `INVALID_CHART` with specific review reasons while preserving otherwise
+  approved text. Code additionally requires
   correction of citation IDs absent from RAG results and blocks evidence from another workspace.
   At most one revision is allowed; revision regenerates the
   answer with review feedback, not the worker queries. Another non-approved review ends in an error answer.
@@ -91,6 +105,11 @@ START -> receive_request
 An empty `RagResult` is still a result: insufficient retrieval must be disclosed, but is not automatically
 a transport failure. A successful worker can support a partial answer when the other worker fails, provided
 review approves it. Model review is not a deterministic proof that every numerical statement is correct.
+SQL text-availability flags are not quotations. Missing excerpts must be disclosed as missing from the
+answer's retrieved evidence, not proof the dataset lacks text; a reviewed limited answer can retain
+verified rates and valid charts. Synthesis/review trace SQL tables through `source_datasets` and the
+executed query rather than trusting aliases: review counts are not report counts, low ratings are not
+negative sentiment, and positive profit does not establish cash available for investment.
 
 ## 4. A2A contract, progress and persistence
 

@@ -24,6 +24,12 @@ Each row has one cell per value_column in exactly that order. Before/after serie
 periods stated in the passages, never reverse them or invent years. Do not mix absolute percentages
 with percentage-point changes. Use meaningful metric/category labels, not record IDs or filenames.
 For time trends, use explicitly stated periods as row labels, in chronological order.
+One metric explicitly compared across two periods is sufficient for a comparison bar chart.
+Do not demand a second report or another metric. Preserve the reported period labels and population;
+if only the current survey's sample size is supplied, disclose that in scope instead of inventing
+the earlier sample size or rejecting the report's explicit comparison solely for that missing detail.
+If required_changes contains chart-review feedback, correct the metric/period/population mapping
+against the original passages rather than repeating the rejected extraction.
 For a pie chart ONLY: partition_record_id must identify the record explicitly stating a mutually
 exclusive and exhaustive breakdown of ONE whole, covering all rows. Otherwise partition_record_id=null.
 Survey responses allowing multiple choices, independent usage rates and top-N subsets are not pie slices.
@@ -35,6 +41,9 @@ Do not add prose, placeholders or extra rows outside the JSON schema."""
 
 CHART_PROMPT = """Select helpful visualizations for the actual question/analysis, or return {"charts":[]}.
 Honor explicit bar, line, pie or table requests; otherwise choose only when useful.
+When both a chart and data table are requested, select each supported kind explicitly.
+The UI already exposes source data for each chart; do not generate duplicate charts of the same kind
+with identical cells merely to provide another copy of that data.
 Unsupported types must not be substituted silently. Do not chart ordinary creative/general chat.
 You only select source, exact label_column/value_columns and zero-based row_indices from sources.
 A one-row wide summary is not a long-form table: do not invent columns such as metric, rating,
@@ -198,7 +207,7 @@ def document_source(
         }
     except (ValueError, KeyError, IndexError, OverflowError) as exc:
         raise StudioError(
-            "INVALID_CHART", "Document chart values must match quoted evidence and scope.", 422
+            "INVALID_CHART", f"Document chart values must match quoted evidence and scope ({exc}).", 422
         ) from exc
 
 

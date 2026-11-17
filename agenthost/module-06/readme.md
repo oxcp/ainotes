@@ -279,33 +279,33 @@ Each response appears in the history panel. Expand its "Evidence, SQL and execut
 - The collaboration between Agents and each Agent's inputs and responses.
 - The final synthesis and review performed by the Orchestrator Agent.
 
-![module-06-chat-response+evidence](../pic/module-06-chat-response+evidence.png)
+![module-06-chat-response+evidence-en](../pic/module-06-chat-response+evidence-en.png)
 
 <details>
 <summary>Expand to view a complete HYBRID response example (Chinese model text translated into English)</summary>
 
-![module-06-chat-response+evidence-hybrid](../pic/module-06-chat-response+evidence-hybrid.png)
+![module-06-chat-response+evidence-hybrid-en](../pic/module-06-chat-response+evidence-hybrid-en.png)
 
 ```text
 {
   "mode": "HYBRID",
   "plan": {
     "mode": "HYBRID",
-    "reason": "Recommending a market requires both structured sales/profit summaries and source passages from consumer trend reports: SQL calculates sales performance by market, while RAG extracts consumer trends and market context from the reports to support the explanation.",
-    "rag_goal": "Use 01_capgemini_consumer_trends_2025.pdf and 02_ryder_ecommerce_consumer_study_2025.pdf to retrieve consumer trends, purchasing preferences, price sensitivity, regional/market differences and indicators of product launch suitability relevant to market selection.",
-    "sql_goal": "Aggregate sales and profit performance by country from 04_financial_sample.csv, focusing on each country's total sales and profit and the comparative rankings needed to recommend the most suitable product launch market.",
+    "reason": "Need RAG for consumer trend evidence from the reports and SQL for sales/profit aggregation to compare launch markets and recommend the best one.",
+    "rag_goal": "Retrieve consumer trend findings from 01_capgemini_consumer_trends_2025.pdf and 02_ryder_ecommerce_consumer_study_2025.pdf relevant to launch-market preferences, purchase drivers, sustainability, price sensitivity, and country/region signals.",
+    "sql_goal": "Aggregate 04_financial_sample.csv by country for sales and profit, with any relevant period summaries needed to identify the strongest launch market. Use the split rows file scope and report results by country ranking.",
     "rag_strategy": "semantic",
-    "chart_intent": "none",
-    "answer_language": "Simplified Chinese",
+    "chart_intent": "auto",
+    "answer_language": "English",
     "tasks": [
       {
         "worker": "rag_agent",
-        "goal": "Use 01_capgemini_consumer_trends_2025.pdf and 02_ryder_ecommerce_consumer_study_2025.pdf to retrieve consumer trends, purchasing preferences, price sensitivity, regional/market differences and indicators of product launch suitability relevant to market selection.",
+        "goal": "Retrieve consumer trend findings from 01_capgemini_consumer_trends_2025.pdf and 02_ryder_ecommerce_consumer_study_2025.pdf relevant to launch-market preferences, purchase drivers, sustainability, price sensitivity, and country/region signals.",
         "depends_on": []
       },
       {
         "worker": "sql_agent",
-        "goal": "Aggregate sales and profit performance by country from 04_financial_sample.csv, focusing on each country's total sales and profit and the comparative rankings needed to recommend the most suitable product launch market.",
+        "goal": "Aggregate 04_financial_sample.csv by country for sales and profit, with any relevant period summaries needed to identify the strongest launch market. Use the split rows file scope and report results by country ranking.",
         "depends_on": []
       }
     ]
@@ -314,38 +314,25 @@ Each response appears in the history panel. Expand its "Evidence, SQL and execut
     "status": "weak",
     "results": [
       {
-        "record_id": "5856ffb2-bd44-4e6d-8028-acf45d00ea96",
-        "workspace_id": "3316b200-58be-4bb4-aa26-8cb472ba91ef",
-        "document_id": "eec4d614-566c-48be-9fda-f00e18d9488d",
-        "filename": "01_capgemini_consumer_trends_2025-pages-000001-000020.pdf",
-        "content": "We identified five distinct behavior clusters based on the \nsub-themes on which questions were asked in the consumer \nsurvey:\nSource: Capgemini Research Institute, Consumer Demand survey, October–November 2024, N = 12,000 consumers; Educated \nRationalists cluster = 2,462 consumers; Convenience-Led Urbanites cluster = 3,556 consumers; Grounded Suburbanites cluster = \n1,912 consumers; Digital-First Trailblazers cluster = 2,660 consumers; Traditionalists cluster = 1,410 consumers.\nFigure 1.\nConsumer trends clusters \n12%\n16%\n21%\n22%\n30%\nTraditionalists  \nGrounded Suburbanites \nEducated Rationalists Digital-First Trailblazers \nConvenience-Led Urbanites  \nUsage of Gen AI\nSocial media influence\nSustainability impact\nOnline advertisements\nCost of living \n(Last-mile) convenience\nLoyalty\n9\nCapgemini Research Institute 2025\nWhat matter to today’s consumer? 2025 consumer behavior tracker for the consumer product and retail industries",
-        "similarity_score": 0.516250412399397,
-        "page_number": 9,
-        "section": null,
-        "metadata": {
-          "language": "en"
-        }
-      },
-      {
-        "record_id": "34550ca0-2808-419b-9afa-68a0ab6bfb22",
-        "workspace_id": "3316b200-58be-4bb4-aa26-8cb472ba91ef",
-        "document_id": "70bf51ee-7e42-4ad5-bf99-667622a252a8",
+        "record_id": "5960cd79-e79a-48f2-a40d-ae8c6aae7f2e",
+        "workspace_id": "a1b9d91b-13e9-4dd0-8064-888fc632d030",
+        "document_id": "73bc1dbe-8f0c-4463-b7fe-a023fd964251",
         "filename": "02_ryder_ecommerce_consumer_study_2025-pages-000001-000020.pdf",
-        "content": "PURCHASE BEHAVIOR | 12\nPURCHASE BEHAVIOR | 13\nPURCHASE BEHAVIOR: \nKEY TAKEAWAYS\n• Experience is the leading driver of physical \nshopping.\n• Price comparison is the most commonly used \nresearch method among online shoppers.\n• Cleaning products, toys, and vitamins/\nsupplements exhibited the most annual \ngrowth. \n• Holiday purchasing patterns signal key \nomnichannel and consumer loyalty \nopportunities.",
-        "similarity_score": 0.5390977324415074,
-        "page_number": 13,
+        "content": "PURCHASE BEHAVIOR",
+        "similarity_score": 0.5007373473533687,
+        "page_number": 12,
         "section": null,
         "metadata": {
           "language": "en"
         }
       },
       {
-        "record_id": "34bcd495-b5f9-4a19-b67b-d43a9fc5d24a",
-        "workspace_id": "3316b200-58be-4bb4-aa26-8cb472ba91ef",
-        "document_id": "eec4d614-566c-48be-9fda-f00e18d9488d",
+        "record_id": "1dd6e5ab-b7dd-4669-9098-57c99ccd2da7",
+        "workspace_id": "a1b9d91b-13e9-4dd0-8064-888fc632d030",
+        "document_id": "ec22b3f9-a207-439a-9136-b914cec82bf2",
         "filename": "01_capgemini_consumer_trends_2025-pages-000001-000020.pdf",
         "content": "Executive \nsummary \nSeeing the light: The beginning of the end of the cost-\nof-living crisis?\nAlthough the cost-of-living crisis continues to impact \nconsumer sentiment, things are slowly improving. \nHowever, consumers still seek discounts, both online and \nin-store. Private-label sales are on the rise as consumers \nlook for more affordable options.   \n• 64% of shoppers visit multiple physical stores looking \nfor deals, up from 56% last year.\n• Currently, 65% of consumers buy private-label or low-\ncost brands, up from 63% last year.\n• 73% of millennials expect retailers to provide alerts \nwhen brands reduce the weight of a product without \nreducing the price (‘shrinkflation’).\n \nThe grass is greener: Why consumers are \nswitching brands\n \n• 70% of consumers globally switch to try new brands. Another \nmajor reason for switching brands, as stated by 65% of \nconsumers, was that membership programs and shared \npreference data failed to result in a better experience.\n• Two-thirds of consumers will switch food brands for higher \nnutrition scores. \nTo remain competitive, brands and retailers must augment Gen AI \ntools to become more consumer-centric, use technology to boost \nresilience and sustainability and lower prices, leverage social and \nretail media networks as a keyway to engage and influence early in \nthe consumer journey, and bridge the gap in consumer education \nand trust with transparent collaboration across all partners.\n6\nCapgemini Research Institute 2025\nWhat matter to today’s consumer? 2025 consumer behavior tracker for the consumer product and retail industries",
-        "similarity_score": 0.5088272243476892,
+        "similarity_score": 0.47824127510677306,
         "page_number": 6,
         "section": null,
         "metadata": {
@@ -353,26 +340,39 @@ Each response appears in the history panel. Expand its "Evidence, SQL and execut
         }
       },
       {
-        "record_id": "e333d479-fb07-4b6a-81de-d61b38f1520b",
-        "workspace_id": "3316b200-58be-4bb4-aa26-8cb472ba91ef",
-        "document_id": "70bf51ee-7e42-4ad5-bf99-667622a252a8",
+        "record_id": "789a7f76-280b-43fb-a50f-1395645c15cd",
+        "workspace_id": "a1b9d91b-13e9-4dd0-8064-888fc632d030",
+        "document_id": "73bc1dbe-8f0c-4463-b7fe-a023fd964251",
         "filename": "02_ryder_ecommerce_consumer_study_2025-pages-000001-000020.pdf",
-        "content": "PURCHASE BEHAVIOR",
-        "similarity_score": 0.4901920565175468,
-        "page_number": 12,
+        "content": "PURCHASE BEHAVIOR | 12\nPURCHASE BEHAVIOR | 13\nPURCHASE BEHAVIOR: \nKEY TAKEAWAYS\n• Experience is the leading driver of physical \nshopping.\n• Price comparison is the most commonly used \nresearch method among online shoppers.\n• Cleaning products, toys, and vitamins/\nsupplements exhibited the most annual \ngrowth. \n• Holiday purchasing patterns signal key \nomnichannel and consumer loyalty \nopportunities.",
+        "similarity_score": 0.49940079041018226,
+        "page_number": 13,
         "section": null,
         "metadata": {
           "language": "en"
         }
       },
       {
-        "record_id": "d1281d59-ee99-4be9-bf9e-383ab60d4f1e",
-        "workspace_id": "3316b200-58be-4bb4-aa26-8cb472ba91ef",
-        "document_id": "b3002d48-de4a-42f5-97ce-b25511b16f73",
-        "filename": "01_capgemini_consumer_trends_2025-pages-000041-000060.pdf",
-        "content": "trend highlights \na growing impatience and desire for immediate \ngratification among consumers.\n70\n%\nof consumers are willing to pay more  \nfor quick delivery\n52\nCapgemini Research Institute 2025\nWhat matter to today’s consumer? 2025 consumer behavior tracker for the consumer product and retail industries",
-        "similarity_score": 0.5057642285570623,
-        "page_number": 12,
+        "record_id": "e718dc88-df97-4210-bf22-f31704ee9cd2",
+        "workspace_id": "a1b9d91b-13e9-4dd0-8064-888fc632d030",
+        "document_id": "ec22b3f9-a207-439a-9136-b914cec82bf2",
+        "filename": "01_capgemini_consumer_trends_2025-pages-000001-000020.pdf",
+        "content": "the cost-of-living \ncrisis, and buy sustainable products\nDemographic:\nAverage age is 37 (youngest cluster), \n32% part-time workers, 42% live \nalone, 74% urban\nBehavioral\nHigh Gen AI awareness and use, \ntech-savvy, trust and utilize social \nmedia and inﬂuencers the most for \npurchases , loyal to brands, and buy \nprivate labels\nDemographic:\nAverage age is 62 (oldest cluster), 65% \nretirees, 70% urban\nBehavioral\nPrefer in-store shopping, low on tech, \nutilizes social media and inﬂuencers \nthe least for purchases, low focus on \nsustainability, least loyal to brands, \nand traditional shopping methods\n11\nCapgemini Research Institute 2025\nWhat matter to today’s consumer? 2025 consumer behavior tracker for the consumer product and retail industries",
+        "similarity_score": 0.46757439818868796,
+        "page_number": 11,
+        "section": null,
+        "metadata": {
+          "language": "en"
+        }
+      },
+      {
+        "record_id": "829f3f94-0f04-4aa3-8234-2d02a490a5a9",
+        "workspace_id": "a1b9d91b-13e9-4dd0-8064-888fc632d030",
+        "document_id": "73bc1dbe-8f0c-4463-b7fe-a023fd964251",
+        "filename": "02_ryder_ecommerce_consumer_study_2025-pages-000001-000020.pdf",
+        "content": "PURCHASE BEHAVIOR | 17\nHoliday purchasing patterns signal key omnichannel \nand consumer loyalty opportunities.\nof shoppers use \nretailer loyalty/\nrewards points \nmore during the \nholiday season \nthan the rest of \nthe year.\n62% \nYounger shoppers use BNPL \nmethods more during the holiday \nseason than the rest of the year.\nI use Buy Online Pickup In Store \n(BOPIS) more during the holiday \nseason than the rest of the year.\nI use Buy Online Return in Store \n(BORIS) more during the holiday \nseason than the rest of the year.\n37%\n23%\n13%\n7%\n45%\n39%\n(+1% YOY) \n(-1% YOY) \nNote: Percentages may not total 100% due to rounding and/or because respondents could select more than one answer.\n(+12% YOY)",
+        "similarity_score": 0.4285431843243436,
+        "page_number": 17,
         "section": null,
         "metadata": {
           "language": "en"
@@ -383,74 +383,104 @@ Each response appears in the history panel. Expand its "Evidence, SQL and execut
     "retrieval_method": "semantic",
     "truncated": true,
     "warnings": [
-      "Search 01_capgemini_consumer_trends_2025.pdf / market selection consumer trends purchase preferences price sensitivity regional differences market attractiveness: 5 candidates above threshold, 3 retained.",
-      "Search 02_ryder_ecommerce_consumer_study_2025.pdf / market selection consumer trends purchase preferences price sensitivity regional differences market attractiveness: 5 candidates above threshold, 2 retained.",
+      "Search 02_ryder_ecommerce_consumer_study_2025.pdf / launch market preferences purchase drivers sustainability price sensitivity country region signals: 5 candidates above threshold, 3 retained.",
+      "Search 01_capgemini_consumer_trends_2025.pdf / launch market preferences purchase drivers sustainability price sensitivity country region signals: 5 candidates above threshold, 2 retained.",
       "Search coverage is bounded by the current file inventory and similarity threshold. A matching passage is not proof of every requested theme; verify its text. Missing evidence is not evidence that a report lacks a theme.",
       "Evidence was capped by the merged record/context budget; coverage is partial."
     ]
   },
   "query": {
-    "sql": "WITH country_summary AS (SELECT country, SUM(sales) AS total_sales, SUM(profit) AS total_profit, COUNT(*) AS row_count FROM (SELECT * FROM ds_10552e69c5c04c309340a4390cb97890 WHERE workspace_id = '3316b200-58be-4bb4-aa26-8cb472ba91ef') AS ds_10552e69c5c04c309340a4390cb97890 GROUP BY country), ranked AS (SELECT country, total_sales, total_profit, row_count, ROUND(total_profit / NULLIF(total_sales, 0), 6) AS profit_margin, RANK() OVER (ORDER BY total_sales DESC, total_profit DESC) AS sales_rank, RANK() OVER (ORDER BY total_profit DESC, total_sales DESC) AS profit_rank FROM country_summary) SELECT country, total_sales, total_profit, profit_margin, sales_rank, profit_rank, CASE WHEN sales_rank = 1 AND profit_rank = 1 THEN TRUE ELSE FALSE END AS recommended_market_flag FROM ranked ORDER BY total_sales DESC, total_profit DESC, country LIMIT 100",
+    "sql": "WITH financial_by_country AS (SELECT country, SUM(sales) AS total_sales, SUM(profit) AS total_profit FROM (SELECT * FROM ds_0d66208966d5415a8d7e78b634f88531 WHERE workspace_id = 'a1b9d91b-13e9-4dd0-8064-888fc632d030') AS ds_0d66208966d5415a8d7e78b634f88531 GROUP BY country), ranked_financial AS (SELECT country, total_sales, total_profit, RANK() OVER (ORDER BY total_sales DESC, total_profit DESC, country) AS sales_rank FROM financial_by_country), review_summary AS (SELECT COUNT(*) AS review_count, AVG(rating) AS avg_rating, SUM(CASE WHEN LOWER(sentiment_label) = 'positive' THEN 1 ELSE 0 END) AS positive_reviews, SUM(CASE WHEN LOWER(sentiment_label) = 'negative' THEN 1 ELSE 0 END) AS negative_reviews FROM (SELECT * FROM ds_9100cfd2da514347a8e1ae355d72cd5a WHERE workspace_id = 'a1b9d91b-13e9-4dd0-8064-888fc632d030') AS ds_9100cfd2da514347a8e1ae355d72cd5a), combined AS (SELECT 'financial' AS analysis_section, rf.country, rf.total_sales, rf.total_profit, rf.sales_rank, CAST(NULL AS BIGINT) AS review_count, CAST(NULL AS DECIMAL) AS avg_rating, CAST(NULL AS BIGINT) AS positive_reviews, CAST(NULL AS BIGINT) AS negative_reviews, CASE WHEN rf.sales_rank = 1 AND rf.total_profit > 0 THEN TRUE ELSE FALSE END AS recommended_best_launch_market FROM ranked_financial AS rf UNION ALL SELECT 'consumer_trends' AS analysis_section, CAST(NULL AS TEXT) AS country, CAST(NULL AS DECIMAL) AS total_sales, CAST(NULL AS DECIMAL) AS total_profit, CAST(NULL AS BIGINT) AS sales_rank, rs.review_count, ROUND(rs.avg_rating, 2) AS avg_rating, rs.positive_reviews, rs.negative_reviews, CAST(NULL AS BOOLEAN) AS recommended_best_launch_market FROM review_summary AS rs) SELECT analysis_section, country, total_sales, total_profit, sales_rank, review_count, avg_rating, positive_reviews, negative_reviews, recommended_best_launch_market FROM combined ORDER BY analysis_section, sales_rank, country LIMIT 100",
     "columns": [
+      "analysis_section",
       "country",
       "total_sales",
       "total_profit",
-      "profit_margin",
       "sales_rank",
-      "profit_rank",
-      "recommended_market_flag"
+      "review_count",
+      "avg_rating",
+      "positive_reviews",
+      "negative_reviews",
+      "recommended_best_launch_market"
     ],
     "rows": [
       {
+        "analysis_section": "consumer_trends",
+        "country": null,
+        "total_sales": null,
+        "total_profit": null,
+        "sales_rank": null,
+        "review_count": 2000,
+        "avg_rating": "4.36",
+        "positive_reviews": 1281,
+        "negative_reviews": 447,
+        "recommended_best_launch_market": null
+      },
+      {
+        "analysis_section": "financial",
         "country": "United States of America",
         "total_sales": "25029830.18",
         "total_profit": "2995540.68",
-        "profit_margin": "0.119679",
         "sales_rank": 1,
-        "profit_rank": 4,
-        "recommended_market_flag": false
+        "review_count": null,
+        "avg_rating": null,
+        "positive_reviews": null,
+        "negative_reviews": null,
+        "recommended_best_launch_market": true
       },
       {
+        "analysis_section": "financial",
         "country": "Canada",
         "total_sales": "24887654.89",
         "total_profit": "3529228.89",
-        "profit_margin": "0.141806",
         "sales_rank": 2,
-        "profit_rank": 3,
-        "recommended_market_flag": false
+        "review_count": null,
+        "avg_rating": null,
+        "positive_reviews": null,
+        "negative_reviews": null,
+        "recommended_best_launch_market": false
       },
       {
+        "analysis_section": "financial",
         "country": "France",
         "total_sales": "24354172.29",
         "total_profit": "3781020.79",
-        "profit_margin": "0.155251",
         "sales_rank": 3,
-        "profit_rank": 1,
-        "recommended_market_flag": false
+        "review_count": null,
+        "avg_rating": null,
+        "positive_reviews": null,
+        "negative_reviews": null,
+        "recommended_best_launch_market": false
       },
       {
+        "analysis_section": "financial",
         "country": "Germany",
         "total_sales": "23505340.82",
         "total_profit": "3680388.82",
-        "profit_margin": "0.156577",
         "sales_rank": 4,
-        "profit_rank": 2,
-        "recommended_market_flag": false
+        "review_count": null,
+        "avg_rating": null,
+        "positive_reviews": null,
+        "negative_reviews": null,
+        "recommended_best_launch_market": false
       },
       {
+        "analysis_section": "financial",
         "country": "Mexico",
         "total_sales": "20949352.11",
         "total_profit": "2907523.11",
-        "profit_margin": "0.138788",
         "sales_rank": 5,
-        "profit_rank": 5,
-        "recommended_market_flag": false
+        "review_count": null,
+        "avg_rating": null,
+        "positive_reviews": null,
+        "negative_reviews": null,
+        "recommended_best_launch_market": false
       }
     ],
-    "row_count": 5,
-    "summary": "Executed read-only query; returned 5 rows.",
+    "row_count": 6,
+    "summary": "Executed read-only query; returned 6 rows.",
     "warnings": [
-      "Query scope: 1 catalog dataset(s): 04_financial_sample-rows-000001-000700.csv. The bounded catalog is not proof of complete uploaded-file coverage."
+      "Query scope: 2 catalog dataset(s): 03_customer_reviews-rows-000001-002000.csv, 04_financial_sample-rows-000001-000700.csv. The bounded catalog is not proof of complete uploaded-file coverage."
     ]
   },
   "review": {
@@ -459,9 +489,8 @@ Each response appears in the history panel. Expand its "Evidence, SQL and execut
     "conflicts": [],
     "required_changes": [],
     "notes": [
-      "The conclusion is explicitly labeled as a recommendation, and the partial coverage limitations of the retrieval and SQL results are disclosed.",
-      "The financial comparison is based only on the five returned countries; it does not claim to represent all markets.",
-      "The statements about retrieved consumer trends and purchasing preferences are consistent with the cited evidence."
+      "The recommendation is appropriately scoped to the supplied sample and supported by the SQL ranking plus the note that consumer-trend evidence is only contextual, not country-specific.",
+      "The cited consumer trend passages support broad deal-seeking and price-sensitivity behavior, but not a U.S.-specific launch preference."
     ],
     "chart_issues": []
   },

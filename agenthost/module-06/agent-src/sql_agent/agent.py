@@ -5,6 +5,7 @@ from uuid import UUID
 import psycopg
 import sqlglot
 from sqlglot import exp
+from sqlglot.optimizer.scope import traverse_scope
 
 from shared.config import Settings
 from shared.contracts import SQLProposal, SQLResult, StudioError
@@ -50,6 +51,14 @@ class SQLAgent:
             "do not mix ungrouped detail columns with aggregates or nest aggregates at the same level. "
             "For independent review and financial summaries, aggregate each source family separately; "
             "never join unrelated datasets or use one population as another's denominator. "
+            "For financial totals plus qualitative customer needs/report trends, compute only the "
+            "requested financial totals; RAG supplies review/report text. Do not add unsolicited "
+            "sentiment counts, low-rating proxies or risk/issue/problem keyword counts. "
+            "Never label customer-review rows as reports, even through CTE names, aliases or literal "
+            "analysis_section labels. Derive each metric from its actual catalog source, not a "
+            "similar-looking schema. Negative sentiment is not the same as a low rating. "
+            "A non-null review field establishes only potential text availability, not retrieved "
+            "quotation evidence, customer needs or a complaint theme. "
             "A single result may combine independent summaries through UNION ALL inside a CTE, with an "
             "explicit analysis_section label, matching column types and NULLs for inapplicable measures. "
             "Keep metric names/units distinct and minimize metrics to those needed by the question. "
@@ -106,9 +115,16 @@ class SQLAgent:
             row_count=str(len(rows)),
         )
         referenced = {
-            table.name for table in sqlglot.parse_one(statement, read="postgres").find_all(exp.Table)
+            source.name
+            for scope in traverse_scope(sqlglot.parse_one(statement, read="postgres"))
+            for source in scope.sources.values()
+            if isinstance(source, exp.Table)
         }
-        names = [d.get("name", d["table_name"]) for d in catalog if d["table_name"] in referenced]
+        source_datasets = {
+            d["table_name"]: d.get("name", d["table_name"])
+            for d in catalog if d["table_name"] in referenced
+        }
+        names = list(source_datasets.values())
         warnings = [
             f"Query scope: {len(names)} catalog dataset(s): "
             + ", ".join(names)
@@ -123,4 +139,5 @@ class SQLAgent:
             row_count=len(rows),
             summary=f"Executed read-only query; returned {len(rows)} rows.",
             warnings=warnings,
+            source_datasets=source_datasets,
         )

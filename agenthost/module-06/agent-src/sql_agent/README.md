@@ -58,6 +58,13 @@ corrected proposal passes the SQL gate and workspace rewrite again before a new 
 Group detail columns explicitly; compute grouped totals in a CTE before outer ratios/window functions.
 Results identify the actual catalog filenames referenced by the validated query; a bounded catalog
 does not establish complete coverage of all uploaded shards.
+`SQLResult.source_datasets` maps physical table names to uploaded filenames, resolving CTE scopes
+instead of treating CTE names as physical sources. This is query-level provenance, not per-cell lineage.
+Synthesis/review use it with the executed SQL to check source labels. Customer-review rows must not be
+renamed as report statistics, and low-rating counts must not be presented as negative-sentiment counts.
+When only financial totals and qualitative review/report findings are requested, SQL generation is
+instructed to return the financial totals only; RAG supplies quotations and trends. Text-availability
+flags do not constitute quotation evidence.
 For independent review and financial summaries, the prompt requires separate source-family aggregates,
 not joins between unrelated populations. A single result can use a labeled `UNION ALL` inside a CTE,
 with compatible column types and `NULL` for inapplicable measures; this remains subject to the same SQL gate.

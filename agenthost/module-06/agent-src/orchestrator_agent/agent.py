@@ -81,6 +81,7 @@ class State(TypedDict, total=False):
     answer: dict
     review: dict
     charts: list[dict]
+    chart_feedback: list[str]
     errors: Annotated[list[dict], operator.add]
     revision_count: int
 
@@ -319,6 +320,7 @@ class Orchestrator:
                     extraction_payload = {
                         "question": {"message": state["question"]["message"]},
                         "passages": retrieved["results"],
+                        "required_changes": state.get("chart_feedback", []),
                     }
                     for attempt in range(2):
                         extracted = None
@@ -373,6 +375,7 @@ class Orchestrator:
                     },
                     "analysis": state.get("answer", {}),
                     "required_changes": state.get("review", {}),
+                    "chart_feedback": state.get("chart_feedback", []),
                     "sources": sources,
                 }
                 for attempt in range(2):
@@ -410,15 +413,26 @@ class Orchestrator:
                     if isinstance(exc, StudioError)
                     else "CHART_FAILED"
                 )
+                if isinstance(exc, StudioError):
+                    message = exc.message
+                elif isinstance(exc, ValidationError):
+                    message = "Chart output schema was invalid: " + "; ".join(
+                        ".".join(str(part) for part in item["loc"]) + ": " + item["type"]
+                        for item in exc.errors(include_input=False)
+                    )[:1000]
+                else:
+                    message = (
+                        "Charts could not be prepared from the available data. "
+                        "The text answer is reviewed separately."
+                    )
                 return {
                     "charts": [],
                     "errors": [
                         {
                             "worker": "prepare_charts",
                             "code": code,
-                            "message": exc.message
-                            if isinstance(exc, StudioError)
-                            else "Charts could not be prepared from the available data. The text answer is reviewed separately.",
+                            "message": message,
+                            "review_issues": state.get("chart_feedback", []),
                             "retry_count": 0,
                         }
                     ],
@@ -429,6 +443,7 @@ class Orchestrator:
             if state["mode"] == "DIRECT" and state.get("answer") and not state.get("revision_count"):
                 return {}
             payload = evidence(state)
+            payload["charts"] = state.get("charts", [])
             passages = state.get("rag_result", {}).get("results", [])
             references = {f"R{index}": item["record_id"] for index, item in enumerate(passages, 1)}
             # Only synthesis sees short references; review, charts and persisted evidence retain real IDs.
@@ -476,6 +491,18 @@ class Orchestrator:
                 "The UI renders actual inline SVG charts. When revising, supplied charts are the "
                 "renderable specifications: do not claim only data/instructions are available or "
                 "that charts cannot be drawn when these specifications are present. "
+                "Charts have already been selected before this answer: supplied charts are included "
+                "in the SAME response. Describe the provided chart/table directly; do not recommend "
+                "that the user create or draw it. If charts is empty, do not claim a chart is present. "
+                "One metric compared over two reported periods satisfies a comparison request. "
+                "Do not invent a need for a second metric/report/series or call such a comparison "
+                "unavailable when the two quoted values are already supplied. "
+                "Distinguish unknown coverage from proven omissions: five grouped country rows do "
+                "not prove the source contains additional countries, and 16 monthly aggregates do "
+                "not prove missing months. A bounded catalog is not proof of a partial sample either. "
+                "State the actual queried file/shard and any cap; call unverified wider coverage "
+                "unknown, not incomplete. SQL needs no retrieved-passage citations; omit irrelevant "
+                "no-passage-citation disclaimers in SQL-only answers. "
                 "Respect retrieval_method, truncated and warnings: an overview subset is not a representative "
                 "sample or a whole-dataset summary. Ground qualitative statements in the supplied passages. "
                 "For cross-source comparisons, explicitly check each source/theme against actual passage text. "
@@ -503,6 +530,21 @@ class Orchestrator:
                 "before using a passage as a mismatch example. SQL counts remain valid independently "
                 "of missing qualitative examples: preserve verified statistics and disclose the text gap. "
                 "When no review passages were retrieved, do not claim customer complaint themes or causes. "
+                "A SQL quotation_availability flag, non-null text count or column name is NOT an actual "
+                "quotation. Distinguish 'no excerpts were retrieved for this answer' from 'the dataset "
+                "contains no review text'; never assert the latter from missing RAG results. If excerpts "
+                "are missing, explicitly leave quotation-grounded suggestions unsupported; do not pretend "
+                "that the flag supplies them. "
+                "Use sql_result.source_datasets to map physical tables in the executed SQL to uploaded "
+                "filenames. Trace each aggregate through its CTEs to the actual table; aliases and literal "
+                "section labels are not proof of source identity. Never report review-table counts as "
+                "report counts, or substitute low ratings for negative sentiment. If a metric's source "
+                "label conflicts with its actual table, omit that mislabeled interpretation and disclose "
+                "the conflict while retaining independently supported financial totals. "
+                "For financial totals plus qualitative reviews/reports, prioritize the requested sales "
+                "and profit totals and cited customer needs/trends. Do not turn unsolicited keyword "
+                "counts into market risks or pad the answer with unrelated sentiment statistics. Positive "
+                "sales/profit totals do not establish available cash, an investment budget or causal ROI. "
                 "Still report verified group rates and sample sizes; label any suggested investigation "
                 "as a recommendation based on statistics, not a finding from review text. Distinguish the "
                 "highest rate from the largest count, and keep source scope and small-sample limitations. "
@@ -538,6 +580,13 @@ class Orchestrator:
                 "they do not require SQL or document confirmation to visualize supplied values. "
                 "Their caption does not claim independent verification. Reject any unsupported claim "
                 "that user-provided inputs are verified report facts or a full-dataset aggregation. "
+                "One report explicitly comparing the same metric over two periods supports a "
+                "comparison chart; do not require a second metric or report. Preserve stated periods "
+                "and populations; a missing earlier sample size alone is not grounds to reject "
+                "an explicitly published comparison if that limitation is honestly disclosed. "
+                "Unknown coverage does not prove missing records: returned group counts, monthly "
+                "aggregate counts and bounded-catalog warnings do not establish that the source "
+                "contains additional countries/months or is an incomplete sample. "
                 "When charts is non-empty, the UI renders them as real inline SVG graphics. Require a "
                 "text revision if the draft falsely says no chart is generated, only data/instructions "
                 "are provided, or the assistant cannot draw charts. This is an answer-text issue, "
@@ -559,9 +608,19 @@ class Orchestrator:
                 "For separate source summaries, require explicit scope rather than exhaustive coverage. "
                 "Fewer charts than requested is a disclosed limitation, not a reason to block otherwise "
                 "supported findings or demand invented charts for a failed SQL source. "
-                "For HYBRID with SQL rows but no review passages, approve accurate scoped statistics and "
+                "For any route with SQL rows but no review passages, approve accurate scoped statistics and "
                 "clearly labeled statistical recommendations if the missing original-text evidence is "
                 "disclosed; do not require nonexistent citations or invented complaint themes. "
+                "A quotation-availability flag does not supply quotations, but does not contradict a "
+                "clear statement that no actual excerpts were retrieved for this answer. Require that "
+                "distinction, not a claim that the source has no quotations. Missing quotations alone "
+                "must not repeatedly reject a corrected, honestly limited statistical answer or remove "
+                "its valid chart. "
+                "Use sql_result.source_datasets and the executed SQL to trace aggregate sources through "
+                "CTEs. Reject review counts relabeled as report counts, or low ratings relabeled as "
+                "negative sentiment, even if the numeric values appear in SQL output. Require omission "
+                "or correction of those interpretations, retaining separately valid financial totals. "
+                "Positive sales/profit does not prove cash available to fund improvements or their ROI. "
                 "A review_overview uses stored passages, not semantic scores; null similarity is expected. "
                 "The record_id fields in rag_result.results ARE citation IDs; require the draft's "
                 "citation_ids to identify supporting passages for a review overview. "
@@ -615,21 +674,25 @@ class Orchestrator:
                 result.status = "blocked"
             update: dict[str, Any] = {"review": result.model_dump()}
             if result.chart_issues:
-                update.update(
-                    charts=[],
-                    errors=[
+                update.update(charts=[], chart_feedback=result.chart_issues)
+                if not state.get("revision_count") and result.status != "blocked":
+                    if result.status == "approved":
+                        result.status = "revise"
+                        update["review"] = result.model_dump()
+                else:
+                    update["errors"] = [
                         {
                             "worker": "prepare_charts",
                             "code": "INVALID_CHART",
-                            "message": "Charts did not pass evidence review and were omitted. See review details.",
+                            "message": "Charts did not pass evidence review and were omitted: "
+                            + "; ".join(result.chart_issues),
                             "retry_count": 0,
                         }
-                    ],
-                )
+                    ]
             return update
 
         async def revise(state):
-            emit("revision", "Revising the answer once based on evidence review...")
+            emit("revision", "Revising the answer and any rejected charts once based on evidence review...")
             return {"revision_count": 1}
 
         async def emit_response(state):
@@ -677,19 +740,19 @@ class Orchestrator:
             }[s["mode"]],
         )
         graph.add_edge("process_uploaded_file", "prepare_charts")
-        graph.add_edge("direct_llm", "generate_final_response")
+        graph.add_edge("direct_llm", "prepare_charts")
         graph.add_edge("rag_search", "aggregate_results")
         graph.add_edge("sql_query", "aggregate_results")
         graph.add_conditional_edges(
             "aggregate_results",
             lambda s: (
-                "generate_final_response" if s.get("rag_result") or s.get("sql_result") else "handle_error"
+                "prepare_charts" if s.get("rag_result") or s.get("sql_result") else "handle_error"
             ),
         )
-        graph.add_edge("generate_final_response", "prepare_charts")
+        graph.add_edge("generate_final_response", "review_evidence")
         graph.add_conditional_edges(
             "prepare_charts",
-            lambda s: "emit_response" if s["request_type"] == "FILE_UPLOAD" else "review_evidence",
+            lambda s: "emit_response" if s["request_type"] == "FILE_UPLOAD" else "generate_final_response",
         )
         graph.add_conditional_edges(
             "review_evidence",
@@ -701,7 +764,7 @@ class Orchestrator:
                 else "handle_error"
             ),
         )
-        graph.add_edge("revise", "generate_final_response")
+        graph.add_edge("revise", "prepare_charts")
         graph.add_edge("handle_error", "emit_response")
         graph.add_edge("emit_response", END)
         return graph.compile()

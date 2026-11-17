@@ -94,6 +94,7 @@ class SQLResult(Contract):
     row_count: int
     summary: str
     warnings: list[str] = Field(default_factory=list)
+    source_datasets: dict[str, str] = Field(default_factory=dict)
 
 
 class ProcessingResult(Contract):

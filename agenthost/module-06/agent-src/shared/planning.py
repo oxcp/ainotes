@@ -56,6 +56,15 @@ Contrastive examples (apply by intent, not exact wording):
 "统计已上传评论分片的情感标签数量和占比。" -> SQL; no original-text evidence requested.
 "统计情感标签数量和占比，再引用相关评论解释体验差异。"
 -> HYBRID; SQL supplies population statistics, RAG supplies qualitative quotations.
+"Compare negative-review rates across platforms, chart them and ground suggestions in review
+quotations; state if none are available." -> HYBRID, chart_intent=requested. SQL computes rates
+from sentiment categories; RAG retrieves actual negative-review quotations from those review sources.
+An optional 'if available/if none' qualifier still requires attempting retrieval, not just testing
+whether review text columns are non-null. A quotation-availability flag is NOT a quotation.
+"Calculate total sales/profit and use reviews and consumer reports to recommend business improvements.
+Do not chart." -> HYBRID, chart_intent=none. SQL aggregates ONLY the financial metrics; RAG retrieves
+customer needs from reviews AND consumer trends/risks from reports. Do not invent review/report
+counts, sentiment summaries or keyword-risk counts when only financial aggregates were requested.
 "列出评分至少4分且情感标签为negative的评论记录。" -> SQL; explicit field predicates, not semantic search.
 Numerical figures stated in PDFs need RAG, NOT SQL unless relational data is also requested.
 Distinguish retrieving a published statistic from computing a statistic over underlying rows.
@@ -194,7 +203,8 @@ async def plan_question(model: Foundry, question: Question, available_data: dict
         result.mode in {Mode.SQL, Mode.HYBRID} and not result.sql_goal.strip()
     )
     if missing_goal or (
-        result.mode == Mode.DIRECT and (available_data["files"] or available_data["structured_data"])
+        result.mode in {Mode.DIRECT, Mode.SQL, Mode.HYBRID}
+        and (available_data["files"] or available_data["structured_data"])
     ):
         result = await request_plan(
             PLAN_PROMPT
@@ -202,11 +212,25 @@ async def plan_question(model: Foundry, question: Question, available_data: dict
             "uploaded evidence is needed. A missing worker goal may indicate an unnecessary worker: "
             "if only SQL data is needed, choose SQL, not HYBRID; likewise choose RAG for text evidence only. "
             "Do not invent a second evidence need just to fill an empty goal. For every genuinely required "
-            "worker supply a goal. Do not accept 'no text provided' or previous assistant refusals as reasons.",
+            "worker supply a goal. For a proposed SQL route, check whether the CURRENT request also "
+            "requires original review quotations, customer needs or report findings. If so, use HYBRID "
+            "with a real retrieval goal; SQL availability flags and keyword counts cannot replace "
+            "that evidence. Keep purely statistical comparisons/recommendations SQL-only. "
+            "For a proposed HYBRID route, verify that SQL performs an independently requested "
+            "structured operation on a relevant catalog dataset. Extracting quoted percentages "
+            "from a PDF, preserving survey periods/populations and preparing a bar chart are RAG "
+            "operations, not reasons to add SQL or query unrelated review/financial tables. "
+            "One reported metric compared over two periods is a complete comparison; it does not "
+            "require another report or a second metric. "
+            "Do not accept 'no text provided' or previous assistant refusals as reasons.",
             {**payload, "proposed_plan": result.model_dump(mode="json")},
         )
     if result.mode in {Mode.RAG, Mode.HYBRID}:
         result.rag_goal = result.rag_goal.strip() or question.message
+    else:
+        result.rag_goal = ""
     if result.mode in {Mode.SQL, Mode.HYBRID}:
         result.sql_goal = result.sql_goal.strip() or question.message
+    else:
+        result.sql_goal = ""
     return result
