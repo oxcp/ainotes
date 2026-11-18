@@ -205,7 +205,7 @@ This downloads the content required for the `agenthost` workshop.
 | [module-02](./module-02/README.md) | Solution A: Foundry Hosted Agent | 30 min | Deploy a managed Foundry hosted agent with native state, authentication, governance, and AI Gateway integration. |
 | [module-03](./module-03/README.md) | Solution B: AKS + agent-sandbox | 40 min | Deploy a customizable agent runtime on AKS with sandbox isolation, persistent state, and workload identity. |
 | [module-04](./module-04/README.md) | Solution C: ACA Sandboxes | 30 min | Deploy an agent in ACA Sandboxes with micro-VM isolation and suspend/resume.<!-- , and explore Dynamic Sessions as an optional track. --> |
-| [module-05](./module-05/README.md) | Wrap-up and Q&A | 5 min | Compare the solutions and review selection guidance, cost optimization, and production-hardening recommendations. |
+| [module-05](./module-05/README.md) | Summary and Resource Cleanup | 5 min | Compare the solutions, review selection guidance, cost optimization, and production-hardening recommendations, and release workshop resources when not continuing with Module-06 or after completing it. |
 | [module-06](./module-06/readme.md) | Extended practice: Multi-Agent Business Scenarios | 60 min | Simulate a business scenario: deploy five agents that orchestrate and collaborate to process uploaded business data, then use it for intelligent analysis and planning. |
 
 > [!NOTE]
@@ -286,8 +286,8 @@ agenthost/
 │   ├── sandbox.bicep            ← SandboxGroup (real Sandboxes, micro-VM boundary, suspend/resume) + UAMI AcrPull role
 │   └── sandbox-deploy.sh        ← Reuses the Module-03 image + SandboxGroup + disk image + sandbox mgmt
 ├── module-05/
-│   ├── README.md                ← Comparison recap, decision guide, cost tips, and production checklist
-│   ├── README_CN.md             ← Chinese wrap-up guide
+│   ├── README.md                ← Summary and resource cleanup: comparison, selection, cost optimization, production hardening, and cleanup instructions
+│   ├── README_CN.md             ← Chinese summary and resource cleanup guide
 │   └── cleanup.sh               ← Removes AKS VNet Private Endpoints/NICs, then AKS, deployment records and the workshop resource group
 └── module-06/
     ├── readme.md                ← Multi-Agent Business Scenarios: complete installation, deployment, upload/vectorization and chat walkthrough

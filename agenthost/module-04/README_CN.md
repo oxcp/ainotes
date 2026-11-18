@@ -430,7 +430,7 @@ https://github.com/user-attachments/assets/35d74a64-f960-4e20-93c1-63d318f947fe
 
 ## 下一步
 
-继续学习[模块 5 — 总结与问答](../module-05/README_CN.md)。
+继续学习[模块 5 — 总结与资源释放](../module-05/README_CN.md)。
 
 ---
 

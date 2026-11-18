@@ -205,7 +205,7 @@ Fix suggestion:
 | [module-02](./module-02/README_CN.md) | 解决方案 A：Foundry Hosted Agent | 30 分钟 | 部署具有原生状态、身份验证、治理和 AI Gateway 集成的托管 Foundry 智能体。 |
 | [module-03](./module-03/README_CN.md) | 解决方案 B：AKS + agent-sandbox | 40 分钟 | 在 AKS 上部署可定制的智能体运行时，具备沙盒隔离、持久状态和工作负载标识。 |
 | [module-04](./module-04/README_CN.md) | 解决方案 C：ACA Sandboxes | 30 分钟 | 在 ACA Sandboxes 中部署具有微型 VM 隔离及挂起/恢复功能的智能体。<!-- ，并探索作为可选路径的 Dynamic Sessions。 --> |
-| [module-05](./module-05/README_CN.md) | 总结和问答 | 5 分钟 | 比较解决方案，并查看选择指南、成本优化和生产环境强化建议。 |
+| [module-05](./module-05/README_CN.md) | 总结与资源释放 | 5 分钟 | 比较解决方案，梳理选型指南、成本优化和生产环境强化建议，并在不继续 Module-06 或已完成该模块后释放研讨会资源。 |
 | [module-06](./module-06/readme_CN.md) | 扩展练习：多智能体业务场景 | 60 分钟 | 模拟业务场景，部署 5个 智能体，通过多智能体间的编排和协作，处理上传的业务数据，并据此做智能分析和计划。 |
 
 > [!NOTE]
@@ -286,8 +286,8 @@ agenthost/
 │   ├── sandbox.bicep            ← SandboxGroup（真正的 Sandboxes、微型 VM 边界、挂起/恢复）+ UAMI AcrPull 角色
 │   └── sandbox-deploy.sh        ← 复用模块 03 映像 + SandboxGroup + 磁盘映像 + 沙盒管理
 ├── module-05/
-│   ├── README.md                ← 比较回顾、决策指南、成本技巧和生产环境清单
-│   ├── README_CN.md             ← 中文总结指南
+│   ├── README.md                ← 总结与资源释放：方案比较、选型、成本优化、生产环境强化及资源释放说明
+│   ├── README_CN.md             ← 中文总结与资源释放指南
 │   └── cleanup.sh               ← 先清理 AKS VNet 内的 Private Endpoint/NIC，再删除 AKS、部署记录及研讨会资源组
 └── module-06/
     ├── readme.md                ← 多智能体业务场景：完整安装、部署、上传/向量化和聊天操作指南

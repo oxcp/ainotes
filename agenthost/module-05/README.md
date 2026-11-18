@@ -1,4 +1,4 @@
-# Module 5 — Wrap-up and Q&A (5 min)
+# Module 5 — Summary and Resource Cleanup (5 min)
 
 > 🌐 语言 / Language: **English** | [中文](README_CN.md)
 
@@ -6,7 +6,7 @@
 
 ## Overview
 
-Recap the three solutions, provide decision guidance, and share cost-optimization tips for production deployments.
+Recap the three solutions, review selection guidance, cost optimization, and production-hardening recommendations, then release workshop resources when you are not continuing with Module-06 or have completed it.
 
 ---
 

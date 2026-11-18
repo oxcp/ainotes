@@ -468,7 +468,7 @@ https://github.com/user-attachments/assets/35d74a64-f960-4e20-93c1-63d318f947fe
 
 ## Next Step
 
-Proceed to [Module 5 — Wrap-up and Q&A](../module-05/README.md).
+Proceed to [Module 5 — Summary and Resource Cleanup](../module-05/README.md).
 
 ---
 
