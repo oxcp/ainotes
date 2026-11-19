@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI Notes - Local Preview</title>
+    <style>
+        :root { color-scheme: light; --ink: #1f2328; --muted: #59636e; --border: #d1d9e0; --link: #0969da; --canvas: #f6f8fa; }
+        * { box-sizing: border-box; }
+        body { display: flex; flex-direction: column; height: 100vh; height: 100dvh; margin: 0; color: var(--ink); background: white; font: 14px/1.5 ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+        header { padding: .8rem 1rem; border-bottom: 1px solid var(--border); background: var(--canvas); }
+        .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+        h1 { margin: 0 auto 0 0; font-size: 1.1rem; }
+        a { color: var(--link); }
+        button, input { font: inherit; }
+        button { padding: .35rem .7rem; color: var(--ink); background: white; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; }
+        button:disabled { cursor: wait; }
+        summary { cursor: pointer; overflow-wrap: anywhere; }
+        header details { margin-top: .5rem; color: var(--muted); font-size: .85rem; }
+        header p { margin: .4rem 0; }
+        main { display: grid; flex: 1; grid-template-columns: 300px minmax(0, 1fr); min-height: 0; }
+        aside { padding: 1rem; overflow: auto; background: var(--canvas); border-right: 1px solid var(--border); }
+        label { display: block; margin-bottom: .35rem; font-weight: 600; }
+        input { width: 100%; padding: .5rem; border: 1px solid var(--border); border-radius: 6px; }
+        #status { color: var(--muted); font-size: .85rem; overflow-wrap: anywhere; }
+        #status.error { color: #cf222e; }
+        #directories ul { margin: .25rem 0; padding-left: 1rem; list-style: none; }
+        #directories > ul { padding-left: 0; }
+        #directories details { margin: .35rem 0; }
+        #directories a { display: block; padding: .3rem .4rem; overflow-wrap: anywhere; text-decoration: none; border-radius: 4px; }
+        #directories a:hover { background: #eaeef2; }
+        #directories a[aria-current="page"] { color: var(--link); font-weight: 600; background: #ddf4ff; }
+        a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+        .reader { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+        #reader-path { margin: 0; padding: .5rem 1rem; overflow-wrap: anywhere; border-bottom: 1px solid var(--border); }
+        iframe { flex: 1; width: 100%; min-height: 0; border: 0; }
+        @media (max-width: 800px) {
+            main { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(150px, 30vh) minmax(0, 1fr); }
+            aside { border-right: 0; border-bottom: 1px solid var(--border); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="toolbar">
+            <h1>AI Notes - Local Preview</h1>
+            <a href="index.html">Static home</a>
+            <button id="refresh" type="button">Refresh directories</button>
+        </div>
+        <details>
+            <summary>How to run locally</summary>
+            <p>In the repository root, run <code>node preview.cjs</code> with Node.js 18 or later, then open
+                <a href="http://127.0.0.1:3000/preview.html">http://127.0.0.1:3000/preview.html</a>.
+                No package installation is needed. Keep the terminal open; press Ctrl+C to stop.
+                If port 3000 is occupied, use <code>node preview.cjs 3001</code> and the printed URL.</p>
+            <p>This read-only local server includes uncommitted and Git-ignored Markdown.
+                Hidden paths, dependency/test directories, runtime JSON and links outside the repository are excluded.
+                Refresh after adding or deleting files. The existing Markdown reader is embedded unchanged;
+                its external CDN dependencies still require internet access.</p>
+            <p>Double-clicking this page, or using a generic static server, cannot provide the local directory API.
+                The original static home and reader do not depend on this preview service.</p>
+        </details>
+    </header>
+    <main>
+        <aside aria-label="Local repository files">
+            <label for="filter">Filter Markdown paths</label>
+            <input id="filter" type="search" placeholder="Search directories or filenames" autocomplete="off">
+            <p id="status" role="status" aria-live="polite">Loading local directories...</p>
+            <nav id="directories" aria-label="Markdown documents"></nav>
+        </aside>
+        <section class="reader" aria-label="Markdown preview">
+            <p id="reader-path">Choose a Markdown document from the local tree.</p>
+            <iframe id="reader" name="markdown-preview" title="Existing AI Notes Markdown reader" src="about:blank"></iframe>
+        </section>
+    </main>
+    <script>
+        const status = document.getElementById('status');
+        const refresh = document.getElementById('refresh');
+        const filter = document.getElementById('filter');
+        const directories = document.getElementById('directories');
+        const reader = document.getElementById('reader');
+        const readerPath = document.getElementById('reader-path');
+        let paths = [];
+        let selected = new URLSearchParams(location.search).get('file');
+
+        function viewerUrl(path) {
+            const url = new URL('markdown-viewer.html', location.href);
+            url.searchParams.set('file', path.split('/').map(encodeURIComponent).join('/'));
+            return url.href;
+        }
+
+        function selectDocument(path) {
+            selected = path;
+            reader.src = viewerUrl(path);
+            const link = document.createElement('a');
+            link.href = viewerUrl(path);
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.textContent = path;
+            link.title = 'Open selected document in a separate tab';
+            readerPath.replaceChildren(link);
+            const url = new URL(location.href);
+            url.searchParams.set('file', path);
+            history.replaceState(null, '', url);
+            directories.querySelectorAll('a[data-path]').forEach((item) => {
+                if (item.dataset.path === path) item.setAttribute('aria-current', 'page');
+                else item.removeAttribute('aria-current');
+            });
+        }
+
+        function renderDirectories() {
+            const query = filter.value.trim().toLowerCase();
+            const visible = paths.filter((path) => path.toLowerCase().includes(query));
+            const root = { folders: new Map(), files: [] };
+            visible.forEach((path) => {
+                const parts = path.split('/');
+                const name = parts.pop();
+                let folder = root;
+                parts.forEach((part) => {
+                    if (!folder.folders.has(part)) folder.folders.set(part, { folders: new Map(), files: [] });
+                    folder = folder.folders.get(part);
+                });
+                folder.files.push({ name, path });
+            });
+            function render(folder, parent = '') {
+                const list = document.createElement('ul');
+                [...folder.folders].sort(([first], [second]) => first.localeCompare(second))
+                    .forEach(([name, child]) => {
+                        const item = document.createElement('li');
+                        const group = document.createElement('details');
+                        const prefix = `${parent}${name}/`;
+                        group.open = Boolean(query) || Boolean(selected?.startsWith(prefix));
+                        const summary = document.createElement('summary');
+                        summary.textContent = name;
+                        group.append(summary, render(child, prefix));
+                        item.append(group);
+                        list.append(item);
+                    });
+                folder.files.sort((first, second) => first.name.localeCompare(second.name))
+                    .forEach(({ name, path }) => {
+                        const item = document.createElement('li');
+                        const link = document.createElement('a');
+                        link.textContent = name;
+                        link.href = viewerUrl(path);
+                        link.target = 'markdown-preview';
+                        link.dataset.path = path;
+                        link.title = path;
+                        if (path === selected) link.setAttribute('aria-current', 'page');
+                        link.addEventListener('click', (event) => {
+                            if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+                            event.preventDefault();
+                            selectDocument(path);
+                        });
+                        item.append(link);
+                        list.append(item);
+                    });
+                return list;
+            }
+            directories.replaceChildren(render(root));
+            status.className = '';
+            status.textContent = `${visible.length} of ${paths.length} local Markdown documents. Refresh to rescan disk.`;
+        }
+
+        async function loadDirectories() {
+            refresh.disabled = true;
+            filter.disabled = true;
+            paths = [];
+            directories.replaceChildren();
+            status.className = '';
+            status.textContent = 'Loading local directories...';
+            try {
+                if (location.protocol === 'file:') throw new Error('A file:// page cannot scan local directories.');
+                const response = await fetch('/api/repository-tree', { cache: 'no-store', signal: AbortSignal.timeout(15000) });
+                if (!response.ok) throw new Error(`Local directory request failed (${response.status}).`);
+                const listing = await response.json();
+                if (listing.truncated !== false || !Array.isArray(listing.tree) ||
+                    !listing.tree.every((entry) => entry.type === 'blob' && typeof entry.path === 'string' &&
+                        /\.md$/i.test(entry.path) && entry.path.split('/').every((part) => part && !part.startsWith('.') &&
+                            !/[\\:\u0000-\u001f]/.test(part)))) {
+                    throw new Error('The server returned an invalid or incomplete Markdown listing.');
+                }
+                paths = [...new Set(listing.tree.map(({ path }) => path))];
+                if (!selected) selected = paths.find((path) => /^readme\.md$/i.test(path)) ?? paths[0];
+                renderDirectories();
+                if (selected && paths.includes(selected)) {
+                    selectDocument(selected);
+                } else {
+                    reader.src = 'about:blank';
+                    readerPath.textContent = selected ? `Document no longer present in the local tree: ${selected}` :
+                        'No visible Markdown documents were found.';
+                }
+            } catch (error) {
+                status.className = 'error';
+                status.textContent = `${error.message} Run node preview.cjs in the repository root and use its printed URL; then retry.`;
+            } finally {
+                refresh.disabled = false;
+                filter.disabled = paths.length === 0;
+            }
+        }
+
+        filter.addEventListener('input', renderDirectories);
+        refresh.addEventListener('click', loadDirectories);
+        loadDirectories();
+    </script>
+</body>
+</html>
