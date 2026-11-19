@@ -63,6 +63,12 @@ def validate_sql(statement: str, tables: set[str], workspace: UUID, limit: int) 
         name = func.name.upper() if isinstance(func, exp.Anonymous) else func.sql_name().upper()
         # SQLGlot also models boolean operators as Func; their children are still checked.
         if name not in SAFE_FUNCTIONS and not isinstance(func, (exp.Case, exp.If, exp.And, exp.Or, exp.Lag)):
+            if isinstance(func, exp.GroupConcat):
+                reject(
+                    "Text aggregation (STRING_AGG/GROUP_CONCAT) is not supported. "
+                    "Return numeric counts/rates using COUNT, SUM(CASE WHEN ... THEN 1 ELSE 0 END) "
+                    "and NULLIF; the RAG worker retrieves original review quotations separately."
+                )
             reject(f"Unsupported SQL function: {name}. Use only approved functions.")
     physical: list[exp.Table] = []
     for scope in traverse_scope(tree):

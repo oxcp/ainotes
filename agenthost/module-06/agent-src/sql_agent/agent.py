@@ -57,6 +57,12 @@ class SQLAgent:
             "Never label customer-review rows as reports, even through CTE names, aliases or literal "
             "analysis_section labels. Derive each metric from its actual catalog source, not a "
             "similar-looking schema. Negative sentiment is not the same as a low rating. "
+            "For negative-review rates, group by the actual platform field, return COUNT(*) as "
+            "total_reviews and SUM(CASE WHEN LOWER(sentiment_label)='negative' THEN 1 ELSE 0 END) "
+            "as negative_reviews, then divide 1.0 * negative_reviews / NULLIF(total_reviews,0) "
+            "in an outer SELECT. Preserve missing platform categories and state the denominator. "
+            "Do not concatenate review text using STRING_AGG/GROUP_CONCAT or collect quotations "
+            "in SQL; the RAG worker supplies original excerpts independently. "
             "A non-null review field establishes only potential text availability, not retrieved "
             "quotation evidence, customer needs or a complaint theme. "
             "A single result may combine independent summaries through UNION ALL inside a CTE, with an "
@@ -128,8 +134,20 @@ class SQLAgent:
         warnings = [
             f"Query scope: {len(names)} catalog dataset(s): "
             + ", ".join(names)
-            + ". The bounded catalog is not proof of complete uploaded-file coverage."
+            + ". Aggregations use stored rows in these datasets subject to the SQL predicates. "
+            "Returned group counts are not source-row counts. Coverage outside these named "
+            "datasets is unverified, not evidence that rows or groups are missing."
         ]
+        counts = [
+            f"{d.get('name', d['table_name'])}: {d['row_count']}"
+            for d in catalog if d["table_name"] in referenced and "row_count" in d
+        ]
+        if counts:
+            warnings.append(
+                "Catalog stored-row counts (before query predicates, not aggregate result counts): "
+                + ", ".join(counts)
+                + "."
+            )
         if len(rows) == self.config.sql_row_limit:
             warnings.append("Results are capped at the configured row limit.")
         return SQLResult(

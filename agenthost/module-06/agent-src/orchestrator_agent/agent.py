@@ -278,13 +278,46 @@ class Orchestrator:
         async def sql_node(state):
             return await worker(state, "sql_query")
 
+        def aggregate_route(state):
+            errors = state.get("errors", [])
+            if (
+                state["mode"] == "SQL"
+                and not state.get("sql_result")
+                and not state.get("rag_result")
+                and any(item["worker"] == "sql_query" for item in errors)
+                and not any(item["worker"] == "rag_search" for item in errors)
+            ):
+                return "rag_search"
+            return "prepare_charts" if state.get("rag_result") or state.get("sql_result") else "handle_error"
+
         async def aggregate(state):
             note(state, "aggregate_results", "Combining evidence and checking worker outcomes...")
+            if aggregate_route(state) == "rag_search":
+                note(
+                    state, "rag_fallback",
+                    "SQL data is unavailable; searching documents for independently supported findings...",
+                )
+                goal = state["question"]["message"]
+                return {"plan": {
+                    **state["plan"],
+                    "rag_goal": goal,
+                    "rag_strategy": "semantic",
+                    "tasks": [
+                        *state["plan"]["tasks"],
+                        {"worker": "rag_agent", "goal": goal, "depends_on": ["sql_agent"]},
+                    ],
+                }}
             return {}
 
         def evidence(state):
             payload = {k: state[k] for k in ("rag_result", "sql_result", "errors") if k in state}
             payload["answer_language"] = state.get("plan", {}).get("answer_language", "")
+            payload["sql_unavailable"] = not state.get("sql_result") and any(
+                item["worker"] == "sql_query" for item in state.get("errors", [])
+            )
+            payload["chart_data_unavailable"] = not state.get("charts") and any(
+                item["code"] == "CHART_DATA_UNAVAILABLE" for item in state.get("errors", [])
+            )
             if state.get("question"):
                 # History resolves intent during planning; old assistant facts/citations are not evidence.
                 payload["question"] = {k: v for k, v in state["question"].items() if k != "recent_context"}
@@ -297,7 +330,7 @@ class Orchestrator:
             intent = state.get("plan", {}).get("chart_intent", "auto")
             if intent == "none":
                 return {"charts": []}
-            if state.get("revision_count") and state.get("charts"):
+            if state.get("revision_count") and not state.get("chart_feedback"):
                 return {}
             try:
                 sources = chart_sources(state)
@@ -356,7 +389,9 @@ class Orchestrator:
                     if intent == "requested":
                         raise StudioError(
                             "CHART_DATA_UNAVAILABLE",
-                            "No suitable numeric chart data was retrieved. Narrow the metrics/periods or upload the relevant data.",
+                            "No explicit numeric data suitable for the requested chart was found in the "
+                            "available evidence. Only supported text findings can be provided; "
+                            "chart values must not be inferred.",
                             422,
                         )
                     return {"charts": []}
@@ -478,6 +513,17 @@ class Orchestrator:
                 "When there are no retrieved passages, citation_ids MUST be []; SQL text, table names, "
                 "column names, chart source names and request IDs are NOT citation IDs. "
                 "Do not invent calculations. Explicitly disclose failed workers and insufficient retrieval. "
+                "When sql_unavailable is true, continue with independently supported RAG findings, "
+                "even if the original route was SQL. In limitations explicitly state that the SQL "
+                "portion's requested data is missing and its calculations could not be completed. "
+                "Do not replace missing SQL totals/rates with zero, estimates or retrieved-passage counts. "
+                "Published figures quoted in RAG may still be reported as document facts, not as "
+                "successful SQL calculations. If RAG also found nothing, say that no relevant evidence "
+                "was retrieved; do not invent findings or substitute a generic refusal for the data gaps. "
+                "When chart_data_unavailable is true, preserve the supported text answer and explicitly "
+                "state that no explicit numeric data suitable for the requested chart was found. "
+                "Do not invent or estimate chart values, infer distributions from retrieved examples, "
+                "or promise a chart that was not produced. "
                 "Charts support bar, line, pie and numeric comparison table only; explain unsupported requests. "
                 "Only when visualization was requested, explain unavailable numeric chart data. "
                 "For a qualitative summary or ordinary text answer, do not add unsolicited chart recommendations "
@@ -598,6 +644,14 @@ class Orchestrator:
                 "An honestly scoped partial answer may be approved: missing requested evidence alone is not "
                 "an unsupported claim when the draft clearly discloses the gap and preserves only verified "
                 "findings. Still reject claims of shared trends or comparisons without both sources. "
+                "When sql_unavailable is true, a failed SQL query is NOT grounds to block independently "
+                "supported RAG findings or document charts. Require an explicit missing-SQL-data "
+                "limitation and omission of unsupported SQL calculations, not a generic refusal. "
+                "When chart_data_unavailable is true, approve supported textual findings with an explicit "
+                "statement that no suitable explicit numeric chart data was found. Do not require "
+                "a chart, assumed values, or SQL confirmation for already quoted report figures. "
+                "If these disclosures are missing, request a text revision; missing data alone must "
+                "not produce status=blocked. Unsupported claims and invalid citations still fail review. "
                 "A user premise about report themes is not verified evidence. If report passages are absent, "
                 "require an explicit statement that the report claims were not verified and scope discussion "
                 "to reviews against the user-specified themes. A generic 'partial coverage' disclaimer does "
@@ -743,12 +797,7 @@ class Orchestrator:
         graph.add_edge("direct_llm", "prepare_charts")
         graph.add_edge("rag_search", "aggregate_results")
         graph.add_edge("sql_query", "aggregate_results")
-        graph.add_conditional_edges(
-            "aggregate_results",
-            lambda s: (
-                "prepare_charts" if s.get("rag_result") or s.get("sql_result") else "handle_error"
-            ),
-        )
+        graph.add_conditional_edges("aggregate_results", aggregate_route)
         graph.add_edge("generate_final_response", "review_evidence")
         graph.add_conditional_edges(
             "prepare_charts",

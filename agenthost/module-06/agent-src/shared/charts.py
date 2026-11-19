@@ -41,9 +41,9 @@ Do not add prose, placeholders or extra rows outside the JSON schema."""
 
 CHART_PROMPT = """Select helpful visualizations for the actual question/analysis, or return {"charts":[]}.
 Honor explicit bar, line, pie or table requests; otherwise choose only when useful.
-When both a chart and data table are requested, select each supported kind explicitly.
-The UI already exposes source data for each chart; do not generate duplicate charts of the same kind
-with identical cells merely to provide another copy of that data.
+The UI already exposes a numeric data table for EVERY chart. A bar chart with that built-in table
+satisfies "bar chart and data table"; select a standalone table only for additional rows or columns
+not already shown by the chart's table. Do not select duplicate charts with identical cells.
 Unsupported types must not be substituted silently. Do not chart ordinary creative/general chat.
 You only select source, exact label_column/value_columns and zero-based row_indices from sources.
 A one-row wide summary is not a long-form table: do not invent columns such as metric, rating,
@@ -79,6 +79,9 @@ series representing mutually exclusive parts of a whole (not ratings, overlappin
 Do not combine incompatible units in one chart. Table is a numeric comparison with a text label column.
 At most 4 charts, 4 series per chart and 40 rows per chart. Do not imply a subset is the whole dataset.
 RAG rows are retrieved record metadata, not document-wide statistics: never infer frequencies or totals.
+A numeric source is useful only if it directly supports the requested metric. Never substitute review
+ratings, retrieval scores, passage counts or unrelated metadata for missing report figures or SQL rates.
+If the requested metric has no directly supported numeric values, return charts=[] and explain the gap.
 Document rows are numbers anchored to exact retrieved passages, with a consistent unit and scope.
 They are valid chart data without SQL rows. Use source=document for such report metrics, including
 grouped bars with multiple series. Never substitute source=user unless that source actually exists.
@@ -276,7 +279,7 @@ def chart_sources(state):
         sources["sql"] = {
             "columns": sql["columns"],
             "rows": sql["rows"][:40],
-            "note": "SQL result rows (up to first 40); query limits/filters apply. Not necessarily the full dataset.",
+            "note": "SQL result groups (up to first 40); see executed SQL for source scope and filters. Group count is not source-row count.",
         }
     report = state.get("processing_result")
     if report:
@@ -416,7 +419,20 @@ def resolve_charts(selection: ChartSelection, sources: dict) -> list[ChartSpec]:
                     + ([source["partition"]] if source.get("partition") else []),
                 )
             )
-        return specs
+        def chart_cells(chart: ChartSpec) -> str:
+            return chart.model_dump_json(exclude={"kind", "title"})
+
+        graphics = {chart_cells(chart) for chart in specs if chart.kind != "table"}
+        unique, seen = [], set()
+        for chart in specs:
+            key = chart_cells(chart)
+            if chart.kind == "table" and key in graphics:
+                continue
+            signature = (chart.kind, key)
+            if signature not in seen:
+                unique.append(chart)
+                seen.add(signature)
+        return unique
     except (KeyError, IndexError, ValueError, OverflowError) as exc:
         raise StudioError(
             "INVALID_CHART",

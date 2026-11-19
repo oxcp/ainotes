@@ -413,6 +413,28 @@ records. The separate review-overview scan is unchanged. See [RAG details](rag_a
 Answer citation lists also allow 12 records. Inline UUID citations are checked against retrieved
 record IDs; document IDs or invented IDs trigger revision, not acceptance as valid references.
 
+Empty semantic searches receive at most one query-planning correction. Only empty searches may
+change; source indices, rating/sentiment filters and successful searches remain fixed. Topic-specific
+queries keep the relevance threshold. Generic rating/sentiment examples may use the existing
+metadata-only selection, ranked by similarity without that cutoff; they do not prove dominant themes.
+Actual retries are disclosed in retrieval warnings. If no excerpts are found, the answer must say so,
+not claim the dataset contains no review text or invent quotation-grounded suggestions.
+
+SQL remains limited to approved read-only functions. Text aggregation (`STRING_AGG`/`GROUP_CONCAT`)
+is rejected with corrective guidance: compute numeric counts/rates in SQL and retrieve quotations
+through RAG. SQL validation/execution corrections share one retry budget. Scope warnings identify
+queried filenames and available catalog stored-row counts before SQL predicates. Five country
+aggregate rows do not imply five source records, missing countries or an incomplete file; coverage
+outside the queried datasets remains unverified.
+
+SQL failure does not discard independent RAG findings. HYBRID keeps its existing retrieval result;
+if a SQL-only route fails, the Orchestrator attempts one semantic RAG fallback using the current
+question and filters, without rerunning SQL. The execution plan records that fallback task while
+retaining the original route. The answer explicitly marks SQL data/calculations as unavailable and
+preserves only supported retrieved findings; no excerpts means no qualitative findings to invent.
+The SQL error remains visible in diagnostics and the persisted run is partial when RAG returns a result.
+Evidence and citation checks still apply; unsupported claims are not accepted as a fallback.
+
 All `/api` routes allow keyless workshop access; no browser Authorization header is required.
 
 ```text
@@ -448,6 +470,15 @@ from retrieved document passages. You do not need to repeat these values in the 
 Upload charts describe ingestion counts only; ask a follow-up SQL/HYBRID question for business metrics.
 If an explicit chart request has no suitable numeric data or selection, `CHART_DATA_UNAVAILABLE`
 explains the limitation while preserving the answer; ordinary text requests do not receive chart warnings.
+For a RAG chart request, use only directly supported numeric metadata or quotation-anchored document
+figures matching the requested metric. If none are available, keep the verified text findings,
+explicitly state that no suitable numeric chart data was found, and omit the chart. Do not estimate
+values or substitute passage counts, unrelated review ratings or failed SQL metrics.
+Every graphic already includes its numeric data table, so “bar chart and data table” needs only one
+graphic. Identical same-kind charts and standalone tables duplicating a graphic's exact cells are
+removed; tables with additional metrics remain. Text-only answer revision does not rerun an already
+failed chart step or duplicate its error; rejected charts are regenerated once only when chart-review
+feedback requires it.
 The planner records `chart_intent` (`requested`, `none`, or `auto`). Qualitative summaries and explicit
 text-only requests skip chart generation. Retrieved numeric metadata (such as review ratings) is charted
 only on request; a lone SQL total does not trigger an automatic chart. Automatic SQL comparisons with
