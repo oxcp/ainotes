@@ -479,6 +479,11 @@ graphic. Identical same-kind charts and standalone tables duplicating a graphic'
 removed; tables with additional metrics remain. Text-only answer revision does not rerun an already
 failed chart step or duplicate its error; rejected charts are regenerated once only when chart-review
 feedback requires it.
+If the corrected charts still fail evidence review, they are omitted and one bounded text-only
+answer is generated and independently reviewed against the original evidence, without repeating
+retrieval, SQL or chart generation. Approved text is returned as a partial result with `INVALID_CHART`
+and an explicit chart-validation limitation, not a claim that the report contains no numbers.
+Unsupported text, invalid citations, workspace mismatches and blocked reviews still fail closed.
 The planner records `chart_intent` (`requested`, `none`, or `auto`). Qualitative summaries and explicit
 text-only requests skip chart generation. Retrieved numeric metadata (such as review ratings) is charted
 only on request; a lone SQL total does not trigger an automatic chart. Automatic SQL comparisons with
@@ -495,6 +500,11 @@ Gen AI shopping, recommended purchases, chatbot queries and virtual try-on perce
 The Orchestrator selects a bounded table from retrieved passages; every cell references a retrieved
 record ID, exact numeric token and its occurrence within that record. The server locates the token
 and constructs the quotation itself, verifies the evidence belongs to the selected Session and resolves numeric values.
+Cell quotations prefer the complete sentence around the numeric token, avoiding unrelated neighboring
+chart values; full retrieved passages remain available for period/population review. Pie-partition
+quotations retain their wider context. Extraction prefers explicit prose comparisons over ambiguous
+flattened PDF number order. Corrections receive the rejected extraction and chart-review instructions;
+unrelated indicators must not replace or expand the requested comparison.
 Evidence review checks metric/period mappings, units, scale,
 population, conflicting figures and comparability. Missing values are never filled or inferred.
 Document charts work even when SQL returns no rows. Expand **Chart sources** below the chart to see

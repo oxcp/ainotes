@@ -82,6 +82,8 @@ class State(TypedDict, total=False):
     review: dict
     charts: list[dict]
     chart_feedback: list[str]
+    document_chart_extraction: dict
+    text_only_fallback: bool
     errors: Annotated[list[dict], operator.add]
     revision_count: int
 
@@ -318,6 +320,10 @@ class Orchestrator:
             payload["chart_data_unavailable"] = not state.get("charts") and any(
                 item["code"] == "CHART_DATA_UNAVAILABLE" for item in state.get("errors", [])
             )
+            payload["chart_unavailable"] = not state.get("charts") and any(
+                item["worker"] == "prepare_charts" for item in state.get("errors", [])
+            )
+            payload["text_only_fallback"] = state.get("text_only_fallback", False)
             if state.get("question"):
                 # History resolves intent during planning; old assistant facts/citations are not evidence.
                 payload["question"] = {k: v for k, v in state["question"].items() if k != "recent_context"}
@@ -332,6 +338,7 @@ class Orchestrator:
                 return {"charts": []}
             if state.get("revision_count") and not state.get("chart_feedback"):
                 return {}
+            document_extraction = {}
             try:
                 sources = chart_sources(state)
                 retrieved = state.get("rag_result", {})
@@ -353,8 +360,13 @@ class Orchestrator:
                     extraction_payload = {
                         "question": {"message": state["question"]["message"]},
                         "passages": retrieved["results"],
-                        "required_changes": state.get("chart_feedback", []),
+                        "required_changes": [
+                            *state.get("chart_feedback", []),
+                            *state.get("review", {}).get("required_changes", []),
+                        ],
                     }
+                    if state.get("document_chart_extraction"):
+                        extraction_payload["previous_extraction"] = state["document_chart_extraction"]
                     for attempt in range(2):
                         extracted = None
                         try:
@@ -367,6 +379,7 @@ class Orchestrator:
                                 timeout=self.config.worker_timeout,
                             )
                             source = document_source(extracted, retrieved["results"], state["workspace_id"])
+                            document_extraction = extracted.model_dump()
                             break
                         except (ValidationError, StudioError) as exc:
                             if attempt or (isinstance(exc, StudioError) and exc.code != "INVALID_CHART"):
@@ -438,7 +451,10 @@ class Orchestrator:
                         or "The retrieved values do not support the requested chart and statistical scope.",
                         422,
                     )
-                return {"charts": [c.model_dump(mode="json", exclude_defaults=True) for c in charts]}
+                return {
+                    "charts": [c.model_dump(mode="json", exclude_defaults=True) for c in charts],
+                    "document_chart_extraction": document_extraction,
+                }
             except Exception as exc:
                 failure(exc, request_id=state["request_id"], stage="prepare_charts")
                 code = (
@@ -462,6 +478,7 @@ class Orchestrator:
                     )
                 return {
                     "charts": [],
+                    "document_chart_extraction": document_extraction,
                     "errors": [
                         {
                             "worker": "prepare_charts",
@@ -522,6 +539,15 @@ class Orchestrator:
                 "was retrieved; do not invent findings or substitute a generic refusal for the data gaps. "
                 "When chart_data_unavailable is true, preserve the supported text answer and explicitly "
                 "state that no explicit numeric data suitable for the requested chart was found. "
+                "When chart_unavailable is true but chart_data_unavailable is false, explain that the "
+                "chart could not be prepared or validated and was omitted; do not falsely claim the "
+                "report contains no numeric data. "
+                "When text_only_fallback is true, rewrite the answer WITHOUT charts after exhausted "
+                "chart correction. Use the original evidence to retain or correct supported findings "
+                "and quotations, preserve period/population limitations, and disclose the omitted chart. "
+                "Do not repeat rejected chart values or unrelated metrics from previous_answer. "
+                "Do not promise a chart, refer to absent graphics, or replace supported findings with "
+                "a generic failure. The text must pass independent evidence review. "
                 "Do not invent or estimate chart values, infer distributions from retrieved examples, "
                 "or promise a chart that was not produced. "
                 "Charts support bar, line, pie and numeric comparison table only; explain unsupported requests. "
@@ -650,6 +676,13 @@ class Orchestrator:
                 "When chart_data_unavailable is true, approve supported textual findings with an explicit "
                 "statement that no suitable explicit numeric chart data was found. Do not require "
                 "a chart, assumed values, or SQL confirmation for already quoted report figures. "
+                "When chart_unavailable is true but chart_data_unavailable is false, require disclosure "
+                "that the chart could not be prepared or validated and was omitted, not a false claim "
+                "that the report lacks numbers. When text_only_fallback is true, independently review "
+                "the new text against original evidence, not the rejected chart or previous draft. "
+                "Do not demand another chart or reject supported text solely because a requested chart "
+                "was omitted with this disclosure. Unsupported text, incorrect mappings in the "
+                "narrative, invented citations and workspace mismatches must still fail review. "
                 "If these disclosures are missing, request a text revision; missing data alone must "
                 "not produce status=blocked. Unsupported claims and invalid citations still fail review. "
                 "A user premise about report themes is not verified evidence. If report passages are absent, "
@@ -749,6 +782,27 @@ class Orchestrator:
             emit("revision", "Revising the answer and any rejected charts once based on evidence review...")
             return {"revision_count": 1}
 
+        async def text_only(state):
+            note(
+                state, "generate_text_only",
+                "Omitting rejected charts and independently checking a text-only answer...",
+            )
+            return {"charts": [], "chart_feedback": [], "text_only_fallback": True}
+
+        def review_route(state):
+            if (
+                state["review"]["chart_issues"]
+                and state.get("revision_count")
+                and not state.get("text_only_fallback")
+                and state["review"]["status"] != "blocked"
+            ):
+                return "generate_text_only"
+            if state["review"]["status"] == "approved":
+                return "emit_response"
+            if state["review"]["status"] == "revise" and not state.get("revision_count"):
+                return "revise"
+            return "handle_error"
+
         async def emit_response(state):
             emit("emit_response", "Response ready.")
             return {}
@@ -775,6 +829,7 @@ class Orchestrator:
             ("prepare_charts", visualize),
             ("review_evidence", review),
             ("revise", revise),
+            ("generate_text_only", text_only),
             ("emit_response", emit_response),
             ("handle_error", handle_error),
         ]:
@@ -803,17 +858,9 @@ class Orchestrator:
             "prepare_charts",
             lambda s: "emit_response" if s["request_type"] == "FILE_UPLOAD" else "generate_final_response",
         )
-        graph.add_conditional_edges(
-            "review_evidence",
-            lambda s: (
-                "emit_response"
-                if s["review"]["status"] == "approved"
-                else "revise"
-                if s["review"]["status"] == "revise" and s.get("revision_count", 0) == 0
-                else "handle_error"
-            ),
-        )
+        graph.add_conditional_edges("review_evidence", review_route)
         graph.add_edge("revise", "prepare_charts")
+        graph.add_edge("generate_text_only", "generate_final_response")
         graph.add_edge("handle_error", "emit_response")
         graph.add_edge("emit_response", END)
         return graph.compile()
