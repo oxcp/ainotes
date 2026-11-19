@@ -9,3 +9,7 @@
 - Preserve unrelated user edits. If both versions contain conflicting edits and the intended source is unclear, ask the user before overwriting either version.
 - If no counterpart exists, do not create a translation unless requested; mention that the README is unpaired.
 - Before finishing, compare the affected sections in both versions for equivalent content, matching commands and examples, valid links, and consistent Markdown structure. Report the synchronization in the completion summary.
+
+## Keep Linux shell scripts readable
+
+- When generating Linux shell scripts, follow the Bash style in `agenthost/module-03/`: prioritize clarity over compactness, use descriptive section headers, consistent indentation and blank lines, split long commands across lines with clearly grouped arguments, and expand functions and control flow into readable multiline blocks rather than dense one-liners.
