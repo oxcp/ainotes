@@ -183,6 +183,9 @@ Inventory: .../.local/aca-deployment.json
 - 生成的配置、密码、对等密钥和资源清单保存在 `.local` 下。
 - 自定义设置应写入另一份 `ACA_COMMON` JSON，值使用字符串。
 
+在 ACA Sandbox 门户，进入 **SandboxGroup → Sandboxes**，能够看到新创建的 5 个 agent 处于运行状态：
+![module-06-five-agents-in-aca-sandboxes](../pic/module-06-five-agents-in-aca-sandboxes.png)
+
 > [!important]
 > - 自动挂起**默认禁用**，因为 HTTP/A2A 请求不会唤醒已挂起的 Agent。因此五个 Agent 即使空闲也会产生计算费用。
 > - 练习间隙如需挂起，再次使用前应显式恢复所有工作 Agent。
@@ -192,6 +195,7 @@ Inventory: .../.local/aca-deployment.json
 ```bash
 jq -r '.agents.chat.url' "$ACA_OUTPUT"
 ```
+或者点击 `chat` agent，进入 `chat` agent的控制台，在控制台上方，点击 `chat` agent 的服务访问 URL。
 
 1. 打开打印的 URL。
 2. 选择已有 **Session**，或在 **New session** 输入 `Summer launch` 并点击 **Create**。

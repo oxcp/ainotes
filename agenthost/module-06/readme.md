@@ -191,6 +191,10 @@ Inventory: .../.local/aca-deployment.json
 - Generated settings, passwords, peer keys and resource inventories are saved under `.local`.
 - Custom settings belong in a separate `ACA_COMMON` JSON with string values.
 
+In the ACA Sandbox portal, go to **SandboxGroup → Sandboxes** to see the five newly created Agents running:
+
+![module-06-five-agents-in-aca-sandboxes](../pic/module-06-five-agents-in-aca-sandboxes.png)
+
 > [!important]
 > - Auto-suspend is **disabled by default** because HTTP/A2A requests do not wake suspended Agents.
 >   All five Agents therefore incur compute charges even when idle.
@@ -201,6 +205,8 @@ Inventory: .../.local/aca-deployment.json
 ```bash
 jq -r '.agents.chat.url' "$ACA_OUTPUT"
 ```
+
+Alternatively, click the `chat` Agent to open its console, then click its service access URL at the top of the console.
 
 1. Open the printed URL.
 2. Select an existing **Session**, or enter `Summer launch` under **New session** and click **Create**.
