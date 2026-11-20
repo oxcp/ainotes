@@ -7,12 +7,19 @@ const { pipeline } = require('node:stream/promises');
 const excludedDirectories = new Set(['node_modules', 'tests', '__pycache__', 'venv', 'copilot-worktrees']);
 const contentTypes = new Map([
     ['.html', 'text/html'], ['.md', 'text/plain'], ['.js', 'text/javascript'], ['.css', 'text/css'],
+    ['.json', 'application/json'],
     ['.svg', 'image/svg+xml'], ['.png', 'image/png'], ['.jpg', 'image/jpeg'], ['.jpeg', 'image/jpeg'],
     ['.gif', 'image/gif'], ['.webp', 'image/webp'], ['.ico', 'image/x-icon'],
     ['.mp4', 'video/mp4'], ['.webm', 'video/webm'], ['.ogg', 'video/ogg'], ['.pdf', 'application/pdf'],
     ['.woff', 'font/woff'], ['.woff2', 'font/woff2'], ['.ttf', 'font/ttf'],
-    ...['.sh', '.ps1', '.bicep', '.yaml', '.yml', '.tf'].map((extension) => [extension, 'text/plain']),
+    ...['.sh', '.ps1', '.bicep', '.yaml', '.yml', '.tf', '.dockerfile', '.py', '.xml', '.txt']
+        .map((extension) => [extension, 'text/plain']),
 ]);
+
+function getContentType(filename) {
+    return path.basename(filename).toLowerCase() === 'dockerfile' ? 'text/plain' :
+        contentTypes.get(path.extname(filename).toLowerCase());
+}
 
 function isVisible(parts) {
     return parts.every((part) => part && !part.startsWith('.') &&
@@ -36,8 +43,12 @@ async function directoryTree(root) {
             }
             if (entry.isDirectory()) {
                 await walk(segments);
-            } else if (entry.isFile() && /\.md$/i.test(entry.name)) {
-                tree.push({ type: 'blob', path: segments.join('/') });
+            } else if (entry.isFile()) {
+                tree.push({
+                    type: 'blob',
+                    path: segments.join('/'),
+                    previewable: Boolean(getContentType(entry.name)),
+                });
             }
         }
     }
@@ -83,10 +94,10 @@ function createPreviewServer({ root = __dirname } = {}) {
         if (path.isAbsolute(relative) || !isVisible(relative.split(path.sep))) {
             throw httpError(403, 'This path is outside the visible documentation tree.');
         }
-        const type = contentTypes.get(path.extname(target).toLowerCase());
+        const type = getContentType(target);
         if (!type) throw httpError(403, 'This file type is not served by the documentation preview.');
         if (!(await fs.stat(target)).isFile()) throw httpError(404, 'Document not found.');
-        response.setHeader('Content-Type', `${type}${type.startsWith('text/') ? '; charset=utf-8' : ''}`);
+        response.setHeader('Content-Type', `${type}${type.startsWith('text/') || type === 'application/json' ? '; charset=utf-8' : ''}`);
         if (request.method === 'HEAD') {
             response.end();
             return;
@@ -124,10 +135,11 @@ if (require.main === module) {
             console.error(`Local preview could not start: ${error.message}. Try node preview.cjs 3001.`);
             process.exitCode = 1;
         });
-        server.listen(port, '127.0.0.1', () => {
-            console.log(`Local AI Notes: http://127.0.0.1:${server.address().port}/preview.html`);
-            console.log('Reading local Markdown, including uncommitted directories. Refresh directories after adding or deleting files.');
-            console.log('Read-only, loopback-only preview. Hidden paths, dependencies/tests and runtime JSON are not served.');
+        server.listen(port, '0.0.0.0', () => {
+            console.log(`Local AI Notes: http://0.0.0.0:${server.address().port}/preview.html`);
+            console.log('Listing local files, including uncommitted directories. Refresh directories after adding or deleting files.');
+            console.log('Read-only, loopback-only preview. JSON is served; do not keep sensitive configuration in visible paths.');
+            console.log('Hidden paths and dependencies/tests are not served.');
             console.log('Node.js 18+; no package installation. Keep this terminal open; press Ctrl+C to stop.');
         });
     }

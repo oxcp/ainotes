@@ -10,6 +10,10 @@
 
 浏览本仓库最便捷的方式是访问 [AI Notes 网站](https://oxcp.github.io/ainotes/)。网站中的 Markdown 阅读器支持类似 GitHub 的渲染效果、代码快速复制、嵌入式视频、长文章目录展示和点击跳转，以及多模块 Workshop 导航。
 
+### 本地预览
+
+克隆仓库后，可以在本地以与 GitHub 页面近似的显示效果浏览仓库内容。具体做法请参考[本地预览指南](preview_CN.md)。
+
 ### Workshop 与动手指南
 
 | 主题 | 说明 |
@@ -57,6 +61,11 @@ multi-k8s-mgmt/                  Kubernetes 多集群管理笔记
 test-report/                     AI 基础设施基准与规模测试报告
 index.html                       GitHub Pages 首页
 markdown-viewer.html             网站共用的 Markdown 阅读器
+preview.html                     本地文件浏览页面，支持搜索与文件类型多选筛选
+preview.cjs                      只读本地 HTTP 服务与仓库目录 API
+code-viewer.html                 语法高亮代码阅读器与 JSON 源码/格式化/树形视图
+preview.md                       英文本地预览指南（Node.js 与 Docker）
+preview_CN.md                    中文本地预览指南（Node.js 与 Docker）
 ```
 
 ## 使用仓库

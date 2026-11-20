@@ -10,6 +10,10 @@ The repository combines runnable scripts and infrastructure templates with detai
 
 The easiest way to explore the repository is through the [AI Notes site](https://oxcp.github.io/ainotes/). Its Markdown viewer provides GitHub-style rendering, code-copy controls, embedded videos, a clickable table of contents for long articles, and navigation for multi-module workshops.
 
+### Local Preview
+
+After cloning the repository, you can browse its contents locally with a display similar to GitHub pages. See the [local preview guide](preview.md) for setup instructions.
+
 ### Workshops and Hands-on Guides
 
 | Area | Description |
@@ -57,6 +61,11 @@ multi-k8s-mgmt/                  Kubernetes multi-cluster management notes
 test-report/                     AI infrastructure benchmark and scale-test reports
 index.html                       GitHub Pages landing page
 markdown-viewer.html             Shared Markdown renderer for the site
+preview.html                     Local file browser with search and multi-select type filters
+preview.cjs                      Read-only local HTTP server and repository directory API
+code-viewer.html                 Syntax-highlighted code reader and JSON source/formatted/tree views
+preview.md                       English local preview guide (Node.js and Docker)
+preview_CN.md                    Chinese local preview guide (Node.js and Docker)
 ```
 
 ## Using the Repository

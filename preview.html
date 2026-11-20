@@ -22,6 +22,12 @@
         aside { padding: 1rem; overflow: auto; background: var(--canvas); border-right: 1px solid var(--border); }
         label { display: block; margin-bottom: .35rem; font-weight: 600; }
         input { width: 100%; padding: .5rem; border: 1px solid var(--border); border-radius: 6px; }
+        aside > details { margin-top: .75rem; }
+        fieldset { margin: .5rem 0 0; padding: .5rem; border: 1px solid var(--border); border-radius: 6px; }
+        .type-actions { display: flex; gap: .5rem; margin-bottom: .5rem; }
+        #type-options { display: flex; flex-wrap: wrap; gap: .3rem .75rem; max-height: 10rem; overflow: auto; }
+        #type-options label { display: flex; align-items: center; gap: .3rem; margin: 0; font-weight: 400; }
+        #type-options input { width: auto; margin: 0; }
         #status { color: var(--muted); font-size: .85rem; overflow-wrap: anywhere; }
         #status.error { color: #cf222e; }
         #directories ul { margin: .25rem 0; padding-left: 1rem; list-style: none; }
@@ -30,6 +36,7 @@
         #directories a { display: block; padding: .3rem .4rem; overflow-wrap: anywhere; text-decoration: none; border-radius: 4px; }
         #directories a:hover { background: #eaeef2; }
         #directories a[aria-current="page"] { color: var(--link); font-weight: 600; background: #ddf4ff; }
+        #directories .unavailable { display: block; padding: .3rem .4rem; color: var(--muted); overflow-wrap: anywhere; }
         a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
         .reader { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
         #reader-path { margin: 0; padding: .5rem 1rem; overflow-wrap: anywhere; border-bottom: 1px solid var(--border); }
@@ -53,8 +60,11 @@
                 <a href="http://127.0.0.1:3000/preview.html">http://127.0.0.1:3000/preview.html</a>.
                 No package installation is needed. Keep the terminal open; press Ctrl+C to stop.
                 If port 3000 is occupied, use <code>node preview.cjs 3001</code> and the printed URL.</p>
-            <p>This read-only local server includes uncommitted and Git-ignored Markdown.
-                Hidden paths, dependency/test directories, runtime JSON and links outside the repository are excluded.
+            <p>This read-only local server lists uncommitted and Git-ignored files.
+                Hidden paths, dependency/test directories and symbolic links are excluded.
+                Markdown uses the existing reader; scripts, JSON and infrastructure code use the syntax-highlighted code reader.
+                Images, PDFs and other supported media open directly. Unsupported types are listed as not previewable.
+                JSON contents are now served: keep credentials and sensitive runtime configuration outside visible paths.
                 Refresh after adding or deleting files. The existing Markdown reader is embedded unchanged;
                 its external CDN dependencies still require internet access.</p>
             <p>Double-clicking this page, or using a generic static server, cannot provide the local directory API.
@@ -63,42 +73,68 @@
     </header>
     <main>
         <aside aria-label="Local repository files">
-            <label for="filter">Filter Markdown paths</label>
+            <label for="filter">Filter file paths</label>
             <input id="filter" type="search" placeholder="Search directories or filenames" autocomplete="off">
+            <details open>
+                <summary>File types (multi-select)</summary>
+                <fieldset id="type-filters" disabled>
+                    <legend>Include file types</legend>
+                    <div class="type-actions">
+                        <button id="all-types" type="button">Select all</button>
+                        <button id="clear-types" type="button">Clear</button>
+                    </div>
+                    <div id="type-options"></div>
+                </fieldset>
+            </details>
             <p id="status" role="status" aria-live="polite">Loading local directories...</p>
-            <nav id="directories" aria-label="Markdown documents"></nav>
+            <nav id="directories" aria-label="Repository files"></nav>
         </aside>
-        <section class="reader" aria-label="Markdown preview">
-            <p id="reader-path">Choose a Markdown document from the local tree.</p>
-            <iframe id="reader" name="markdown-preview" title="Existing AI Notes Markdown reader" src="about:blank"></iframe>
+        <section class="reader" aria-label="File preview">
+            <p id="reader-path">Choose a file from the local tree.</p>
+            <iframe id="reader" name="markdown-preview" title="AI Notes file preview" src="about:blank"></iframe>
         </section>
     </main>
     <script>
         const status = document.getElementById('status');
         const refresh = document.getElementById('refresh');
         const filter = document.getElementById('filter');
+        const typeFilters = document.getElementById('type-filters');
+        const typeOptions = document.getElementById('type-options');
         const directories = document.getElementById('directories');
         const reader = document.getElementById('reader');
         const readerPath = document.getElementById('reader-path');
         let paths = [];
+        let previewablePaths = new Set();
+        let selectedTypes = null;
         let selected = new URLSearchParams(location.search).get('file');
 
         function viewerUrl(path) {
-            const url = new URL('markdown-viewer.html', location.href);
-            url.searchParams.set('file', path.split('/').map(encodeURIComponent).join('/'));
+            const markdown = /\.md$/i.test(path);
+            const code = /(^|\/)dockerfile$/i.test(path) ||
+                /\.(sh|ps1|json|bicep|yaml|yml|tf|js|css|dockerfile|py|xml|txt)$/i.test(path);
+            if (!markdown && !code) {
+                return new URL(`/${path.split('/').map(encodeURIComponent).join('/')}`, location.href).href;
+            }
+            const url = new URL(markdown ? 'markdown-viewer.html' : 'code-viewer.html', location.href);
+            url.searchParams.set('file', markdown ? path.split('/').map(encodeURIComponent).join('/') : path);
             return url.href;
         }
 
         function selectDocument(path) {
             selected = path;
-            reader.src = viewerUrl(path);
-            const link = document.createElement('a');
-            link.href = viewerUrl(path);
-            link.target = '_blank';
-            link.rel = 'noopener noreferrer';
-            link.textContent = path;
-            link.title = 'Open selected document in a separate tab';
-            readerPath.replaceChildren(link);
+            if (previewablePaths.has(path)) {
+                reader.src = viewerUrl(path);
+                const link = document.createElement('a');
+                link.href = viewerUrl(path);
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.textContent = path;
+                link.title = 'Open selected file in a separate tab';
+                readerPath.replaceChildren(link);
+            } else {
+                reader.src = 'about:blank';
+                readerPath.textContent = `File is listed but its type is not served by the preview: ${path}`;
+            }
             const url = new URL(location.href);
             url.searchParams.set('file', path);
             history.replaceState(null, '', url);
@@ -108,9 +144,37 @@
             });
         }
 
+        function fileType(path) {
+            const name = path.split('/').pop();
+            if (/^dockerfile$/i.test(name)) return 'Dockerfile';
+            const dot = name.lastIndexOf('.');
+            return dot > 0 && dot < name.length - 1 ? name.slice(dot).toLowerCase() : '';
+        }
+
+        function renderTypeFilters() {
+            const types = [...new Set(paths.map(fileType))].sort();
+            typeOptions.replaceChildren();
+            types.forEach((type) => {
+                const label = document.createElement('label');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = type;
+                checkbox.checked = selectedTypes === null || selectedTypes.has(type);
+                checkbox.addEventListener('change', () => {
+                    if (selectedTypes === null) selectedTypes = new Set(types);
+                    if (checkbox.checked) selectedTypes.add(type);
+                    else selectedTypes.delete(type);
+                    renderDirectories();
+                });
+                label.append(checkbox, document.createTextNode(type || 'No extension'));
+                typeOptions.append(label);
+            });
+        }
+
         function renderDirectories() {
             const query = filter.value.trim().toLowerCase();
-            const visible = paths.filter((path) => path.toLowerCase().includes(query));
+            const visible = paths.filter((path) => path.toLowerCase().includes(query) &&
+                (selectedTypes === null || selectedTypes.has(fileType(path))));
             const root = { folders: new Map(), files: [] };
             visible.forEach((path) => {
                 const parts = path.split('/');
@@ -129,7 +193,7 @@
                         const item = document.createElement('li');
                         const group = document.createElement('details');
                         const prefix = `${parent}${name}/`;
-                        group.open = Boolean(query) || Boolean(selected?.startsWith(prefix));
+                        group.open = Boolean(query) || selectedTypes !== null || Boolean(selected?.startsWith(prefix));
                         const summary = document.createElement('summary');
                         summary.textContent = name;
                         group.append(summary, render(child, prefix));
@@ -139,6 +203,15 @@
                 folder.files.sort((first, second) => first.name.localeCompare(second.name))
                     .forEach(({ name, path }) => {
                         const item = document.createElement('li');
+                        if (!previewablePaths.has(path)) {
+                            const label = document.createElement('span');
+                            label.className = 'unavailable';
+                            label.textContent = `${name} (not previewable)`;
+                            label.title = `${path}: this file type is not served by the preview`;
+                            item.append(label);
+                            list.append(item);
+                            return;
+                        }
                         const link = document.createElement('a');
                         link.textContent = name;
                         link.href = viewerUrl(path);
@@ -158,14 +231,17 @@
             }
             directories.replaceChildren(render(root));
             status.className = '';
-            status.textContent = `${visible.length} of ${paths.length} local Markdown documents. Refresh to rescan disk.`;
+            status.textContent = `${visible.length} of ${paths.length} local files. Refresh to rescan disk.`;
         }
 
         async function loadDirectories() {
             refresh.disabled = true;
             filter.disabled = true;
+            typeFilters.disabled = true;
             paths = [];
+            previewablePaths = new Set();
             directories.replaceChildren();
+            typeOptions.replaceChildren();
             status.className = '';
             status.textContent = 'Loading local directories...';
             try {
@@ -175,19 +251,22 @@
                 const listing = await response.json();
                 if (listing.truncated !== false || !Array.isArray(listing.tree) ||
                     !listing.tree.every((entry) => entry.type === 'blob' && typeof entry.path === 'string' &&
-                        /\.md$/i.test(entry.path) && entry.path.split('/').every((part) => part && !part.startsWith('.') &&
+                        typeof entry.previewable === 'boolean' && entry.path.split('/').every((part) => part && !part.startsWith('.') &&
                             !/[\\:\u0000-\u001f]/.test(part)))) {
-                    throw new Error('The server returned an invalid or incomplete Markdown listing.');
+                    throw new Error('The server returned an invalid or incomplete file listing.');
                 }
                 paths = [...new Set(listing.tree.map(({ path }) => path))];
-                if (!selected) selected = paths.find((path) => /^readme\.md$/i.test(path)) ?? paths[0];
+                previewablePaths = new Set(listing.tree.filter(({ previewable }) => previewable).map(({ path }) => path));
+                renderTypeFilters();
+                if (!selected) selected = paths.find((path) => /^readme\.md$/i.test(path)) ??
+                    paths.find((path) => previewablePaths.has(path)) ?? paths[0];
                 renderDirectories();
                 if (selected && paths.includes(selected)) {
                     selectDocument(selected);
                 } else {
                     reader.src = 'about:blank';
-                    readerPath.textContent = selected ? `Document no longer present in the local tree: ${selected}` :
-                        'No visible Markdown documents were found.';
+                    readerPath.textContent = selected ? `File no longer present in the local tree: ${selected}` :
+                        'No visible files were found.';
                 }
             } catch (error) {
                 status.className = 'error';
@@ -195,10 +274,21 @@
             } finally {
                 refresh.disabled = false;
                 filter.disabled = paths.length === 0;
+                typeFilters.disabled = paths.length === 0;
             }
         }
 
         filter.addEventListener('input', renderDirectories);
+        document.getElementById('all-types').addEventListener('click', () => {
+            selectedTypes = null;
+            renderTypeFilters();
+            renderDirectories();
+        });
+        document.getElementById('clear-types').addEventListener('click', () => {
+            selectedTypes = new Set();
+            renderTypeFilters();
+            renderDirectories();
+        });
         refresh.addEventListener('click', loadDirectories);
         loadDirectories();
     </script>
