@@ -43,16 +43,17 @@ node preview.cjs 3001
    git clone https://github.com/oxcp/ainotes.git "<AINOTES_CLONE_DIR>"
    ```
 
-   请将 `<AINOTES_CLONE_DIR>` 替换为仓库的实际绝对路径；如果已有仓库，可以使用现有目录。
+> [!IMPORTANT]
+> 请将 `<AINOTES_CLONE_DIR>` 替换为实际绝对路径；如果已有仓库，可以使用现有目录。
 
 2. 启动容器（以下多行命令使用 Bash 续行语法）：
 
    ```bash
    docker run -d \
      --restart unless-stopped \
-     -p 13000:3000 \
+     -p 3000:3000 \
      -v "<AINOTES_CLONE_DIR>:/preview" \
-     --name preview \
+     --name ainotes-preview \
      --entrypoint node \
      dhi.io/node:26-alpine-sfw-ent-dev \
      /preview/preview.cjs
@@ -61,22 +62,25 @@ node preview.cjs 3001
    在 Windows PowerShell 中，可使用等价的单行命令：
 
    ```powershell
-   docker run -d --restart unless-stopped -p 13000:3000 -v "<AINOTES_CLONE_DIR>:/preview" --name preview --entrypoint node dhi.io/node:26-alpine-sfw-ent-dev /preview/preview.cjs
+   docker run -d --restart unless-stopped -p 3000:3000 -v "<AINOTES_CLONE_DIR>:/preview" --name ainotes-preview --entrypoint node dhi.io/node:26-alpine-sfw-ent-dev /preview/preview.cjs
    ```
 
-   本地仓库挂载到容器的 `/preview`，宿主机端口 13000 映射到容器服务端口 3000。`--restart unless-stopped` 使容器在 Docker 重启后自动启动，除非手动停止。
+   本地仓库挂载到容器的 `/preview`，宿主机端口 3000 映射到容器服务端口 3000。`--restart unless-stopped` 使容器在 Docker 重启后自动启动，除非手动停止。
 
-3. 浏览器访问：<http://localhost:13000/preview.html>。
+> [!TIP]
+> 如果本地端口 3000 已被占用，可以在执行 `docker run` 时选择其他未占用的本地端口。映射格式为 `-p <本地端口>:<容器端口>`：只修改本地端口，容器侧端口保持 3000。例如，将 `-p 3000:3000` 改为 `-p 3001:3000`
+
+3. 浏览器访问：<http://localhost:3000/preview.html>。如果使用了其它本地端口，相应调整访问端口
 
 查看启动日志或停止、重新启动容器：
 
 ```bash
-docker logs preview
-docker stop preview
-docker start preview
+docker logs ainotes-preview
+docker stop ainotes-preview
+docker start ainotes-preview
 ```
 
-如果已有名为 `preview` 的容器，使用 `docker start preview` 启动现有容器，不要重复执行 `docker run`。
+如果已有名为 `ainotes-preview` 的容器，使用 `docker start ainotes-preview` 启动现有容器，不要重复执行 `docker run`。
 
 ## 页面使用说明
 
@@ -87,7 +91,7 @@ docker start preview
 - 新增或删除文件后，点击 **Refresh directories** 重新扫描目录；修改文档后刷新页面查看最新内容。容器方式直接读取挂载的本地仓库，无需重新构建镜像。
 - Markdown 阅读器和 Shiki 语法高亮的外部 CDN 依赖需要互联网连接。如果高亮加载失败，代码阅读器会显示错误，并保留带行号的纯文本源码。
 - 服务为只读预览，不提供文件编辑功能；隐藏路径、依赖目录、测试目录和符号链接不会显示。
-- 请使用 `localhost` 或 `127.0.0.1` 访问，服务会拒绝其他 Host 名称。服务监听 `0.0.0.0`，上述 Docker 命令也会发布到所有宿主机接口；如需限制为本机访问，可将端口映射改为 `-p 127.0.0.1:13000:3000`。
+- 请使用 `localhost` 或 `127.0.0.1` 访问，服务会拒绝其他 Host 名称。服务监听 `0.0.0.0`，上述 Docker 命令也会发布到所有宿主机接口；如需限制为本机访问，可将端口映射改为 `-p 127.0.0.1:3000:3000`。
 
 ### 代码和 JSON 阅读器
 

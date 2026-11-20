@@ -43,16 +43,17 @@ Prerequisites: Docker is installed and running, and you can pull the `dhi.io/nod
    git clone https://github.com/oxcp/ainotes.git "<AINOTES_CLONE_DIR>"
    ```
 
-   Replace `<AINOTES_CLONE_DIR>` with the actual absolute path to the repository. If you already have a clone, you can use that directory.
+> [!IMPORTANT]
+> Replace `<AINOTES_CLONE_DIR>` with an actual absolute path. If you already have a clone, you can use its existing directory.
 
 2. Start the container (the multiline command below uses Bash line continuation syntax):
 
    ```bash
    docker run -d \
      --restart unless-stopped \
-     -p 13000:3000 \
+     -p 3000:3000 \
      -v "<AINOTES_CLONE_DIR>:/preview" \
-     --name preview \
+     --name ainotes-preview \
      --entrypoint node \
      dhi.io/node:26-alpine-sfw-ent-dev \
      /preview/preview.cjs
@@ -61,22 +62,25 @@ Prerequisites: Docker is installed and running, and you can pull the `dhi.io/nod
    In Windows PowerShell, use the equivalent single-line command:
 
    ```powershell
-   docker run -d --restart unless-stopped -p 13000:3000 -v "<AINOTES_CLONE_DIR>:/preview" --name preview --entrypoint node dhi.io/node:26-alpine-sfw-ent-dev /preview/preview.cjs
+   docker run -d --restart unless-stopped -p 3000:3000 -v "<AINOTES_CLONE_DIR>:/preview" --name ainotes-preview --entrypoint node dhi.io/node:26-alpine-sfw-ent-dev /preview/preview.cjs
    ```
 
-   The local repository is mounted at `/preview` inside the container, and host port 13000 maps to service port 3000 in the container. `--restart unless-stopped` automatically starts the container after Docker restarts, unless you have manually stopped it.
+   The local repository is mounted at `/preview` inside the container, and host port 3000 maps to service port 3000 in the container. `--restart unless-stopped` automatically starts the container after Docker restarts, unless you have manually stopped it.
 
-3. Open <http://localhost:13000/preview.html> in your browser.
+> [!TIP]
+> If host port 3000 is already in use, choose another available host port when running `docker run`. The mapping uses `-p <host-port>:<container-port>`: change only the host port and keep the container port at 3000. For example, replace `-p 3000:3000` with `-p 3001:3000`.
+
+3. Open <http://localhost:3000/preview.html> in your browser. If you use another host port, adjust the port in the URL accordingly.
 
 View startup logs, stop the container, or start it again:
 
 ```bash
-docker logs preview
-docker stop preview
-docker start preview
+docker logs ainotes-preview
+docker stop ainotes-preview
+docker start ainotes-preview
 ```
 
-If a container named `preview` already exists, start it with `docker start preview` instead of running `docker run` again.
+If a container named `ainotes-preview` already exists, start it with `docker start ainotes-preview` instead of running `docker run` again.
 
 ## Using the Preview Page
 
@@ -87,7 +91,7 @@ If a container named `preview` already exists, start it with `docker start previ
 - After adding or deleting files, click **Refresh directories** to rescan the directory tree. After editing a document, refresh the page to see the latest content. The container reads the mounted local repository directly; no image rebuild is needed.
 - The Markdown reader and Shiki syntax highlighter use external CDN dependencies that require internet access. If highlighting fails, the code reader reports the error and keeps the plain source visible with line numbers.
 - The service provides read-only previews, not file editing. Hidden paths, dependency directories, test directories, and symbolic links are not shown.
-- Access the service using `localhost` or `127.0.0.1`; requests with other Host names are rejected. The service listens on `0.0.0.0`, and the Docker command above publishes the port on all host interfaces. To restrict access to the local machine, change the port mapping to `-p 127.0.0.1:13000:3000`.
+- Access the service using `localhost` or `127.0.0.1`; requests with other Host names are rejected. The service listens on `0.0.0.0`, and the Docker command above publishes the port on all host interfaces. To restrict access to the local machine, change the port mapping to `-p 127.0.0.1:3000:3000`.
 
 ### Code and JSON Reader
 
