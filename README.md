@@ -1,6 +1,6 @@
 # AI Notes
 
-**English** | [简体中文](README_CN.md)
+> 🌐 语言 / Language: **English** | [中文](README_CN.md)
 
 A collection of hands-on workshops, deployment guides, technical deep dives, and model evaluations focused on AI infrastructure and cloud-native workloads on Azure.
 

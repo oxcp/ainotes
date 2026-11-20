@@ -1,6 +1,6 @@
 # AI Notes
 
-[English](README.md) | **简体中文**
+> 🌐 语言 / Language: [English](README.md) | **中文**
 
 这是一个聚焦于 Azure AI 基础设施和云原生工作负载的知识库，包含动手实验、部署指南、技术深度解析和模型评测。
 
