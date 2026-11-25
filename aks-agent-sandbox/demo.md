@@ -14,7 +14,6 @@ This demo uses an online chatbot (Online Bot) that answers customer questions to
 
 https://github.com/user-attachments/assets/20d0cabd-4dbe-4b9b-94da-4935812416df
 
-
 Before starting, complete the [lab environment setup](README.md), confirm cluster access, extensions, images and model services are available, and start the Sandbox management portal.
 
 Run all commands from the `aks-agent-sandbox` directory. The following uses the default namespace; update it if `.env` specifies another value:
