@@ -1,0 +1,24 @@
+apiVersion: podsnapshot.aks.azure.com/v1alpha1
+kind: PodSnapshotStorageConfig
+metadata:
+  name: ${STORAGE_CONFIG}
+spec:
+  snapshotStorageConfig:
+    azureBlob:
+      account: ${STORAGE_ACCOUNT}
+      container: ${STORAGE_CONTAINER}
+      prefix: ${NAMESPACE}
+---
+apiVersion: podsnapshot.aks.azure.com/v1alpha1
+kind: PodSnapshotPolicy
+metadata:
+  name: session-policy
+  namespace: ${NAMESPACE}
+spec:
+  storageConfigName: ${STORAGE_CONFIG}
+  selector:
+    matchLabels:
+      app: agent-session
+  triggerConfig:
+    type: manual
+    postCheckpoint: resume

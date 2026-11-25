@@ -1,0 +1,11 @@
+instruction.md
+.env
+.lab/
+infra/main.json
+infra/ai.json
+infra/kubelet-rbac.json
+agent-src/app/.env
+agent-src/app/data/
+__pycache__/
+slides/
+build-slides.py

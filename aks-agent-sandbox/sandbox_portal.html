@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="portal-token" content="__PORTAL_TOKEN__">
+  <title>Sandbox 管理门户</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 14px system-ui, sans-serif; color: #193044; background: #f3f6fa; }
+    .layout { display: grid; grid-template-columns: 330px minmax(0, 1fr); height: 100dvh; }
+    aside { display: flex; flex-direction: column; border-right: 1px solid #d1dbe5; background: white; min-height: 0; overflow-y: auto; }
+    .controls { padding: 20px; border-bottom: 1px solid #d1dbe5; }
+    h1 { margin: 0 0 16px; font-size: 20px; }
+    .portal-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+    .portal-heading h1 { margin: 0; }
+    button { cursor: pointer; font: inherit; }
+    .list-refresh { background: #1466a5; color: white; border: 0; border-radius: 6px; padding: 6px 10px; flex-shrink: 0; }
+    button:disabled { opacity: .6; cursor: wait; }
+    dt { font-weight: 600; margin-top: 10px; }
+    dd { margin: 3px 0; overflow-wrap: anywhere; }
+    .sandbox-list { overflow-y: auto; max-height: 280px; padding: 10px 0 0; }
+    .list-section { margin: 10px 0 16px; border-bottom: 1px solid #d1dbe5; padding-bottom: 12px; }
+    .list-section summary { cursor: pointer; font-weight: 600; padding: 6px 0; color: #1466a5; }
+    .list-section summary:focus-visible { outline: 3px solid #f1ae25; outline-offset: 2px; }
+    .list-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .list-heading h2 { font-size: 14px; margin: 0; min-width: 0; }
+    .sandbox { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 12px; margin-bottom: 6px; border: 1px solid #d1dbe5; border-radius: 6px; background: #f7f9fc; overflow-wrap: anywhere; }
+    .sandbox[aria-pressed="true"] { border-color: #1466a5; background: #e7f2fc; }
+    .sandbox-content { flex: 1; min-width: 0; }
+    .status-dot { width: 10px; height: 10px; flex: 0 0 10px; border-radius: 50%; background: #d59b2a; }
+    .status-dot.ready { background: #269447; box-shadow: 0 0 0 3px #26944724; }
+    .status-dot.stopped { background: #929ba6; }
+    .sandbox small { display: block; margin-top: 5px; color: #52687a; }
+    button:focus-visible, input:focus-visible { outline: 3px solid #f1ae25; outline-offset: 2px; }
+    main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+    .toolbar { padding: 14px 18px; border-bottom: 1px solid #d1dbe5; background: white; overflow-wrap: anywhere; }
+    #current-sandbox { margin: 0 0 10px; font-size: 24px; font-weight: 700; line-height: 1.3; color: #1466a5; overflow-wrap: anywhere; }
+    #status { white-space: pre-wrap; }
+    #snapshot-status { margin: 0 0 8px; color: #52687a; overflow-wrap: anywhere; }
+    #status.error { color: #a02121; }
+    #open-link { display: inline-block; margin-top: 8px; }
+    #open-link[hidden] { display: none; }
+    .chat-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+    .chat-actions #open-link { margin-top: 0; }
+    .auto-wake-control { display: inline-flex; align-items: center; gap: 10px; padding: 7px 12px; border: 1px solid #d1dbe5; border-radius: 10px; background: #f7f9fc; color: #52687a; font-weight: 600; cursor: pointer; transition: background .18s, border-color .18s, color .18s; }
+    .auto-wake-control[hidden] { display: none; }
+    .auto-wake-control:hover { border-color: #9cb8ce; }
+    .auto-wake-control:has(input:checked) { border-color: #8db9da; background: #e7f2fc; color: #1466a5; }
+    #auto-wake { appearance: none; position: relative; width: 42px; height: 24px; flex: 0 0 42px; margin: 0; border: 1px solid #8c9aa8; border-radius: 999px; background: #a3afba; cursor: pointer; transition: background .18s, border-color .18s; }
+    #auto-wake::before { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: white; box-shadow: 0 1px 3px #001b3326; transition: transform .18s; }
+    #auto-wake:checked { border-color: #1466a5; background: #1466a5; }
+    #auto-wake:checked::before { transform: translateX(18px); }
+    #refresh-chat { padding: 7px 12px; border: 1px solid #b9cddd; border-radius: 6px; color: #1466a5; background: #f2f7fc; }
+    #refresh-chat:hover:not(:disabled) { background: #e7f2fc; }
+    #refresh-chat:disabled { cursor: not-allowed; }
+    iframe { border: 0; width: 100%; flex: 1; background: white; }
+    .note { font-size: 12px; color: #52687a; line-height: 1.6; }
+    @media (prefers-reduced-motion: reduce) { .auto-wake-control, #auto-wake, #auto-wake::before { transition: none; } }
+    @media (max-width: 700px) { .layout { grid-template-columns: 220px minmax(0, 1fr); } .controls { padding: 12px; } }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside aria-label="Sandbox 导航">
+      <section class="controls">
+        <div class="portal-heading">
+          <h1>Agent Sandboxes</h1>
+          <button id="refresh-lists" class="list-refresh" type="button" aria-label="同时刷新 Sandbox 和快照列表">刷新列表</button>
+        </div>
+        <dl>
+          <dt>Gateway 地址</dt><dd id="gateway">加载中…</dd>
+        </dl>
+        <div class="list-heading">
+          <h2>Warm pool Sandbox</h2>
+        </div>
+        <p id="warm">—</p>
+        <details class="list-section">
+          <summary>展开 / 折叠列表</summary>
+          <nav id="warm-list" class="sandbox-list" aria-label="Warm pool Sandbox 列表">加载中…</nav>
+        </details>
+        <div class="list-heading">
+          <h2>已申领 Sandbox</h2>
+        </div>
+        <p id="claimed">—</p>
+        <details class="list-section" open>
+          <summary>展开 / 折叠列表</summary>
+          <nav id="list" class="sandbox-list" aria-label="已申领 Sandbox 列表">加载中…</nav>
+        </details>
+        <div class="list-heading">
+          <h2>已捕获快照</h2>
+        </div>
+        <p id="snapshots">—</p>
+        <details class="list-section" open>
+          <summary>展开 / 折叠列表</summary>
+          <nav id="snapshot-list" class="sandbox-list" aria-label="已捕获快照列表">加载中…</nav>
+        </details>
+        <dl>
+          <dt>集群 / Namespace</dt><dd id="scope">加载中…</dd>
+        </dl>
+      </section>
+    </aside>
+    <main>
+      <div class="toolbar">
+        <h2 id="current-sandbox">未选择 Sandbox</h2>
+        <p id="snapshot-status" role="status" aria-live="polite">Snapshot：未选择 Sandbox</p>
+        <div id="status" role="status" aria-live="polite">选择 Sandbox；Ready 时检查 /health，停止或挂起时可按自动唤醒设置恢复。</div>
+        <div class="chat-actions">
+          <label id="auto-wake-control" class="auto-wake-control" hidden><input id="auto-wake" type="checkbox">自动唤醒</label>
+          <button id="refresh-chat" type="button" hidden disabled title="只刷新右侧 Agent 页面，不刷新左侧列表">刷新聊天页面</button>
+          <a id="open-link" target="_blank" rel="noopener noreferrer" hidden>在新窗口打开聊天</a>
+        </div>
+      </div>
+      <iframe id="chat" title="Sandbox 聊天门户" referrerpolicy="no-referrer"
+              sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+    </main>
+  </div>
+  <script>
+    const token = document.querySelector('meta[name="portal-token"]').content;
+    const refreshListsButton = document.getElementById('refresh-lists');
+    const autoWake = document.getElementById('auto-wake');
+    const autoWakeControl = document.getElementById('auto-wake-control');
+    const list = document.getElementById('list');
+    const warmList = document.getElementById('warm-list');
+    const snapshotList = document.getElementById('snapshot-list');
+    const status = document.getElementById('status');
+    const chat = document.getElementById('chat');
+    const openLink = document.getElementById('open-link');
+    const refreshChatButton = document.getElementById('refresh-chat');
+    const currentSandbox = document.getElementById('current-sandbox');
+    const snapshotStatus = document.getElementById('snapshot-status');
+    let selection = 0;
+    let selectedName = '';
+    let selectedList = '';
+    let selectedSnapshot = '';
+    let chatUrl = '';
+    let claimedSandboxes = [];
+    let warmSandboxes = [];
+    let capturedSnapshots = [];
+    let wakeInProgress = false;
+    let listRefresh = null;
+
+    function findSandbox(name) {
+      return [...claimedSandboxes, ...warmSandboxes].find(sandbox => sandbox.name === name);
+    }
+
+    function showSandboxStatus(name, sandbox, wakeMessage = '') {
+      showSnapshot(sandbox);
+      const state = sandbox ? `${sandbox.mode} · ${sandbox.status || (sandbox.ready ? 'Ready' : 'Not Ready')}` :
+        '不存在（当前列表缓存中未找到）';
+      const notice = !sandbox || !sandbox.ready ?
+        `\n${wakeMessage || (selectedList === 'claimed' && autoWake.checked ? '自动唤醒已开启；仅点击停止或挂起的 Sandbox 时执行。' : '自动唤醒目前关闭。')}` : '';
+      message(`${name}：${state}${notice}`, !sandbox);
+    }
+
+    function showSnapshot(sandbox) {
+      snapshotStatus.textContent = sandbox?.snapshot ?
+        `Snapshot：有对应快照 · ${sandbox.snapshot}` : 'Snapshot：无对应快照（.lab/snapshot-mapping）';
+    }
+
+    async function wakeSandbox(name, sandbox) {
+      if (selectedList !== 'claimed' || !sandbox || !autoWake.checked ||
+          !(['Stopped', 'Suspended'].includes(sandbox.status) ||
+            ['Stopped', 'Suspended'].includes(sandbox.mode))) {
+        showSandboxStatus(name, sandbox);
+        return null;
+      }
+      wakeInProgress = true;
+      refreshListsButton.disabled = true;
+      autoWake.disabled = true;
+      showSandboxStatus(name, sandbox, sandbox.snapshot ?
+        '正执行自动唤醒：从快照同名重建 Sandbox；列表刷新已暂停。' :
+        '正执行自动唤醒：无对应快照，将创建新 Pod，原内存状态丢失；列表刷新已暂停。');
+      try {
+        if (listRefresh) await listRefresh;
+        return await api('/api/wake', {
+          method: 'POST',
+          body: JSON.stringify({ name, uid: sandbox.uid })
+        });
+      } finally {
+        wakeInProgress = false;
+        autoWake.disabled = false;
+        refreshListsButton.disabled = false;
+        await refreshLists(true);
+      }
+    }
+
+    function renderSandboxes(container, sandboxes, emptyMessage) {
+      container.replaceChildren();
+      for (const sandbox of sandboxes) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'sandbox';
+        button.dataset.name = sandbox.name;
+        button.setAttribute('aria-pressed', String(sandbox.name === selectedName));
+        const state = sandbox.status || (sandbox.ready ? 'Ready' : 'Not Ready');
+        const dot = document.createElement('span');
+        dot.className = `status-dot${state === 'Ready' ? ' ready' : ['Stopped', 'Suspended'].includes(state) ? ' stopped' : ''}`;
+        dot.setAttribute('aria-hidden', 'true');
+        const content = document.createElement('span');
+        content.className = 'sandbox-content';
+        const name = document.createElement('span');
+        name.textContent = sandbox.name;
+        content.appendChild(name);
+        const detail = document.createElement('small');
+        detail.textContent = `${sandbox.mode} · ${state}${sandbox.restored ? ' · 已恢复（独立 Sandbox）' : ''}`;
+        content.appendChild(detail);
+        button.appendChild(dot);
+        button.appendChild(content);
+        button.addEventListener('click', () => selectSandbox(sandbox.name, container === list ? 'claimed' : 'warm'));
+        container.appendChild(button);
+      }
+      if (!sandboxes.length) container.textContent = emptyMessage;
+    }
+
+    function snapshotKey(record) {
+      return JSON.stringify([record.snapshot, record.sandbox, record.sandbox_uid]);
+    }
+
+    function markSelection() {
+      [list, warmList, snapshotList].forEach(container => {
+        container.querySelectorAll('button').forEach(button => {
+          const pressed = container === snapshotList ?
+            button.dataset.snapshot === selectedSnapshot : button.dataset.name === selectedName;
+          button.setAttribute('aria-pressed', String(pressed));
+        });
+      });
+    }
+
+    function showSnapshotDetails(record) {
+      currentSandbox.textContent = `快照：${record.snapshot}`;
+      snapshotStatus.textContent = `Snapshot：已捕获 · ${record.snapshot}`;
+      message(`快照名称：${record.snapshot}\n对应 Sandbox：${record.sandbox}\nSandbox UID：${record.sandbox_uid}` +
+        `\nContext：${record.context}\nNamespace：${record.namespace}` +
+        '\n来源：.lab/snapshot-mapping（本地映射，未实时查询快照是否存在或 Ready）。');
+    }
+
+    function selectSnapshot(record) {
+      if (wakeInProgress) return;
+      selection++;
+      selectedName = '';
+      selectedList = '';
+      selectedSnapshot = snapshotKey(record);
+      clearChat();
+      markSelection();
+      showSnapshotDetails(record);
+    }
+
+    function checkSelection() {
+      if (wakeInProgress) return;
+      if (selectedSnapshot) {
+        const record = capturedSnapshots.find(record => snapshotKey(record) === selectedSnapshot);
+        if (record) showSnapshotDetails(record);
+        else {
+          snapshotStatus.textContent = 'Snapshot：所选映射已移除或更新';
+          message('所选快照的映射已移除或更新，请重新选择。', true);
+        }
+        return;
+      }
+      if (!selectedName) return;
+      const sandbox = findSandbox(selectedName);
+      showSnapshot(sandbox);
+      if (!sandbox || !sandbox.ready) {
+        selection++;
+        clearChat();
+        showSandboxStatus(selectedName, sandbox);
+      }
+    }
+
+    function clearChat() {
+      chatUrl = '';
+      chat.removeAttribute('src');
+      openLink.hidden = true;
+      autoWakeControl.hidden = selectedList !== 'claimed';
+      refreshChatButton.hidden = !selectedName;
+      refreshChatButton.disabled = !selectedName;
+    }
+
+    function message(text, error = false) {
+      status.textContent = text;
+      status.classList.toggle('error', error);
+    }
+
+    async function api(path, options = {}) {
+      const response = await fetch(path, {
+        ...options,
+        headers: { 'Content-Type': 'application/json', 'X-Portal-Token': token }
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+      return data;
+    }
+
+    async function selectSandbox(name, source = null) {
+      if (wakeInProgress) return;
+      const current = ++selection;
+      selectedList = source || (name === selectedName ? selectedList :
+        claimedSandboxes.some(sandbox => sandbox.name === name) ? 'claimed' :
+        warmSandboxes.some(sandbox => sandbox.name === name) ? 'warm' : 'claimed');
+      selectedName = name;
+      selectedSnapshot = '';
+      currentSandbox.textContent = name;
+      markSelection();
+      clearChat();
+      const sandbox = findSandbox(name);
+      showSandboxStatus(name, sandbox);
+      try {
+        let data = !sandbox || !sandbox.ready ? await wakeSandbox(name, sandbox) : await api('/api/open', {
+          method: 'POST',
+          body: JSON.stringify({ name })
+        });
+        if (!data) return;
+        if (current !== selection) return;
+        if (!data.ready) {
+          data = await wakeSandbox(name, { ...sandbox, ...data });
+          if (!data || current !== selection) return;
+          if (!data.ready) {
+            showSandboxStatus(name, data);
+            return;
+          }
+        }
+        showSnapshot(data);
+        chatUrl = data.url;
+        chat.src = chatUrl;
+        openLink.href = data.url;
+        openLink.hidden = false;
+        refreshChatButton.disabled = false;
+        const notice = data.wake_action === 'cold-start' ? '\n已冷启动新 Pod，原内存状态已丢失。' :
+          data.wake_action === 'restored' ? '\n已从对应快照恢复。' : '';
+        message(`${name}：${data.mode} · ${data.status}${notice}\n正在访问服务：${data.url}`);
+      } catch (error) {
+        if (current === selection) message(`${name}：Sandbox不可访问\n${error.message}\n如已开始唤醒，资源可能已变化，请检查后再重试。`, true);
+      }
+    }
+
+    async function loadInfo() {
+      try {
+        const data = await api('/api/info');
+        document.getElementById('gateway').textContent = data.gateway_ip || '尚未分配 IP';
+        document.getElementById('scope').textContent = `${data.context} / ${data.namespace}`;
+      } catch (error) {
+        document.getElementById('gateway').textContent = '加载失败';
+        document.getElementById('scope').textContent = '加载失败';
+        message(`加载集群信息失败：${error.message}。请重新加载页面重试。`, true);
+      }
+    }
+
+    async function refreshClaims() {
+      const data = await api('/api/claims');
+      document.getElementById('claimed').textContent = `${data.claimed_count}（待分配 Claim：${data.pending_claim_count}）`;
+      claimedSandboxes = data.sandboxes;
+      renderSandboxes(list, claimedSandboxes, '当前没有已分配的 Sandbox。');
+    }
+
+    async function refreshWarm() {
+      const data = await api('/api/warm');
+      document.getElementById('warm').textContent = `${data.warm_sandboxes.length}（Ready：${data.warm_ready}）`;
+      warmSandboxes = data.warm_sandboxes;
+      renderSandboxes(warmList, warmSandboxes, '当前没有带 Warm pool 标签的 Sandbox。');
+    }
+
+    async function refreshSnapshots() {
+      const data = await api('/api/snapshots');
+      capturedSnapshots = data.snapshots;
+      document.getElementById('snapshots').textContent = String(data.snapshot_count);
+      snapshotList.replaceChildren();
+      for (const record of capturedSnapshots) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'sandbox';
+        button.dataset.snapshot = snapshotKey(record);
+        button.setAttribute('aria-pressed', String(button.dataset.snapshot === selectedSnapshot));
+        const content = document.createElement('span');
+        content.className = 'sandbox-content';
+        const name = document.createElement('span');
+        name.textContent = record.snapshot;
+        const sandbox = document.createElement('small');
+        sandbox.textContent = `Sandbox：${record.sandbox}`;
+        content.appendChild(name);
+        content.appendChild(sandbox);
+        button.appendChild(content);
+        button.addEventListener('click', () => selectSnapshot(record));
+        snapshotList.appendChild(button);
+      }
+      if (!capturedSnapshots.length) snapshotList.textContent = '当前没有已记录的快照。';
+    }
+
+    function refreshLists(preserveSelection = false) {
+      if (wakeInProgress || refreshListsButton.disabled) return listRefresh;
+      refreshListsButton.disabled = true;
+      listRefresh = (async () => {
+        try {
+          const results = await Promise.allSettled([refreshClaims(), refreshWarm(), refreshSnapshots()]);
+          if (preserveSelection !== true) checkSelection();
+          const labels = ['已申领', 'Warm pool', '已捕获快照'];
+          const errors = results.flatMap((result, index) => result.status === 'rejected' ?
+            [`${labels[index]}列表刷新失败：${result.reason.message}。该列表和计数可能已过期。`] : []);
+          if (errors.length) message(errors.join('\n'), true);
+        } finally {
+          refreshListsButton.disabled = wakeInProgress;
+          listRefresh = null;
+        }
+      })();
+      return listRefresh;
+    }
+
+    refreshListsButton.addEventListener('click', refreshLists);
+    autoWake.addEventListener('change', checkSelection);
+    refreshChatButton.addEventListener('click', async () => {
+      if (chatUrl) chat.src = chatUrl;
+      else if (selectedName) await selectSandbox(selectedName);
+    });
+    loadInfo();
+    refreshLists();
+    setInterval(refreshLists, 15000);
+  </script>
+</body>
+</html>

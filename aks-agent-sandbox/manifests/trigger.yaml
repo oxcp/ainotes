@@ -1,0 +1,8 @@
+apiVersion: podsnapshot.aks.azure.com/v1alpha1
+kind: PodSnapshotManualTrigger
+metadata:
+  name: session-capture
+  namespace: ${NAMESPACE}
+spec:
+  targetPod: ${SOURCE_POD}
+  policyName: session-policy
