@@ -1,0 +1,11 @@
+# Build-context excludes for agent-src image
+tests/
+__pycache__/
+app/data/
+obsoleted/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+*.md

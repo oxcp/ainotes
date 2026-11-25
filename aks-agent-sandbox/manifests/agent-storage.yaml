@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ${NAMESPACE}-agent-state
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  claimRef:
+    name: agent-state
+    namespace: ${NAMESPACE}
+  csi:
+    driver: blob.csi.azure.com
+    volumeHandle: ${STORAGE_ACCOUNT}_data
+    volumeAttributes:
+      protocol: fuse2
+      resourceGroup: ${RESOURCE_GROUP}
+      storageAccount: ${STORAGE_ACCOUNT}
+      containerName: data
+      AzureStorageAuthType: MSI
+      AzureStorageIdentityClientID: ${KUBELET_CLIENT_ID}
+  mountOptions:
+    - -o allow_other
+    - -o uid=1000
+    - -o gid=1000
+    - --file-cache-timeout-in-seconds=120
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: agent-state
+  namespace: ${NAMESPACE}
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  volumeName: ${NAMESPACE}-agent-state
+  storageClassName: ""

@@ -19,6 +19,7 @@
 | 主题 | 说明 |
 |---|---|
 | [Azure AI 智能体托管](agenthost/README_CN.md) | 包含基础和扩展两部分的模块化 Workshop。基础部分面向企业与消费者场景，对比 Microsoft Foundry 托管智能体、AKS 与 `agent-sandbox`、Azure Container Apps Sandboxes，涵盖共享基础设施、身份认证、状态持久化、隔离、生命周期管理、成本与生产环境强化。扩展部分通过 A2A 通信和 LangGraph 编排协作五个智能体，实现数据处理、企业知识库、业务分析和计划等场景，并使用 Azure HorizonDB（默认）或 Azure Database for PostgreSQL Flexible Server 进行结构化数据与向量的存储和检索。 |
+| [AKS Agent Sandbox 动手实验](aks-agent-sandbox/README_CN.md) | 基于 AKS 上的 Kata VM isolation v2 和 Agent Sandbox / Pod Snapshot 扩展的动手实验。涵盖环境搭建、预热池创建与申领、本地 Sandbox 管理门户、Blob 中的进程状态快照、冷启动唤醒与快照恢复。完成环境搭建和扩展安装后，按[中文演示指南](aks-agent-sandbox/demo_CN.md)进行验证、演示和演示资源清理。 |
 | [Azure AI 基础设施 Workshop](azure-ai-infrastructure-workshop/README.md) | 端到端实验，涵盖 AKS 与 KAITO、Anyscale on Azure、Ray Data/Serve/Train、Microsoft Foundry 托管计算、合作伙伴模型和可观测性。 |
 | [AKS 上的 Anyscale](anyscale-on-aks/README_CN.md) | 在 AKS 上部署 Anyscale Operator，并使用 Ray 运行分布式模型推理和微调的脚本与指南。也提供[英文指南](anyscale-on-aks/README.md)。 |
 | [Azure 上的 Anyscale](anyscale-on-azure/README.md) | Anyscale Kubernetes Operator 认证所需的 Microsoft Entra 服务主体配置，附脱敏输出示例和[权限检查脚本](anyscale-on-azure/check_permission.sh)。 |
@@ -47,6 +48,7 @@
 
 ```text
 agenthost/                       智能体托管 Workshop 与部署资源
+aks-agent-sandbox/              AKS Agent Sandbox 动手实验：Kata v2、预热池、门户、快照与恢复
 anyscale-on-aks/                 Anyscale Operator、Ray 服务与训练示例
 anyscale-on-azure/               Anyscale on Azure 介绍、Operator 身份配置与权限检查脚本
 azmon-export-to-prometheus/      Azure Monitor 指标导出指南与清单

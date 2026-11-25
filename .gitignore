@@ -7,5 +7,4 @@ Caldova-Live-Demo
 tests/
 *.test.*
 __pycache__/
-aks-agent-sandbox/
 preview/
