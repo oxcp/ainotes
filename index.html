@@ -26,6 +26,8 @@
 
         header.hero { text-align: center; margin-bottom: 1rem; }
         header.hero p { color: var(--muted); font-size: clamp(1.2rem, 2.5vw, 1.4rem); margin: 0; }
+        .language-switch { margin-top: .75rem; color: var(--muted); font-size: .95rem; }
+        .language-switch a { color: var(--labs); text-underline-offset: .2em; }
 
         section.category { margin-top: 2.5rem; }
         .category h2 {
@@ -75,6 +77,10 @@
     <div class="container">
         <header class="hero">
             <p>Hands-on labs, technical deep-dives, and prototypes（由 <strong>Kylercai</strong> 维护）</p>
+            <nav class="language-switch" aria-label="Language">
+                <span lang="en" aria-current="page">English</span> |
+                <a href="index_CN.html" lang="zh-CN" hreflang="zh-CN" rel="alternate">中文</a>
+            </nav>
         </header>
 
         <section class="category labs">

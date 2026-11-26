@@ -6,7 +6,7 @@
 
 本实验使用 **Pod 沙盒化与 Kata VM 隔离 v2**，而不是参考文章中的 ACI/无服务器方案。这些预览功能不支持 AKS Automatic。预计需要 90–120 分钟。
 
-本 README 负责环境搭建、补充技术说明、诊断及环境退役；**验证、演示和演示资源释放步骤以 [demo_CN.md](demo_CN.md) 为准**。
+本 README 负责环境搭建、补充技术说明、诊断及环境退役；**验证、演示和演示资源释放步骤请参考 [演示说明](demo_CN.md)**。
 
 ## 1. 业务场景
 
@@ -54,11 +54,6 @@ VM 隔离只是一层防御，**并不意味着可以在没有额外控制措施
 > - Agent Sandbox 和 Pod Snapshot 扩展可独立使用，安装顺序不限。快照管理器无需重启即可检测到 Sandbox API。
 
 ## 3. 实验架构与目标
-
-- 运行架构与网络配置见下方展开区；演示操作仍以 [demo_CN.md](demo_CN.md) 为准。
-
-<details>
-<summary>展开架构图、网络地址与 NSG 说明</summary>
 
 ### 运行架构
 
@@ -131,6 +126,9 @@ flowchart TD
 | Pod CIDR | `10.42.0.0/16` | Overlay Pod 地址，不占用节点子网地址 |
 | Service CIDR | `10.41.0.0/16` | Kubernetes Service 地址；DNS 为 `10.41.0.10` |
 
+<details>
+<summary>展开查看细节说明</summary>
+
 - [infra/main.bicep](infra/main.bicep) 创建或更新 `sboxvnet-aks-subnet-nsg-${location}`，并将其绑定到 `aks-subnet`。
 - 在 `eastus2` 中，这就是现有的 `sboxvnet-aks-subnet-nsg-eastus2`，不会换成另一个名称的 NSG。
 - 每次部署主模板都会声明 `allow_http`：优先级 **1000**、入站 Allow、协议 `*`、任意源地址/源端口、任意目标地址，以及目标端口 **80 和 8080**。
@@ -147,8 +145,6 @@ flowchart TD
 - 这些恢复标记与可选的持久化聊天历史分离，冷启动进程不能从文件恢复这些标记。
 - 该会话关闭聊天持久化，不挂载持久卷。
 - 就绪探针在 Agent 初始化后检查 `/ready`；不人为设置延迟启动。
-
-验证目标与操作顺序见 [demo_CN.md](demo_CN.md)。
 
 </details>
 
@@ -376,7 +372,7 @@ kubectl -n aks-istio-system get pods
 - 旧镜像仍可能请求根路径 API；
 - 修改 Gateway 清单不能修复旧应用，需重建镜像并在保存所需状态后重新创建会话。
 - 现有预热/已申领 Pod 不会自动更新。
-- 验证步骤见 [demo_CN.md](demo_CN.md)，路由故障检查见第 8 节。
+- 验证步骤请参考 [演示说明](demo_CN.md)，路由故障检查见第 8 节。
 
 身份职责：
 
@@ -499,7 +495,7 @@ bash scripts/rebuild-aks.sh --confirm-cluster aks-agent-sandbox-lab
 - 集群仍存在时重新运行，会再次删除该集群。
 - 不要仅为重复验证而重跑。
 
-- 成功后运行 `bash scripts/03-install-extensions.sh` 重新安装扩展，再参考 [demo_CN.md](demo_CN.md) 部署并验证新工作负载。
+- 成功后运行 `bash scripts/03-install-extensions.sh` 重新安装扩展，再参考 [演示说明](demo_CN.md) 部署并验证新工作负载。
 - 所需权限包括 AKS 删除/创建、功能/资源提供程序注册、UAMI 联合身份更新和角色分配创建。
 - 集群存在期间节点会持续计费。
 
@@ -550,24 +546,22 @@ kubectl -n pod-snapshot-system get pods -o wide
 
 ## 6. 验证与演示入口
 
-- **环境搭建完成、Kata v2 运行时验证通过，且两个 AKS 扩展安装成功后，请参考 [demo_CN.md](demo_CN.md) 进行验证。**
-- 标准会话、内核隔离、预热池申领、门户操作、挂起与快照恢复，以及演示资源的释放顺序，均以该文档为准；
-- 本 README 不再重复这些步骤和演示输出。
+**环境搭建完成、Kata v2 运行时验证通过，且两个 AKS 扩展安装成功后，请参考 [演示说明](demo_CN.md) 进行验证。**
 
-演示文档要求先启动本实验提供的管理门户。在 kubectl 已可用的 Linux/WSL 终端中，从本目录运行：
+- 演示文档需要启动本实验提供的管理门户。在 kubectl 已可用的 Linux/WSL 终端中，从本目录运行以下命令（可带 `--port` 参数指定监听端口）：
 
 ```bash
-python3 sandbox_portal.py --namespace "$NAMESPACE"
+python sandbox_portal.py --namespace "$NAMESPACE"
 # 如需指定其他 context 或本地端口：
-python3 sandbox_portal.py --namespace "$NAMESPACE" --context "<kubectl-context>" --port 8090
+python sandbox_portal.py --namespace "$NAMESPACE" --context "<kubectl-context>" --port 8090
 ```
 
-- 打开 `http://127.0.0.1:8090/`，保持终端运行，再按演示文档继续。
+- 打开 `http://127.0.0.1:8090/`，保持终端运行，再参考 [演示说明](demo_CN.md) 继续。
 
 <details>
 <summary>展开管理门户运行设置</summary>
 
-- 打开 `http://127.0.0.1:8090/`，保持终端运行，再按 [demo_CN.md](demo_CN.md) 继续。
+- 打开 `http://127.0.0.1:8090/`，保持终端运行，再参考 [演示说明](demo_CN.md) 继续。
 - Ctrl+C 只停止本地门户，不释放集群资源。
 - 门户仅监听 loopback，固定启动时的 context，保留 `KUBECONFIG`，不读取 `.env` 或刷新 Azure 凭据；
 - `--gateway`、`--pool` 默认分别为 `sandbox-gateway`、`agent-pool`。
@@ -576,7 +570,7 @@ python3 sandbox_portal.py --namespace "$NAMESPACE" --context "<kubectl-context>"
 </details>
 
 - **演示资源释放不等于环境退役。**
-- 为下次演示保留基础设施和 AKS 扩展时，使用 [demo_CN.md](demo_CN.md) 中的释放步骤；
+- 为下次演示保留基础设施和 AKS 扩展时，参考 [演示说明](demo_CN.md) 中的释放步骤；
 - 只有不再保留整个实验环境时，才执行第 9 节的付费资源清理。
 
 ## 7. 补充技术说明
@@ -906,6 +900,30 @@ kubectl -n agent-sandbox-system logs deployment/agent-sandbox-controller --tail=
 kubectl -n pod-snapshot-system logs deployment/pod-snapshot-manager --tail=100
 ```
 
+### Managed Gateway API 与 Application routing 诊断
+
+- [scripts/01-provision.sh](scripts/01-provision.sh) 通过 [infra/main.bicep](infra/main.bicep) 在创建 AKS 时配置两项功能：
+  - `ingressProfile.gatewayAPI.installation: 'Standard'`：安装并管理 Standard 通道的 Gateway API CRD。
+  - `ingressProfile.webAppRouting.gatewayAPIImplementations.appRoutingIstio.mode: 'Enabled'`：启用入口专用的 Istio 实现，提供 `approuting-istio` GatewayClass。
+- 这等价于官方创建命令中的 `--enable-gateway-api --enable-app-routing-istio`；脚本后续的 `az aks update` 没有这两个参数，不代表未配置启用。
+- 此实现不是旧版 NGINX，也不是完整 Istio service mesh。
+- 具体业务的 Gateway、Service 和 HTTPRoute 由 [scripts/04-start-session.sh](scripts/04-start-session.sh) 创建；集群组件已安装不代表业务路由已创建。
+
+以下只读命令用于确认实际集群状态，不能仅凭模板配置判断安装成功：
+
+```bash
+az aks show -g "$RESOURCE_GROUP" -n "$CLUSTER_NAME" \
+  --query ingressProfile -o yaml
+kubectl get crd gateways.gateway.networking.k8s.io \
+  httproutes.gateway.networking.k8s.io
+kubectl get gatewayclass approuting-istio -o yaml
+kubectl -n aks-istio-system get pods
+```
+
+- 预期配置分别为 `Standard` / `Enabled`，两个 CRD 存在，GatewayClass 的 `Accepted` 为 `True`，`istiod` Pod 为 Ready。
+- 若组件缺失或未就绪，先检查 AKS 部署状态及控制器 Pod 的事件和日志，再检查下方业务服务与路由。
+- 官方说明：[Managed Gateway API 安装](https://learn.microsoft.com/en-us/azure/aks/managed-gateway-api)及 [Application routing Gateway API 实现](https://learn.microsoft.com/en-us/azure/aks/app-routing-gateway-api?pivots=azure-cli)。
+
 ### 服务与路由诊断
 
 以下仅检查演示已经创建的资源，不创建新会话。替换为实际 Sandbox 名称及其对应 Pod：
@@ -930,7 +948,7 @@ curl --fail-with-body --max-time 5 "http://$GATEWAY_IP/$SANDBX/health"
 
 ## 9. 清理所有付费资源
 
-**本节仅用于整个实验环境退役。**如果只是为下次演示释放会话、申领、预热池和快照，请按 [demo_CN.md](demo_CN.md) 操作，不执行下面的资源组清理。
+**本节仅用于整个实验环境退役。**如果只是为下次演示释放会话、申领、预热池和快照，请参考 [演示说明](demo_CN.md)，不执行下面的资源组清理。
 
 - 本实验**仅适用于新建的专用资源组**，不是面向已有/共享集群的教程。
 - 以下命令会删除**配置的资源组中的全部内容**，包括 Blob 快照/聊天记录、VNet/Private Endpoint/NIC/DNS、Foundry project/模型、APIM、ACR/镜像和 UAMI。
@@ -992,7 +1010,7 @@ az group exists --name "$RESOURCE_GROUP"
 
 | 路径 | 用途 |
 | --- | --- |
-| [demo_CN.md](demo_CN.md) | 验证、演示及演示资源释放步骤的唯一操作依据。 |
+| `demo_CN.md` | 验证、演示及演示资源释放步骤的参考文档。 |
 | `.env.example` | 可配置的实验设置；复制为 Git 忽略的 `.env`。 |
 | `infra/main.bicep`、`infra/ai.bicep`、`infra/kubelet-rbac.bicep` | VNet/Private Link、AKS、存储、Foundry/APIM/ACR、标识/联合身份和角色分配。 |
 | `agent-src/` | 聊天 Agent、网页门户、Dockerfile 和依赖；包含答案来源提示、可选持久化及固定非 root UID。 |
@@ -1001,18 +1019,6 @@ az group exists --name "$RESOURCE_GROUP"
 | `scripts/07-delete-snapshots.sh` | 显式确认命名空间后，仅删除快照并清理对应本地映射；保留工作负载和 Azure 资源。 |
 | `scripts/cleanup.sh` | 按顺序清理工作负载/快照、永久 purge Foundry/APIM，并删除专用资源组；不单独卸载集群扩展。 |
 | `manifests/` | 快照测试与聊天工作负载、Blob CSI、ServiceAccount、策略、申领和恢复 RBAC。 |
-| `tests/test_lab.py` | 离线检查应用状态、模板、恢复和安全措施。 |
-
-编写时可执行以下检查（不部署到 Azure）：
-
-```bash
-python3 -m pip install -r requirements-dev.txt
-python3 -m unittest discover -s tests -v
-for script in scripts/*.sh; do bash -n "$script"; done
-az bicep build --file infra/main.bicep --stdout >/dev/null
-```
-
-离线检查不能证明云端预配或预览运行时行为符合预期。只有在兼容的订阅中实际执行实验，才能验证这些结果。
 
 ## 参考资料
 

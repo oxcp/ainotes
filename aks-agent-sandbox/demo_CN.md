@@ -6,9 +6,9 @@
 
 本演示以一个回答客户问题的在线聊天机器人（Online Bot）为例，展示以下能力：
 
-1. **标准 Sandbox 启动**：验证业务功能、记录冷启动耗时，并观察 MicroVM 内核隔离。
-2. **Warm Pool 与 Claim**：预先准备运行环境，比较从预热池申领与冷启动的等待时间。
-3. **挂起与快照恢复**：对比无快照时的状态丢失，以及通过快照恢复聊天状态。
+1. **标准 Sandbox 启动**：验证 `Agent Sandbox扩展` 和 `Pod Snapshot扩展` 功能、记录冷启动耗时，并观察 MicroVM 内核隔离。
+2. **Warm Pool 与 Claim**：准备预热池，从预热池申领 Sandbox，比较与冷启动的就绪时间。
+3. **挂起与快照恢复**：模拟 Sandbox 停止/挂起，并被自动唤醒场景。对比无快照时的状态丢失，以及有快照时通过快照恢复业务状态（聊天历史）。
 
 **观看演示视频：**
 
@@ -247,6 +247,15 @@ Sandbox 管理门户是为本演示开发的辅助工具，**不是 AKS 扩展�
 - 查看 Warm Pool、已申领 Sandbox 和已捕获快照。
 - 检查 Sandbox 状态与服务可访问性，打开 Online Bot 聊天界面。
 - 根据自动唤醒设置，由门户发起无快照冷启动或有快照恢复。
+
+启动 Sandbox 管理门户（可带 `--port` 参数指定监听端口）：
+```bash
+python sandbox_portal.py --namespace "$NAMESPACE"
+# 如需指定其他 context 或本地端口：
+python sandbox_portal.py --namespace "$NAMESPACE" --context "<kubectl-context>" --port 8090
+```
+
+- 打开 `http://127.0.0.1:8090/`，保持终端运行
 
 ### 3.1 管理门户、会话与快照的关系
 

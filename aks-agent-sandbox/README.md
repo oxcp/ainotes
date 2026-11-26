@@ -6,7 +6,7 @@ Build an isolated code-execution session, allocate preinitialized sessions from 
 
 The lab uses **Pod sandboxing with Kata VM isolation v2**, not the ACI/serverless pivot of the reference articles. AKS Automatic is not supported by these previews. Allow approximately 90–120 minutes.
 
-This README covers environment setup, supplementary technical notes, diagnostics and retirement. **[demo.md](demo.md) is authoritative for validation, demos and demo-resource release.**
+This README covers environment setup, supplementary technical notes, diagnostics and retirement. **Refer to [demo.md](demo.md) for validation, demos and demo-resource release steps.**
 
 ## 1. Business scenarios
 
@@ -55,11 +55,6 @@ Trigger completion and snapshot readiness are separate checks.
 > - The Agent Sandbox and Pod Snapshot extensions are independently usable and can be installed in either order. The snapshot manager detects the Sandbox API without a restart.
 
 ## 3. Lab architecture and objectives
-
-- Expand the runtime/network reference below; [demo.md](demo.md) remains the demo guide.
-
-<details>
-<summary>Architecture diagrams, network addresses and NSG details</summary>
 
 ### Runtime and snapshots
 
@@ -132,6 +127,9 @@ Network address plan:
 | Pod CIDR | `10.42.0.0/16` | Overlay Pod addresses, outside the node subnet |
 | Service CIDR | `10.41.0.0/16` | Kubernetes Service addresses; DNS is `10.41.0.10` |
 
+<details>
+<summary>Expand for additional details</summary>
+
 - [infra/main.bicep](infra/main.bicep) creates or updates `sboxvnet-aks-subnet-nsg-${location}` and associates it with `aks-subnet`.
 - In `eastus2`, this is the existing `sboxvnet-aks-subnet-nsg-eastus2`, not a differently named replacement.
 - Every main-template deployment declares `allow_http`: priority **1000**, inbound Allow, protocol `*`, any source address/source port, any destination address, and destination ports **80 and 8080**.
@@ -153,8 +151,6 @@ Network address plan:
 - The session disables chat persistence and mounts no persistent volume.
 - Its readiness probe checks `/ready` after Agent initialization;
 - there is no artificial startup delay.
-
-See [demo.md](demo.md) for validation goals and the operation sequence.
 
 </details>
 
@@ -401,7 +397,7 @@ kubectl -n aks-istio-system get pods
 - Gateway-only edits do not fix them.
 - Rebuild the image and recreate sessions after saving needed state.
 - Existing warm/claimed Pods do not update automatically.
-- Follow [demo.md](demo.md) for validation and section 8 for route diagnostics.
+- Refer to [demo.md](demo.md) for validation and section 8 for route diagnostics.
 
 Identity responsibilities:
 - Control-plane UAMI: Network Contributor on the lab VNet, assigned before AKS creation.
@@ -521,7 +517,7 @@ bash scripts/rebuild-aks.sh --confirm-cluster aks-agent-sandbox-lab
 - rerunning while a cluster exists deletes that cluster again.
 - Do not rerun solely to repeat verification.
 
-- After success, reinstall extensions with `bash scripts/03-install-extensions.sh`, then follow [demo.md](demo.md) to deploy and validate new workloads.
+- After success, reinstall extensions with `bash scripts/03-install-extensions.sh`, then refer to [demo.md](demo.md) to deploy and validate new workloads.
 - Required permissions include AKS deletion/creation, feature/provider registration, UAMI federation updates and role-assignment creation.
 - Nodes incur charges while the cluster exists.
 
@@ -576,23 +572,22 @@ kubectl -n pod-snapshot-system get pods -o wide
 
 ## 6. Validation and demo entry point
 
-- **After environment setup, Kata v2 runtime verification and successful installation of both AKS extensions, follow [demo.md](demo.md) for validation.** That document is authoritative for standalone sessions, kernel isolation, warm-pool claims, portal use, suspend/snapshot restore and demo-resource release order.
-- This README no longer duplicates those steps or sample outputs.
+**After environment setup, Kata v2 runtime verification and successful installation of both AKS extensions, refer to [demo.md](demo.md) for validation.**
 
-The demo requires this lab's management portal to be running. From this directory in a Linux/WSL terminal where kubectl already works:
+- The demo requires this lab's management portal to be running. From this directory in a Linux/WSL terminal where kubectl already works, run the commands below (optionally use `--port` to specify the listening port):
 
 ```bash
-python3 sandbox_portal.py --namespace "$NAMESPACE"
+python sandbox_portal.py --namespace "$NAMESPACE"
 # To select another context or local port:
-python3 sandbox_portal.py --namespace "$NAMESPACE" --context "<kubectl-context>" --port 8090
+python sandbox_portal.py --namespace "$NAMESPACE" --context "<kubectl-context>" --port 8090
 ```
 
-- Open `http://127.0.0.1:8090/`, keep the terminal running and follow the demo.
+- Open `http://127.0.0.1:8090/`, keep the terminal running and refer to [demo.md](demo.md) to continue.
 
 <details>
 <summary>Management portal runtime settings</summary>
 
-- Open `http://127.0.0.1:8090/`, keep the terminal running, then continue with [demo.md](demo.md).
+- Open `http://127.0.0.1:8090/`, keep the terminal running, then refer to [demo.md](demo.md) to continue.
 - Ctrl+C stops only the local portal, not cluster resources.
 - The server binds to loopback, pins its startup context, preserves `KUBECONFIG` and does not read `.env` or refresh Azure credentials.
 - `--gateway` and `--pool` default to `sandbox-gateway` and `agent-pool`.
@@ -600,7 +595,7 @@ python3 sandbox_portal.py --namespace "$NAMESPACE" --context "<kubectl-context>"
 
 </details>
 
-- **Demo-resource release is not environment retirement.** To retain infrastructure and AKS extensions for another demo, use the release steps in [demo.md](demo.md).
+- **Demo-resource release is not environment retirement.** To retain infrastructure and AKS extensions for another demo, refer to the release steps in [demo.md](demo.md).
 - Use the paid-resource cleanup in section 9 only when retiring the entire lab environment.
 
 ## 7. Supplementary technical notes
@@ -951,6 +946,30 @@ kubectl -n agent-sandbox-system logs deployment/agent-sandbox-controller --tail=
 kubectl -n pod-snapshot-system logs deployment/pod-snapshot-manager --tail=100
 ```
 
+### Managed Gateway API and Application routing diagnostics
+
+- [scripts/01-provision.sh](scripts/01-provision.sh) configures both features during AKS creation through [infra/main.bicep](infra/main.bicep):
+  - `ingressProfile.gatewayAPI.installation: 'Standard'`: installs and manages Standard-channel Gateway API CRDs.
+  - `ingressProfile.webAppRouting.gatewayAPIImplementations.appRoutingIstio.mode: 'Enabled'`: enables the ingress-only Istio implementation and provides the `approuting-istio` GatewayClass.
+- This is equivalent to `--enable-gateway-api --enable-app-routing-istio` in the official cluster-creation command. Their absence from the script's subsequent `az aks update` does not mean enablement is missing.
+- This implementation is neither legacy NGINX nor the full Istio service mesh.
+- [scripts/04-start-session.sh](scripts/04-start-session.sh) creates the application's Gateway, Service and HTTPRoute; installed cluster components do not imply that application routes exist.
+
+Use these read-only commands to confirm the actual cluster state; template configuration alone does not prove successful installation:
+
+```bash
+az aks show -g "$RESOURCE_GROUP" -n "$CLUSTER_NAME" \
+  --query ingressProfile -o yaml
+kubectl get crd gateways.gateway.networking.k8s.io \
+  httproutes.gateway.networking.k8s.io
+kubectl get gatewayclass approuting-istio -o yaml
+kubectl -n aks-istio-system get pods
+```
+
+- Expect `Standard` / `Enabled` respectively, both CRDs present, GatewayClass `Accepted` set to `True`, and the `istiod` Pod Ready.
+- If components are missing or not ready, inspect AKS deployment status and controller Pod events/logs before checking the application services and routes below.
+- Official guidance: [Managed Gateway API installation](https://learn.microsoft.com/en-us/azure/aks/managed-gateway-api) and [Application routing Gateway API implementation](https://learn.microsoft.com/en-us/azure/aks/app-routing-gateway-api?pivots=azure-cli).
+
 ### Service and route diagnostics
 
 These checks inspect resources already created by the demo; they do not create sessions. Use the actual Sandbox name and its corresponding Pod:
@@ -975,7 +994,7 @@ curl --fail-with-body --max-time 5 "http://$GATEWAY_IP/$SANDBX/health"
 
 ## 9. Clean up all paid resources
 
-**This section retires the entire lab environment.** For releasing sessions, claims, warm pools and snapshots for another demo, follow [demo.md](demo.md), not the resource-group cleanup below.
+**This section retires the entire lab environment.** For releasing sessions, claims, warm pools and snapshots for another demo, refer to [demo.md](demo.md), not the resource-group cleanup below.
 
 - This lab is **new dedicated group only**, not an existing/shared-cluster tutorial.
 - The command below deletes **everything in the configured resource group**, including snapshot/chat Blobs, VNet/Private Endpoint/NIC/DNS, Foundry project/model, APIM, ACR/images and UAMIs.
@@ -1040,7 +1059,7 @@ az group exists --name "$RESOURCE_GROUP"
 
 | Path | Purpose |
 | --- | --- |
-| [demo.md](demo.md) | Authoritative validation, demo and demo-resource release steps. |
+| `demo.md` | Reference for validation, demo and demo-resource release steps. |
 | `.env.example` | Configurable lab settings; copy to ignored `.env`. |
 | `infra/main.bicep`, `infra/ai.bicep`, `infra/kubelet-rbac.bicep` | VNet/Private Link, AKS, storage, Foundry/APIM/ACR, identities/federation and role assignments. |
 | `agent-src/` | Chat Agent, web portal, Dockerfile and dependencies; includes answer provenance, optional persistence and a fixed non-root UID. |
@@ -1049,18 +1068,6 @@ az group exists --name "$RESOURCE_GROUP"
 | `scripts/07-delete-snapshots.sh` | Confirmed namespace-only snapshot deletion and scoped local mapping cleanup; preserves workloads and Azure resources. |
 | `scripts/cleanup.sh` | Ordered workload/snapshot cleanup, permanent Foundry/APIM purge and dedicated group deletion; no separate cluster-extension uninstall. |
 | `manifests/` | Snapshot/chat workloads, Blob CSI, ServiceAccount, policies, claims and restore RBAC. |
-| `tests/test_lab.py` | Offline application-state, template, restore and safety checks. |
-
-For authoring checks (no Azure deployment):
-
-```bash
-python3 -m pip install -r requirements-dev.txt
-python3 -m unittest discover -s tests -v
-for script in scripts/*.sh; do bash -n "$script"; done
-az bicep build --file infra/main.bicep --stdout >/dev/null
-```
-
-Offline checks do not prove cloud provisioning or preview runtime behavior. Only executing the lab in a compatible subscription can establish those outcomes.
 
 ## References
 

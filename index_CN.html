@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Notes - 首页</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            --bg1:#eef2f7; --bg2:#dbe4f3;
+            --ink:#1f2733; --muted:#5b6675;
+            --labs:#2563eb; --docs:#7c3aed; --proto:#0d9488; --reports:#c2410c;
+            --card:#ffffff; --border:#e6ebf2;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 3rem 1.25rem;
+            color: var(--ink);
+            background: linear-gradient(135deg, var(--bg1), var(--bg2));
+            background-attachment: fixed;
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+        .container { max-width: 980px; margin: 0 auto; }
+
+        header.hero { text-align: center; margin-bottom: 1rem; }
+        header.hero p { color: var(--muted); font-size: clamp(1.2rem, 2.5vw, 1.4rem); margin: 0; }
+        .language-switch { margin-top: .75rem; color: var(--muted); font-size: .95rem; }
+        .language-switch a { color: var(--labs); text-underline-offset: .2em; }
+
+        section.category { margin-top: 2.5rem; }
+        .category h2 {
+            display: flex; align-items: center; gap: .6rem;
+            font-size: 1.35rem; margin: 0 0 1.1rem; font-weight: 700;
+        }
+        .category h2::before {
+            content: ""; width: .55rem; height: 1.4rem; border-radius: 4px;
+            background: var(--accent, #2563eb);
+        }
+
+        ul.category-list {
+            list-style: none; padding: 0; margin: 0;
+            border-top: 1px solid var(--border);
+        }
+        ul.category-list li { margin: 0; }
+        ul.category-list a {
+            display: flex; align-items: center; gap: .65rem;
+            text-decoration: none; color: var(--ink);
+            padding: .7rem .5rem .7rem .9rem;
+            border-bottom: 1px solid var(--border);
+            border-left: 3px solid transparent;
+            font-size: 1.05rem;
+            transition: background .15s ease, border-color .15s ease, padding-left .15s ease, color .15s ease;
+        }
+        ul.category-list a::before {
+            content: ""; width: .45rem; height: .45rem; border-radius: 50%;
+            background: var(--accent, #2563eb); flex: 0 0 auto;
+        }
+        ul.category-list a:hover {
+            background: rgba(37,99,235,.05);
+            border-left-color: var(--accent, #2563eb);
+            padding-left: 1.15rem;
+            color: var(--accent, #2563eb);
+        }
+
+        .labs  { --accent: var(--labs); }
+        .docs  { --accent: var(--docs); }
+        .proto { --accent: var(--proto); }
+        .reports { --accent: var(--reports); }
+
+        footer { text-align: center; color: var(--muted); margin-top: 3rem; font-size: .9rem; }
+        @media (max-width: 520px) { body { padding: 2rem 1rem; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="hero">
+            <p>动手实验、技术深度解析与原型项目（由 <strong>Kylercai</strong> 维护）</p>
+            <nav class="language-switch" aria-label="语言">
+                <a href="index.html" lang="en" hreflang="en" rel="alternate">English</a> |
+                <span lang="zh-CN" aria-current="page">中文</span>
+            </nav>
+        </header>
+
+        <section class="category labs">
+            <h2>动手实验</h2>
+            <ul class="category-list">
+                <li><a href="markdown-viewer.html?file=agenthost/README_CN.md">Azure AI 智能体托管 Workshop</a></li>
+                <li><a href="markdown-viewer.html?file=aks-agent-sandbox/README_CN.md">AKS Agent Sandbox 动手实验：Kata v2 隔离、预热池与快照恢复</a></li>
+                <li><a href="markdown-viewer.html?file=anyscale-on-aks/README_CN.md">AKS 上的 Anyscale：使用 Ray 部署、提供模型服务与微调</a></li>
+                <li><a href="markdown-viewer.html?file=anyscale-on-azure/README.md">Azure 上的 Anyscale：Operator 认证配置</a></li>
+                <li><a href="markdown-viewer.html?file=cni-on-aks/README.md">在 AKS 上管理与安装 CNI</a></li>
+                <li><a href="markdown-viewer.html?file=gitops-acr-cache/README.md">AKS GitOps：Flux 与 ACR Artifact Cache</a></li>
+                <li><a href="markdown-viewer.html?file=azmon-export-to-prometheus/README.md">将 Azure 指标导出至 Prometheus 和 Grafana</a></li>
+                <li><a href="markdown-viewer.html?file=istio-on-aks/monitoring/README.md">为 AKS Istio 服务网格构建完整监控</a></li>
+                <li><a href="markdown-viewer.html?file=e2b-on-azure/Embed/quick-install.md">在 Azure 上安装 E2B Embed</a></li>
+            </ul>
+        </section>
+
+        <section class="category reports">
+            <h2>测试报告</h2>
+            <ul class="category-list">
+                <li><a href="markdown-viewer.html?file=test-report/AKS%2BESAN-AIAgent-benchmark-report-cn.md">AKS + Azure Elastic SAN：12 万级 AI Agent 基础设施规模测试报告</a></li>
+            </ul>
+        </section>
+
+        <section class="category proto">
+            <h2>原型项目</h2>
+            <ul class="category-list">
+                <li><a href="https://github.com/kylercai/ghcp-proxy">GHCP Proxy：GitHub 代理工具</a></li>
+                <li><a href="https://github.com/kylercai/OSS-AKS/tree/master/rocketmq-raft">RocketMQ Raft：AKS 上的分布式消息系统</a></li>
+            </ul>
+        </section>
+
+        <section class="category docs">
+            <h2>技术参考</h2>
+            <ul class="category-list">
+                <li><a href="markdown-viewer.html?file=codegen-compare-across-models/README.md">GPT-5 代码生成能力综合对比</a></li>
+                <li><a href="codegen-compare-across-models/compare-codegen-realcases.html">GPT-5 真实场景代码生成对比</a></li>
+                <li><a href="markdown-viewer.html?file=models-healthcare/models-in-Bio-Healthcare-industry.md">GPT-5 在生物医疗与健康领域的对比</a></li>
+                <li><a href="markdown-viewer.html?file=models-healthcare/model-4-SKH-TC.md">医学影像模型对比</a></li>
+                <li><a href="markdown-viewer.html?file=multi-k8s-mgmt/multiclustermgmt.md">Kubernetes 多集群管理</a></li>
+                <li><a href="markdown-viewer.html?file=techref/git-operations.md">Git / GitHub 快速参考</a></li>
+            </ul>
+        </section>
+    </div>
+</body>
+</html>

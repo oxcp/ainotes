@@ -6,9 +6,9 @@
 
 This demo uses an online chatbot (Online Bot) that answers customer questions to demonstrate:
 
-1. **Standard Sandbox startup**: validate application functionality, record cold-start timing and observe MicroVM kernel isolation.
-2. **Warm Pool and Claim**: prepare runtime environments in advance and compare warm-pool claiming with cold-start wait times.
-3. **Suspend and snapshot restore**: compare state loss without a snapshot with restoring chat state from a snapshot.
+1. **Standard Sandbox startup**: validate the `Agent Sandbox extension` and `Pod Snapshot extension` functionality, record cold-start timing and observe MicroVM kernel isolation.
+2. **Warm Pool and Claim**: prepare a warm pool, claim Sandboxes from it and compare their readiness times with cold startup.
+3. **Suspend and snapshot restore**: simulate a Sandbox stopping or suspending and being automatically woken. Compare state loss without a snapshot with restoring application state (chat history) from a snapshot.
 
 **Watch the demo video:**
 
@@ -254,6 +254,16 @@ The management portal is a helper developed for this demo, **not a management UI
 - View the Warm Pool, claimed Sandboxes and captured snapshots.
 - Check Sandbox state and service accessibility, and open the Online Bot chat UI.
 - Initiate a cold-start wake without a snapshot or a snapshot restore according to the auto-wake setting.
+
+Start the Sandbox management portal (optionally use `--port` to specify the listening port):
+
+```bash
+python sandbox_portal.py --namespace "$NAMESPACE"
+# To select another context or local port:
+python sandbox_portal.py --namespace "$NAMESPACE" --context "<kubectl-context>" --port 8090
+```
+
+- Open `http://127.0.0.1:8090/` and keep the terminal running.
 
 ### 3.1 Portal, session and snapshot relationships
 
