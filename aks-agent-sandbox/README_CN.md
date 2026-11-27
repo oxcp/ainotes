@@ -673,6 +673,18 @@ curl --fail-with-body --max-time 5 "$SANDBOX_URL/health"
 
 ### 8.2 容量调整
 
+先用只读脚本检查节点池资源：
+
+```bash
+bash scripts/check-node-resources.sh
+# 显式指定集群 context 和节点池：
+bash scripts/check-node-resources.sh --context aks-agent-sandbox-lab --pool katapool
+```
+
+- 需要 Linux/WSL Bash、`kubectl` 和 Python 3；默认使用当前 context，以及 `NODEPOOL_NAME`（未设置时为 `katapool`），不读取 `.env`、登录 Azure 或修改集群。
+- 表格按节点列出可分配及已预留的 CPU（核）、内存（GiB）、预留占比，并提供合计和剩余可预留额度。
+- “已分配”指 `kubectl describe node` 中所有命名空间 Pod 的 **Requests** 合计，不是 `kubectl top` 的实时使用量，也不是 Limits。逐节点采集期间资源分配可能变化；查询失败或没有匹配节点时明确报错，不输出成功汇总。
+
 初始预热池创建至少为 50；创建后可单独调整预留容量：
 
 ```bash
@@ -1073,6 +1085,7 @@ az group exists --name "$RESOURCE_GROUP"
 | `agent-src/` | 聊天 Agent、网页门户、Dockerfile 和依赖；包含答案来源提示、可选持久化及固定非 root UID。 |
 | `scripts/01-*.sh` 至 `08-*.sh` | 预配、验证、安装、启动、预热、捕获、恢复和独立聊天 Agent。 |
 | `scripts/build-image.sh` | 远程 ACR Tasks 构建、推送并记录不可变摘要；构建失败时可独立重试。 |
+| `scripts/check-node-resources.sh` | 只读检查节点池可分配和已预留的 CPU/内存，逐节点打印表格及合计。 |
 | `scripts/07-delete-snapshots.sh` | 显式确认命名空间后，仅删除快照并清理对应本地映射；保留工作负载和 Azure 资源。 |
 | `scripts/cleanup.sh` | 按顺序清理工作负载/快照、永久 purge Foundry/APIM，并删除专用资源组；不单独卸载集群扩展。 |
 | `manifests/` | 快照测试与聊天工作负载、Blob CSI、ServiceAccount、策略、申领和恢复 RBAC。 |

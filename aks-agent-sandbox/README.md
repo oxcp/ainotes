@@ -709,6 +709,18 @@ These notes cover configuration, permissions, capacity and failure boundaries no
 
 ### 8.2 Capacity adjustment
 
+First inspect node-pool resources with the read-only script:
+
+```bash
+bash scripts/check-node-resources.sh
+# Explicitly select the cluster context and node pool:
+bash scripts/check-node-resources.sh --context aks-agent-sandbox-lab --pool katapool
+```
+
+- Requires Linux/WSL Bash, `kubectl` and Python 3. Defaults to the current context and `NODEPOOL_NAME` (`katapool` when unset); it does not read `.env`, log in to Azure or modify the cluster.
+- The table lists each node's allocatable and reserved CPU (cores), memory (GiB) and reservation percentages, followed by totals and remaining request capacity.
+- "Allocated" means the sum of Pod **Requests** across all namespaces in `kubectl describe node`, not live usage from `kubectl top` or Limits. Allocations can change during sequential collection; failed queries or no matching nodes produce an explicit error, not a successful summary.
+
 Initial warm-pool creation requires at least 50 reserves. After creation, adjust reserve capacity separately:
 
 ```bash
@@ -1123,6 +1135,7 @@ az group exists --name "$RESOURCE_GROUP"
 | `agent-src/` | Chat Agent, web portal, Dockerfile and dependencies; includes answer provenance, optional persistence and a fixed non-root UID. |
 | `scripts/01-*.sh` through `08-*.sh` | Provision, verify, install, start, warm, capture, restore and separate chat Agent. |
 | `scripts/build-image.sh` | Remote ACR Tasks build/push and immutable digest recording; independently retryable after a failed build. |
+| `scripts/check-node-resources.sh` | Read-only node-pool allocatable and reserved CPU/memory checks, with per-node tables and totals. |
 | `scripts/07-delete-snapshots.sh` | Confirmed namespace-only snapshot deletion and scoped local mapping cleanup; preserves workloads and Azure resources. |
 | `scripts/cleanup.sh` | Ordered workload/snapshot cleanup, permanent Foundry/APIM purge and dedicated group deletion; no separate cluster-extension uninstall. |
 | `manifests/` | Snapshot/chat workloads, Blob CSI, ServiceAccount, policies, claims and restore RBAC. |
