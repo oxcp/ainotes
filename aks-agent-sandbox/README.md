@@ -8,7 +8,7 @@ Validate two complementary capabilities: manage isolated sessions, warm pools an
 
 The lab uses **Pod sandboxing with Kata VM isolation v2**, not the ACI/serverless pivot of the reference articles. AKS Automatic is not supported by these previews. Allow approximately 90–120 minutes.
 
-This README covers environment setup, supplementary technical notes, diagnostics and retirement. **Refer to [demo.md](demo.md) for validation, demos and demo-resource release steps.**
+This README covers environment setup, supplementary technical notes, diagnostics and retirement. **Refer to the [Demo Guide](demo.md) for validation, demos and demo-resource release steps.**
 
 ## 1. Business scenarios
 
@@ -272,8 +272,8 @@ Network address plan:
 
    This checks out the lab's documentation, scripts, infrastructure templates and Agent source without checking out other workshop directories. Run subsequent commands from `aks-agent-sandbox` unless stated otherwise.
 
-3. Follow the deployment section below to prepare tools, configure `.env`, provision resources and install extensions; then follow [demo.md](demo.md) to validate standalone sessions, warm-pool claims and snapshot restore, and [this README's cache demo](#72-amr-as-the-ai-gateway-response-cache) to validate the AMR response cache.
-4. After the demo, release Sandbox demo resources as described in [demo.md](demo.md). When retiring the entire lab environment, follow [Clean up all paid resources](#10-clean-up-all-paid-resources). Releasing sessions does not stop all Azure charges.
+3. Follow the deployment section below to prepare tools, configure `.env`, provision resources and install extensions; then follow the [Demo Guide](demo.md) to validate standalone sessions, warm-pool claims and snapshot restore, and [this README's cache demo](#72-amr-as-the-ai-gateway-response-cache) to validate the AMR response cache.
+4. After the demo, release Sandbox demo resources as described in the [Demo Guide](demo.md). When retiring the entire lab environment, follow [Clean up all paid resources](#10-clean-up-all-paid-resources). Releasing sessions does not stop all Azure charges.
 
 ## 6. Deployment
 ### 6.1 Prepare the workstation
@@ -427,7 +427,7 @@ kubectl -n aks-istio-system get pods
 - Gateway-only edits do not fix them.
 - Rebuild the image and recreate sessions after saving needed state.
 - Existing warm/claimed Pods do not update automatically.
-- Refer to [demo.md](demo.md) for validation and section 9 for route diagnostics.
+- Refer to the [Demo Guide](demo.md) for validation and section 9 for route diagnostics.
 
 Identity responsibilities:
 - Control-plane UAMI: Network Contributor on the lab VNet, assigned before AKS creation.
@@ -547,7 +547,7 @@ bash scripts/rebuild-aks.sh --confirm-cluster aks-agent-sandbox-lab
 - rerunning while a cluster exists deletes that cluster again.
 - Do not rerun solely to repeat verification.
 
-- After success, reinstall extensions with `bash scripts/03-install-extensions.sh`, then refer to [demo.md](demo.md) to deploy and validate new workloads.
+- After success, reinstall extensions with `bash scripts/03-install-extensions.sh`, then refer to the [Demo Guide](demo.md) to deploy and validate new workloads.
 - Required permissions include AKS deletion/creation, feature/provider registration, UAMI federation updates and role-assignment creation.
 - Nodes incur charges while the cluster exists.
 
@@ -604,7 +604,7 @@ kubectl -n pod-snapshot-system get pods -o wide
 
 ### 7.1 Sandbox lifecycle, warm pools and snapshot restore
 
-**After environment setup, Kata v2 runtime verification and successful installation of both AKS extensions, refer to [demo.md](demo.md) for validation.**
+**After environment setup, Kata v2 runtime verification and successful installation of both AKS extensions, refer to the [Demo Guide](demo.md) for validation.**
 
 - The demo requires this lab's management portal to be running. From this directory in a Linux/WSL terminal where kubectl already works, run the commands below (optionally use `--port` to specify the listening port):
 
@@ -614,12 +614,12 @@ python sandbox_portal.py --namespace "$NAMESPACE"
 python sandbox_portal.py --namespace "$NAMESPACE" --context "<kubectl-context>" --port 8090
 ```
 
-- Open `http://127.0.0.1:8090/`, keep the terminal running and refer to [demo.md](demo.md) to continue.
+- Open `http://127.0.0.1:8090/`, keep the terminal running and refer to the [Demo Guide](demo.md) to continue.
 
 <details>
 <summary>Management portal runtime settings</summary>
 
-- Open `http://127.0.0.1:8090/`, keep the terminal running, then refer to [demo.md](demo.md) to continue.
+- Open `http://127.0.0.1:8090/`, keep the terminal running, then refer to the [Demo Guide](demo.md) to continue.
 - Ctrl+C stops only the local portal, not cluster resources.
 - The server binds to loopback, pins its startup context, preserves `KUBECONFIG` and does not read `.env` or refresh Azure credentials.
 - `--gateway` and `--pool` default to `sandbox-gateway` and `agent-pool`.
@@ -627,7 +627,7 @@ python sandbox_portal.py --namespace "$NAMESPACE" --context "<kubectl-context>" 
 
 </details>
 
-- To retain infrastructure and AKS extensions for another demo, refer to the release steps in [demo.md](demo.md).
+- To retain infrastructure and AKS extensions for another demo, refer to the release steps in the [Demo Guide](demo.md).
 - Use the paid-resource cleanup in section 10 only when retiring the entire lab environment.
 
 ### 7.2 AMR as the AI Gateway response cache
@@ -1052,7 +1052,7 @@ curl --fail-with-body --max-time 5 "http://$GATEWAY_IP/$SANDBX/health"
 
 ## 10. Clean up all paid resources
 
-**This section retires the entire lab environment.** For releasing sessions, claims, warm pools and snapshots for another demo, refer to [demo.md](demo.md), not the resource-group cleanup below.
+**This section retires the entire lab environment.** For releasing sessions, claims, warm pools and snapshots for another demo, refer to the [Demo Guide](demo.md), not the resource-group cleanup below.
 
 - This lab is **new dedicated group only**, not an existing/shared-cluster tutorial.
 - The command below deletes **everything in the configured resource group**, including snapshot/chat Blobs, VNet/Private Endpoint/NIC/DNS, Foundry project/model, APIM, ACR/images and UAMIs.
