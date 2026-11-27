@@ -627,12 +627,12 @@ python sandbox_portal.py --namespace "$NAMESPACE" --context "<kubectl-context>" 
 
 </details>
 
-- **Demo-resource release is not environment retirement.** To retain infrastructure and AKS extensions for another demo, refer to the release steps in [demo.md](demo.md).
+- To retain infrastructure and AKS extensions for another demo, refer to the release steps in [demo.md](demo.md).
 - Use the paid-resource cleanup in section 10 only when retiring the entire lab environment.
 
 ### 7.2 AMR as the AI Gateway response cache
 
-This demo verifies model-response reuse, not process snapshot restore. Use `agent-session` with its existing Service/HTTPRoute and **access it through the shared Gateway, not port forwarding**:
+This demo verifies model-response reuse, not process snapshot restore. Use `agent-session` with its existing Service/HTTPRoute and **access the Sandbox through the shared Gateway**:
 
 ```bash
 # Skip startup if agent-session is already running.
@@ -642,7 +642,7 @@ GATEWAY_IP="$(kubectl -n "$NAMESPACE" get gateway sandbox-gateway \
   -o jsonpath='{.status.addresses[0].value}')"
 : "${GATEWAY_IP:?Wait for the Gateway address, then retry}"
 SANDBOX_URL="http://$GATEWAY_IP/$SANDBX"
-echo "$SANDBOX_URL/"
+echo "Sandbox access URL: $SANDBOX_URL/"
 curl --fail-with-body --max-time 5 "$SANDBOX_URL/health"
 ```
 

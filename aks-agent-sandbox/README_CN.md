@@ -601,13 +601,12 @@ python sandbox_portal.py --namespace "$NAMESPACE" --context "<kubectl-context>" 
 
 </details>
 
-- **演示资源释放不等于环境退役。**
 - 为下次演示保留基础设施和 AKS 扩展时，参考 [演示说明](demo_CN.md) 中的释放步骤；
 - 只有不再保留整个实验环境时，才执行第 10 节的付费资源清理。
 
 ### 7.2 AMR 作为 AI Gateway 的 response cache
 
-此演示验证模型响应复用，不验证进程快照恢复。使用已有 Service/HTTPRoute 的 `agent-session`，**通过共享 Gateway 访问，不使用端口转发**：
+此演示验证模型响应复用，不验证进程快照恢复。使用已有 Service/HTTPRoute 的 `agent-session`，**通过共享 Gateway 访问 Sandbox**：
 
 ```bash
 # 如果已有正在运行的 agent-session，可跳过启动命令。
@@ -617,7 +616,7 @@ GATEWAY_IP="$(kubectl -n "$NAMESPACE" get gateway sandbox-gateway \
   -o jsonpath='{.status.addresses[0].value}')"
 : "${GATEWAY_IP:?等待 Gateway 获得地址后重试}"
 SANDBOX_URL="http://$GATEWAY_IP/$SANDBX"
-echo "$SANDBOX_URL/"
+echo "Sandbox access URL: $SANDBOX_URL/"
 curl --fail-with-body --max-time 5 "$SANDBOX_URL/health"
 ```
 
