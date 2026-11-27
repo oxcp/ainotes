@@ -65,7 +65,9 @@
                 Markdown uses the existing reader; scripts, JSON and infrastructure code use the syntax-highlighted code reader.
                 Images, PDFs and other supported media open directly. Unsupported types are listed as not previewable.
                 JSON contents are now served: keep credentials and sensitive runtime configuration outside visible paths.
-                Refresh after adding or deleting files. The existing Markdown reader is embedded unchanged;
+                Refresh after adding or deleting files. Document links and heading anchors update the address bar
+                and support browser Back/Forward. Other links navigate outside the preview frame;
+                links to new tabs and modifier-clicks keep their normal behavior. The existing Markdown reader is embedded unchanged;
                 its external CDN dependencies still require internet access.</p>
             <p>Double-clicking this page, or using a generic static server, cannot provide the local directory API.
                 The original static home and reader do not depend on this preview service.</p>
@@ -120,12 +122,14 @@
             return url.href;
         }
 
-        function selectDocument(path) {
+        function selectDocument(path, { hash = '', historyMode = 'push', navigate = true } = {}) {
             selected = path;
             if (previewablePaths.has(path)) {
-                reader.src = viewerUrl(path);
+                const target = new URL(viewerUrl(path));
+                target.hash = hash;
+                if (navigate) reader.contentWindow.location.replace(target.href);
                 const link = document.createElement('a');
-                link.href = viewerUrl(path);
+                link.href = target.href;
                 link.target = '_blank';
                 link.rel = 'noopener noreferrer';
                 link.textContent = path;
@@ -137,10 +141,67 @@
             }
             const url = new URL(location.href);
             url.searchParams.set('file', path);
-            history.replaceState(null, '', url);
+            url.hash = hash;
+            if (historyMode !== 'none' && url.href !== location.href) {
+                if (historyMode === 'replace') history.replaceState(null, '', url);
+                else history.pushState(null, '', url);
+            }
             directories.querySelectorAll('a[data-path]').forEach((item) => {
                 if (item.dataset.path === path) item.setAttribute('aria-current', 'page');
                 else item.removeAttribute('aria-current');
+            });
+        }
+
+        function readerDocument(url) {
+            if (url.origin !== location.origin) return null;
+            const isViewer = ['markdown-viewer.html', 'code-viewer.html'].some((name) =>
+                url.pathname === new URL(name, location.href).pathname);
+            let path = isViewer ? url.searchParams.get('file') : url.pathname.slice(1);
+            if (!path) return null;
+            if (!previewablePaths.has(path)) {
+                try {
+                    path = decodeURIComponent(path);
+                } catch (error) {
+                    if (!(error instanceof URIError)) throw error;
+                    status.className = 'error';
+                    status.textContent = `Invalid preview link: ${url.href}`;
+                    return null;
+                }
+            }
+            return previewablePaths.has(path) ? { path, hash: url.hash } : null;
+        }
+
+        function trackReaderNavigation() {
+            let frame;
+            try {
+                frame = reader.contentWindow;
+                if (frame.location.origin !== location.origin) return;
+            } catch (error) {
+                if (error.name !== 'SecurityError') throw error;
+                return;
+            }
+            const sync = () => {
+                const target = readerDocument(new URL(frame.location.href));
+                if (target) selectDocument(target.path, {
+                    hash: target.hash, historyMode: 'replace', navigate: false,
+                });
+            };
+            sync();
+            frame.addEventListener('hashchange', sync);
+            frame.document.addEventListener('click', (event) => {
+                if (event.defaultPrevented || event.button !== 0 ||
+                    event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+                const link = event.target.closest?.('a[href]');
+                if (!link || link.hasAttribute('download') ||
+                    (link.target && !['_self', reader.name].includes(link.target))) return;
+                const url = new URL(link.href);
+                const target = readerDocument(url);
+                if (!target) {
+                    if (['http:', 'https:'].includes(url.protocol)) link.target = '_top';
+                    return;
+                }
+                event.preventDefault();
+                selectDocument(target.path, { hash: target.hash });
             });
         }
 
@@ -262,7 +323,7 @@
                     paths.find((path) => previewablePaths.has(path)) ?? paths[0];
                 renderDirectories();
                 if (selected && paths.includes(selected)) {
-                    selectDocument(selected);
+                    selectDocument(selected, { hash: location.hash, historyMode: 'replace' });
                 } else {
                     reader.src = 'about:blank';
                     readerPath.textContent = selected ? `File no longer present in the local tree: ${selected}` :
@@ -290,6 +351,11 @@
             renderDirectories();
         });
         refresh.addEventListener('click', loadDirectories);
+        reader.addEventListener('load', trackReaderNavigation);
+        window.addEventListener('popstate', () => {
+            const path = new URLSearchParams(location.search).get('file');
+            if (path) selectDocument(path, { hash: location.hash, historyMode: 'none' });
+        });
         loadDirectories();
     </script>
 </body>

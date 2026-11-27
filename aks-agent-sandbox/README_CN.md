@@ -1,8 +1,10 @@
-# AKS Agent Sandbox 动手实验
+# AKS Agent Sandbox 与 AI Gateway 响应缓存动手实验
 
 > Language / 语言: [English](README.md) | **中文**
 
-本实验构建隔离的代码执行会话，从预热池分配预初始化会话，捕获进程状态，并从快照恢复逻辑会话。
+本实验验证两条互补能力：在 AKS 上使用 Agent Sandbox 管理隔离会话、预热池和进程状态快照恢复；使用 Azure API Management（APIM）作为 AI Gateway（AIGW），以 Azure Managed Redis（AMR）提供语义 response cache，验证答案复用与来源标识。
+
+**Sandbox 快照恢复的是进程状态；AMR 缓存复用的是模型响应。两者不是同一种缓存，也不能相互替代。**
 
 本实验使用 **Pod 沙盒化与 Kata VM 隔离 v2**，而不是参考文章中的 ACI/无服务器方案。这些预览功能不支持 AKS Automatic。预计需要 90–120 分钟。
 
@@ -16,6 +18,7 @@
 | 交互式笔记本与开发会话 | 为每个会话提供有状态、可单独管理的执行环境。 | 持久化重要文件、实施租户隔离，并管理空闲关闭。 |
 | 初始化成本高的智能体工具 | 在预热池中保留就绪环境，降低分配延迟。 | 为预留容量编制预算，并限制活跃申领数量；池副本数不限制会话总数。 |
 | 已初始化会话的暂停与恢复 | 对运行时状态创建快照，恢复进程内存，无需重复初始化。 | 在恢复后验证外部连接、凭据、租约以及应用的正确性。 |
+| 相同上下文中的重复或相近 AI 问题 | 由 APIM AI Gateway 查询 AMR 语义响应缓存，命中时复用答案，避免再次调用聊天模型。 | 验证上下文分区、距离阈值、TTL 和答案来源；评估误匹配风险及 embedding/缓存查询成本。 |
 
 VM 隔离只是一层防御，**并不意味着可以在没有额外控制措施的情况下执行任意恶意代码**。实际系统应使用可信且固定摘要的镜像、限定作用域的 RBAC、网络策略/出站访问控制、身份隔离、准入控制和监控。
 
@@ -25,13 +28,17 @@ VM 隔离只是一层防御，**并不意味着可以在没有额外控制措施
 - 可选的独立聊天 Sandbox 使用同一应用。
 - 两者都使用本实验 ACR 中构建并固定摘要的镜像。
 
-## 2. 功能与扩展（AKS extension）职责
+## 2. 功能、AKS 扩展与 AI Gateway 职责
+
+Agent Sandbox 与 Pod Snapshot 是 AKS 扩展；APIM 和 AMR 是独立的 Azure 服务，不随扩展安装。
 
 | 组件 | 职责 | 不负责的事项 |
 | --- | --- | --- |
 | AKS Pod 沙盒化 / Kata v2 | 在轻量级 VM 中运行沙盒化 Pod；使用 `kata-vm-isolation-v2`，其处理程序为 `kata-v2`。 | 安装任一扩展都不会启用此运行时。 |
 | Agent Sandbox 扩展（`Microsoft.AgentSandbox`，**1.0.7+**） | 安装控制器以及声明式会话/预热池 API。 | 不提供 LLM、自动空闲关闭或应用授权。 |
 | Pod Snapshot 扩展（`Microsoft.PodSnapshot`，**0.1.1+**） | 捕获运行时状态并存储到 Blob Storage，授权恢复、验证兼容性、暂存状态，并将其恢复到新 Pod。 | 不是分布式应用备份、PV 备份，也不能透明修复外部会话。 |
+| APIM AI Gateway | 验证调用方身份，执行语义缓存 lookup/store 策略，并标识答案来自模型还是缓存。 | 不负责 Sandbox 生命周期或进程状态恢复。 |
+| Azure Managed Redis（AMR） | 作为 APIM 的外部语义响应缓存，提供 RediSearch 查询；embedding 由 Foundry 模型提供。 | 不是 Agent 本地缓存、聊天历史存储或 Pod 快照存储。 |
 
 **Agent Sandbox API：**
 
@@ -233,8 +240,31 @@ flowchart TD
 
 </details>
 
-## 5. 部署
-### 5.1 准备工作站
+## 5. 如何使用本 Lab
+
+1. 在 Linux/WSL Bash 中创建用于存放实验文件的本地目录，然后进入该目录：
+
+   ```bash
+   mkdir mylab
+   cd mylab
+   ```
+
+2. 使用稀疏签出克隆仓库，仅签出本实验目录：
+
+   ```bash
+   git clone --depth 1 --filter=blob:none --sparse https://github.com/oxcp/ainotes/
+   cd ainotes
+   git sparse-checkout set --no-cone '/aks-agent-sandbox/'
+   cd aks-agent-sandbox
+   ```
+
+   这会检出本 Lab 的文档、脚本、基础设施模板及 Agent 源码，无需检出其他研讨会目录。后续命令均在 `aks-agent-sandbox` 目录执行，除非另有说明。
+
+3. 按下方部署章节准备工具、配置 `.env`、预配资源并安装扩展；随后按照[演示说明](demo_CN.md)验证独立会话、预热池申领和快照恢复，按[本 README 的缓存演示](#72-amr-作为-ai-gateway-的-response-cache)验证 AMR 响应缓存。
+4. 演示结束后，按照[演示说明](demo_CN.md)释放 Sandbox 演示资源；不再使用整个实验环境时，执行[清理所有付费资源](#10-清理所有付费资源)。释放会话不等于停止所有 Azure 计费。
+
+## 6. 部署
+### 6.1 准备工作站
 
 确认 Azure CLI 和 Bicep 版本（必要时升级到最新版）。
 
@@ -268,7 +298,7 @@ kubectl version --client
 
 </details>
 
-### 5.2 设置环境变量
+### 6.2 设置环境变量
 
 从 `.env.example` 中复制出 `.env`，用于配置当前适用的环境变量：
 
@@ -289,7 +319,7 @@ source <(sed 's/\r$//' .env)
 set +a
 ```
 
-### 5.3 预配基础设施
+### 6.3 预配基础设施
 
 阅读 [infra/main.bicep](infra/main.bicep)，然后运行：
 
@@ -372,7 +402,7 @@ kubectl -n aks-istio-system get pods
 - 旧镜像仍可能请求根路径 API；
 - 修改 Gateway 清单不能修复旧应用，需重建镜像并在保存所需状态后重新创建会话。
 - 现有预热/已申领 Pod 不会自动更新。
-- 验证步骤请参考 [演示说明](demo_CN.md)，路由故障检查见第 8 节。
+- 验证步骤请参考 [演示说明](demo_CN.md)，路由故障检查见第 9 节。
 
 身份职责：
 
@@ -411,7 +441,7 @@ audience: api://AzureADTokenExchange
 - 不是生产身份设计。
 - 本实验不使用 Automatic/自动缩放。
 - 演示通过共享的公网 HTTP Gateway 暴露会话的 ClusterIP Service；
-- 可选的独立聊天 Sandbox 通过本机端口转发访问。
+- 可选的独立聊天 Sandbox 需先配置 Service/HTTPRoute，再通过共享 Gateway 的 Sandbox 路径访问。
 - 生产部署仍需 TLS、用户/租户授权、网络控制、监控与可靠性/成本设计。
 
 验证：
@@ -510,7 +540,7 @@ bash scripts/rebuild-aks.sh --confirm-cluster aks-agent-sandbox-lab
 
 </details>
 
-### 5.4 安装并验证两个扩展
+### 6.4 安装并验证两个扩展
 
 ```bash
 bash scripts/03-install-extensions.sh
@@ -544,7 +574,9 @@ kubectl -n pod-snapshot-system get pods -o wide
 
 </details>
 
-## 6. 验证与演示入口
+## 7. 验证与演示入口
+
+### 7.1 Sandbox 生命周期、预热池与快照恢复
 
 **环境搭建完成、Kata v2 运行时验证通过，且两个 AKS 扩展安装成功后，请参考 [演示说明](demo_CN.md) 进行验证。**
 
@@ -571,13 +603,35 @@ python sandbox_portal.py --namespace "$NAMESPACE" --context "<kubectl-context>" 
 
 - **演示资源释放不等于环境退役。**
 - 为下次演示保留基础设施和 AKS 扩展时，参考 [演示说明](demo_CN.md) 中的释放步骤；
-- 只有不再保留整个实验环境时，才执行第 9 节的付费资源清理。
+- 只有不再保留整个实验环境时，才执行第 10 节的付费资源清理。
 
-## 7. 补充技术说明
+### 7.2 AMR 作为 AI Gateway 的 response cache
+
+此演示验证模型响应复用，不验证进程快照恢复。使用已有 Service/HTTPRoute 的 `agent-session`，**通过共享 Gateway 访问，不使用端口转发**：
+
+```bash
+# 如果已有正在运行的 agent-session，可跳过启动命令。
+bash scripts/04-start-session.sh
+SANDBX="agent-session"
+GATEWAY_IP="$(kubectl -n "$NAMESPACE" get gateway sandbox-gateway \
+  -o jsonpath='{.status.addresses[0].value}')"
+: "${GATEWAY_IP:?等待 Gateway 获得地址后重试}"
+SANDBOX_URL="http://$GATEWAY_IP/$SANDBX"
+echo "$SANDBOX_URL/"
+curl --fail-with-body --max-time 5 "$SANDBOX_URL/health"
+```
+
+1. 在浏览器打开输出的 `http://<gateway_ip>/<sandbox name>/`，正常聊天可观察答案来源提示。连续聊天会改变历史，不能保证重复问题命中。
+2. 按[同上下文独立请求示例](#85-amr-作为-ai-gateway-的语义-response-cache-与答案来源)验证：无已有条目时首次为 `generated`，存储完成后在 TTL 内重复请求应为 `amr-cache-hit`；已有条目可能使首次直接命中。
+3. 用来源 header 和 APIM trace 确认命中未调用聊天模型，不仅比较延迟。默认距离阈值 `0.05`、TTL `300s`；同义问法是否命中取决于距离，命中仍有 embedding/AMR 查询成本。
+
+仅为本次缓存演示创建的 `agent-session`，验证结束后可用 `bash scripts/04-delete-session.sh` 释放；不要删除仍用于其他演示的会话。
+
+## 8. 补充技术说明
 
 以下内容补充演示文档未展开的配置、权限、容量和故障边界，不构成另一套演示步骤。
 
-### 7.1 配置、权限与访问边界
+### 8.1 配置、权限与访问边界
 
 - **Gateway 无 TLS/用户认证；仅允许可信来源，不公开本地管理端口。**
 - 不并发执行捕获、恢复、唤醒或清理；失败后先检查保留资源。
@@ -614,11 +668,11 @@ python sandbox_portal.py --namespace "$NAMESPACE" --context "<kubectl-context>" 
   - 同一 Sandbox 的访问者共享聊天状态。
   - 健康探测从 Python 服务访问 Gateway，浏览器也必须能访问该地址；
   - HTTP 200 或 Kubernetes Ready 均不保证模型调用成功。
-- 修改 Python 后端后需重启管理门户；新增快照映射无需重启。列表使用缓存条件，快照列表只是本地记录；无法访问服务时按第 8 节诊断，不把列表状态当作实时连通性证明。
+- 修改 Python 后端后需重启管理门户；新增快照映射无需重启。列表使用缓存条件，快照列表只是本地记录；无法访问服务时按第 9 节诊断，不把列表状态当作实时连通性证明。
 
 </details>
 
-### 7.2 容量调整
+### 8.2 容量调整
 
 初始预热池创建至少为 50；创建后可单独调整预留容量：
 
@@ -645,7 +699,7 @@ az aks nodepool scale \
 
 默认五个 Kata 节点不保证能容纳 100 个 Ready 预留 Pod 及已有申领；还需考虑可分配 CPU/内存、RuntimeClass 开销、Azure 配额和费用。
 
-### 7.3 快照记录、恢复授权与清理边界
+### 8.3 快照记录、恢复授权与清理边界
 
 - 快照记录、Blob 状态数据和本地 UID 映射是三种不同对象。
 - 已恢复 Pod 再次捕获要求无 limits；默认工作负载不满足。
@@ -702,12 +756,12 @@ bash scripts/07-restore.sh "<sandbox-name>"
 - 默认 Gateway/池为 `sandbox-gateway`/`agent-pool`，直接 Python 调用可覆盖。
 
 - CLI 成功仅表示 Sandbox/Pod Ready 且网络资源创建成功，不检查 `/health` 或 HTTPRoute 接受，也不证明内存一致。
-- 状态验证按演示文档进行，访问失败使用第 8 节诊断；
+- 状态验证按演示文档进行，访问失败使用第 9 节诊断；
 - 部分替换失败后检查资源再重试。
 
 </details>
 
-### 7.4 运行聊天 Agent
+### 8.4 运行聊天 Agent
 
 - 演示已有聊天会话；独立 `reflection-agent` 和 Blob 持久化是可选项。
 - 默认只保留内存；开启持久化开关不会自动挂载 Blob。
@@ -719,14 +773,18 @@ bash scripts/07-restore.sh "<sandbox-name>"
 
 ```bash
 bash scripts/08-start-agent.sh
-kubectl -n "$NAMESPACE" port-forward service/reflection-agent 8080:8080
 ```
 
-保持端口转发终端打开，在浏览器访问 `http://127.0.0.1:8080`。或者在另一终端测试：
+该可选脚本只创建 `reflection-agent` 的 Sandbox 和 Service，不创建 HTTPRoute。访问前需参考 [session.yaml](manifests/session.yaml)，配置指向共享 `sandbox-gateway` 的独立 HTTPRoute：前缀为 `/reflection-agent`，移除前缀后转发到同名 Service。仅验证缓存时，直接使用第 7.2 节已有路由的 `agent-session`，无需创建此可选会话。
+
+路由就绪后，在浏览器访问 `http://<gateway_ip>/reflection-agent/`，或通过 Gateway 测试：
 
 ```bash
-curl --fail-with-body http://127.0.0.1:8080/ready
-curl --fail-with-body http://127.0.0.1:8080/reflect \
+GATEWAY_IP="$(kubectl -n "$NAMESPACE" get gateway sandbox-gateway \
+  -o jsonpath='{.status.addresses[0].value}')"
+: "${GATEWAY_IP:?等待 Gateway 获得地址后重试}"
+curl --fail-with-body "http://$GATEWAY_IP/reflection-agent/ready"
+curl --fail-with-body "http://$GATEWAY_IP/reflection-agent/reflect" \
   -H 'Content-Type: application/json' \
   -d '{"query":"Explain how this agent uses the AI gateway."}'
 ```
@@ -757,11 +815,11 @@ curl --fail-with-body http://127.0.0.1:8080/reflect \
 - 初始化、认证和模型错误仍会报告失败，不返回模拟成功答案。
 - 持久化失败时，该轮记录仍留在内存，重启后可能丢失；
 - 聊天成功不代表保存成功。
-- 聊天门户没有面向多用户的身份验证：该可选 Sandbox 应继续通过受控本机端口转发使用，演示会话的公网 Gateway 访问应按第 7.1 节的边界限制。
+- 聊天门户没有面向多用户的身份验证：Gateway 访问应按第 8.1 节的边界限制，不使用端口转发访问 Sandbox。
 
 </details>
 
-### 7.5 AI Gateway 语义 response cache 与答案来源
+### 8.5 AMR 作为 AI Gateway 的语义 response cache 与答案来源
 
 - APIM 使用 AMR 语义缓存；答案来源由响应 header 标识，不能仅看延迟判断。
 - 默认距离阈值 `0.05`、TTL `300s`；不同历史和指令分区隔离。
@@ -831,7 +889,7 @@ SEMANTIC_CACHE_TTL=300
 - 第二次相同问题应命中，第三次同义问法是否命中取决于实际向量距离：
 
 ```bash
-CHAT_POD="$(kubectl -n "$NAMESPACE" get pods -l app=reflection-agent \
+CHAT_POD="$(kubectl -n "$NAMESPACE" get pods -l app=agent-session \
   -o jsonpath='{.items[0].metadata.name}')"
 kubectl -n "$NAMESPACE" exec -i "$CHAT_POD" -- python - <<'PY'
 import json
@@ -875,7 +933,7 @@ PY
 
 </details>
 
-## 8. 故障排查
+## 9. 故障排查
 
 | 现象 | 检查与处理 |
 | --- | --- |
@@ -946,7 +1004,7 @@ curl --fail-with-body --max-time 5 "http://$GATEWAY_IP/$SANDBX/health"
 - Gateway 探测失败时，可在 Pod 内访问 `http://127.0.0.1:8080/health`、`/ready` 区分应用故障与路由故障。
 - 仅看 Ready 不足以证明模型可用。
 
-## 9. 清理所有付费资源
+## 10. 清理所有付费资源
 
 **本节仅用于整个实验环境退役。**如果只是为下次演示释放会话、申领、预热池和快照，请参考 [演示说明](demo_CN.md)，不执行下面的资源组清理。
 
@@ -1006,7 +1064,7 @@ az group exists --name "$RESOURCE_GROUP"
 
 </details>
 
-## 10. 仓库内容与离线检查
+## 11. 仓库内容与离线检查
 
 | 路径 | 用途 |
 | --- | --- |

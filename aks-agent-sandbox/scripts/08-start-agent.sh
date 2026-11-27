@@ -26,6 +26,6 @@ kubectl -n "$NAMESPACE" wait \
   -l app=reflection-agent \
   --timeout="$TIMEOUT"
 
-echo "Agent ready. Open its portal using:"
-echo "kubectl -n $NAMESPACE port-forward service/reflection-agent 8080:8080"
-echo "Then visit http://127.0.0.1:8080. Only an actual chat verifies model inference."
+echo "Agent ready. This script creates no HTTPRoute."
+echo "Configure a /reflection-agent route on sandbox-gateway before opening http://<gateway_ip>/reflection-agent/."
+echo "Do not use port forwarding for this Sandbox. Only an actual chat verifies model inference."

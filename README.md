@@ -19,7 +19,7 @@ After cloning the repository, you can browse its contents locally with a display
 | Area | Description |
 |---|---|
 | [Agent Hosting on Azure](agenthost/readme.md) | A modular workshop with core and extended sections. The core compares Microsoft Foundry hosted agents, AKS with `agent-sandbox`, and Azure Container Apps Sandboxes for enterprise and consumer scenarios, covering shared infrastructure, identity, state persistence, isolation, lifecycle management, cost, and production hardening. The extended section hosts five agents using A2A communication and LangGraph orchestration for data processing, enterprise knowledge bases, business analysis, and planning, with Azure HorizonDB (default) or Azure Database for PostgreSQL Flexible Server for structured and vector data storage and retrieval. |
-| [AKS Agent Sandbox Lab](aks-agent-sandbox/README.md) | A hands-on lab for Kata VM isolation v2 and the Agent Sandbox / Pod Snapshot extensions on AKS. Covers environment setup, warm-pool creation and claiming, a local Sandbox management portal, process-state snapshots in Blob Storage, cold-start wake and snapshot restore. After setup and extension installation, follow the [English demo guide](aks-agent-sandbox/demo.md) for validation, demonstrations and demo-resource cleanup. |
+| [AKS Agent Sandbox and AI Gateway Response Cache Lab](aks-agent-sandbox/README.md) | Validates AKS Kata VM isolation v2, the Agent Sandbox / Pod Snapshot extensions, and APIM AI Gateway with Azure Managed Redis (AMR) as a semantic response cache. Covers warm-pool claims, the management portal, process-state restore, model-answer reuse and cache provenance. After setup, use the [English demo guide](aks-agent-sandbox/demo.md) for Sandbox and snapshots, and the [README cache demo](aks-agent-sandbox/README.md#72-amr-as-the-ai-gateway-response-cache) for AMR. |
 | [Azure AI Infrastructure Workshop](azure-ai-infrastructure-workshop/README.md) | End-to-end labs for AKS with KAITO, Anyscale on Azure, Ray Data/Serve/Train, Microsoft Foundry managed compute, partner models, and observability. |
 | [Anyscale on AKS](anyscale-on-aks/README.md) | Scripts and guidance for deploying the Anyscale Operator on AKS and running distributed model inference and fine-tuning with Ray. A [Chinese guide](anyscale-on-aks/README_CN.md) is also available. |
 | [Anyscale on Azure](anyscale-on-azure/README.md) | Microsoft Entra service principal setup for Anyscale Kubernetes Operator authentication, with a masked example response and a [permission-check script](anyscale-on-azure/check_permission.sh). |
@@ -48,7 +48,7 @@ After cloning the repository, you can browse its contents locally with a display
 
 ```text
 agenthost/                       Agent-hosting workshop and deployment assets
-aks-agent-sandbox/              AKS Agent Sandbox hands-on lab: Kata v2, warm pools, portal, snapshots, and restore
+aks-agent-sandbox/              AKS Agent Sandbox and AI Gateway: Kata v2, snapshot restore, AMR response cache
 anyscale-on-aks/                 Anyscale Operator, Ray serving, and training examples
 anyscale-on-azure/               Anyscale on Azure introduction, operator identity setup, and permission-check script
 azmon-export-to-prometheus/      Azure Monitor metrics exporter guide and manifests

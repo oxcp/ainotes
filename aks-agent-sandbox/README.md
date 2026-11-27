@@ -1,8 +1,10 @@
-# AKS Agent Sandbox hands-on lab
+# AKS Agent Sandbox and AI Gateway Response Cache Lab
 
 > Language / 语言: **English** | [中文](README_CN.md)
 
-Build an isolated code-execution session, allocate preinitialized sessions from a warm pool, capture process state, and resume the logical session from a snapshot.
+Validate two complementary capabilities: manage isolated sessions, warm pools and process-state snapshot restore with Agent Sandbox on AKS; use Azure API Management (APIM) as an AI Gateway (AIGW), backed by Azure Managed Redis (AMR) for a semantic response cache, and verify answer reuse and provenance.
+
+**Sandbox snapshots restore process state; AMR caches reuse model responses. They are different mechanisms and cannot replace each other.**
 
 The lab uses **Pod sandboxing with Kata VM isolation v2**, not the ACI/serverless pivot of the reference articles. AKS Automatic is not supported by these previews. Allow approximately 90–120 minutes.
 
@@ -16,6 +18,7 @@ This README covers environment setup, supplementary technical notes, diagnostics
 | Interactive notebooks and development sessions | Give each session a stateful, individually managed execution environment. | Persist important files, enforce tenant boundaries, and manage idle shutdown. |
 | Agent tools with expensive initialization | Keep ready environments in a warm pool to reduce allocation latency. | Budget reserve capacity and cap active claims; pool replicas do not cap total sessions. |
 | Pause/resume of initialized sessions | Snapshot runtime state and resume process memory without repeating initialization. | Validate external connections, credentials, leases, and application correctness after restore. |
+| Repeated or similar AI questions in the same context | APIM AI Gateway queries the AMR semantic response cache and reuses matching answers without another chat-model call. | Validate context partitioning, distance threshold, TTL and provenance; assess false matches and embedding/cache-query costs. |
 
 - VM isolation is one defense layer, **not permission to execute arbitrary hostile code without additional controls**.
 - Use trusted digest-pinned images, scoped RBAC, network policies/egress controls, identity separation, admission controls, and monitoring in a real system.
@@ -26,13 +29,17 @@ This README covers environment setup, supplementary technical notes, diagnostics
 - An optional separate chat Sandbox uses the same application.
 - Both use images built in this lab's ACR and pinned by digest.
 
-## 2. Features and extension responsibilities
+## 2. Features, AKS extensions and AI Gateway responsibilities
+
+Agent Sandbox and Pod Snapshot are AKS extensions; APIM and AMR are separate Azure services, not installed by those extensions.
 
 | Component | Responsibility | Not its responsibility |
 | --- | --- | --- |
 | AKS Pod sandboxing / Kata v2 | Runs a sandboxed pod in a lightweight VM; uses `kata-vm-isolation-v2` with handler `kata-v2`. | Installing either extension does not enable this runtime. |
 | Agent Sandbox extension (`Microsoft.AgentSandbox`, **1.0.7+**) | Installs controllers and declarative session/warm-pool APIs. | It does not provide an LLM, automatic idle shutdown, or application authorization. |
 | Pod Snapshot extension (`Microsoft.PodSnapshot`, **0.1.1+**) | Captures runtime state, stores it in Blob Storage, authorizes restore, validates compatibility, stages state and restores it into a new pod. | It is not a distributed application backup, PV backup, or transparent repair for external sessions. |
+| APIM AI Gateway | Validates caller identity, applies semantic cache lookup/store policies and identifies model-generated versus cached answers. | It does not manage Sandbox lifecycle or restore process state. |
+| Azure Managed Redis (AMR) | Serves as APIM's external semantic response cache with RediSearch queries; Foundry supplies embeddings. | It is not an Agent-local cache, chat-history store or Pod snapshot store. |
 
 **Agent Sandbox APIs:**
 
@@ -245,8 +252,31 @@ Network address plan:
 
 </details>
 
-## 5. Deployment
-### 5.1 Prepare the workstation
+## 5. How to use this Lab
+
+1. In Linux/WSL Bash, create a local directory for the lab files and enter it:
+
+   ```bash
+   mkdir mylab
+   cd mylab
+   ```
+
+2. Clone the repository with sparse checkout, checking out only this lab directory:
+
+   ```bash
+   git clone --depth 1 --filter=blob:none --sparse https://github.com/oxcp/ainotes/
+   cd ainotes
+   git sparse-checkout set --no-cone '/aks-agent-sandbox/'
+   cd aks-agent-sandbox
+   ```
+
+   This checks out the lab's documentation, scripts, infrastructure templates and Agent source without checking out other workshop directories. Run subsequent commands from `aks-agent-sandbox` unless stated otherwise.
+
+3. Follow the deployment section below to prepare tools, configure `.env`, provision resources and install extensions; then follow [demo.md](demo.md) to validate standalone sessions, warm-pool claims and snapshot restore, and [this README's cache demo](#72-amr-as-the-ai-gateway-response-cache) to validate the AMR response cache.
+4. After the demo, release Sandbox demo resources as described in [demo.md](demo.md). When retiring the entire lab environment, follow [Clean up all paid resources](#10-clean-up-all-paid-resources). Releasing sessions does not stop all Azure charges.
+
+## 6. Deployment
+### 6.1 Prepare the workstation
 
 Confirm the Azure CLI and Bicep versions; upgrade when necessary.
 
@@ -281,7 +311,7 @@ kubectl version --client
 
 </details>
 
-### 5.2 Set environment variables
+### 6.2 Set environment variables
 
 Copy `.env.example` to `.env` to configure the environment variables for your setup:
 
@@ -303,7 +333,7 @@ source <(sed 's/\r$//' .env)
 set +a
 ```
 
-### 5.3 Provision infrastructure
+### 6.3 Provision infrastructure
 
 Read [infra/main.bicep](infra/main.bicep), then run:
 
@@ -397,7 +427,7 @@ kubectl -n aks-istio-system get pods
 - Gateway-only edits do not fix them.
 - Rebuild the image and recreate sessions after saving needed state.
 - Existing warm/claimed Pods do not update automatically.
-- Refer to [demo.md](demo.md) for validation and section 8 for route diagnostics.
+- Refer to [demo.md](demo.md) for validation and section 9 for route diagnostics.
 
 Identity responsibilities:
 - Control-plane UAMI: Network Contributor on the lab VNet, assigned before AKS creation.
@@ -433,7 +463,7 @@ audience: api://AzureADTokenExchange
 - Local Kubernetes credentials are enabled for this short-lived administrator-led lab, not as a production identity design.
 - There is no Automatic/autoscaling.
 - The demo exposes the session's ClusterIP Service through a shared public HTTP Gateway;
-- the optional separate chat Sandbox uses local port forwarding.
+- the optional separate chat Sandbox requires a Service/HTTPRoute before access through its path on the shared Gateway.
 - Production still needs TLS, user/tenant authorization, network controls, monitoring and reliability/cost design.
 
 Verify:
@@ -532,7 +562,7 @@ bash scripts/rebuild-aks.sh --confirm-cluster aks-agent-sandbox-lab
 
 </details>
 
-### 5.4 Install and verify both extensions
+### 6.4 Install and verify both extensions
 
 ```bash
 bash scripts/03-install-extensions.sh
@@ -570,7 +600,9 @@ kubectl -n pod-snapshot-system get pods -o wide
 
 </details>
 
-## 6. Validation and demo entry point
+## 7. Validation and demo entry point
+
+### 7.1 Sandbox lifecycle, warm pools and snapshot restore
 
 **After environment setup, Kata v2 runtime verification and successful installation of both AKS extensions, refer to [demo.md](demo.md) for validation.**
 
@@ -596,13 +628,35 @@ python sandbox_portal.py --namespace "$NAMESPACE" --context "<kubectl-context>" 
 </details>
 
 - **Demo-resource release is not environment retirement.** To retain infrastructure and AKS extensions for another demo, refer to the release steps in [demo.md](demo.md).
-- Use the paid-resource cleanup in section 9 only when retiring the entire lab environment.
+- Use the paid-resource cleanup in section 10 only when retiring the entire lab environment.
 
-## 7. Supplementary technical notes
+### 7.2 AMR as the AI Gateway response cache
+
+This demo verifies model-response reuse, not process snapshot restore. Use `agent-session` with its existing Service/HTTPRoute and **access it through the shared Gateway, not port forwarding**:
+
+```bash
+# Skip startup if agent-session is already running.
+bash scripts/04-start-session.sh
+SANDBX="agent-session"
+GATEWAY_IP="$(kubectl -n "$NAMESPACE" get gateway sandbox-gateway \
+  -o jsonpath='{.status.addresses[0].value}')"
+: "${GATEWAY_IP:?Wait for the Gateway address, then retry}"
+SANDBOX_URL="http://$GATEWAY_IP/$SANDBX"
+echo "$SANDBOX_URL/"
+curl --fail-with-body --max-time 5 "$SANDBOX_URL/health"
+```
+
+1. Open the printed `http://<gateway_ip>/<sandbox name>/` in a browser and inspect answer provenance during normal chat. Consecutive turns change history, so repeated questions are not guaranteed to hit.
+2. Follow the [independent requests with identical context](#85-amr-as-the-ai-gateway-semantic-response-cache-and-provenance): without an existing entry, the first request is `generated`; after storage completes, repeating it within the TTL should return `amr-cache-hit`. Existing entries can make the first request a hit.
+3. Use the provenance header and APIM trace to confirm a hit skips the chat model, not just lower latency. Defaults are a distance threshold of `0.05` and TTL of `300s`; similar wording matches only within the threshold, and hits still incur embedding/AMR-query costs.
+
+If `agent-session` was created only for this cache demo, release it afterward with `bash scripts/04-delete-session.sh`; do not delete a session still used by other demos.
+
+## 8. Supplementary technical notes
 
 These notes cover configuration, permissions, capacity and failure boundaries not expanded in the demo; they are not a second demo sequence.
 
-### 7.1 Configuration, permissions and access boundaries
+### 8.1 Configuration, permissions and access boundaries
 
 - **Gateway has no TLS/user authentication; restrict sources and keep the management port local.**
 - Do not run capture, restore, wake or cleanup concurrently; inspect retained resources after failures.
@@ -649,11 +703,11 @@ These notes cover configuration, permissions, capacity and failure boundaries no
 - Restart the management portal after Python backend changes;
   - new snapshot mappings need no restart.
   - Lists use cached conditions and snapshots are local records.
-  - Diagnose access failures using section 8 instead of treating list status as live connectivity proof.
+  - Diagnose access failures using section 9 instead of treating list status as live connectivity proof.
 
 </details>
 
-### 7.2 Capacity adjustment
+### 8.2 Capacity adjustment
 
 Initial warm-pool creation requires at least 50 reserves. After creation, adjust reserve capacity separately:
 
@@ -681,7 +735,7 @@ az aks nodepool scale \
 
 Five default Kata nodes do not guarantee room for 100 Ready reserves plus existing claims. Account for allocatable CPU/memory, RuntimeClass overhead, Azure quota and cost.
 
-### 7.3 Snapshot records, restore authorization and cleanup boundaries
+### 8.3 Snapshot records, restore authorization and cleanup boundaries
 
 - Snapshot records, Blob state data and local UID mappings are distinct objects.
 - Recapturing restored Pods requires no limits; default workloads are ineligible.
@@ -740,12 +794,12 @@ bash scripts/07-restore.sh "<sandbox-name>"
 - Default Gateway/pool are `sandbox-gateway`/`agent-pool`, overridable through direct Python invocation.
 
 - CLI success means Sandbox/Pod readiness and network-resource creation, not `/health`, HTTPRoute acceptance or matching memory state.
-- Validate state using the demo and diagnose access with section 8.
+- Validate state using the demo and diagnose access with section 9.
 - Inspect resources after partial replacement failures before retrying.
 
 </details>
 
-### 7.4 Run the chat Agent
+### 8.4 Run the chat Agent
 
 - The demo already serves chat; a separate `reflection-agent` and Blob persistence are optional.
 - Memory-only is the default; the persistence switch does not mount Blob automatically.
@@ -757,14 +811,18 @@ The demo session already serves the chat portal. To run an optional separate cha
 
 ```bash
 bash scripts/08-start-agent.sh
-kubectl -n "$NAMESPACE" port-forward service/reflection-agent 8080:8080
 ```
 
-Keep that terminal open and visit `http://127.0.0.1:8080` in your browser. Alternatively, test from another terminal:
+This optional script creates only the `reflection-agent` Sandbox and Service, not an HTTPRoute. Before accessing it, use [session.yaml](manifests/session.yaml) as a reference to configure a separate HTTPRoute on the shared `sandbox-gateway`: match `/reflection-agent`, strip the prefix and forward to the same-name Service. For cache validation alone, use the already-routed `agent-session` in section 7.2 instead; this optional session is unnecessary.
+
+Once the route is ready, open `http://<gateway_ip>/reflection-agent/` or test through the Gateway:
 
 ```bash
-curl --fail-with-body http://127.0.0.1:8080/ready
-curl --fail-with-body http://127.0.0.1:8080/reflect \
+GATEWAY_IP="$(kubectl -n "$NAMESPACE" get gateway sandbox-gateway \
+  -o jsonpath='{.status.addresses[0].value}')"
+: "${GATEWAY_IP:?Wait for the Gateway address, then retry}"
+curl --fail-with-body "http://$GATEWAY_IP/reflection-agent/ready"
+curl --fail-with-body "http://$GATEWAY_IP/reflection-agent/reflect" \
   -H 'Content-Type: application/json' \
   -d '{"query":"Explain how this agent uses the AI gateway."}'
 ```
@@ -800,11 +858,11 @@ The new `.env` setting is `CHAT_PERSISTENCE_ENABLED=false`:
 - Initialization, authentication and model errors still report failure, never simulated successful answers.
 - If persistence fails, the turn stays in memory and can be lost on restart;
 - successful chat does not prove successful saving.
-- The chat portal has no multi-user authentication: keep this optional Sandbox behind controlled local port forwarding, and restrict the demo session's public Gateway access as described in section 7.1.
+- The chat portal has no multi-user authentication: restrict Gateway access as described in section 8.1; do not access a Sandbox using port forwarding.
 
 </details>
 
-### 7.5 AI Gateway semantic response cache and answer provenance
+### 8.5 AMR as the AI Gateway semantic response cache and provenance
 
 - APIM uses AMR semantic caching; the response header identifies provenance, not latency alone.
 - Defaults: distance threshold `0.05`, TTL `300s`; isolate different histories/instructions.
@@ -877,7 +935,7 @@ SEMANTIC_CACHE_TTL=300
 - the third paraphrase depends on actual vector distance:
 
 ```bash
-CHAT_POD="$(kubectl -n "$NAMESPACE" get pods -l app=reflection-agent \
+CHAT_POD="$(kubectl -n "$NAMESPACE" get pods -l app=agent-session \
   -o jsonpath='{.items[0].metadata.name}')"
 kubectl -n "$NAMESPACE" exec -i "$CHAT_POD" -- python - <<'PY'
 import json
@@ -921,7 +979,7 @@ PY
 
 </details>
 
-## 8. Troubleshooting
+## 9. Troubleshooting
 
 | Symptom | Check and action |
 | --- | --- |
@@ -992,7 +1050,7 @@ curl --fail-with-body --max-time 5 "http://$GATEWAY_IP/$SANDBX/health"
 - If Gateway probing fails, access `http://127.0.0.1:8080/health` and `/ready` inside the Pod to distinguish application failures from routing failures.
 - Ready alone does not prove model availability.
 
-## 9. Clean up all paid resources
+## 10. Clean up all paid resources
 
 **This section retires the entire lab environment.** For releasing sessions, claims, warm pools and snapshots for another demo, refer to [demo.md](demo.md), not the resource-group cleanup below.
 
@@ -1055,7 +1113,7 @@ az group exists --name "$RESOURCE_GROUP"
 
 </details>
 
-## 10. Repository contents and offline checks
+## 11. Repository contents and offline checks
 
 | Path | Purpose |
 | --- | --- |
